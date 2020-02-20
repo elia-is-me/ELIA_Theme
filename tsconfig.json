@@ -1,0 +1,8 @@
+{
+    "compilerOptions": {
+        "module": "none",
+        "target": "ES2018",
+        "noImplicitAny": true,
+        "pretty": true
+    }
+}
