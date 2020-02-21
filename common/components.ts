@@ -448,7 +448,7 @@ class Textlink extends Component {
         this.changeState(ButtonStates.down);
     }
 
-    on_mosue_lbtn_up(x: number, y: number) {
+    on_mouse_lbtn_up(x: number, y: number) {
         if (this.state === ButtonStates.down) {
             if (this.trace(x, y)) {
                 invoke(this, "on_click", x, y);
