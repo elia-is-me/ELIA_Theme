@@ -8,7 +8,12 @@
  */
 declare var include: (path: string) => void;
 
+type StringOrNumber = string | number;
+
 interface IFbUtils {
+    /** At %appdata%\foobar2000 or foobar2000 installation folder; */
+    ProfilePath: string;
+
     /**
      * @type {boolean}
      *

@@ -3,6 +3,7 @@
         "module": "none",
         "target": "ES2018",
         "noImplicitAny": true,
-        "pretty": true
+        "pretty": true,
+        "outDir": "../temp_out"
     }
 }
