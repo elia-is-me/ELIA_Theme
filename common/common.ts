@@ -17,8 +17,9 @@ let folders = {
     lastfm: folders_data + "lastfm\\"
 };
 
-function RGB(r: number, g: number, b: number, a: number = 0xff000000): number {
-    return ((a<<24) | (r << 16) | (g << 8) | (b));
+
+function RGB(r: number, g: number, b: number) {
+    return (0xff000000 | (r << 16) | (g << 8) | (b));
 };
 
 function RGBA(r: number, g: number, b: number, a: number) {

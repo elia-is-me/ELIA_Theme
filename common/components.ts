@@ -23,8 +23,8 @@ class Component {
     width: number = 0;
     height: number = 0;
     private visible: boolean = true;
-    private parent: Component;
-    children: Component[];
+    parent: Component;
+    children: Component[] = [];
 
 
     constructor(attrs: object) {
@@ -213,7 +213,7 @@ class Slider extends Component {
 
     trace(x: number, y: number) {
         if (!this.isVisible()) return false;
-        let pad = (this.thumbImg ? (this.thumbDownImg.Width / 2) >> 0 : 0);
+        let pad = (this.thumbImg ? (this.thumbImg.Width / 2) >> 0 : 0);
         return x > this.x - pad && x <= this.x + this.width + pad
             && y > this.y && y <= this.y + this.height;
     }
@@ -247,7 +247,7 @@ class Slider extends Component {
         }
     }
 
-    on_mosue_move(x: number, y: number) {
+    on_mouse_move(x: number, y: number) {
         if (this.isDrag) {
             x -= this.x;
             let progress_ = x < 0 ? 0 : x > this.width ? 1 : x / this.width;
@@ -259,7 +259,7 @@ class Slider extends Component {
     on_mouse_lbtn_down(x: number, y: number) {
         if (this.trace(x, y)) {
             this.isDrag = true;
-            this.on_mosue_move(x, y);
+            this.on_mouse_move(x, y);
         }
     }
 
@@ -282,7 +282,7 @@ class AlbumArtView extends Component {
     tf = fb.TitleFormat("%album artist%^^%album");
     trackkey: string = "";
     currentImg: IGdiBitmap;
-    defaultImg: IGdiBitmap;
+    defaultImg: IGdiBitmap = this._drawNocoverImg(0xafffffff, 0x0fffffff);
     metadb: IFbMetadb;
     private _rawDefaultImg: IGdiBitmap;
 
@@ -292,6 +292,7 @@ class AlbumArtView extends Component {
         if (isObject(attrs)) {
             Object.assign(this, attrs);
         }
+        this._rawDefaultImg = this.defaultImg;
     }
 
     _drawNocoverImg(textColor: number, backColor: number) {
@@ -437,20 +438,20 @@ class Textlink extends Component {
         }
     }
 
-    on_mouse_move (x: number, y: number) {
+    on_mouse_move(x: number, y: number) {
         if (this.state === ButtonStates.normal) {
             this.changeState(ButtonStates.hover);
         }
     }
 
-    on_mouse_lbtn_down (x: number, y: number) {
+    on_mouse_lbtn_down(x: number, y: number) {
         this.changeState(ButtonStates.down);
     }
 
-    on_mosue_lbtn_up( x: number, y: number) {
+    on_mosue_lbtn_up(x: number, y: number) {
         if (this.state === ButtonStates.down) {
             if (this.trace(x, y)) {
-                invoke (this, "on_click", x, y);
+                invoke(this, "on_click", x, y);
             }
         }
         this.changeState(ButtonStates.hover);
