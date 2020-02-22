@@ -218,7 +218,7 @@ function _isFolder(folder: string) {
 }
 
 // https://github.com/robinvdvleuten/shvl
-function _get(object: any, path: string|string[], default_val: any) {
+function _get(object: any, path: string | string[], default_val: any) {
     return (object = (<string[]>((<any>path).split ? (<string>path).split('.') : path)).reduce(function (obj: any, p: string) {
         return obj && obj[p]
     }, object)) === undefined ? default_val : object;
@@ -325,7 +325,7 @@ StringFormat.Center = StringFormat(1, 1, StringTrimming.Character, StringFormatF
 
 
 function debounce(fn: Function, delay: number) {
-    var timer : number= null;
+    var timer: number = null;
     delay = delay || 250;
     return function () {
         var context = this,
@@ -337,7 +337,7 @@ function debounce(fn: Function, delay: number) {
     };
 }
 
-function throttle(fn: Function, threshhold:number, scope?: any) {
+function throttle(fn: Function, threshhold: number, scope?: any) {
     threshhold || (threshhold = 250);
     var last: number,
         deferTimer: number;
@@ -360,6 +360,11 @@ function throttle(fn: Function, threshhold:number, scope?: any) {
     };
 }
 
+// Localization function, not impl yet;
+function l18n(text: string | number) {
+    return text;
+}
+
 // Image
 
 /**
@@ -369,7 +374,7 @@ function throttle(fn: Function, threshhold:number, scope?: any) {
  * @param {number} height 
  * @param {number?} itp 
  */
-function CropImage(image: IGdiBitmap, width: number, height?: number, itp: number =0) {
+function CropImage(image: IGdiBitmap, width: number, height?: number, itp: number = 0) {
     if (height == null) {
         height = width;
     }
@@ -396,7 +401,7 @@ function CropImage(image: IGdiBitmap, width: number, height?: number, itp: numbe
 
 function imageFromCode(
     code: string, font: IGdiFont, color: number, width: number, height: number, fmt = StringFormat(1, 1)
-    ) : IGdiBitmap{
+): IGdiBitmap {
     var img = gdi.CreateImage(width, height);
     var g = img.GetGraphics();
 
@@ -416,7 +421,7 @@ function imageFromCode(
  */
 const MeasureString = (() => {
     let g = gdi.CreateImage(1, 1).GetGraphics();
-    return (str: string|number, font: IGdiFont) => g.MeasureString(str, font, 0, 0, 99999, 999, StringFormat.LeftCenter);
+    return (str: string | number, font: IGdiFont) => g.MeasureString(str, font, 0, 0, 99999, 999, StringFormat.LeftCenter);
 })();
 
 // TEST,

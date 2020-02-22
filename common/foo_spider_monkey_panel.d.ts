@@ -2846,7 +2846,7 @@ interface IGdiGraphics {
      * @param {number} h
      * @param {number=} [flags=0] See Flags.js > StringFormatFlags
      */
-    DrawString(str: string | number, font: IGdiFont, colour: number, x: number, y: number, w: number, h: number, flags?: number): void;
+    DrawString(str: string | number, font: IGdiFont, colour: number, x: number, y: number, w: number, h: number, flags: number): void;
 
     /**
      * @param {number} x

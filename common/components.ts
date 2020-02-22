@@ -15,7 +15,37 @@ const Repaint = () => window.Repaint();
 const ThrottledRepaint = throttle(Repaint, 15);
 let g_panels_changed = false;
 
-class Component {
+interface ICallbacks {
+    on_paint?: (gr: IGdiGraphics) => void;
+    on_size?: () => void;
+    on_mouse_move?: (x: number, y: number) => void;
+    on_mouse_lbtn_down?: (x: number, y: number) => void;
+    on_mouse_lbtn_up?: (x: number, y: number) => void;
+    on_mouse_lbtn_dblclk?: (x: number, y: number) => void;
+    on_mouse_rbtn_down?: (x: number, y: number) => void;
+    on_mouse_rbtn_up?: (x: number, y: number) => void;
+    on_mouse_leave?: () => void;
+    on_mouse_wheel?: (step: number) => void;
+    on_char?: (code: number) => void;
+    on_focus?: (focus: boolean) => void;
+    on_key_down?: (vkey: number) => void;
+    on_key_up?: (vkey: number) => void;
+}
+
+interface IBox {
+    x: number;
+    y: number;
+    z?: number;
+    width: number;
+    height: number;
+}
+
+interface TEST {
+    parent: Component;
+    children: Component[];
+}
+
+class Component implements IBox, TEST {
     readonly cid: number = get_cid();
     x: number = 0;
     y: number = 0;
@@ -25,7 +55,6 @@ class Component {
     private visible: boolean = true;
     parent: Component;
     children: Component[] = [];
-
 
     constructor(attrs: object) {
         Object.assign(this, attrs);
@@ -83,10 +112,7 @@ class Component {
 
         if (is_vis) invoke(this, 'on_size');
         if (is_vis !== pre_vis) g_panels_changed = true;
-
     }
-
-
 }
 
 
