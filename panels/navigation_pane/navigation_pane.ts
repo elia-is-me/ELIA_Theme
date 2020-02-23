@@ -1,7 +1,6 @@
-/// <reference path="../common/foo_spider_monkey_panel.d.ts" />
-/// <reference path="../common/common.ts" />
-/// <reference path="../common/components.ts" />
-
+/// <reference path="../../common/foo_spider_monkey_panel.d.ts" />
+/// <reference path="../../common/common.ts" />
+/// <reference path="../../common/components.ts" />
 
 abstract class Scrollable extends Component {
     totalHeight: number;
@@ -184,6 +183,7 @@ class NavButton extends Component {
     textFont: IGdiFont;
     textColor: number;
     textHoverColor: number;
+    active: boolean = false;
 
     constructor(props: {
         iconCode: string;
@@ -201,16 +201,24 @@ class NavButton extends Component {
     }
 
     on_paint(gr: IGdiGraphics) {
-
+        let textColor_ = (this.state === ButtonStates.normal ? this.textColor : this.textHoverColor);
         let icon_x = this.x + scale(16);
         let icon_y = this.y + scale(8);
         let icon_w = scale(24);
-        gr.DrawString(this.iconCode, this.iconFont, this.textColor, icon_x, icon_y, icon_w, icon_w, StringFormat.Center);
+        gr.DrawString(this.iconCode, this.iconFont, textColor_, icon_x, icon_y, icon_w, icon_w, StringFormat.Center);
+
+        let txt_x = icon_x + icon_w + scale(16);
+        let txt_w = this.x + this.width - txt_x - scale(16);
+        gr.DrawString(this.text, this.textFont, textColor_, txt_x, this.y, txt_w, this.height, StringFormat.LeftCenter);
+
+        //
+        if (this.active) {
+            gr.SetSmoothingMode(SmoothingMode.AntiAlias);
+            let r = scale(4);
+            gr.FillRoundRect(this.x, this.y, this.width - 1, this.height - 1, r, r, 0x80ffffff & this.textColor);
+        }
+
     }
-
-
-
-
 }
 
 class NavigationPane extends Scrollable {
@@ -219,3 +227,9 @@ class NavigationPane extends Scrollable {
     items: any[];
     scrollbar: Scrollbar;
 }
+
+
+// const colors = {
+//     text: RGB(200, 202, 204),
+
+// }
