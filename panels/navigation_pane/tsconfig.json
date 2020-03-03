@@ -5,9 +5,6 @@
         "noImplicitAny": true,
         "pretty": true,
         "outDir": "../../../temp_out",
-        "removeComments": true
-    },
-    // "exclude": [
-    //     "./panels"
-    // ]
+        // "removeComments": true
+    }
 }
