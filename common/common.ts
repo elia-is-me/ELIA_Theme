@@ -17,7 +17,6 @@ let folders = {
     lastfm: folders_data + "lastfm\\"
 };
 
-
 function RGB(r: number, g: number, b: number) {
     return (0xff000000 | (r << 16) | (g << 8) | (b));
 };
@@ -26,15 +25,14 @@ function RGBA(r: number, g: number, b: number, a: number) {
     return ((a << 24) | (r << 16) | (g << 8) | (b));
 };
 
-// test;
+function toRGB(color: number) { // returns an array like [192, 0, 0]
+    var a = color - 0xFF000000;
+    return [a >> 16, a >> 8 & 0xFF, a & 0xFF];
+}
 
-function toRGB(d: number) { // convert back to RGB values
-    var d = d - 0xff000000;
-    var r = d >> 16;
-    var g = d >> 8 & 0xFF;
-    var b = d & 0xFF;
-    return [r, g, b];
-};
+function getAlpha(colour: number) {
+    return ((colour >> 24) & 0xff);
+}
 
 function blendColors(c1: number, c2: number, factor: number) {
     // When factor is 0, result is 100% color1, when factor is 1, result is 100% color2.
@@ -47,13 +45,92 @@ function blendColors(c1: number, c2: number, factor: number) {
     return (0xff000000 | (r << 16) | (g << 8) | (b));
 };
 
+interface IRGBA_Color {
+    r: number; // [0, 255];
+    g: number; // [0, 255];
+    b: number; // [0, 255];
+    a: number; // [0, 255];
+}
 
+interface IHSLA_Color {
+    h: number; // Hue: integer in [0, 360];
+    s: number; // Saturation: float in [0, 1];
+    l: number; // Luminosity: float in [0, 1];
+    a: number; // Alpha: float in [0, 1];
+}
+
+function rgba2hsla(rgba: IRGBA_Color): IHSLA_Color {
+    const r = rgba.a / 255;
+    const g = rgba.g / 255;
+    const b = rgba.b / 255;
+
+    const max = Math.max(r, g, b);
+    const min = Math.max(r, g, b);
+    let h = 0;
+    let s = 0;
+    const l = (min + max) / 2;
+    const chroma = max - min;
+
+    if (chroma > 0) {
+        s = Math.min((l <= 0.5 ? chroma / (2 * l) : chroma / (2 - (2 * l))), 1);
+
+        switch (max) {
+            case r: h = (g - b) / chroma + (g < b ? 6 : 0); break;
+            case g: h = (b - r) / chroma + 2; break;
+            case b: h = (r - g) / chroma + 4; break;
+        }
+
+        h *= 60;
+        h = Math.round(h);
+    }
+    return { h: h, s: s, l: l, a: rgba.a };
+}
+
+function hslToRgb(hue: number, sat: number, light: number) {
+    var t1, t2, r, g, b;
+    hue = hue / 60;
+    if (light <= 0.5) {
+        t2 = light * (sat + 1);
+    } else {
+        t2 = light + sat - (light * sat);
+    }
+    t1 = light * 2 - t2;
+    r = hueToRgb(t1, t2, hue + 2) * 255;
+    g = hueToRgb(t1, t2, hue) * 255;
+    b = hueToRgb(t1, t2, hue - 2) * 255;
+    return { r: r, g: g, b: b };
+}
+
+function hueToRgb(t1: number, t2: number, hue: number) {
+    if (hue < 0) hue += 6;
+    if (hue >= 6) hue -= 6;
+    if (hue < 1) return (t2 - t1) * hue + t1;
+    else if (hue < 3) return t2;
+    else if (hue < 4) return (t2 - t1) * (4 - hue) + t1;
+    else return t1;
+}
+
+function lighten(color: number, factor: number): number {
+    let rgb_ = toRGB(color);
+    let alpha = getAlpha(color);
+    let hsla: IHSLA_Color = rgba2hsla({ r: rgb_[0], g: rgb_[1], b: rgb_[2], a: alpha });
+    hsla.l = hsla.l * (1 + factor);
+    let rgb__ = hslToRgb(hsla.h, hsla.s, hsla.l);
+    return RGBA(rgb__.r, rgb__.g, rgb__.b, alpha);
+}
+
+function darken(color: number, factor: number): number {
+    let rgb_ = toRGB(color);
+    let alpha = getAlpha(color);
+    let hsla: IHSLA_Color = rgba2hsla({ r: rgb_[0], g: rgb_[1], b: rgb_[2], a: alpha });
+    hsla.l = hsla.l * (1 - factor);
+    let rgb__ = hslToRgb(hsla.h, hsla.s, hsla.l);
+    return RGBA(rgb__.r, rgb__.g, rgb__.b, alpha);
+}
 // dpi scale
-
 const scale = (function () {
     var factor = window.GetProperty("_Global.Zoom Factor(%, 0 = default)", 0) / 100;
     var round = Math.round;
-
     if (factor === 0) {
         try {
             var ws = new ActiveXObject("WScript.Shell");
@@ -62,83 +139,11 @@ const scale = (function () {
         } catch (e) {
             factor = 1;
         }
-    } else {
-        //
-    }
-
+    } else { };
     return function (value: number) {
         return round(value * factor * 100) / 100;
     }
 })();
-
-// if (typeof Object.assign != 'function') {
-//     // Must be writable: true, enumerable: false, configurable: true
-//     Object.defineProperty(Object, "assign", {
-//         value: function assign(target, varArgs) { // .length of function is 2
-//             'use strict';
-//             if (target == null) { // TypeError if undefined or null
-//                 throw new TypeError('Cannot convert undefined or null to object');
-//             }
-
-//             let to = Object(target);
-
-//             for (var index = 1; index < arguments.length; index++) {
-//                 var nextSource = arguments[index];
-
-//                 if (nextSource != null) { // Skip over if undefined or null
-//                     for (let nextKey in nextSource) {
-//                         // Avoid bugs when hasOwnProperty is shadowed
-//                         if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
-//                             to[nextKey] = nextSource[nextKey];
-//                         }
-//                     }
-//                 }
-//             }
-//             return to;
-//         },
-//         writable: true,
-//         configurable: true
-//     });
-// }
-
-// if (!Array.prototype.filter) {
-//     Array.prototype.filter = function (func, thisArg) {
-//         'use strict';
-//         if (!((typeof func === 'Function' || typeof func === 'function') && this))
-//             throw new TypeError();
-
-//         var len = this.length >>> 0,
-//             res = new Array(len), // preallocate array
-//             t = this, c = 0, i = -1;
-//         if (thisArg === undefined) {
-//             while (++i !== len) {
-//                 // checks to see if the key was set
-//                 if (i in this) {
-//                     if (func(t[i], i, t)) {
-//                         res[c++] = t[i];
-//                     }
-//                 }
-//             }
-//         }
-//         else {
-//             while (++i !== len) {
-//                 // checks to see if the key was set
-//                 if (i in this) {
-//                     if (func.call(thisArg, t[i], i, t)) {
-//                         res[c++] = t[i];
-//                     }
-//                 }
-//             }
-//         }
-
-//         res.length = c; // shrink down array to proper size
-//         return res;
-//     };
-// }
-
-// Array.prototype.diff = function (a) {
-//     return this.filter(function (i) { return a.indexOf(i) < 0; });
-// };
 
 function isFunction(obj: any) {
     return Object.prototype.toString.call(obj) === "[object Function]"
@@ -158,30 +163,9 @@ function isString(x: any) {
     return Object.prototype.toString.call(x) === "[object String]"
 }
 
-// function goog_inherits(childCtor, parentCtor) {
-//     /** @constructor */
-//     function tempCtor() { }
-//     tempCtor.prototype = parentCtor.prototype;
-//     childCtor.superClass_ = parentCtor.prototype;
-//     childCtor.prototype = new tempCtor();
-//     /** @override */
-//     childCtor.prototype.constructor = childCtor;
-
-//     childCtor.base = function (me, methodName, var_args) {
-//         // Copying using loop to avoid deop due to passing arguments object to
-//         // function. This is faster in many JS engines as of late 2014.
-//         var args = new Array(arguments.length - 2);
-//         for (var i = 2; i < arguments.length; i++) {
-//             args[i - 2] = arguments[i];
-//         }
-//         return parentCtor.prototype[methodName].apply(me, args);
-//     };
-// }
-
 function _tagged(value: string) {
     return value != '' && value != '?';
 }
-
 
 function _q(value: string) {
     return '"' + value + '"';
@@ -195,7 +179,6 @@ function _jsonParse(value: string) {
         return [];
     }
 }
-
 
 function _run() {
     try {
@@ -212,7 +195,6 @@ function _createFolder(folder: string) {
     }
 }
 
-
 function _isFolder(folder: string) {
     return isString(folder) ? fso.FolderExists(folder) : false;
 }
@@ -223,13 +205,6 @@ function _get(object: any, path: string | string[], default_val: any) {
         return obj && obj[p]
     }, object)) === undefined ? default_val : object;
 };
-
-
-// let __test_obj = {
-//     b: [0, 2, 2]
-// }
-// console.log("hello common js");
-// console.log(_get(__test_obj, 'b'));
 
 let popup = {
     ok: 0,
@@ -299,30 +274,23 @@ var TextRenderingHint = {
     ClearTypeGridFit: 5
 };
 
+const PlaybackOrder = {
+    normal: 0,
+    repeat_playlist: 1,
+    repeat_track: 2,
+    random: 3,
+    shuffle_tracks: 4,
+    shuffle_albums: 5,
+    shuffle_folders: 6
+};
+
 // Helper function for DrawString() and MeasureString()
 // args: h_align, v_align, trimming, flags
 function StringFormat(h_align = 0, v_align = 0, trimming = 0, flags = 0) {
-    // var h_align = 0, v_align = 0, trimming = 0, flags = 0;
-    // switch (arguments.length) {
-    //     // fall-thru
-    //     case 4:
-    //         flags = arguments[3];
-    //     case 3:
-    //         trimming = arguments[2];
-    //     case 2:
-    //         v_align = arguments[1];
-    //     case 1:
-    //         h_align = arguments[0];
-    //         break;
-    //     default:
-    //         return 0;
-    // }
     return ((h_align << 28) | (v_align << 24) | (trimming << 20) | flags);
 }
 StringFormat.LeftCenter = StringFormat(0, 1, StringTrimming.EllipsisCharacter, StringFormatFlags.NoWrap);
 StringFormat.Center = StringFormat(1, 1, StringTrimming.Character, StringFormatFlags.NoWrap);
-
-
 
 function debounce(fn: Function, delay: number) {
     var timer: number = null;
@@ -365,8 +333,6 @@ function l18n(text: string | number) {
     return text;
 }
 
-// Image
-
 /**
  * 
  * @param {IGdiBitmap} image 
@@ -378,13 +344,11 @@ function CropImage(image: IGdiBitmap, width: number, height?: number, itp: numbe
     if (height == null) {
         height = width;
     }
-
     var sc = width / height;
     var src_w = image.Width;
     var src_h = image.Height;
     var src_sc = src_w / src_h;
     var tmp_w, tmp_h, crop, tmp_img;
-
     if (src_sc > sc) {
         tmp_w = src_h * sc;
         crop = Math.round((src_w - tmp_w) / 2);
@@ -395,23 +359,15 @@ function CropImage(image: IGdiBitmap, width: number, height?: number, itp: numbe
         crop = Math.round((src_h - tmp_h) / 2);
         tmp_img = image.Clone(0, crop, src_w, tmp_h);
     }
-
     return tmp_img.Resize(width, height, itp);
 }
 
-function imageFromCode(
-    code: string, font: IGdiFont, color: number, width: number, height: number, fmt = StringFormat(1, 1)
-): IGdiBitmap {
+function imageFromCode(code: string, font: IGdiFont, color: number, width: number, height: number, fmt = StringFormat(1, 1)): IGdiBitmap {
     var img = gdi.CreateImage(width, height);
     var g = img.GetGraphics();
-
     g.SetTextRenderingHint(TextRenderingHint.AntiAlias);
-    // for test;
-    // g.SetSmoothingMode(0);
-    // g.DrawRect(0, 0, width - 1, height - 1, 1, RGB(127, 127, 127));
     g.DrawString(code, font, color, 0, 0, width, height, fmt);
     img.ReleaseGraphics(g);
-
     return img;
 }
 
@@ -423,9 +379,6 @@ const MeasureString = (() => {
     let g = gdi.CreateImage(1, 1).GetGraphics();
     return (str: string | number, font: IGdiFont) => g.MeasureString(str, font, 0, 0, 99999, 999, StringFormat.LeftCenter);
 })();
-
-// TEST,
-// console.log(MeasureString("text", gdi.Font("tahoma", 12)).Width);
 
 const MF_STRING = 0x00000000;
 const MF_GRAYED = 0x00000001;

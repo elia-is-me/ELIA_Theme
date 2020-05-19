@@ -2,7 +2,7 @@
 /// <reference path="../../common/common.ts" />
 /// <reference path="../../common/components.ts" />
 
-abstract class Scrollable extends Component {
+abstract class ScrollView extends Component {
     totalHeight: number;
     scrolling: boolean = false;
     private scroll__: number = 0;
@@ -76,7 +76,7 @@ class Scrollbar extends Component implements ICallbacks {
     private cursorDelta: number;
     cursorColor: number;
     backgroundColor: number;
-    parent: Scrollable;
+    parent: ScrollView;
 
     constructor(attrs: object) {
         super(attrs);
@@ -159,11 +159,13 @@ interface IColors {
     highlight: number;
     text_sel: number;
     background_sel: number;
+    [name: string]: number;
 }
 
 interface IListItem {
     id: number;
-    icon?: number;
+    icon?: string;
+    text: string;
     x: number;
     y: number;
     width: number;
@@ -217,19 +219,245 @@ class NavButton extends Component {
             let r = scale(4);
             gr.FillRoundRect(this.x, this.y, this.width - 1, this.height - 1, r, r, 0x80ffffff & this.textColor);
         }
-
     }
 }
 
-class NavigationPane extends Scrollable {
-    colors: IColors;
+class PlaylistItem implements IListItem {
+    id: number;
+    icon?: string;
+    text: string;
+    py: number;
+    x: number = 0;
+    y: number = 0;
+    z: number = 0;
+    width: number = 0;
+    height: number = 0;
+    constructor(attrs: object) {
+    }
 
-    items: any[];
+    draw(gr: IGdiGraphics) { }
+}
+
+class PlaylistManager extends ScrollView implements ICallbacks {
+    items: IListItem[] = [];
     scrollbar: Scrollbar;
+    itemHeight: number = scale(28);
+    colors: IColors;
+    playlistVisible: boolean = true;
+    itemFont: IGdiFont;
+    iconFont: IGdiFont;
+
+    private _menuIsOpen = false;
+
+    constructor(props: {
+        itemHeight?: number;
+        colors: IColors;
+        itemFont: IGdiFont;
+        iconFont: IGdiFont;
+    }) {
+        super(props);
+        Object.assign(this, props);
+
+        this.colors.text_secondary = darken(this.colors.text, 0.5);
+    }
+
+    initList(playlistId: number) {
+        this.totalHeight = 0;
+        for (let i = 0, count = plman.PlaylistCount; i < count; i++) {
+            this.items.push(new PlaylistItem({}));
+        }
+    }
+
+    on_size() {
+        this.scrollbar.setSize(this.x + this.width - SCROLLBAR_WIDTH, this.y, SCROLLBAR_WIDTH, this.height);
+        this.scrollTo();  // check scrollTop;
+    }
+
+    on_paint(gr: IGdiGraphics) {
+        let textColor = this.colors.text;
+        let backColorSel = this.colors.background_sel;
+        let vFontPad = ((this.itemHeight - this.itemFont.Height) / 2) >> 0;
+        for (let i = 0, len = this.items.length; i < len; i++) {
+            let thisItem = this.items[i];
+            thisItem.x = this.x;
+            thisItem.y = thisItem.py + this.y - this.scroll_;
+            thisItem.width = this.width;
+            thisItem.height = this.itemHeight;
+            if (thisItem.y + thisItem.height > this.y && thisItem.y < this.y + this.height) {
+                // draw visible items;
+                if (fb.IsPlaying && i === plman.PlayingPlaylist) {
+                    // draw playing playlist item;
+                    gr.DrawString(fb.IsPaused ? Material.volume_mute : Material.volume, this.iconFont, this.colors.highlight, thisItem.x + thisItem.width - scale(32) - this.scrollbar.width, thisItem.y, scale(32), this.height, StringFormat.Center);
+                    gr.DrawString(thisItem.icon, this.iconFont, textColor, thisItem.x + scale(16), thisItem.y, scale(32), thisItem.height, StringFormat.Center);
+                    gr.DrawString(thisItem.text, this.itemFont, textColor, thisItem.x + scale(16 + 32), thisItem.y, thisItem.width - scale(16 + 32 + 16 + 32), this.height, StringFormat.LeftCenter);
+                } else {
+                    gr.DrawString(thisItem.icon, this.iconFont, textColor, thisItem.x + scale(16), thisItem.y, scale(32), thisItem.height, StringFormat.Center);
+                    gr.DrawString(thisItem.text, this.itemFont, textColor, thisItem.x + scale(16 + 32), thisItem.y, thisItem.width - scale(16 + 32 + 16), this.height, StringFormat.LeftCenter);
+                }
+                if (this.playlistVisible && i === plman.ActivePlaylist) {
+                    gr.FillSolidRect(this.x, this.y + vFontPad, scale(4), this.itemFont.Height, this.colors.highlight);
+                } else {
+                    // current view is not displaying playlist or this item is
+                    // not active playlist;
+                }
+            } else {
+                // items invisible to us, do not draw them;
+            }
+        }
+        // TODO: draw dragdrop indication line;
+    }
+
+    _findHoverIndex(x: number, y: number) {
+        return this.items.findIndex(item => (y > item.y && y <= item.y + item.height));
+    }
+
+    on_mouse_lbtn_down(x: number, y: number) {
+        let hoverIdx = this._findHoverIndex(x, y);
+        if (isValidPlaylist(hoverIdx)) {
+            // handle click  item;
+            // notify others that active playlist changed;
+        }
+    }
+
+    on_mouse_lbtn_dblclk(x: number, y: number) {
+        let hoverIdx = this._findHoverIndex(x, y);
+        if (isValidPlaylist(hoverIdx)) {
+            // handle double click here;
+            // notify others;
+        }
+    }
+
+    on_mouse_move(x: number, y: number) {
+        // if mouse is dragging some item, update dragdrop target index;
+        // else do nothing, items' state will not change.
+    }
+
+    on_mouse_lbtn_up(x: number, y: number) {
+        // 
+    }
+
+    on_mouse_rbtn_down(x: number, y: number) {
+
+    }
+
+    on_mouse_rbtn_up(x: number, y: number) { }
+
+    PopupContextMenu(playlistIndex: number, x: number, y: number) {
+        if (!isValidPlaylist(playlistIndex)) {
+            return;
+        }
+
+        this._menuIsOpen = true;
+        const metadbs = plman.GetPlaylistItems(playlistIndex);
+        const hasTracks = metadbs.Count > 0;
+
+        const root = window.CreatePopupMenu();
+        root.AppendMenuItem(hasTracks ? MF_STRING : MF_GRAYED, 1, "Play\tEnter");
+        root.AppendMenuItem(MF_STRING, 2, "Rename playlist...\tF2");
+        root.AppendMenuItem(MF_STRING, 3, "Remove playlist\tDel");
+        root.AppendMenuItem(MF_STRING, 4, "Create new playlist\tCtrl+N");
+        if (plman.IsAutoPlaylist(playlistIndex)) {
+            root.AppendMenuSeparator();
+            root.AppendMenuItem(MF_STRING, 5, "Edit autoplaylist...");
+        }
+        // contents context menu;
+        const contents = window.CreatePopupMenu();
+        const Context = fb.CreateContextMenuManager();
+        const BaseID = 1000;
+        if (hasTracks) {
+            Context.InitContext(metadbs);
+            Context.BuildMenu(contents, BaseID, -1);
+            //
+            root.AppendMenuSeparator();
+            contents.AppendTo(root, hasTracks ? MF_STRING : MF_GRAYED, metadbs.Count + " Track(s)");
+        }
+
+        const ret = root.TrackPopupMenu(x, y);
+        switch (true) {
+            case ret === 1:
+                // Play
+                plman.ActivePlaylist = playlistIndex;
+                if (plman.PlaybackOrder >= PlaybackOrder.random) {
+                    plman.ExecutePlaylistDefaultAction(playlistIndex, Math.floor(Math.random() * plman.PlaylistItemCount(playlistIndex)));
+                } else {
+                    plman.ExecutePlaylistDefaultAction(playlistIndex, 0);
+                }
+                break;
+            case ret === 2:
+                // Rename;
+                // TODO: Popup a modal or Dialog;
+                break;
+            case ret === 3:
+                // Remove playlist;
+                if (plman.ActivePlaylist === playlistIndex) {
+                    if (isValidPlaylist(playlistIndex - 1)) {
+                        plman.ActivePlaylist = playlistIndex - 1;
+                    } else if (isValidPlaylist(playlistIndex + 1)) {
+                        plman.ActivePlaylist = playlistIndex + 1;
+                    } else {
+                        plman.ActivePlaylist = 0;
+                    }
+                    // TODO: what if no playlists left?
+                }
+                plman.RemovePlaylist(playlistIndex);
+                break;
+            case ret === 4:
+                fb.RunMainMenuCommand("New playlist");
+                fb.RunMainMenuCommand("Rename playlist");
+                // TODO: replace it with a popup modal;
+                break;
+            case ret === 5:
+                plman.ShowAutoPlaylistUI(playlistIndex);
+                break;
+            case ret >= BaseID:
+                // Tracks context menu;
+                Context.ExecuteByID(ret - BaseID);
+                break;
+        }
+
+        this._menuIsOpen = false;
+    }
 }
 
 
-// const colors = {
-//     text: RGB(200, 202, 204),
+const Material = {
+    sort: '\ue0c3',
+    edit: '\ue254',
+    circle_add: '\ue3ba',
+    add: '\ue145',
+    shuffle: '\ue043',
+    gear: '\ue8b8',
+    heart: '\ue87d',
+    heart_empty: '\ue87e',
+    play: '\ue037',
+    circle_play: '\ue039',
+    volume: '\ue050',
+    volume_mute: '\ue04e',
+    h_dots: '\ue5d3',
+    music_note: '\ue3a1',
+    star_border: '\ue83a',
+    queue_music: '\ue03d',
+    event: '\ue8df',
+    add_circle_outline: '\ue3ba',
+    search: '\ue8b6',
+    settings: '\ue8b8',
+    menu: '\ue5d2',
+    history: '\ue8b3',
+    close: '\ue14c'
+};
 
-// }
+const colors: IColors = {
+    text: RGB(180, 182, 184),
+    background: RGB(40, 40, 40),
+    highlight: RGB(238, 127, 0),
+    text_sel: RGB(255, 255, 255),
+    background_sel: RGB(0, 0, 0),
+    heart: RGB(195, 45, 46),
+};
+
+class NavigationPane extends Component {
+    colors: IColors;
+    constructor(attrs: object) {
+        super(attrs);
+    }
+}
