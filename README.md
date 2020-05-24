@@ -3,11 +3,11 @@
 ##  Compile
 
 - install nodejs (v6.13.4)
-- cd `ts_elia` folder and install typescript(v3.7):
+- cd `ts_elia` folder and install typescript(v3.7), gulp, etc:
 ``` 
-npm install typescript
+npm install --save-dev typescript gulp-cli gulp@4.0.0 gulp-typescript
 ```
-- `npx tsc`
+- `npx gulp`
 
 ## Use
 

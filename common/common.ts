@@ -1,6 +1,4 @@
-// last modified: 2020-02-20;
-
-/// <reference path="./foo_spider_monkey_panel.d.ts" />
+// last modified: 2020年5月24日
 
 let doc = new ActiveXObject('htmlfile');
 let app = new ActiveXObject('Shell.Application');

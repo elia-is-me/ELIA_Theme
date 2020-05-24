@@ -1,6 +1,3 @@
-/// <reference path="./foo_spider_monkey_panel.d.ts" />
-/// <reference path="./common.ts" />
-
 'use strict'
 
 
@@ -60,8 +57,8 @@ class Component implements IBox, TEST {
         Object.assign(this, attrs);
     }
 
-    // foobar2k's callback function collection;
-    callbacks: ICallbacks = {};
+    // on_paint?: Function
+    // on_size?: () => void;
 
     addChild(node: Component) {
         if (!(node instanceof Component)) {
@@ -78,7 +75,6 @@ class Component implements IBox, TEST {
 
         g_panels_changed = true;
     }
-
 
     removeChild(node: Component) {
         if (!(node instanceof Component) || node.parent !== this) {
@@ -111,10 +107,7 @@ class Component implements IBox, TEST {
         }
         let is_vis = this.isVisible();
 
-        if (is_vis) {
-            invoke(this, 'on_size'); // Obsolete!
-            invoke(this.callbacks, 'on_size');
-        }
+        if (is_vis) invoke(this, 'on_size');
         if (is_vis !== pre_vis) g_panels_changed = true;
     }
 }
@@ -205,31 +198,6 @@ class Icon extends Component {
 
     on_mouse_leave() {
         this.changeState(ButtonStates.normal);
-    }
-
-    callbacks = {
-        on_mouse_move(x: number, y: number) {
-            if (this.state === ButtonStates.normal) {
-                this.changeState(ButtonStates.hover);
-            }
-        },
-
-        on_mouse_lbtn_down(x: number, y: number) {
-            this.changeState(ButtonStates.down);
-        },
-
-        on_mouse_lbtn_up(x: number, y: number) {
-            if (this.state === ButtonStates.down) {
-                if (this.trace(x, y)) {
-                    invoke(this.callbacks, "on_click", x, y);
-                }
-            }
-            this.changeState(ButtonStates.hover);
-        },
-
-        on_mouse_leave() {
-            this.changeState(ButtonStates.normal);
-        }
     }
 }
 
