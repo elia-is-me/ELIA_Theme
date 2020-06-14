@@ -49,7 +49,7 @@ class Component implements IBox, TEST {
     z: number = 0;
     width: number = 0;
     height: number = 0;
-    private visible: boolean = true;
+    private _visible: boolean = true;
     parent: Component;
     children: Component[] = [];
 
@@ -57,8 +57,9 @@ class Component implements IBox, TEST {
         Object.assign(this, attrs);
     }
 
-    // on_paint?: Function
-    // on_size?: () => void;
+    on_paint(gr: IGdiGraphics) { }
+    on_size() { }
+    on_init() {}
 
     addChild(node: Component) {
         if (!(node instanceof Component)) {
@@ -87,8 +88,11 @@ class Component implements IBox, TEST {
     }
 
     isVisible() {
-        return this.visible && this.width > 0 && this.height > 0;
+        return this._visible && this.width > 0 && this.height > 0;
     }
+
+    get visible() { return this._visible }
+    set visible(val: boolean) { this._visible = val; }
 
     trace(x: number, y: number) {
         return this.isVisible()
@@ -299,6 +303,26 @@ const AlbumArtId = {
     icon: 3,
     artist: 4
 };
+
+
+function drawNoCover(textColor: number, backColor: number) {
+    let fontName = "Segoe UI";
+    let font1 = gdi.Font(fontName, 270, 1);
+    let font2 = gdi.Font(fontName, 120, 1);
+    let cc = StringFormat(1, 1);
+    let img = gdi.CreateImage(500, 500);
+    let g = img.GetGraphics();
+
+    // g.SetSmoothingMode(SmoothingMode.HighQuality);
+    g.SetTextRenderingHint(TextRenderingHint.AntiAlias);
+    g.FillSolidRect(0, 0, 500, 500, textColor & 0x20ffffff);
+    g.DrawString("NO", font1, textColor & 0x25ffffff, 0, 0, 500, 275, cc);
+    g.DrawString("COVER", font2, textColor & 0x25ffffff, 2.5, 175, 500, 275, cc);
+    g.FillSolidRect(60, 388, 380, 50, textColor & 0x65ffffff);
+
+    img.ReleaseGraphics(g);
+    return img;
+}
 
 class AlbumArtView extends Component {
     currentArtId: number = AlbumArtId.front;

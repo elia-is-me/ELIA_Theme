@@ -156,6 +156,42 @@ class Scrollbar extends Component implements ICallbacks {
     }
 }
 
+class ImageCacheItem {
+    image: IGdiBitmap;
+    embed: boolean;
+    path: string;
+    artId?: number;
+
+    constructor(image: IGdiBitmap, path: string, embed: boolean = false) {
+        this.image= image;
+        this.path = path;
+        this.embed = embed;
+    }
+
+    compare(item: ImageCacheItem) {
+        if (this.embed !== item.embed) return false;
+        if (this.embed && item.embed) return this.path === item.path;
+        return this.path === item.path;
+    }
+
+    readImage (dstW: number, dstH: number) {
+
+    }
+}
+
+class ImageCollection {
+    images: IGdiBitmap[]; 
+
+    constructor() {
+        this.images = [];
+    }
+
+    getTrackImages (metadb: IFbMetadb) {
+
+    }
+}
+
+
 // ------------------------------------------------------------
 // Global resources: theme colors, icon codes, command string,
 //                    title_format objects;
@@ -165,6 +201,7 @@ class Scrollbar extends Component implements ICallbacks {
 
 interface IThemeColors {
     text: number;
+    text2?: number;
     background: number;
     highlight: number;
     background_sel?: number;
@@ -244,6 +281,8 @@ const Material = {
  * Google material icons font name;
  */
 const MaterialFont = "Material Icons";
+
+const logfont = gdi.Font("Microsoft YaHei", scale(14));
 
 const panels: {
     pb_ctrl: Component;
@@ -561,15 +600,18 @@ const volumebar = new Slider({
 });
 
 const TF_TRACK_TITLE = fb.TitleFormat("%title%");
-const TF_ARTIST = fb.TitleFormat("$if2([%artist%],未知艺人)");
-const artistFont = gdi.Font("segoe ui", scale(12));
+// \u30fb: Middle dot char code.
+const TF_ARTIST = fb.TitleFormat("$if2([%artist%],未知艺人)[\u30fb$year(%date%)]");
+
+const artistFont = gdi.Font("Microsoft YaHei", scale(12));
 
 const artistText = new Textlink({
     text: "ARTIST",
     font: artistFont,
     color: bottomColors.text,
     hoverColor: blendColors(bottomColors.text, bottomColors.background, 0.7),
-    maxWidth: MeasureString("一二 三四、五六 七八", artistFont).Width,
+    maxWidth: MeasureString("一二 三四、五六 七八" + "\u30fb0000", artistFont).Width,
+
 
     on_init() {
         let metadb = fb.GetNowPlaying();
@@ -769,35 +811,560 @@ const bottomPanel = new Component({
             this.pb_length = "--:--"
             Repaint();
         }
+    },
+
+    on_mouse_lbtn_down(x: number, y: number) {
+        if (main_page_stat === 0) show_page(1)
+        else if (main_page_stat === 1) show_page(0);
+        on_size();
+        window.Repaint();
     }
 });
+
+bottomPanel.z = 1000;
 
 // Append children elements to playback control bar;
 Object.values(pb_btns2).forEach(btn => bottomPanel.addChild(btn));
 [volumebar, seekbar, albumArt, artistText].forEach(item => bottomPanel.addChild(item));
+
+const AD_properties = {
+    marginLR: scale(48), // Move to global
+    marginTB: scale(40), // Move to global;
+    imageExts : 'jpg|jpeg|png'
+}
+
+function getFiles (folder: string, exts: string, newestFirst: boolean) {
+
+}
+
+class ArtDisplay extends Component {
+
+    objTF = fb.TitleFormat("%album artist%^^%album%");
+    trackKey: string = "";
+    currentImage: IGdiBitmap;
+    defaultImage: IGdiBitmap;
+
+    on_init () {}
+
+    on_size() {}
+
+    on_paint (gr: IGdiGraphics) {
+        gr.FillSolidRect(this.x, this.y , this.width, this.height, RGB(145, 85, 47));
+        gr.DrawString("Cover Art", logfont, 0xffffffff, this.x, this.y, this.width, this.height, StringFormat.Center);
+    }
+
+    on_metadb_changed(metadb: IFbMetadb, fromhook?: boolean) {
+    }
+
+    getImages (metadb?: IFbMetadb) {
+
+    }
+}
+
+const bigArt = new ArtDisplay({})
+
+class TopBar extends Component {
+    on_init() {
+
+    }
+
+    on_size() {}
+
+    on_paint(gr: IGdiGraphics) {
+        gr.FillSolidRect(this.x, this.y, this.width, this.height, RGB(79,91,129));
+        gr.DrawString("Top Bar", logfont, 0xffffffff, this.x, this.y, this.width, this.height, StringFormat.Center);
+    }
+}
+
+const topbar = new TopBar({})
+topbar.z = 1100;
+
+//====================================
+// Simple Playlist View
+//====================================
+
+const PL_Properties ={
+    rowHeight: scale(40),
+    headerHeight: scale(24),
+    tfTrackInfo: fb.TitleFormat("%tracknumber%^^%artist%^^%title%^^%length%^^%rating%"),
+    itemFont: gdi.Font("Microsoft YaHei", scale(14), 0),
+    itemFont_2 : gdi.Font("Microsoft YaHei", scale(12), 0),
+    iconFont: gdi.Font("Material Icons", scale(16))
+}
+
+const PL_Colors : IThemeColors = {
+    text: mainColors.text,
+    background: RGB(0, 0, 0),
+    highlight: mainColors.highlight,
+    heartRed: RGB(221,0,27)
+}
+
+
+class PL_Header extends Component {
+    titleText: string = "";
+
+    on_init() {
+        this.titleText = plman.GetPlaylistName(plman.ActivePlaylist);
+    }
+
+    on_paint(gr: IGdiGraphics) {
+        gr.FillSolidRect(this.x, this.y, this.width, this.height, mainColors.background);
+        gr.DrawString(this.titleText, PL_Properties.itemFont, mainColors.text, this.x + scale(16), this.y, this.width - scale(32), this.height, StringFormat.LeftCenter);
+    }
+
+    on_playlists_changed() {
+        this.titleText = plman.GetPlaylistName(plman.ActivePlaylist);
+    }
+
+    on_playlist_switch() {
+        this.titleText = plman.GetPlaylistName(plman.ActivePlaylist);
+    }
+}
+
+const plHeader = new PL_Header({})
+
+const PL_Columns = {
+    trackNo: {x: 0, width: scale(50)},
+    title: {x: 0, width: 0},
+    trackLen: {x: 0, width: scale(8)+MeasureString("00:00", PL_Properties.itemFont).Width},
+    mood: {x: 0, width: scale(24)},
+}
+
+const PL_Select = {
+
+}
+
+const PL_Dragdrop = {
+
+}
+
+class Pl_Item {
+    metadb: IFbMetadb;
+    listIndex: number;
+    plIndex: number;
+    x: number = 0;
+    y: number = 0;
+    width: number = 0;
+    height: number = 0;
+    yOffset: number = 0;
+
+    // info
+    title: string = "";
+    artist: string = "";
+    pbTime: string = "";
+    pbLength: string = "";
+    trackNo: string = "";
+    rating: string = "";
+
+    isSelect: boolean = false   ;
+
+    trace(x: number, y: number) {
+        return x > this.x && x > this.y && x <= this.x + this.width && y <= this.y + this.height;
+    }
+
+    draw(gr: IGdiGraphics ) {}
+}
+
+function isEmptyString(str: string) {
+    return !str || 0 === str.length;
+}
+
+function isValidPlaylist (playlistIndex: number ) {
+    return (playlistIndex >= 0 && playlistIndex < plman.PlaylistCount);
+}
+
+class PlaybackQueue extends ScrollView {
+
+    items: Pl_Item[] = [];
+    scrollbar: Scrollbar = new Scrollbar({
+        cursorColor: PL_Colors.text & 0x50ffffff,
+        backgroundColor: 0x00ffffff});
+
+    playingItemIndex: number = -1;
+    hoverIndex: number = -1;
+    focusIndex: number = -1;
+
+    private _updateHoverIndex(x: number, y: number) {
+        let hoverIndex_ = -1;
+        if (!this.trace(x, y)|| y < this.y || y >= this.y + this.height) {
+            hoverIndex_ = -1;
+        } else {
+            hoverIndex_ = this.items.findIndex(item => item.trace(x, y));
+        }
+    }
+
+    initList() {
+        const pl_metadbs = plman.GetPlaylistItems(plman.ActivePlaylist);
+        const pl_items: Pl_Item[] = [];
+        const pl_itemCount = plman.PlaylistItemCount(plman.ActivePlaylist);
+        const rowHeight = PL_Properties.rowHeight;
+        let itemYOffset = 0;
+
+        for (let plIndex = 0; plIndex < pl_itemCount; plIndex++) {
+            let trackItem = new Pl_Item( );
+            trackItem.height = rowHeight;
+            trackItem.metadb = pl_metadbs[plIndex];
+            trackItem.plIndex = plIndex;
+            trackItem.yOffset = itemYOffset;
+            trackItem.isSelect = plman.IsPlaylistItemSelected(plman.ActivePlaylist, plIndex);
+
+            pl_items.push(trackItem);
+            itemYOffset+= rowHeight;
+        }
+        this.items = pl_items;
+        this.totalHeight = rowHeight * (pl_items.length+1)+PL_Properties.headerHeight;
+
+        if (fb.IsPlaying) {
+            let ItemLocation = plman.GetPlayingItemLocation();
+            if (ItemLocation.IsValid && ItemLocation.PlaylistIndex === plman.ActivePlaylist) {
+                this.playingItemIndex = ItemLocation.PlaylistItemIndex;
+            } else {
+                this.playingItemIndex = -1;
+            }
+        } else {
+            this.playingItemIndex = -1;
+        }
+
+        plman.SetActivePlaylistContext();
+    }
+
+    setColumnSize() {
+        const padLeft = scale(4);
+        const padRight = this.scrollbar.width;
+        const columns = PL_Columns;
+
+        columns.trackNo.x = this.x + padLeft;
+        columns.trackLen.x = this.x + this.width - padRight - columns.trackLen.width;
+        columns.mood.x = columns.trackLen.x - columns.mood.width;
+        columns.title.x = columns.trackNo.x + columns.trackNo.width;
+        columns.title.width = columns.mood.x - columns.title.x;
+    }
+
+    on_init() {
+        // TODO: try to cache playlist items;
+        this.initList();
+
+    }
+    on_size() {
+        let rowHeight = PL_Properties.rowHeight;
+        let items = this.items;
+
+        for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
+            let thisItem = items[itemIndex];
+            thisItem.x = this.x;
+            thisItem.width = this.width;
+        }
+
+        this.setColumnSize();
+
+        this.scrollbar.setSize(
+            this.x + this.width - scale(14),
+            this.y + PL_Properties.headerHeight,
+            scale(14), this.height - PL_Properties.headerHeight);
+
+        plHeader.setSize(this.x, this.y, this.width, PL_Properties.headerHeight);
+    }
+    on_paint(gr: IGdiGraphics) {
+
+        let rowHeight = PL_Properties.rowHeight;
+        let headerHeight = PL_Properties.headerHeight;
+        let tf_TrackInfo = PL_Properties.tfTrackInfo;
+        let items = this.items;
+        let itemFont = PL_Properties.itemFont;
+        let iconFont = PL_Properties.iconFont;
+        let colors = PL_Colors;;
+        let columns = PL_Columns;
+
+        gr.FillSolidRect(this.x, this.y, this.width, this.height, colors.background);
+
+        for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
+            let thisItem = items[itemIndex];
+            thisItem.x = this.x;
+            thisItem.width = this.width;
+            thisItem.y = this.y + thisItem.yOffset - this.scroll_ + headerHeight;
+
+            if (thisItem.y +rowHeight >= this.y + headerHeight && thisItem.y < this.y + this.height) {
+
+                // Set item columns' value;
+                if (isEmptyString(thisItem.title)) {
+                    let infostrings = tf_TrackInfo.EvalWithMetadb(thisItem.metadb).split("^^"); 
+                    thisItem.trackNo = infostrings[0];
+                    thisItem.title = infostrings[2];
+                    thisItem.artist = infostrings[1];
+                    thisItem.pbLength=  infostrings[3];
+                    thisItem.rating = infostrings[4];
+                }
+
+                // Draw items;
+                //
+
+                if (thisItem.isSelect) {
+                    gr.FillSolidRect(this.x, thisItem.y, this.width, rowHeight, RGB(26, 26, 26));
+                }
+
+                if (this.playingItemIndex === itemIndex) {
+                    gr.DrawString(fb.IsPaused ? Material.volume_mute : Material.volume, iconFont, colors.highlight,
+                        columns.trackNo.x, thisItem.y, columns.trackNo.width,  rowHeight, StringFormat.Center);
+                } else {
+                    gr.DrawString(thisItem.trackNo, itemFont, 0xffffffff, columns.trackNo.x, thisItem.y, columns.trackNo.width, rowHeight, StringFormat.Center);
+                }
+
+                gr.DrawString(thisItem.title, itemFont, 0xffffffff, columns.title.x, thisItem.y, columns.title.width, rowHeight, StringFormat.LeftCenter);
+                gr.DrawString(thisItem.pbLength, itemFont, 0xffffffff, columns.trackLen.x, thisItem.y, columns.trackLen.width, rowHeight, StringFormat.Center);
+
+                if (thisItem.rating === "5") {
+                    gr.DrawString(Material.heart, iconFont, colors.heartRed,
+                        columns.mood.x, thisItem.y, columns.mood.width, rowHeight, StringFormat.Center);
+                } else {
+                    gr.DrawString(Material.heart_empty, iconFont, colors.text,
+                        columns.mood.x, thisItem.y, columns.mood.width, rowHeight, StringFormat.Center);
+                }
+                
+            }
+
+        }
+    }
+
+    on_playlists_changed() {
+        if (!isValidPlaylist(plman.ActivePlaylist)){
+            if (!isValidPlaylist(0)) {
+                plman.CreatePlaylist(0, "");
+            }
+            plman.ActivePlaylist = 0;
+        }
+        this.scroll_ = 0;
+        this.initList();
+        ThrottledRepaint();
+    }
+
+    on_playlist_items_added(playlistIndex: number) {
+        this.initList();
+        ThrottledRepaint();
+    }
+
+    on_playlist_items_removed(playlistIndex: number, newCount: number) {
+        this.initList();
+        ThrottledRepaint();
+    }
+
+    on_playlist_items_reordered(playlistIndex: number) {
+        this.initList();
+        ThrottledRepaint();
+    }
+
+    on_selection_changed() {
+        let plItemCount = this.items.length;
+        for (let plIndex = 0; plIndex < plItemCount; plIndex++) {
+            this.items[plIndex].isSelect = plman.IsPlaylistItemSelected(plman.ActivePlaylist, this.items[plIndex].plIndex);
+        }
+        ThrottledRepaint();
+    }
+
+    on_playlist_switch() {
+        this.initList();
+        this.scroll_ = 0;
+        ThrottledRepaint();
+    }
+
+    on_playback_stop(reason: number) {
+        if (reason!==2) {
+            this.playingItemIndex = -1;
+            ThrottledRepaint();
+        }
+    }
+
+    on_playback_new_track(metadb: IFbMetadb)  {
+        if (fb.IsPlaying) {
+            let ItemLocation = plman.GetPlayingItemLocation();
+            if (ItemLocation.IsValid && ItemLocation.PlaylistIndex === plman.ActivePlaylist) {
+                this.playingItemIndex = ItemLocation.PlaylistItemIndex;
+            } else {
+                this.playingItemIndex = -1;
+            }
+        } else {
+            this.playingItemIndex = -1;
+        }
+
+        ThrottledRepaint();
+    }
+
+    on_metadb_changed(handleList: IFbMetadbList, fromhook: boolean) {}
+
+    on_mouse_wheel(step: number) {
+        this.scrollTo(this.scroll_ - step*PL_Properties.rowHeight*3);
+    }
+}
+
+function PL_TrackContextMenu(playlistIndex: number, metadbs: IFbMetadbList, x: number, y: number) {
+    if (!metadbs || metadbs.Count === 0) return;
+
+    const isAutoPlaylist = plman.IsAutoPlaylist(playlistIndex);
+    const menuRoot = window.CreatePopupMenu();
+
+    //
+    const menuAddTo = window.CreatePopupMenu();
+    menuAddTo.AppendTo(menuRoot, MF_STRING, "Add to playlist");
+    menuAddTo.AppendMenuItem(MF_STRING, 2000, 'New playlist...');
+    if (plman.PlaylistCount > 0) {
+        menuAddTo.AppendMenuSeparator();
+    }
+    for (let index = 0; index < plman.PlaylistCount; index++) {
+        menuAddTo.AppendMenuItem(
+            (plman.IsAutoPlaylist(index) || index === playlistIndex) ? MF_GRAYED : MF_STRING,
+            2001+index, plman.GetPlaylistName(index));
+    }
+
+    //
+    menuRoot.AppendMenuItem(isAutoPlaylist ? MF_GRAYED : MF_STRING, 1, "Remove from playlist");
+    menuRoot.AppendMenuSeparator();
+
+    // TODO: Navigate artist | album;
+
+    // Context menu;
+    const Context = fb.CreateContextMenuManager();
+    const BaseID = 1000;
+    Context.InitContext(metadbs);
+    Context.BuildMenu(menuRoot, BaseID, -1);
+
+    const ret = menuRoot.TrackPopupMenu(x, y);
+    let targetId: number;
+
+    switch (true) {
+        // "Remove from playlist"
+        case ret === 1:
+            plman.RemovePlaylistSelection(plman.ActivePlaylist, false);
+            break;
+
+        // "Go to Album"
+        case ret === 10:
+            break;
+        
+        // "Go to Artist";
+        case ret >= 3000 && ret < 3100:
+        break;
+
+        // "Add to... (a newly created playlist)";
+        case ret === 2000:
+        targetId = plman.CreatePlaylist(plman.PlaylistCount, "");
+        plman.InsertPlaylistItems(targetId, 0, metadbs, false);
+        break;
+
+        case ret >2000 && ret <3000:
+            targetId = ret - 2001;
+            plman.InsertPlaylistItems(targetId, plman.PlaylistItemCount(targetId), metadbs, true);
+            break;
+        
+        // Execute context command;
+        case ret >= BaseID && ret < 2000:
+            Context.ExecuteByID(ret - BaseID);
+            break;
+    }
+}
+
+
+const playback_queue = new PlaybackQueue({})
+playback_queue.addChild(playback_queue.scrollbar);
+playback_queue.addChild(plHeader);
+
+class LibraryView extends Component {
+    on_init () {}
+
+    on_size() {}
+
+    on_paint(gr: IGdiGraphics) {
+        gr.FillSolidRect(this.x, this.y, this.width, this.height, RGB(107, 95, 112));
+        gr.DrawString("Library View Panel", logfont, 0xffffffff,this.x, this.y, this.width, this.height, StringFormat.Center);
+    }
+}
+
+const library_view = new LibraryView({})
 
 // --------------------------
 // Manage panels, callbacks;
 // --------------------------
 
 const PLAY_CONTROL_HEIGHT = scale(76);
+const TOP_H = scale(64);
 
 const UI = new Component({
-    on_init() {
-
-    },
-
-    on_paint(gr: IGdiGraphics) {
-        gr.FillSolidRect(this.x, this.y, this.width, this.height, mainColors.background)
-    },
-
-    on_size() {
-        bottomPanel.setSize(this.x, this.y + this.height - PLAY_CONTROL_HEIGHT, this.width, PLAY_CONTROL_HEIGHT);
-    },
+    on_init() { },
 });
 
 // Add children;
 UI.addChild(bottomPanel);
+UI.addChild(bigArt);
+UI.addChild(topbar);
+UI.addChild(playback_queue);
+UI.addChild(library_view);
+
+// 0: now_playing_view
+// 1: media libary view
+// 2: playlist_view
+let main_page_stat = 0;
+
+function show_page(page_id: number) {
+    main_page_stat = page_id;
+
+    switch (page_id) {
+        case 0:
+            playback_queue.visible = true;
+            bigArt.visible = true;
+            library_view.visible = false;
+            break;
+        case 1:
+            playback_queue.visible = false;
+            bigArt.visible = false;
+            library_view.visible = true;
+            break;
+        case 2:
+            library_view.visible = false;
+            bigArt.visible = false;
+            playback_queue.visible = false;
+            break;
+    }
+
+    RefreshPanels();
+}
+
+
+/**
+ * UI.on_init be executed only once at start up .
+ */
+UI.on_init = function () {
+    show_page(1);
+}
+
+UI.on_paint = function (gr: IGdiGraphics) {
+    gr.FillSolidRect(this.x, this.y, this.width, this.height, 0xff000000);
+}
+
+UI.on_size = function () {
+    bottomPanel.setSize(this.x, this.y + this.height - PLAY_CONTROL_HEIGHT, this.width, PLAY_CONTROL_HEIGHT);
+    topbar.setSize(this.x, this.y, this.width, TOP_H);
+
+    const marginLR = AD_properties.marginLR;
+    const marginTB = AD_properties.marginTB;
+
+    bigArt.setSize(
+        this.x + AD_properties.marginLR,
+        this.y + TOP_H + AD_properties.marginTB,
+        this.width * 4 / 7 - 2 * AD_properties.marginLR,
+        this.height - PLAY_CONTROL_HEIGHT - TOP_H - 2 * AD_properties.marginTB
+    );
+
+    playback_queue.setSize(
+        bigArt.x + bigArt.width + marginLR,
+        this.y + TOP_H + marginTB,
+        this.width - 3 * marginLR - bigArt.width,
+        this.height - PLAY_CONTROL_HEIGHT - TOP_H - marginTB
+    );
+
+    library_view.setSize(this.x, this.y + TOP_H, this.width, this.height - TOP_H - PLAY_CONTROL_HEIGHT);
+}
+
+// =============================
+//=============================
+// =============================
 
 let panels_vis: Component[] = [];
 let panels_vis_updated = false;
@@ -979,6 +1546,13 @@ function on_playback_new_track(handle: IFbMetadb) {
     panels_vis.forEach(p => invoke(p, "on_playback_new_track", handle));
 }
 
+function on_selection_changed() {
+    panels_vis.forEach(p => invoke(p, "on_selection_changed"));
+}
+
+function on_playlist_selection_changed() {
+    panels_vis.forEach(p => invoke(p, "on_selection_changed"));
+}
 
 function on_playlists_changed() {
     panels_vis.forEach(p => invoke(p, "on_playlists_changed"));
