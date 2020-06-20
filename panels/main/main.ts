@@ -1,4 +1,4 @@
-// Usage:
+﻿// Usage:
 // (TODO: documents here)
 
 // ---------------------------
@@ -281,6 +281,7 @@ const Material = {
  * Google material icons font name;
  */
 const MaterialFont = "Material Icons";
+const globalFontName = "Microsoft YaHei";
 
 const logfont = gdi.Font("Microsoft YaHei", scale(14));
 
@@ -822,8 +823,6 @@ const bottomPanel = new Component({
 });
 
 bottomPanel.z = 1000;
-
-// Append children elements to playback control bar;
 Object.values(pb_btns2).forEach(btn => bottomPanel.addChild(btn));
 [volumebar, seekbar, albumArt, artistText].forEach(item => bottomPanel.addChild(item));
 
@@ -863,16 +862,83 @@ class ArtDisplay extends Component {
 
 const bigArt = new ArtDisplay({})
 
+// Switch tabs;
+class SwitchTab extends Component {
+    font: IGdiFont;
+    items: string[];
+    gapWdith = scale(36);
+
+    constructor(attr: {
+        font: IGdiFont
+        items: string[],
+    } = {
+        font: gdi.Font(globalFontName, scale(12)),
+        items: ["New Tab1", "New Tab2", "New Tab3"]
+    }) {
+        super(attr);
+
+        this.font  = attr.font;
+        this.items= attr.items;
+
+        const gapWidth = this.gapWdith;
+        this.width = (this.items.length - 1) * gapWidth + this.items
+            .map(item => MeasureString(item, this.font).Width)
+            .reduce((item1, item2) => item1 + item2) >> 0;
+        this.height = MeasureString(this.items[0], this.font).Height * 1.5 + scale(8) >> 0;
+    }
+
+    on_init() {
+    }
+
+    on_paint(gr: IGdiGraphics) {
+        gr.FillSolidRect(this.x, this.y, this.width, this.height, RGB(50, 50, 70));
+
+        let itemX = this.x;
+
+        for (let i = 0; i < this.items.length; i++) {
+            gr.DrawString(this.items[i], this.font, RGB(200, 200, 200),
+                itemX, this.y, this.width, this.height, StringFormat.LeftCenter);
+            itemX += gr.MeasureString(this.items[i], this.font, 0, 0, 999, 9999, StringFormat.LeftCenter).Width + this.gapWdith;
+        }
+    }
+}
+
+
+/* TODO */
+const Topbar_Properties = {
+    HEIGHT: scale(48),
+    tabFont: gdi.Font(globalFontName, scale(16))
+}
+
 class TopBar extends Component {
+
+    switchTabs: SwitchTab;
+
+    constructor(attr: object) {
+        super(attr);
+
+        this.switchTabs = new SwitchTab({
+            font: Topbar_Properties.tabFont,
+            // items: ["播放列表", "专辑", "歌曲", "音乐人"],
+            items: ["PLAYLISTS", "ALBUMS", "SONGS", "ARTISTS"]
+        });
+        this.addChild(this.switchTabs);
+    }
+
     on_init() {
 
     }
 
-    on_size() {}
+    on_size() {
+        let tabX = this.x + scale(8);
+        let tabY = this.y + ((this.height - this.switchTabs.height) / 2);
+        this.switchTabs.setSize(tabX, tabY);
+        // this.switchTabs.x = tabX;
+        // this.switchTabs.y = tabY;
+    }
 
     on_paint(gr: IGdiGraphics) {
-        gr.FillSolidRect(this.x, this.y, this.width, this.height, RGB(79,91,129));
-        gr.DrawString("Top Bar", logfont, 0xffffffff, this.x, this.y, this.width, this.height, StringFormat.Center);
+        gr.FillSolidRect(this.x, this.y, this.width, this.height, RGB(29, 109, 29));
     }
 }
 
@@ -1284,7 +1350,7 @@ const library_view = new LibraryView({})
 // --------------------------
 
 const PLAY_CONTROL_HEIGHT = scale(76);
-const TOP_H = scale(64);
+const TOP_H = scale(48);
 
 const UI = new Component({
     on_init() { },

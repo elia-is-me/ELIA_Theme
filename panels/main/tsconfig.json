@@ -4,6 +4,7 @@
         "target": "ES2018",
         "noImplicitAny": true,
         "pretty": true,
+        "emitBOM": true,
         "rootDir": "../../",
     },
     "include": ["../../common/**/*", "./**/*"]
