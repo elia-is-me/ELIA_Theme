@@ -1,161 +1,6 @@
 ﻿// Usage:
 // (TODO: documents here)
 
-// ---------------------------
-// Elements globally referred;
-// ---------------------------
-
-abstract class ScrollView extends Component {
-    totalHeight: number;
-    scrolling: boolean = false;
-    private scroll__: number = 0;
-    get scroll_() { return this.scroll__ }
-    set scroll_(val: number) {
-        this.scroll__ = this._checkScroll(val);
-    }
-    private timerId: number = -1;
-
-    constructor(attrs: object) {
-        super(attrs);
-    }
-
-    _checkScroll(val: number) {
-        if (val > this.totalHeight - this.height) {
-            val = this.totalHeight - this.height;
-        }
-        if (this.totalHeight < this.height || val < 0) {
-            val = 0;
-        }
-        return val;
-    }
-
-    // TODO:
-    // private _onTimeout (scroll: number) {
-    //     if (Math.abs(scroll - this.scroll_) > 0.4) {
-    //         this.scroll_ += (scroll - this.scroll_) /3;
-    //         this.scrolling = true;
-    //         window.ClearTimeout(this.timerId);
-    //         ...
-    //     }
-    // }
-
-    scrollTo(scroll_?: number) {
-        if (scroll_ == null) {
-            scroll_ = this._checkScroll(this.scroll_);
-        }
-
-        if (scroll_ === this.scroll_) {
-            return;
-        }
-
-        const onTimeout = () => {
-            if (Math.abs(scroll_ - this.scroll_) > 0.4) {
-                this.scroll_ += (scroll_ - this.scroll_) / 3;
-                this.scrolling = true;
-                window.ClearTimeout(this.timerId);
-                this.timerId = window.SetTimeout(onTimeout, 15);
-            } else {
-                window.ClearTimeout(this.timerId);
-                this.scroll_ = Math.round(this.scroll_);
-                this.scrolling = false;
-            }
-            if (!this.isVisible()) {
-                window.ClearTimeout(this.timerId);
-                this.scrolling = false;
-            }
-            Repaint();
-        }
-
-        window.ClearTimeout(this.timerId);
-        onTimeout();
-    }
-}
-
-
-//
-const MIN_CURSOR_HEIGHT = scale(24);
-const SCROLLBAR_WIDTH = scale(12);
-
-class Scrollbar extends Component implements ICallbacks {
-    private cursorHeight: number;
-    private cursorY: number;
-    state: number;
-    private cursorDelta: number;
-    cursorColor: number;
-    backgroundColor: number;
-    parent: ScrollView;
-
-    constructor(attrs: {
-        cursorColor: number;
-        backgroundColor: number;
-    }) {
-        super(attrs);
-    }
-
-    on_paint(gr: IGdiGraphics) {
-        let totalHeight = this.parent.totalHeight;
-        let parentHeight = this.parent.height;
-
-        if (totalHeight > parentHeight) {
-            let scroll_ = this.parent.scroll_;
-            this.cursorY = this.y + Math.round(((this.height - this.cursorHeight) * scroll_) / (totalHeight - parentHeight));
-            this.cursorHeight = Math.max(Math.round((parentHeight / totalHeight) * this.height), MIN_CURSOR_HEIGHT);
-            // Draw background;
-            if (this.backgroundColor) {
-                gr.FillSolidRect(this.x, this.y, this.width, this.height, this.backgroundColor);
-            }
-            // Draw cursor;
-            gr.FillSolidRect(this.x + 1, this.cursorY + 1, this.width - 2, this.cursorHeight - 2, this.cursorColor);
-        }
-
-    }
-
-    traceCursor(x: number, y: number) {
-        return this.trace(x, y)
-            && y > this.cursorY && y <= this.cursorY + this.cursorHeight;
-    }
-
-    changeState(newstate: number) {
-        if (this.state !== newstate) {
-            this.state = newstate;
-            Repaint();
-        }
-    }
-
-    on_mouse_move(x: number, y: number) {
-        if (this.state === ButtonStates.down) {
-            let cursorY = y - this.cursorDelta
-            let ratio = (cursorY - this.y) / (this.height - this.cursorHeight);
-            let offset = Math.round(
-                (this.parent.totalHeight - this.parent.height) * ratio
-            );
-            this.parent.scroll_ = offset;
-            Repaint();
-        } else {
-            this.changeState(
-                this.traceCursor(x, y) ? ButtonStates.hover : ButtonStates.normal
-            );
-        }
-    }
-
-    on_mouse_lbtn_down(x: number, y: number) {
-        if (this.traceCursor(x, y)) {
-            this.cursorDelta = y - this.cursorY;
-            this.changeState(ButtonStates.down);
-        }
-    }
-
-    on_mouse_lbtn_up(x: number, y: number) {
-        this.changeState(
-            this.traceCursor(x, y) ? ButtonStates.hover : ButtonStates.down
-        );
-    }
-
-    on_mouse_leave() {
-        this.changeState(ButtonStates.normal);
-    }
-}
-
 class ImageCacheItem {
     image: IGdiBitmap;
     embed: boolean;
@@ -163,7 +8,7 @@ class ImageCacheItem {
     artId?: number;
 
     constructor(image: IGdiBitmap, path: string, embed: boolean = false) {
-        this.image= image;
+        this.image = image;
         this.path = path;
         this.embed = embed;
     }
@@ -174,23 +19,22 @@ class ImageCacheItem {
         return this.path === item.path;
     }
 
-    readImage (dstW: number, dstH: number) {
+    readImage(dstW: number, dstH: number) {
 
     }
 }
 
 class ImageCollection {
-    images: IGdiBitmap[]; 
+    images: IGdiBitmap[];
 
     constructor() {
         this.images = [];
     }
 
-    getTrackImages (metadb: IFbMetadb) {
+    getTrackImages(metadb: IFbMetadb) {
 
     }
 }
-
 
 // ------------------------------------------------------------
 // Global resources: theme colors, icon codes, command string,
@@ -282,24 +126,7 @@ const Material = {
  */
 const MaterialFont = "Material Icons";
 const globalFontName = "Microsoft YaHei";
-
 const logfont = gdi.Font("Microsoft YaHei", scale(14));
-
-const panels: {
-    pb_ctrl: Component;
-    navigation: Component;
-    main: ScrollView;
-    playlist: ScrollView;
-    album: ScrollView;
-    artist: ScrollView;
-} = {
-    pb_ctrl: null,
-    navigation: null,
-    main: null,
-    playlist: null,
-    album: null,
-    artist: null
-};
 
 // ---------------------
 // Playback control bar;
@@ -539,7 +366,6 @@ const createBottomButtons = () => {
 
 createBottomButtons();
 
-
 function createThumbImg(colors: IThemeColors) {
     let tw = scale(14);
     let thumbImg = gdi.CreateImage(tw, tw);
@@ -560,12 +386,9 @@ function createThumbImg(colors: IThemeColors) {
     return { thumbImg: thumbImg, downThumbImg: downThumbImg };
 }
 
-
 const thumbImages = createThumbImg(bottomColors);
 const progressHeight = scale(3);
 const slider_secondaryColor = blendColors(bottomColors.text, bottomColors.background, 0.7);
-
-
 const seekbar = new Slider({
     progressHeight: progressHeight,
     thumbImg: thumbImages.thumbImg,
@@ -573,11 +396,9 @@ const seekbar = new Slider({
     progressColor: bottomColors.highlight,
     secondaryColor: slider_secondaryColor,
     accentColor: bottomColors.highlight,
-
     get_progress() {
         return fb.PlaybackTime / fb.PlaybackLength;
     },
-
     set_progress(val: number) {
         fb.PlaybackTime = fb.PlaybackLength * val;
     }
@@ -590,11 +411,9 @@ const volumebar = new Slider({
     progressColor: bottomColors.highlight,
     secondaryColor: slider_secondaryColor,
     accentColor: bottomColors.highlight,
-
     get_progress() {
         return vol2pos(fb.Volume);
     },
-
     set_progress(val: number) {
         fb.Volume = pos2vol(val);
     }
@@ -612,7 +431,6 @@ const artistText = new Textlink({
     color: bottomColors.text,
     hoverColor: blendColors(bottomColors.text, bottomColors.background, 0.7),
     maxWidth: MeasureString("一二 三四、五六 七八" + "\u30fb0000", artistFont).Width,
-
 
     on_init() {
         let metadb = fb.GetNowPlaying();
@@ -829,10 +647,10 @@ Object.values(pb_btns2).forEach(btn => bottomPanel.addChild(btn));
 const AD_properties = {
     marginLR: scale(48), // Move to global
     marginTB: scale(40), // Move to global;
-    imageExts : 'jpg|jpeg|png'
+    imageExts: 'jpg|jpeg|png'
 }
 
-function getFiles (folder: string, exts: string, newestFirst: boolean) {
+function getFiles(folder: string, exts: string, newestFirst: boolean) {
 
 }
 
@@ -843,71 +661,141 @@ class ArtDisplay extends Component {
     currentImage: IGdiBitmap;
     defaultImage: IGdiBitmap;
 
-    on_init () {}
+    on_init() { }
 
-    on_size() {}
+    on_size() { }
 
-    on_paint (gr: IGdiGraphics) {
-        gr.FillSolidRect(this.x, this.y , this.width, this.height, RGB(145, 85, 47));
+    on_paint(gr: IGdiGraphics) {
+        gr.FillSolidRect(this.x, this.y, this.width, this.height, RGB(145, 85, 47));
         gr.DrawString("Cover Art", logfont, 0xffffffff, this.x, this.y, this.width, this.height, StringFormat.Center);
     }
 
     on_metadb_changed(metadb: IFbMetadb, fromhook?: boolean) {
     }
 
-    getImages (metadb?: IFbMetadb) {
+    getImages(metadb?: IFbMetadb) {
 
     }
 }
 
 const bigArt = new ArtDisplay({})
 
+class TabItem {
+    private defaultPadding = scale(4);
+    id: number;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    text: string;
+    padding: number;
+    constructor(attr: {
+        text: string;
+        padding?: number;
+    }) {
+        this.text = attr.text;
+        if (attr.padding != null) {
+            this.padding = attr.padding | 0;
+        } else {
+            this.padding = this.defaultPadding;
+        }
+    }
+
+    trace(x: number, y: number) {
+        return (x > this.x && x <= this.x + this.width
+            && y > this.y && y <= this.y + this.height);
+    }
+}
+
+
 // Switch tabs;
 class SwitchTab extends Component {
     font: IGdiFont;
-    items: string[];
     gapWdith = scale(36);
+    tabItems: TabItem[];
+    private focusTabIndex: number;
+    private hoverTabIndex: number;
 
     constructor(attr: {
         font: IGdiFont
         items: string[],
-    } = {
-        font: gdi.Font(globalFontName, scale(12)),
-        items: ["New Tab1", "New Tab2", "New Tab3"]
+        focusTab?: number
     }) {
         super(attr);
 
-        this.font  = attr.font;
-        this.items= attr.items;
-
-        const gapWidth = this.gapWdith;
-        this.width = (this.items.length - 1) * gapWidth + this.items
-            .map(item => MeasureString(item, this.font).Width)
-            .reduce((item1, item2) => item1 + item2) >> 0;
-        this.height = MeasureString(this.items[0], this.font).Height * 1.5 + scale(8) >> 0;
+        this.font = attr.font;
+        const itemPaddingLR = scale(4);
+        this.tabItems = attr.items.map(item => new TabItem({ text: item, padding: itemPaddingLR }));
+        this.focusTabIndex = (attr.focusTab == null ? 0 : attr.focusTab);
     }
 
-    on_init() {
+    calcTotalWidth() {
+        return (this.tabItems.length - 1) * this.gapWdith + this.tabItems
+            .map(item => MeasureString(item.text, this.font).Width + 2 * item.padding)
+            .reduce((prevResult, item, index, array) => { return prevResult += item });
     }
 
     on_paint(gr: IGdiGraphics) {
-        gr.FillSolidRect(this.x, this.y, this.width, this.height, RGB(50, 50, 70));
+
+        // gr.FillSolidRect(this.x, this.y, this.width, this.height, RGB(122, 44,102));
 
         let itemX = this.x;
+        let itemColor: number = RGB(150, 150, 150);
+        let itemColorFocus: number = RGB(225, 225, 225);
+        let lineHeight = scale(2);
+        let lineY = this.y + this.height - lineHeight;
 
-        for (let i = 0; i < this.items.length; i++) {
-            gr.DrawString(this.items[i], this.font, RGB(200, 200, 200),
-                itemX, this.y, this.width, this.height, StringFormat.LeftCenter);
-            itemX += gr.MeasureString(this.items[i], this.font, 0, 0, 999, 9999, StringFormat.LeftCenter).Width + this.gapWdith;
+        for (let i = 0; i < this.tabItems.length; i++) {
+            let itemPaddingLR = this.tabItems[i].padding;
+            let itemWidth = gr.MeasureString(
+                this.tabItems[i].text, this.font, 0, 0, 999, 9999, StringFormat.LeftCenter).Width
+                + 2 * itemPaddingLR;
+            gr.DrawString(this.tabItems[i].text, this.font,
+                (i == this.focusTabIndex || i === this.hoverTabIndex) ? itemColorFocus : itemColor,
+                itemX + itemPaddingLR, this.y,
+                itemWidth, this.height, StringFormat.LeftCenter);
+            if (i == this.focusTabIndex) {
+                gr.DrawLine(itemX, lineY, itemX + itemWidth, lineY, lineHeight, itemColorFocus);
+            }
+
+            this.tabItems[i].x = itemX;
+            this.tabItems[i].width = itemWidth;
+            this.tabItems[i].y = this.y;
+            this.tabItems[i].height = this.height;
+
+            itemX += (itemWidth + this.gapWdith)
         }
+    }
+
+    on_mouse_move(x: number, y: number) {
+        const hotItemIndex = this.tabItems.findIndex(item => item.trace(x, y));
+        if (this.hoverTabIndex !== hotItemIndex) {
+            this.hoverTabIndex = hotItemIndex;
+            ThrottledRepaint();
+        }
+    }
+
+    on_mouse_lbtn_down(x: number, y: number) {
+        const hotItemIndex = this.tabItems.findIndex(item => item.trace(x, y));
+        if (hotItemIndex !== -1 && this.focusTabIndex !== hotItemIndex) {
+            this.focusTabIndex = hotItemIndex;
+            //onTabChange(from, to);
+            ThrottledRepaint();
+        }
+    }
+
+    on_mouse_leave() {
+        this.hoverTabIndex = -1;
+        ThrottledRepaint();
     }
 }
 
 
 /* TODO */
 const Topbar_Properties = {
-    HEIGHT: scale(48),
-    tabFont: gdi.Font(globalFontName, scale(16))
+    height: scale(48),
+    tabFont: gdi.Font(globalFontName, scale(14)),
+    focusTabIndex: +window.GetProperty("Topbar.focusTab", 0),
 }
 
 class TopBar extends Component {
@@ -919,6 +807,7 @@ class TopBar extends Component {
 
         this.switchTabs = new SwitchTab({
             font: Topbar_Properties.tabFont,
+            // TODO: Replace strings with CHINESE;
             // items: ["播放列表", "专辑", "歌曲", "音乐人"],
             items: ["PLAYLISTS", "ALBUMS", "SONGS", "ARTISTS"]
         });
@@ -930,15 +819,15 @@ class TopBar extends Component {
     }
 
     on_size() {
+        let tabHeight = this.height;
+        let tabsWidth = this.switchTabs.calcTotalWidth();
         let tabX = this.x + scale(8);
-        let tabY = this.y + ((this.height - this.switchTabs.height) / 2);
-        this.switchTabs.setSize(tabX, tabY);
-        // this.switchTabs.x = tabX;
-        // this.switchTabs.y = tabY;
+        let tabY = this.y
+        this.switchTabs.setSize(tabX, tabY, tabsWidth, tabHeight);
     }
 
     on_paint(gr: IGdiGraphics) {
-        gr.FillSolidRect(this.x, this.y, this.width, this.height, RGB(29, 109, 29));
+        // gr.FillSolidRect(this.x, this.y, this.width, this.height, RGB(29, 109, 29));
     }
 }
 
@@ -949,20 +838,20 @@ topbar.z = 1100;
 // Simple Playlist View
 //====================================
 
-const PL_Properties ={
+const PL_Properties = {
     rowHeight: scale(40),
     headerHeight: scale(24),
     tfTrackInfo: fb.TitleFormat("%tracknumber%^^%artist%^^%title%^^%length%^^%rating%"),
     itemFont: gdi.Font("Microsoft YaHei", scale(14), 0),
-    itemFont_2 : gdi.Font("Microsoft YaHei", scale(12), 0),
+    itemFont_2: gdi.Font("Microsoft YaHei", scale(12), 0),
     iconFont: gdi.Font("Material Icons", scale(16))
 }
 
-const PL_Colors : IThemeColors = {
+const PL_Colors: IThemeColors = {
     text: mainColors.text,
     background: RGB(0, 0, 0),
     highlight: mainColors.highlight,
-    heartRed: RGB(221,0,27)
+    heartRed: RGB(221, 0, 27)
 }
 
 
@@ -990,10 +879,10 @@ class PL_Header extends Component {
 const plHeader = new PL_Header({})
 
 const PL_Columns = {
-    trackNo: {x: 0, width: scale(50)},
-    title: {x: 0, width: 0},
-    trackLen: {x: 0, width: scale(8)+MeasureString("00:00", PL_Properties.itemFont).Width},
-    mood: {x: 0, width: scale(24)},
+    trackNo: { x: 0, width: scale(50) },
+    title: { x: 0, width: 0 },
+    trackLen: { x: 0, width: scale(8) + MeasureString("00:00", PL_Properties.itemFont).Width },
+    mood: { x: 0, width: scale(24) },
 }
 
 const PL_Select = {
@@ -1022,20 +911,20 @@ class Pl_Item {
     trackNo: string = "";
     rating: string = "";
 
-    isSelect: boolean = false   ;
+    isSelect: boolean = false;
 
     trace(x: number, y: number) {
         return x > this.x && x > this.y && x <= this.x + this.width && y <= this.y + this.height;
     }
 
-    draw(gr: IGdiGraphics ) {}
+    draw(gr: IGdiGraphics) { }
 }
 
 function isEmptyString(str: string) {
     return !str || 0 === str.length;
 }
 
-function isValidPlaylist (playlistIndex: number ) {
+function isValidPlaylist(playlistIndex: number) {
     return (playlistIndex >= 0 && playlistIndex < plman.PlaylistCount);
 }
 
@@ -1044,7 +933,8 @@ class PlaybackQueue extends ScrollView {
     items: Pl_Item[] = [];
     scrollbar: Scrollbar = new Scrollbar({
         cursorColor: PL_Colors.text & 0x50ffffff,
-        backgroundColor: 0x00ffffff});
+        backgroundColor: 0x00ffffff
+    });
 
     playingItemIndex: number = -1;
     hoverIndex: number = -1;
@@ -1052,7 +942,7 @@ class PlaybackQueue extends ScrollView {
 
     private _updateHoverIndex(x: number, y: number) {
         let hoverIndex_ = -1;
-        if (!this.trace(x, y)|| y < this.y || y >= this.y + this.height) {
+        if (!this.trace(x, y) || y < this.y || y >= this.y + this.height) {
             hoverIndex_ = -1;
         } else {
             hoverIndex_ = this.items.findIndex(item => item.trace(x, y));
@@ -1067,7 +957,7 @@ class PlaybackQueue extends ScrollView {
         let itemYOffset = 0;
 
         for (let plIndex = 0; plIndex < pl_itemCount; plIndex++) {
-            let trackItem = new Pl_Item( );
+            let trackItem = new Pl_Item();
             trackItem.height = rowHeight;
             trackItem.metadb = pl_metadbs[plIndex];
             trackItem.plIndex = plIndex;
@@ -1075,10 +965,10 @@ class PlaybackQueue extends ScrollView {
             trackItem.isSelect = plman.IsPlaylistItemSelected(plman.ActivePlaylist, plIndex);
 
             pl_items.push(trackItem);
-            itemYOffset+= rowHeight;
+            itemYOffset += rowHeight;
         }
         this.items = pl_items;
-        this.totalHeight = rowHeight * (pl_items.length+1)+PL_Properties.headerHeight;
+        this.totalHeight = rowHeight * (pl_items.length + 1) + PL_Properties.headerHeight;
 
         if (fb.IsPlaying) {
             let ItemLocation = plman.GetPlayingItemLocation();
@@ -1149,15 +1039,15 @@ class PlaybackQueue extends ScrollView {
             thisItem.width = this.width;
             thisItem.y = this.y + thisItem.yOffset - this.scroll_ + headerHeight;
 
-            if (thisItem.y +rowHeight >= this.y + headerHeight && thisItem.y < this.y + this.height) {
+            if (thisItem.y + rowHeight >= this.y + headerHeight && thisItem.y < this.y + this.height) {
 
                 // Set item columns' value;
                 if (isEmptyString(thisItem.title)) {
-                    let infostrings = tf_TrackInfo.EvalWithMetadb(thisItem.metadb).split("^^"); 
+                    let infostrings = tf_TrackInfo.EvalWithMetadb(thisItem.metadb).split("^^");
                     thisItem.trackNo = infostrings[0];
                     thisItem.title = infostrings[2];
                     thisItem.artist = infostrings[1];
-                    thisItem.pbLength=  infostrings[3];
+                    thisItem.pbLength = infostrings[3];
                     thisItem.rating = infostrings[4];
                 }
 
@@ -1170,7 +1060,7 @@ class PlaybackQueue extends ScrollView {
 
                 if (this.playingItemIndex === itemIndex) {
                     gr.DrawString(fb.IsPaused ? Material.volume_mute : Material.volume, iconFont, colors.highlight,
-                        columns.trackNo.x, thisItem.y, columns.trackNo.width,  rowHeight, StringFormat.Center);
+                        columns.trackNo.x, thisItem.y, columns.trackNo.width, rowHeight, StringFormat.Center);
                 } else {
                     gr.DrawString(thisItem.trackNo, itemFont, 0xffffffff, columns.trackNo.x, thisItem.y, columns.trackNo.width, rowHeight, StringFormat.Center);
                 }
@@ -1185,14 +1075,14 @@ class PlaybackQueue extends ScrollView {
                     gr.DrawString(Material.heart_empty, iconFont, colors.text,
                         columns.mood.x, thisItem.y, columns.mood.width, rowHeight, StringFormat.Center);
                 }
-                
+
             }
 
         }
     }
 
     on_playlists_changed() {
-        if (!isValidPlaylist(plman.ActivePlaylist)){
+        if (!isValidPlaylist(plman.ActivePlaylist)) {
             if (!isValidPlaylist(0)) {
                 plman.CreatePlaylist(0, "");
             }
@@ -1233,13 +1123,13 @@ class PlaybackQueue extends ScrollView {
     }
 
     on_playback_stop(reason: number) {
-        if (reason!==2) {
+        if (reason !== 2) {
             this.playingItemIndex = -1;
             ThrottledRepaint();
         }
     }
 
-    on_playback_new_track(metadb: IFbMetadb)  {
+    on_playback_new_track(metadb: IFbMetadb) {
         if (fb.IsPlaying) {
             let ItemLocation = plman.GetPlayingItemLocation();
             if (ItemLocation.IsValid && ItemLocation.PlaylistIndex === plman.ActivePlaylist) {
@@ -1254,10 +1144,10 @@ class PlaybackQueue extends ScrollView {
         ThrottledRepaint();
     }
 
-    on_metadb_changed(handleList: IFbMetadbList, fromhook: boolean) {}
+    on_metadb_changed(handleList: IFbMetadbList, fromhook: boolean) { }
 
     on_mouse_wheel(step: number) {
-        this.scrollTo(this.scroll_ - step*PL_Properties.rowHeight*3);
+        this.scrollTo(this.scroll_ - step * PL_Properties.rowHeight * 3);
     }
 }
 
@@ -1277,7 +1167,7 @@ function PL_TrackContextMenu(playlistIndex: number, metadbs: IFbMetadbList, x: n
     for (let index = 0; index < plman.PlaylistCount; index++) {
         menuAddTo.AppendMenuItem(
             (plman.IsAutoPlaylist(index) || index === playlistIndex) ? MF_GRAYED : MF_STRING,
-            2001+index, plman.GetPlaylistName(index));
+            2001 + index, plman.GetPlaylistName(index));
     }
 
     //
@@ -1304,22 +1194,22 @@ function PL_TrackContextMenu(playlistIndex: number, metadbs: IFbMetadbList, x: n
         // "Go to Album"
         case ret === 10:
             break;
-        
+
         // "Go to Artist";
         case ret >= 3000 && ret < 3100:
-        break;
+            break;
 
         // "Add to... (a newly created playlist)";
         case ret === 2000:
-        targetId = plman.CreatePlaylist(plman.PlaylistCount, "");
-        plman.InsertPlaylistItems(targetId, 0, metadbs, false);
-        break;
+            targetId = plman.CreatePlaylist(plman.PlaylistCount, "");
+            plman.InsertPlaylistItems(targetId, 0, metadbs, false);
+            break;
 
-        case ret >2000 && ret <3000:
+        case ret > 2000 && ret < 3000:
             targetId = ret - 2001;
             plman.InsertPlaylistItems(targetId, plman.PlaylistItemCount(targetId), metadbs, true);
             break;
-        
+
         // Execute context command;
         case ret >= BaseID && ret < 2000:
             Context.ExecuteByID(ret - BaseID);
@@ -1333,13 +1223,13 @@ playback_queue.addChild(playback_queue.scrollbar);
 playback_queue.addChild(plHeader);
 
 class LibraryView extends Component {
-    on_init () {}
+    on_init() { }
 
-    on_size() {}
+    on_size() { }
 
     on_paint(gr: IGdiGraphics) {
         gr.FillSolidRect(this.x, this.y, this.width, this.height, RGB(107, 95, 112));
-        gr.DrawString("Library View Panel", logfont, 0xffffffff,this.x, this.y, this.width, this.height, StringFormat.Center);
+        gr.DrawString("Library View Panel", logfont, 0xffffffff, this.x, this.y, this.width, this.height, StringFormat.Center);
     }
 }
 
@@ -1510,7 +1400,7 @@ function Activate(x: number, y: number) {
     g_active_index = findActivePanel(panels_vis, x, y);
     if (g_active_index !== deactiveId) {
         invoke(panels_vis[deactiveId], "on_mouse_leave");
-        invoke(panels_vis[g_active_index], "on_mouse_move");
+        invoke(panels_vis[g_active_index], "on_mouse_move", x, y);
     }
 }
 

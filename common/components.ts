@@ -508,3 +508,161 @@ class Textlink extends Component {
         this.changeState(ButtonStates.normal);
     }
 }
+
+// ---------------------------
+// Elements globally referred;
+// ---------------------------
+
+abstract class ScrollView extends Component {
+    totalHeight: number;
+    scrolling: boolean = false;
+    private scroll__: number = 0;
+    get scroll_() { return this.scroll__ }
+    set scroll_(val: number) {
+        this.scroll__ = this._checkScroll(val);
+    }
+    private timerId: number = -1;
+
+    constructor(attrs: object) {
+        super(attrs);
+    }
+
+    _checkScroll(val: number) {
+        if (val > this.totalHeight - this.height) {
+            val = this.totalHeight - this.height;
+        }
+        if (this.totalHeight < this.height || val < 0) {
+            val = 0;
+        }
+        return val;
+    }
+
+    // TODO:
+    // private _onTimeout (scroll: number) {
+    //     if (Math.abs(scroll - this.scroll_) > 0.4) {
+    //         this.scroll_ += (scroll - this.scroll_) /3;
+    //         this.scrolling = true;
+    //         window.ClearTimeout(this.timerId);
+    //         ...
+    //     }
+    // }
+
+    scrollTo(scroll_?: number) {
+        if (scroll_ == null) {
+            scroll_ = this._checkScroll(this.scroll_);
+        }
+
+        if (scroll_ === this.scroll_) {
+            return;
+        }
+
+        const onTimeout = () => {
+            if (Math.abs(scroll_ - this.scroll_) > 0.4) {
+                this.scroll_ += (scroll_ - this.scroll_) / 3;
+                this.scrolling = true;
+                window.ClearTimeout(this.timerId);
+                this.timerId = window.SetTimeout(onTimeout, 15);
+            } else {
+                window.ClearTimeout(this.timerId);
+                this.scroll_ = Math.round(this.scroll_);
+                this.scrolling = false;
+            }
+            if (!this.isVisible()) {
+                window.ClearTimeout(this.timerId);
+                this.scrolling = false;
+            }
+            Repaint();
+        }
+
+        window.ClearTimeout(this.timerId);
+        onTimeout();
+    }
+}
+
+
+//
+const SCROLLBAR_WIDTH = scale(12);
+
+class Scrollbar extends Component implements ICallbacks {
+    static defaultCursorWidth = scale(12);
+
+    private minCursorHeight = scale(24);
+    private cursorHeight: number;
+    private cursorY: number;
+    state: number;
+    private cursorDelta: number;
+    cursorColor: number;
+    backgroundColor: number;
+    parent: ScrollView;
+
+    constructor(attrs: {
+        cursorColor: number;
+        backgroundColor: number;
+    }) {
+        super(attrs);
+    }
+
+    on_paint(gr: IGdiGraphics) {
+        let minCursorHeight = this.minCursorHeight;
+        let totalHeight = this.parent.totalHeight;
+        let parentHeight = this.parent.height;
+
+        if (totalHeight > parentHeight) {
+            let scroll_ = this.parent.scroll_;
+            this.cursorHeight = Math.max(Math.round((parentHeight / totalHeight) * this.height), minCursorHeight);
+            this.cursorY = this.y + Math.round(((this.height - this.cursorHeight) * scroll_) / (totalHeight - parentHeight));
+            // Draw background;
+            if (this.backgroundColor) {
+                gr.FillSolidRect(this.x, this.y, this.width, this.height, this.backgroundColor);
+            }
+            // Draw cursor;
+            gr.FillSolidRect(this.x + 1, this.cursorY + 1, this.width - 2, this.cursorHeight - 2, this.cursorColor);
+        }
+
+    }
+
+    traceCursor(x: number, y: number) {
+        return this.trace(x, y)
+            && y > this.cursorY && y <= this.cursorY + this.cursorHeight;
+    }
+
+    changeState(newstate: number) {
+        if (this.state !== newstate) {
+            this.state = newstate;
+            Repaint();
+        }
+    }
+
+    on_mouse_move(x: number, y: number) {
+        if (this.state === ButtonStates.down) {
+            let cursorY = y - this.cursorDelta
+            let ratio = (cursorY - this.y) / (this.height - this.cursorHeight);
+            let offset = Math.round(
+                (this.parent.totalHeight - this.parent.height) * ratio
+            );
+            this.parent.scroll_ = offset;
+            Repaint();
+        } else {
+            this.changeState(
+                this.traceCursor(x, y) ? ButtonStates.hover : ButtonStates.normal
+            );
+        }
+    }
+
+    on_mouse_lbtn_down(x: number, y: number) {
+        if (this.traceCursor(x, y)) {
+            this.cursorDelta = y - this.cursorY;
+            this.changeState(ButtonStates.down);
+        }
+    }
+
+    on_mouse_lbtn_up(x: number, y: number) {
+        this.changeState(
+            this.traceCursor(x, y) ? ButtonStates.hover : ButtonStates.down
+        );
+    }
+
+    on_mouse_leave() {
+        this.changeState(ButtonStates.normal);
+    }
+}
