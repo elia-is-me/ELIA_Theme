@@ -380,3 +380,32 @@ const MeasureString = (() => {
 
 const MF_STRING = 0x00000000;
 const MF_GRAYED = 0x00000001;
+
+const VK_CONTROL = 0x11;
+const VK_SHIFT = 0x10;
+const VK_BACK = 0x08;
+const VK_MENU = 0x12; // Alt key
+const VK_ALT = 0x12;
+const VK_PAUSE = 0x13;
+const VK_ESCAPE = 0x1b;
+const VK_SPACE = 0x20;
+const VK_DELETE = 0x2e;
+const VK_PRIOR = 0x21; // PAGE UP key
+const VK_NEXT = 0x22; // PAGE DOWN key
+const VK_PGUP = 0x21;
+const VK_PGDN = 0x22;
+const VK_END = 0x23;
+const VK_HOME = 0x24;
+const VK_LEFT = 0x25;
+const VK_UP = 0x26;
+const VK_RIGHT = 0x27;
+const VK_DOWN = 0x28;
+const VK_INSERT = 0x2d;
+const VK_SPACEBAR = 0x20;
+const VK_RETURN = 0x0d; // Enter
+const VK_LSHIFT = 0xa0; // Left SHIFT key
+const VK_RSHIFT = 0xa1; // Right SHIFT key
+const VK_LCONTROL = 0xa2; // Left CONTROL key
+const VK_RCONTROL = 0xa3; // Right CONTROL key
+const VK_LMENU = 0xa4; // Left MENU key
+const VK_RMENU = 0xa5; // Right MENU key

@@ -77,7 +77,7 @@ const sidebarColors: IThemeColors = {
  * Colors of main panel area;
  */
 const mainColors: IThemeColors = {
-    text: RGB(180, 182, 184),
+    text: RGB(170, 170, 170),
     background: RGB(35, 35, 35),
     highlight: RGB(238, 127, 0)
 }
@@ -127,6 +127,16 @@ const Material = {
 const MaterialFont = "Material Icons";
 const globalFontName = "Microsoft YaHei";
 const logfont = gdi.Font("Microsoft YaHei", scale(14));
+const scrollbarWidth = scale(14);
+
+// Global Messages
+const Messages = {
+    topbarSwitchTab: "topbar.switchtab",
+}
+
+const Prevent = {
+    on_item_focus_change: false,
+}
 
 // ---------------------
 // Playback control bar;
@@ -285,13 +295,13 @@ const createBottomButtons = () => {
 
         on_init() {
             switch (plman.PlaybackOrder) {
-                case 1: // repeat
+                case PlaybackOrder.repeat_playlist:
                     this.setImage(images.repeat_on);
                     break;
-                case 2: // repeat 1
+                case PlaybackOrder.repeat_track:
                     this.setImage(images.repeat1_on);
                     break;
-                default:
+                default: // repeat off
                     this.setImage(images.repeat_off);
                     break;
             }
@@ -631,13 +641,6 @@ const bottomPanel = new Component({
             Repaint();
         }
     },
-
-    on_mouse_lbtn_down(x: number, y: number) {
-        if (main_page_stat === 0) show_page(1)
-        else if (main_page_stat === 1) show_page(0);
-        on_size();
-        window.Repaint();
-    }
 });
 
 bottomPanel.z = 1000;
@@ -779,10 +782,12 @@ class SwitchTab extends Component {
         const hotItemIndex = this.tabItems.findIndex(item => item.trace(x, y));
         if (hotItemIndex !== -1 && this.focusTabIndex !== hotItemIndex) {
             this.focusTabIndex = hotItemIndex;
-            //onTabChange(from, to);
+            this.onTabChange(this.focusTabIndex);
             ThrottledRepaint();
         }
     }
+
+    onTabChange(to: number) { }
 
     on_mouse_leave() {
         this.hoverTabIndex = -1;
@@ -798,9 +803,16 @@ const Topbar_Properties = {
     focusTabIndex: +window.GetProperty("Topbar.focusTab", 0),
 }
 
+const Topbar_Colors: IThemeColors = {
+    text: mainColors.text,
+    background: RGB(32, 32, 32),
+    highlight: mainColors.highlight
+};
+
 class TopBar extends Component {
 
     switchTabs: SwitchTab;
+    colors: IThemeColors = mainColors;
 
     constructor(attr: object) {
         super(attr);
@@ -811,7 +823,11 @@ class TopBar extends Component {
             // items: ["播放列表", "专辑", "歌曲", "音乐人"],
             items: ["PLAYLISTS", "ALBUMS", "SONGS", "ARTISTS"]
         });
+        this.switchTabs.onTabChange = (to: number) => {
+            NotifyOtherPanels(Messages.topbarSwitchTab, to)
+        }
         this.addChild(this.switchTabs);
+        this.colors = Topbar_Colors;
     }
 
     on_init() {
@@ -827,7 +843,7 @@ class TopBar extends Component {
     }
 
     on_paint(gr: IGdiGraphics) {
-        // gr.FillSolidRect(this.x, this.y, this.width, this.height, RGB(29, 109, 29));
+        gr.FillSolidRect(this.x, this.y, this.width, this.height, this.colors.background);
     }
 }
 
@@ -894,9 +910,6 @@ const PL_Dragdrop = {
 }
 
 class Pl_Item {
-    metadb: IFbMetadb;
-    listIndex: number;
-    plIndex: number;
     x: number = 0;
     y: number = 0;
     width: number = 0;
@@ -904,6 +917,9 @@ class Pl_Item {
     yOffset: number = 0;
 
     // info
+    metadb: IFbMetadb;
+    playlistIndex: number;
+    playlistItemIndex: number;
     title: string = "";
     artist: string = "";
     pbTime: string = "";
@@ -914,7 +930,7 @@ class Pl_Item {
     isSelect: boolean = false;
 
     trace(x: number, y: number) {
-        return x > this.x && x > this.y && x <= this.x + this.width && y <= this.y + this.height;
+        return x > this.x && y > this.y && x <= this.x + this.width && y <= this.y + this.height;
     }
 
     draw(gr: IGdiGraphics) { }
@@ -931,6 +947,8 @@ function isValidPlaylist(playlistIndex: number) {
 class PlaybackQueue extends ScrollView {
 
     items: Pl_Item[] = [];
+    visibleItems: Pl_Item[] = [];
+    selectedIndexes: number[] = [];
     scrollbar: Scrollbar = new Scrollbar({
         cursorColor: PL_Colors.text & 0x50ffffff,
         backgroundColor: 0x00ffffff
@@ -940,14 +958,6 @@ class PlaybackQueue extends ScrollView {
     hoverIndex: number = -1;
     focusIndex: number = -1;
 
-    private _updateHoverIndex(x: number, y: number) {
-        let hoverIndex_ = -1;
-        if (!this.trace(x, y) || y < this.y || y >= this.y + this.height) {
-            hoverIndex_ = -1;
-        } else {
-            hoverIndex_ = this.items.findIndex(item => item.trace(x, y));
-        }
-    }
 
     initList() {
         const pl_metadbs = plman.GetPlaylistItems(plman.ActivePlaylist);
@@ -956,13 +966,13 @@ class PlaybackQueue extends ScrollView {
         const rowHeight = PL_Properties.rowHeight;
         let itemYOffset = 0;
 
-        for (let plIndex = 0; plIndex < pl_itemCount; plIndex++) {
+        for (let playlistItemIndex = 0; playlistItemIndex < pl_itemCount; playlistItemIndex++) {
             let trackItem = new Pl_Item();
             trackItem.height = rowHeight;
-            trackItem.metadb = pl_metadbs[plIndex];
-            trackItem.plIndex = plIndex;
+            trackItem.metadb = pl_metadbs[playlistItemIndex];
+            trackItem.playlistItemIndex = playlistItemIndex;
             trackItem.yOffset = itemYOffset;
-            trackItem.isSelect = plman.IsPlaylistItemSelected(plman.ActivePlaylist, plIndex);
+            trackItem.isSelect = plman.IsPlaylistItemSelected(plman.ActivePlaylist, playlistItemIndex);
 
             pl_items.push(trackItem);
             itemYOffset += rowHeight;
@@ -1016,7 +1026,8 @@ class PlaybackQueue extends ScrollView {
         this.scrollbar.setSize(
             this.x + this.width - scale(14),
             this.y + PL_Properties.headerHeight,
-            scale(14), this.height - PL_Properties.headerHeight);
+            scrollbarWidth,
+            this.height - PL_Properties.headerHeight);
 
         plHeader.setSize(this.x, this.y, this.width, PL_Properties.headerHeight);
     }
@@ -1031,15 +1042,23 @@ class PlaybackQueue extends ScrollView {
         let colors = PL_Colors;;
         let columns = PL_Columns;
 
+        // Draw background;
         gr.FillSolidRect(this.x, this.y, this.width, this.height, colors.background);
 
+        //
+        this.visibleItems.splice(0, this.visibleItems.length);
+
+        // Draw Items;
         for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
             let thisItem = items[itemIndex];
             thisItem.x = this.x;
             thisItem.width = this.width;
             thisItem.y = this.y + thisItem.yOffset - this.scroll_ + headerHeight;
 
+            // Visible items;
             if (thisItem.y + rowHeight >= this.y + headerHeight && thisItem.y < this.y + this.height) {
+
+                this.visibleItems.push(thisItem);
 
                 // Set item columns' value;
                 if (isEmptyString(thisItem.title)) {
@@ -1052,21 +1071,25 @@ class PlaybackQueue extends ScrollView {
                 }
 
                 // Draw items;
-                //
 
                 if (thisItem.isSelect) {
                     gr.FillSolidRect(this.x, thisItem.y, this.width, rowHeight, RGB(26, 26, 26));
+                }
+
+                if (this.focusIndex === itemIndex) {
+                    gr.DrawRect(this.x, thisItem.y, this.width - 1, rowHeight - 1, scale(1),
+                        RGB(127, 127, 127));
                 }
 
                 if (this.playingItemIndex === itemIndex) {
                     gr.DrawString(fb.IsPaused ? Material.volume_mute : Material.volume, iconFont, colors.highlight,
                         columns.trackNo.x, thisItem.y, columns.trackNo.width, rowHeight, StringFormat.Center);
                 } else {
-                    gr.DrawString(thisItem.trackNo, itemFont, 0xffffffff, columns.trackNo.x, thisItem.y, columns.trackNo.width, rowHeight, StringFormat.Center);
+                    gr.DrawString(thisItem.trackNo, itemFont, colors.text, columns.trackNo.x, thisItem.y, columns.trackNo.width, rowHeight, StringFormat.Center);
                 }
 
-                gr.DrawString(thisItem.title, itemFont, 0xffffffff, columns.title.x, thisItem.y, columns.title.width, rowHeight, StringFormat.LeftCenter);
-                gr.DrawString(thisItem.pbLength, itemFont, 0xffffffff, columns.trackLen.x, thisItem.y, columns.trackLen.width, rowHeight, StringFormat.Center);
+                gr.DrawString(thisItem.title, itemFont, colors.text, columns.title.x, thisItem.y, columns.title.width, rowHeight, StringFormat.LeftCenter);
+                gr.DrawString(thisItem.pbLength, itemFont, colors.text, columns.trackLen.x, thisItem.y, columns.trackLen.width, rowHeight, StringFormat.Center);
 
                 if (thisItem.rating === "5") {
                     gr.DrawString(Material.heart, iconFont, colors.heartRed,
@@ -1111,7 +1134,16 @@ class PlaybackQueue extends ScrollView {
     on_selection_changed() {
         let plItemCount = this.items.length;
         for (let plIndex = 0; plIndex < plItemCount; plIndex++) {
-            this.items[plIndex].isSelect = plman.IsPlaylistItemSelected(plman.ActivePlaylist, this.items[plIndex].plIndex);
+            this.items[plIndex].isSelect = plman.IsPlaylistItemSelected(
+                plman.ActivePlaylist,
+                this.items[plIndex].playlistItemIndex);
+        }
+        ThrottledRepaint();
+    }
+
+    on_item_focus_change(playlistIndex: number, from?: number, to?: number) {
+        if (playlistIndex !== plman.ActivePlaylist) {
+            return;
         }
         ThrottledRepaint();
     }
@@ -1146,8 +1178,120 @@ class PlaybackQueue extends ScrollView {
 
     on_metadb_changed(handleList: IFbMetadbList, fromhook: boolean) { }
 
+    private _findHoverIndex(x: number, y: number) {
+        if (!this.trace(x, y)) { return - 1; }
+        else { return this.visibleItems.findIndex(item => item.trace(x, y)); }
+    }
+
+    private _setFocus(index: number) {
+        if (this.items[index] == null) return;
+        plman.SetPlaylistFocusItem(
+            plman.ActivePlaylist,
+            this.items[index].playlistItemIndex);
+        this.focusIndex = index;
+    }
+
+    private _setSelection(from: number, to?: number) {
+        if (to == null) to = from;
+        let c = from;
+        if (from > to) { from = to; to = c; }
+        let indexes: number[] = [];
+
+        for (let index = from; index <= to; index++) {
+            this.items[index]
+                && indexes.push(this.items[index].playlistItemIndex);
+        }
+
+        if (indexes.toString() !== this.selectedIndexes.toString()) {
+            this.selectedIndexes = indexes;
+            plman.ClearPlaylistSelection(plman.ActivePlaylist);
+            plman.SetPlaylistSelection(plman.ActivePlaylist, indexes, true);
+        }
+    }
+
     on_mouse_wheel(step: number) {
         this.scrollTo(this.scroll_ - step * PL_Properties.rowHeight * 3);
+    }
+
+    on_mouse_lbtn_dblclk(x: number, y: number, mask: number) {
+        let hoverIndex_ = this._findHoverIndex(x, y);
+        if (hoverIndex_ > -1) {
+            plman.ExecutePlaylistDefaultAction(plman.ActivePlaylist, this.items[hoverIndex_].playlistItemIndex);
+        }
+    }
+
+    on_mouse_lbtn_down(x: number, y: number, mask: number) {
+        let hoverIndex_ = this._findHoverIndex(x, y);
+        let hoverItem_ = this.items[hoverIndex_];
+        let hoverItemSel_ = (
+            hoverItem_ &&
+            plman.IsPlaylistItemSelected(plman.ActivePlaylist, hoverItem_.playlistItemIndex));
+        let holdCtrl_ = utils.IsKeyPressed(VK_CONTROL);
+        let holdShift_ = utils.IsKeyPressed(VK_SHIFT);
+
+        // TODO: Reset selecting & dragging;
+        if (hoverItem_ == null) {
+            if (!holdCtrl_ && !holdShift_) {
+                // TODO:Set selecting
+                plman.ClearPlaylistSelection(plman.ActivePlaylist);
+            }
+        } else {
+            this._setFocus(hoverIndex_);
+            console.log(this.items[this.focusIndex].title);
+            if (!holdShift_) {
+                this.selection.SHIFT_startId = this.focusIndex
+            }
+
+            // set selecting;
+            switch (true) {
+                case holdCtrl_:
+                    plman.SetPlaylistSelectionSingle(
+                        plman.ActivePlaylist,
+                        hoverItem_.playlistItemIndex,
+                        !hoverItemSel_
+                    );
+                    break;
+                case holdShift_:
+                    this._setSelection(
+                        this.selection.SHIFT_startId,
+                        this.focusIndex)
+                    break;
+                default:
+                    if (hoverItemSel_) {
+                        // 
+                    } else {
+                        this._setSelection(this.hoverIndex);
+                    }
+                    break;
+            }
+        }
+    }
+
+    on_mouse_lbtn_up(x: number, y: number, mask?: number) {
+        let hoverIndex_ = this._findHoverIndex(x, y);
+        let hoverItem_ = this.items[hoverIndex_];
+    }
+
+    on_mouse_rbtn_down(x: number, y: number) {
+        let hoverIndex_ = this._findHoverIndex(x, y);
+        let hoverItem_ = this.items[hoverIndex_];
+
+        if (hoverItem_ == null) {
+            plman.ClearPlaylistSelection(plman.ActivePlaylist);
+        }
+        else {
+            if (!plman.IsPlaylistItemSelected(
+                plman.ActivePlaylist,
+                hoverItem_.playlistItemIndex)
+            ) {
+                this._setSelection(hoverIndex_);
+                this._setFocus(hoverIndex_);
+            }
+        }
+    }
+
+    private selection = {
+        SHIFT_startId: -1,
     }
 }
 
@@ -1235,6 +1379,169 @@ class LibraryView extends Component {
 
 const library_view = new LibraryView({})
 
+// -------------------------
+// Playlist Manager
+// -------------------------
+
+const PLM_Properties = {
+    minWidth: scale(256),
+    rowHeight: scale(40),
+    itemFont: gdi.Font(globalFontName, scale(14)),
+    iconFont: gdi.Font(MaterialFont, scale(20)),
+    headerHeight: scale(22),
+    headerFont: gdi.Font("Segoe UI Semibold", scale(12)),
+}
+
+const PLM_Colors: IThemeColors = {
+    text: RGB(170, 170, 170),
+    background: RGB(0, 0, 0),
+    highlight: RGB(200, 200, 200),
+    background_sel: RGB(20, 20, 20),
+    background_hover: RGB(10, 10, 10)
+}
+
+class PLM_Header extends Component {
+    label: string = "PLAYLISTS";
+
+    on_paint(gr: IGdiGraphics) {
+        gr.FillSolidRect(this.x, this.y, this.width, this.height,
+            mainColors.background);
+        gr.DrawString(this.label, PLM_Properties.headerFont,
+            mainColors.text,
+            this.x + scale(8), this.y, this.width - scale(16), this.height,
+            StringFormat.LeftCenter);
+    }
+}
+
+class PLM_Item {
+    metadb: IFbMetadb; // First track in playlist;
+    index: number;
+    x: number = 0;
+    y: number = 0;
+    width: number = 0;
+    height: number = 0;
+    yOffset: number = 0;
+    //
+    listName: string = "";
+    isSelect: boolean = false;
+    isAuto: boolean = false;
+
+    trace(x: number, y: number) {
+        return x > this.x && x <= this.x + this.width
+            && y > this.y && y <= this.y + this.height;
+    }
+}
+
+class PLM_View extends ScrollView {
+    items: PLM_Item[] = [];
+    scrollbar: Scrollbar = new Scrollbar({
+        cursorColor: PL_Colors.text & 0x50ffffff,
+        backgroundColor: 0x00ffffff
+    });
+    header: PLM_Header = new PLM_Header({});
+
+    constructor(attrs: object) {
+        super(attrs);
+        this.addChild(this.scrollbar);
+        this.addChild(this.header);
+    }
+
+    initList() {
+        const rowHeight = PLM_Properties.rowHeight;
+        const items: PLM_Item[] = [];
+        const itemCount = plman.PlaylistCount;
+        let itemYOffset = 0;
+
+        for (let playlistIndex = 0; playlistIndex < itemCount; playlistIndex++) {
+            let rowItem = new PLM_Item();
+            let playlistMetadbs = plman.GetPlaylistItems(playlistIndex);
+            items.push(rowItem);
+            rowItem.height = rowHeight;
+            rowItem.metadb = (playlistMetadbs.Count === 0 ? null : playlistMetadbs[0]);
+            rowItem.listName = plman.GetPlaylistName(playlistIndex)
+            rowItem.isAuto = plman.IsAutoPlaylist(playlistIndex);
+            rowItem.yOffset = itemYOffset;
+            itemYOffset += rowHeight;
+        }
+
+        this.items = items;
+        this.totalHeight = rowHeight * itemCount + PLM_Properties.headerHeight;
+    }
+
+    on_init() {
+        this.initList();
+    }
+
+    on_size() {
+        if (this.items.length > 0) {
+            let items_ = this.items;
+
+            for (let playlistId = 0; playlistId < plman.PlaylistCount; playlistId++) {
+                let rowItem = items_[playlistId];
+                rowItem.x = this.x;
+                rowItem.width = this.width;
+            }
+        }
+
+        this.scrollbar.setSize(
+            this.x + this.width - scale(14),
+            this.y + PL_Properties.headerHeight,
+            scrollbarWidth,
+            this.height - PL_Properties.headerHeight
+        );
+
+        this.header.setSize(
+            this.x, this.y, this.width, PL_Properties.headerHeight
+        );
+    }
+
+    on_paint(gr: IGdiGraphics) {
+        let rowHeight = PLM_Properties.rowHeight;
+        let items_ = this.items;
+        let colors = PLM_Colors;
+        let itemFont = PLM_Properties.itemFont;
+        let iconFont = PLM_Properties.iconFont;
+        let headerHeight = PLM_Properties.headerHeight;
+        let paddingL = scale(16);
+        let paddingR = scale(4);
+
+        // draw background
+        gr.FillSolidRect(this.x, this.y, this.width, this.height, colors.background);
+
+        // draw items;
+        for (let itemIndex = 0; itemIndex < items_.length; itemIndex++) {
+            let rowItem = items_[itemIndex];
+            rowItem.x = this.x;
+            rowItem.width = this.width;
+            rowItem.y = this.y + headerHeight
+                + rowItem.yOffset - this.scroll_;
+
+            // items in visible area;
+            if (rowItem.y + rowHeight >= this.y + headerHeight
+                && rowItem.y < this.y + this.height) {
+
+                // draw icon;
+                let icon_ = (rowItem.isAuto ? Material.settings : Material.queue_music);
+                gr.DrawString(icon_, iconFont, colors.text,
+                    rowItem.x + paddingL, rowItem.y, rowHeight, rowHeight, StringFormat.Center);
+
+                // draw list name;
+                gr.DrawString(rowItem.listName, itemFont, colors.text,
+                    rowItem.x + paddingL + rowHeight,
+                    rowItem.y,
+                    rowItem.width - paddingL - paddingR - rowHeight,
+                    rowHeight,
+                    StringFormat.LeftCenter);
+
+
+            }
+        }
+    }
+}
+
+const plm_pane = new PLM_View({});
+
+
 // --------------------------
 // Manage panels, callbacks;
 // --------------------------
@@ -1252,34 +1559,103 @@ UI.addChild(bigArt);
 UI.addChild(topbar);
 UI.addChild(playback_queue);
 UI.addChild(library_view);
+UI.addChild(plm_pane);
 
 // 0: now_playing_view
 // 1: media libary view
 // 2: playlist_view
 let main_page_stat = 0;
 
-function show_page(page_id: number) {
-    main_page_stat = page_id;
+// TODO : page id 与 tabs index 相关了，解除才好。
+const PanelPageIDs = {
+    playlists: 0,
+    albums: 1,
+    songs: 2,
+    artists: 3,
+    album_tracks: 4,
+    artist_tracks: 5
+}
 
-    switch (page_id) {
+function ShowPage(pageId: number) {
+    main_page_stat = pageId;
+
+    switch (pageId) {
         case 0:
             playback_queue.visible = true;
-            bigArt.visible = true;
+            plm_pane.visible = true;
+            bigArt.visible = false;
             library_view.visible = false;
             break;
         case 1:
             playback_queue.visible = false;
+            plm_pane.visible = false;
             bigArt.visible = false;
             library_view.visible = true;
             break;
         case 2:
             library_view.visible = false;
+            plm_pane.visible = false;
+            bigArt.visible = false;
+            playback_queue.visible = true;
+            break;
+        case 3:
+            library_view.visible = false;
+            plm_pane.visible = false;
+            bigArt.visible = false;
+            playback_queue.visible = false;
+            break;
+        case 4:
+            library_view.visible = false;
+            plm_pane.visible = false;
+            bigArt.visible = false;
+            playback_queue.visible = false;
+            break;
+        case 5:
+            library_view.visible = false;
+            plm_pane.visible = false;
             bigArt.visible = false;
             playback_queue.visible = false;
             break;
     }
 
     RefreshPanels();
+    UI.on_size();
+}
+
+function ArrangeLayout(pageId: number) {
+    const areaY = UI.y + TOP_H;
+    const areaHeight = UI.height - TOP_H - PLAY_CONTROL_HEIGHT;
+    const gap = scale(4);
+
+    switch (pageId) {
+        case PanelPageIDs.playlists:
+            plm_pane.setSize(UI.x, areaY, PLM_Properties.minWidth, areaHeight);
+            playback_queue.setSize(
+                plm_pane.x + plm_pane.width + gap,
+                areaY,
+                UI.width - plm_pane.width - gap,
+                areaHeight
+            );
+            break;
+
+        case PanelPageIDs.albums:
+            library_view.setSize(UI.x, areaY, UI.width, areaHeight);
+            break;
+
+        case PanelPageIDs.songs:
+            bigArt.setSize(UI.x, areaY, UI.width * 4 / 7, areaHeight);
+            playback_queue.setSize(
+                bigArt.x + bigArt.width + gap,
+                areaY, UI.width - bigArt.width - gap,
+                areaHeight);
+            break;
+    }
+}
+
+UI.onNotifyData = function (message: string, data: any) {
+    if (message === Messages.topbarSwitchTab) {
+        ShowPage(data)
+    }
 }
 
 
@@ -1287,7 +1663,7 @@ function show_page(page_id: number) {
  * UI.on_init be executed only once at start up .
  */
 UI.on_init = function () {
-    show_page(1);
+    NotifyOtherPanels(Messages.topbarSwitchTab, Topbar_Properties.focusTabIndex);
 }
 
 UI.on_paint = function (gr: IGdiGraphics) {
@@ -1298,6 +1674,7 @@ UI.on_size = function () {
     bottomPanel.setSize(this.x, this.y + this.height - PLAY_CONTROL_HEIGHT, this.width, PLAY_CONTROL_HEIGHT);
     topbar.setSize(this.x, this.y, this.width, TOP_H);
 
+    /*
     const marginLR = AD_properties.marginLR;
     const marginTB = AD_properties.marginTB;
 
@@ -1316,14 +1693,27 @@ UI.on_size = function () {
     );
 
     library_view.setSize(this.x, this.y + TOP_H, this.width, this.height - TOP_H - PLAY_CONTROL_HEIGHT);
+    */
+    ArrangeLayout(main_page_stat);
 }
 
 // =============================
 //=============================
 // =============================
 
+let panels: Component[] = [];
 let panels_vis: Component[] = [];
 let panels_vis_updated = false;
+
+function flatternPanels(root: Component) {
+    if (root == null) return [];
+    let children = root.children;
+    let results = [root];
+    for (let i = 0; i < children.length; i++) {
+        results = results.concat(flatternPanels(children[i]));
+    }
+    return results;
+}
 
 function findVisibleComponents(root: Component) {
     if (!root.isVisible()) return [];
@@ -1341,12 +1731,24 @@ function findVisibleComponents(root: Component) {
 }
 
 function RefreshPanels() {
+    panels = flatternPanels(UI);
     let panelsPrev = panels_vis;
     panels_vis = findVisibleComponents(UI);
     panels_vis
         .filter(p => panelsPrev.indexOf(p) === -1)
         .forEach(p => invoke(p, "on_init"));
 }
+
+function NotifyOtherPanels(message: string, data: any) {
+    if (g_panels_changed) {
+        RefreshPanels();
+        g_panels_changed = false;
+    }
+    panels.map(panel =>
+        panel.onNotifyData && panel.onNotifyData.call(panel, message, data))
+}
+
+
 
 const useClearType = window.GetProperty('_Global.Font Use ClearType', true);
 const useAntiAlias = window.GetProperty('_Global.Font Antialias(Only when useClearType = false', true);
@@ -1516,4 +1918,8 @@ function on_playlists_changed() {
 
 function on_playlist_switch() {
     panels_vis.forEach(p => invoke(p, "on_playlist_switch"));
+}
+
+function on_item_focus_change(playlistIndex: number, from: number, to: number) {
+    panels_vis.forEach(p => invoke(p, "on_item_focus_change", playlistIndex, from, to));
 }

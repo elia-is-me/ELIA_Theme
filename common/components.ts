@@ -114,6 +114,8 @@ class Component implements IBox, TEST {
         if (is_vis) invoke(this, 'on_size');
         if (is_vis !== pre_vis) g_panels_changed = true;
     }
+
+    onNotifyData(str: string, info: any) {}
 }
 
 
