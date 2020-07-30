@@ -128,7 +128,7 @@ function CreateButtons() {
         image: images.next,
 
         on_click: function () {
-            fb.Prev();
+            fb.Next();
         }
     });
 

@@ -1,6 +1,3 @@
-/// <reference path="./foo_spider_monkey_panel.d.ts" />
-/// <reference path="./common.ts" />
-
 'use strict'
 
 
@@ -52,7 +49,7 @@ class Component implements IBox, TEST {
     z: number = 0;
     width: number = 0;
     height: number = 0;
-    private visible: boolean = true;
+    private _visible: boolean = true;
     parent: Component;
     children: Component[] = [];
 
@@ -60,8 +57,9 @@ class Component implements IBox, TEST {
         Object.assign(this, attrs);
     }
 
-    // on_paint?: Function
-    // on_size?: () => void;
+    on_paint(gr: IGdiGraphics) { }
+    on_size() { }
+    on_init() {}
 
     addChild(node: Component) {
         if (!(node instanceof Component)) {
@@ -90,8 +88,11 @@ class Component implements IBox, TEST {
     }
 
     isVisible() {
-        return this.visible && this.width > 0 && this.height > 0;
+        return this._visible && this.width > 0 && this.height > 0;
     }
+
+    get visible() { return this._visible }
+    set visible(val: boolean) { this._visible = val; }
 
     trace(x: number, y: number) {
         return this.isVisible()
@@ -113,6 +114,8 @@ class Component implements IBox, TEST {
         if (is_vis) invoke(this, 'on_size');
         if (is_vis !== pre_vis) g_panels_changed = true;
     }
+
+    onNotifyData(str: string, info: any) {}
 }
 
 
@@ -303,6 +306,26 @@ const AlbumArtId = {
     artist: 4
 };
 
+
+function drawNoCover(textColor: number, backColor: number) {
+    let fontName = "Segoe UI";
+    let font1 = gdi.Font(fontName, 270, 1);
+    let font2 = gdi.Font(fontName, 120, 1);
+    let cc = StringFormat(1, 1);
+    let img = gdi.CreateImage(500, 500);
+    let g = img.GetGraphics();
+
+    // g.SetSmoothingMode(SmoothingMode.HighQuality);
+    g.SetTextRenderingHint(TextRenderingHint.AntiAlias);
+    g.FillSolidRect(0, 0, 500, 500, textColor & 0x20ffffff);
+    g.DrawString("NO", font1, textColor & 0x25ffffff, 0, 0, 500, 275, cc);
+    g.DrawString("COVER", font2, textColor & 0x25ffffff, 2.5, 175, 500, 275, cc);
+    g.FillSolidRect(60, 388, 380, 50, textColor & 0x65ffffff);
+
+    img.ReleaseGraphics(g);
+    return img;
+}
+
 class AlbumArtView extends Component {
     currentArtId: number = AlbumArtId.front;
     tf = fb.TitleFormat("%album artist%^^%album");
@@ -481,6 +504,164 @@ class Textlink extends Component {
             }
         }
         this.changeState(ButtonStates.hover);
+    }
+
+    on_mouse_leave() {
+        this.changeState(ButtonStates.normal);
+    }
+}
+
+// ---------------------------
+// Elements globally referred;
+// ---------------------------
+
+abstract class ScrollView extends Component {
+    totalHeight: number;
+    scrolling: boolean = false;
+    private scroll__: number = 0;
+    get scroll_() { return this.scroll__ }
+    set scroll_(val: number) {
+        this.scroll__ = this._checkScroll(val);
+    }
+    private timerId: number = -1;
+
+    constructor(attrs: object) {
+        super(attrs);
+    }
+
+    _checkScroll(val: number) {
+        if (val > this.totalHeight - this.height) {
+            val = this.totalHeight - this.height;
+        }
+        if (this.totalHeight < this.height || val < 0) {
+            val = 0;
+        }
+        return val;
+    }
+
+    // TODO:
+    // private _onTimeout (scroll: number) {
+    //     if (Math.abs(scroll - this.scroll_) > 0.4) {
+    //         this.scroll_ += (scroll - this.scroll_) /3;
+    //         this.scrolling = true;
+    //         window.ClearTimeout(this.timerId);
+    //         ...
+    //     }
+    // }
+
+    scrollTo(scroll_?: number) {
+        if (scroll_ == null) {
+            scroll_ = this._checkScroll(this.scroll_);
+        }
+
+        if (scroll_ === this.scroll_) {
+            return;
+        }
+
+        const onTimeout = () => {
+            if (Math.abs(scroll_ - this.scroll_) > 0.4) {
+                this.scroll_ += (scroll_ - this.scroll_) / 3;
+                this.scrolling = true;
+                window.ClearTimeout(this.timerId);
+                this.timerId = window.SetTimeout(onTimeout, 15);
+            } else {
+                window.ClearTimeout(this.timerId);
+                this.scroll_ = Math.round(this.scroll_);
+                this.scrolling = false;
+            }
+            if (!this.isVisible()) {
+                window.ClearTimeout(this.timerId);
+                this.scrolling = false;
+            }
+            Repaint();
+        }
+
+        window.ClearTimeout(this.timerId);
+        onTimeout();
+    }
+}
+
+
+//
+const SCROLLBAR_WIDTH = scale(12);
+
+class Scrollbar extends Component implements ICallbacks {
+    static defaultCursorWidth = scale(12);
+
+    private minCursorHeight = scale(24);
+    private cursorHeight: number;
+    private cursorY: number;
+    state: number;
+    private cursorDelta: number;
+    cursorColor: number;
+    backgroundColor: number;
+    parent: ScrollView;
+
+    constructor(attrs: {
+        cursorColor: number;
+        backgroundColor: number;
+    }) {
+        super(attrs);
+    }
+
+    on_paint(gr: IGdiGraphics) {
+        let minCursorHeight = this.minCursorHeight;
+        let totalHeight = this.parent.totalHeight;
+        let parentHeight = this.parent.height;
+
+        if (totalHeight > parentHeight) {
+            let scroll_ = this.parent.scroll_;
+            this.cursorHeight = Math.max(Math.round((parentHeight / totalHeight) * this.height), minCursorHeight);
+            this.cursorY = this.y + Math.round(((this.height - this.cursorHeight) * scroll_) / (totalHeight - parentHeight));
+            // Draw background;
+            if (this.backgroundColor) {
+                gr.FillSolidRect(this.x, this.y, this.width, this.height, this.backgroundColor);
+            }
+            // Draw cursor;
+            gr.FillSolidRect(this.x + 1, this.cursorY + 1, this.width - 2, this.cursorHeight - 2, this.cursorColor);
+        }
+
+    }
+
+    traceCursor(x: number, y: number) {
+        return this.trace(x, y)
+            && y > this.cursorY && y <= this.cursorY + this.cursorHeight;
+    }
+
+    changeState(newstate: number) {
+        if (this.state !== newstate) {
+            this.state = newstate;
+            Repaint();
+        }
+    }
+
+    on_mouse_move(x: number, y: number) {
+        if (this.state === ButtonStates.down) {
+            let cursorY = y - this.cursorDelta
+            let ratio = (cursorY - this.y) / (this.height - this.cursorHeight);
+            let offset = Math.round(
+                (this.parent.totalHeight - this.parent.height) * ratio
+            );
+            this.parent.scroll_ = offset;
+            Repaint();
+        } else {
+            this.changeState(
+                this.traceCursor(x, y) ? ButtonStates.hover : ButtonStates.normal
+            );
+        }
+    }
+
+    on_mouse_lbtn_down(x: number, y: number) {
+        if (this.traceCursor(x, y)) {
+            this.cursorDelta = y - this.cursorY;
+            this.changeState(ButtonStates.down);
+        }
+    }
+
+    on_mouse_lbtn_up(x: number, y: number) {
+        this.changeState(
+            this.traceCursor(x, y) ? ButtonStates.hover : ButtonStates.down
+        );
     }
 
     on_mouse_leave() {
