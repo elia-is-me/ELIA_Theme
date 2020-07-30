@@ -1,13 +1,21 @@
-# Scripts for foo_spider_monkey_panel
+# ELIA's Scripts
+
+## For
+
+* [foobar2000 audio player](https://www.foobar2000.org/)
+* [foo_uie_foo_spider_monkey_panel.dll](https://theqwertiest.github.io/foo_spider_monkey_panel/)
 
 ##  Compile
 
-- install nodejs (v6.13.4)
+- Install nodejs (v6.13.4)
 - cd `ts_elia` folder and install typescript(v3.7), gulp, etc:
 ``` 
 npm install --save-dev typescript gulp-cli gulp@4.0.0 gulp-typescript
 ```
 - `npx gulp`
 
+Output files will be at `./out` folder
+
 ## Use
 
+> TODO

@@ -587,6 +587,36 @@ addNewPlaylist.on_paint = function (gr: IGdiGraphics) {
     NavButton.prototype.on_paint.call(addNewPlaylist, gr);
 }
 
+    on_mouse_lbtn_down(x: number, y: number) {
+        let hoverIdx = this._findHoverIndex(x, y);
+        if (isValidPlaylist(hoverIdx)) {
+            // handle click  item;
+            // notify others that active playlist changed;
+        }
+    }
+
+    on_mouse_lbtn_dblclk(x: number, y: number) {
+        let hoverIdx = this._findHoverIndex(x, y);
+        if (isValidPlaylist(hoverIdx)) {
+            // handle double click here;
+            // notify others;
+        }
+    }
+
+    on_mouse_move(x: number, y: number) {
+        // if mouse is dragging some item, update dragdrop target index;
+        // else do nothing, items' state will not change.
+    }
+
+    on_mouse_lbtn_up(x: number, y: number) {
+        // 
+    }
+
+    on_mouse_rbtn_down(x: number, y: number) {
+
+    }
+
+    on_mouse_rbtn_up(x: number, y: number) { }
 
 const UI = new Component({
 
@@ -802,4 +832,5 @@ function on_playlists_changed() {
 
 function on_playlist_switch() {
     panels_vis.forEach(p => invoke(p, "on_playlist_switch"));
+}
 }

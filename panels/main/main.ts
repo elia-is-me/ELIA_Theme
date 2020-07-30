@@ -108,14 +108,9 @@ const Material = {
     menu: '\ue5d2',
     history: '\ue8b3',
     close: '\ue14c',
-    // heart_empty: '\ue87e',
-    // heart: '\ue87d',
     repeat: '\ue040',
     repeat1: '\ue041',
-    // shuffle: '\ue043',
     default_order: '\ue16d',
-    // volume: '\ue050',
-    // volume_mute: '\ue04f',
     play_arrow: '\ue037',
     pause: '\ue034',
     skip_next: '\ue044',
@@ -1621,6 +1616,12 @@ const plm_pane = new PLM_View({});
 const PLAY_CONTROL_HEIGHT = scale(76);
 const TOP_H = scale(48);
 
+// TODO:
+// UI = {
+//         root: root,
+//         controller: controller
+//       }
+
 const UI = new Component({
     on_init() { },
 });
@@ -1746,26 +1747,7 @@ UI.on_size = function () {
     bottomPanel.setSize(this.x, this.y + this.height - PLAY_CONTROL_HEIGHT, this.width, PLAY_CONTROL_HEIGHT);
     topbar.setSize(this.x, this.y, this.width, TOP_H);
 
-    /*
-    const marginLR = AD_properties.marginLR;
-    const marginTB = AD_properties.marginTB;
-
-    bigArt.setSize(
-        this.x + AD_properties.marginLR,
-        this.y + TOP_H + AD_properties.marginTB,
-        this.width * 4 / 7 - 2 * AD_properties.marginLR,
-        this.height - PLAY_CONTROL_HEIGHT - TOP_H - 2 * AD_properties.marginTB
-    );
-
-    playback_queue.setSize(
-        bigArt.x + bigArt.width + marginLR,
-        this.y + TOP_H + marginTB,
-        this.width - 3 * marginLR - bigArt.width,
-        this.height - PLAY_CONTROL_HEIGHT - TOP_H - marginTB
-    );
-
-    library_view.setSize(this.x, this.y + TOP_H, this.width, this.height - TOP_H - PLAY_CONTROL_HEIGHT);
-    */
+	// Arrange others' layout;
     ArrangeLayout(main_page_stat);
 }
 
