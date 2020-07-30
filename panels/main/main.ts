@@ -1,42 +1,4 @@
-﻿// Usage:
-// (TODO: documents here)
-
-class ImageCacheItem {
-    image: IGdiBitmap;
-    embed: boolean;
-    path: string;
-    artId?: number;
-
-    constructor(image: IGdiBitmap, path: string, embed: boolean = false) {
-        this.image = image;
-        this.path = path;
-        this.embed = embed;
-    }
-
-    compare(item: ImageCacheItem) {
-        if (this.embed !== item.embed) return false;
-        if (this.embed && item.embed) return this.path === item.path;
-        return this.path === item.path;
-    }
-
-    readImage(dstW: number, dstH: number) {
-
-    }
-}
-
-class ImageCollection {
-    images: IGdiBitmap[];
-
-    constructor() {
-        this.images = [];
-    }
-
-    getTrackImages(metadb: IFbMetadb) {
-
-    }
-}
-
-// ------------------------------------------------------------
+﻿// ------------------------------------------------------------
 // Global resources: theme colors, icon codes, command string,
 //                    title_format objects;
 // ------------------------------------------------------------
@@ -1802,8 +1764,6 @@ function NotifyOtherPanels(message: string, data: any) {
         panel.onNotifyData && panel.onNotifyData.call(panel, message, data))
 }
 
-
-
 const useClearType = window.GetProperty('_Global.Font Use ClearType', true);
 const useAntiAlias = window.GetProperty('_Global.Font Antialias(Only when useClearType = false', true);
 const textRenderingHint = useClearType ? 5 : useAntiAlias ? 4 : 0;
@@ -1978,3 +1938,5 @@ function on_playlist_switch() {
 function on_item_focus_change(playlistIndex: number, from: number, to: number) {
     panels_vis.forEach(p => invoke(p, "on_item_focus_change", playlistIndex, from, to));
 }
+
+// KNOWN ISSUES:

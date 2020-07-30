@@ -539,12 +539,11 @@ abstract class ScrollView extends Component {
         return val;
     }
 
-    scrollTo(scroll_?: number) {
-        scroll_ = this._checkScroll(this.scroll_);
+    scrollTo(scroll_: number = this._checkScroll(this.scroll_)) {
+        scroll_ = this._checkScroll(scroll_);
         if (scroll_ === this.scroll_) {
             return;
         }
-
 
         const onTimeout = () => {
             if (Math.abs(scroll_ - this.scroll_) > 0.4) {
@@ -571,8 +570,6 @@ abstract class ScrollView extends Component {
 
 
 //
-const SCROLLBAR_WIDTH = scale(12);
-
 class Scrollbar extends Component implements ICallbacks {
     static defaultCursorWidth = scale(12);
 
