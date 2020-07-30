@@ -59,7 +59,7 @@ interface IThemeColors {
 const bottomColors: IThemeColors = {
     text: RGB(180, 182, 184),
     background: RGB(40, 40, 40),
-    highlight: RGB(238, 127, 0),
+    highlight: RGB(251,114,153),
     text_sel: RGB(255, 255, 255),
     heart: RGB(195, 45, 46)
 }
@@ -70,16 +70,17 @@ const bottomColors: IThemeColors = {
 const sidebarColors: IThemeColors = {
     text: RGB(180, 182, 184),
     background: RGB(20, 20, 20),
-    highlight: RGB(238, 127, 0)
+    highlight: RGB(247, 217, 76)
 }
 
 /**
  * Colors of main panel area;
  */
 const mainColors: IThemeColors = {
-    text: RGB(170, 170, 170),
+    // text: RGB(170, 170, 170),
+    text: RGB(235, 235, 235),
     background: RGB(35, 35, 35),
-    highlight: RGB(238, 127, 0)
+    highlight: RGB(247, 217, 76)
 }
 
 
@@ -865,7 +866,7 @@ const PL_Properties = {
 
 const PL_Colors: IThemeColors = {
     text: mainColors.text,
-    background: RGB(0, 0, 0),
+    background: RGB(30, 30, 30),
     highlight: mainColors.highlight,
     heartRed: RGB(221, 0, 27)
 }
@@ -1453,9 +1454,10 @@ const PLM_Properties = {
 }
 
 const PLM_Colors: IThemeColors = {
-    text: RGB(170, 170, 170),
-    background: RGB(0, 0, 0),
-    highlight: RGB(200, 200, 200),
+    text: blendColors(mainColors.text, mainColors.background, 0.3),
+    textActive: mainColors.text,
+    background: RGB(24, 24, 24),
+    highlight: mainColors.highlight,
     background_sel: RGB(20, 20, 20),
     background_hover: RGB(10, 10, 10)
 }
@@ -1516,6 +1518,7 @@ class PLM_View extends ScrollView {
             let rowItem = new PLM_Item();
             let playlistMetadbs = plman.GetPlaylistItems(playlistIndex);
             items.push(rowItem);
+            rowItem.index = playlistIndex;
             rowItem.height = rowHeight;
             rowItem.metadb = (playlistMetadbs.Count === 0 ? null : playlistMetadbs[0]);
             rowItem.listName = plman.GetPlaylistName(playlistIndex)
@@ -1580,13 +1583,22 @@ class PLM_View extends ScrollView {
             if (rowItem.y + rowHeight >= this.y + headerHeight
                 && rowItem.y < this.y + this.height) {
 
+                let isActive = rowItem.index === plman.ActivePlaylist;
+                let textColor = (isActive ? colors.textActive : colors.text);
+                let indicateWidth = scale(4);
+
+                if (isActive) {
+                    gr.FillSolidRect(rowItem.x, rowItem.y, rowItem.width, rowItem.height,
+                        colors.text & 0x1fffffff);
+                }
+
                 // draw icon;
                 let icon_ = (rowItem.isAuto ? Material.settings : Material.queue_music);
-                gr.DrawString(icon_, iconFont, colors.text,
+                gr.DrawString(icon_, iconFont, textColor,
                     rowItem.x + paddingL, rowItem.y, rowHeight, rowHeight, StringFormat.Center);
 
                 // draw list name;
-                gr.DrawString(rowItem.listName, itemFont, colors.text,
+                gr.DrawString(rowItem.listName, itemFont, textColor,
                     rowItem.x + paddingL + rowHeight,
                     rowItem.y,
                     rowItem.width - paddingL - paddingR - rowHeight,
@@ -1685,7 +1697,7 @@ function ShowPage(pageId: number) {
 function ArrangeLayout(pageId: number) {
     const areaY = UI.y + TOP_H;
     const areaHeight = UI.height - TOP_H - PLAY_CONTROL_HEIGHT;
-    const gap = scale(4);
+    const gap = scale(0);
 
     switch (pageId) {
         case PanelPageIDs.playlists:
