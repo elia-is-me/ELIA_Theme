@@ -59,7 +59,7 @@ class Component implements IBox, TEST {
 
     on_paint(gr: IGdiGraphics) { }
     on_size() { }
-    on_init() {}
+    on_init() { }
 
     addChild(node: Component) {
         if (!(node instanceof Component)) {
@@ -115,7 +115,7 @@ class Component implements IBox, TEST {
         if (is_vis !== pre_vis) g_panels_changed = true;
     }
 
-    onNotifyData(str: string, info: any) {}
+    onNotifyData(str: string, info: any) { }
 }
 
 
@@ -539,24 +539,12 @@ abstract class ScrollView extends Component {
         return val;
     }
 
-    // TODO:
-    // private _onTimeout (scroll: number) {
-    //     if (Math.abs(scroll - this.scroll_) > 0.4) {
-    //         this.scroll_ += (scroll - this.scroll_) /3;
-    //         this.scrolling = true;
-    //         window.ClearTimeout(this.timerId);
-    //         ...
-    //     }
-    // }
-
     scrollTo(scroll_?: number) {
-        if (scroll_ == null) {
-            scroll_ = this._checkScroll(this.scroll_);
-        }
-
+        scroll_ = this._checkScroll(this.scroll_);
         if (scroll_ === this.scroll_) {
             return;
         }
+
 
         const onTimeout = () => {
             if (Math.abs(scroll_ - this.scroll_) > 0.4) {

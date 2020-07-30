@@ -895,6 +895,7 @@ class PL_Header extends Component {
 const plHeader = new PL_Header({})
 
 const PL_Columns = {
+    index: { x: 0, width: scale(50) },
     trackNo: { x: 0, width: scale(50) },
     title: { x: 0, width: 0 },
     trackLen: { x: 0, width: scale(8) + MeasureString("00:00", PL_Properties.itemFont).Width },
@@ -918,6 +919,7 @@ class Pl_Item {
 
     // info
     metadb: IFbMetadb;
+    index: number;
     playlistIndex: number;
     playlistItemIndex: number;
     title: string = "";
@@ -969,6 +971,7 @@ class PlaybackQueue extends ScrollView {
         for (let playlistItemIndex = 0; playlistItemIndex < pl_itemCount; playlistItemIndex++) {
             let trackItem = new Pl_Item();
             trackItem.height = rowHeight;
+            trackItem.index = playlistItemIndex;
             trackItem.metadb = pl_metadbs[playlistItemIndex];
             trackItem.playlistItemIndex = playlistItemIndex;
             trackItem.yOffset = itemYOffset;
@@ -996,10 +999,12 @@ class PlaybackQueue extends ScrollView {
 
     setColumnSize() {
         const padLeft = scale(4);
-        const padRight = this.scrollbar.width;
+        const padRight = this.scrollbar.width + scale(4);
         const columns = PL_Columns;
 
-        columns.trackNo.x = this.x + padLeft;
+        columns.index.x = this.x + padLeft;
+        // columns.trackNo.x = this.x + padLeft;
+        columns.trackNo.x = columns.index.x + columns.index.width;
         columns.trackLen.x = this.x + this.width - padRight - columns.trackLen.width;
         columns.mood.x = columns.trackLen.x - columns.mood.width;
         columns.title.x = columns.trackNo.x + columns.trackNo.width;
@@ -1046,7 +1051,7 @@ class PlaybackQueue extends ScrollView {
         gr.FillSolidRect(this.x, this.y, this.width, this.height, colors.background);
 
         //
-        this.visibleItems.splice(0, this.visibleItems.length);
+        this.visibleItems.length = 0;
 
         // Draw Items;
         for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
@@ -1080,6 +1085,9 @@ class PlaybackQueue extends ScrollView {
                     gr.DrawRect(this.x, thisItem.y, this.width - 1, rowHeight - 1, scale(1),
                         RGB(127, 127, 127));
                 }
+
+                gr.DrawString(itemIndex, itemFont, colors.text,
+                    columns.index.x, thisItem.y, columns.index.width, rowHeight, StringFormat.Center)
 
                 if (this.playingItemIndex === itemIndex) {
                     gr.DrawString(fb.IsPaused ? Material.volume_mute : Material.volume, iconFont, colors.highlight,
@@ -1139,6 +1147,7 @@ class PlaybackQueue extends ScrollView {
                 this.items[plIndex].playlistItemIndex);
         }
         ThrottledRepaint();
+        // Repaint();
     }
 
     on_item_focus_change(playlistIndex: number, from?: number, to?: number) {
@@ -1180,7 +1189,8 @@ class PlaybackQueue extends ScrollView {
 
     private _findHoverIndex(x: number, y: number) {
         if (!this.trace(x, y)) { return - 1; }
-        else { return this.visibleItems.findIndex(item => item.trace(x, y)); }
+        let hoverItem_ = this.visibleItems.find(item => item.trace(x, y));
+        return (hoverItem_ ? hoverItem_.index : -1);
     }
 
     private _setFocus(index: number) {
@@ -1191,23 +1201,38 @@ class PlaybackQueue extends ScrollView {
         this.focusIndex = index;
     }
 
-    private _setSelection(from: number, to?: number) {
-        if (to == null) to = from;
-        let c = from;
-        if (from > to) { from = to; to = c; }
-        let indexes: number[] = [];
-
-        for (let index = from; index <= to; index++) {
-            this.items[index]
-                && indexes.push(this.items[index].playlistItemIndex);
-        }
-
-        if (indexes.toString() !== this.selectedIndexes.toString()) {
-            this.selectedIndexes = indexes;
+    private _setSelection(from?: number, to?: number) {
+        // Clear playlist selection;
+        if (from == null) {
             plman.ClearPlaylistSelection(plman.ActivePlaylist);
-            plman.SetPlaylistSelection(plman.ActivePlaylist, indexes, true);
+            this.selectedIndexes = [];
+        } else {
+            // Set Selection from - to;
+            if (to == null) to = from;
+            let c = from;
+            if (from > to) { from = to; to = c; }
+            let indexes: number[] = [];
+
+            for (let index = from; index <= to; index++) {
+                this.items[index]
+                    && indexes.push(this.items[index].playlistItemIndex);
+            }
+
+            if (indexes.toString() !== this.selectedIndexes.toString()) {
+                this.selectedIndexes = indexes;
+                plman.ClearPlaylistSelection(plman.ActivePlaylist);
+                plman.SetPlaylistSelection(plman.ActivePlaylist, indexes, true);
+            }
         }
+
+        this.on_selection_changed();
     }
+
+    private drag_is_active = false;
+    private click_on_selection = false;
+    private clicked_index = -1;
+    private drag_timer = -1;
+    private shift_start_index = -1;
 
     on_mouse_wheel(step: number) {
         this.scrollTo(this.scroll_ - step * PL_Properties.rowHeight * 3);
@@ -1226,22 +1251,30 @@ class PlaybackQueue extends ScrollView {
         let hoverItemSel_ = (
             hoverItem_ &&
             plman.IsPlaylistItemSelected(plman.ActivePlaylist, hoverItem_.playlistItemIndex));
+        // console.log("hover item selected?", hoverItemSel_);
         let holdCtrl_ = utils.IsKeyPressed(VK_CONTROL);
         let holdShift_ = utils.IsKeyPressed(VK_SHIFT);
+
+        // Set focus;
+        hoverItem_ && this._setFocus(hoverIndex_);
+
+        // Set selection;
+        if (hoverItem_ && !holdShift_) {
+            this.shift_start_index = this.focusIndex;
+        }
 
         // TODO: Reset selecting & dragging;
         if (hoverItem_ == null) {
             if (!holdCtrl_ && !holdShift_) {
                 // TODO:Set selecting
-                plman.ClearPlaylistSelection(plman.ActivePlaylist);
+                this.drag_is_active = true;
+                this._setSelection();
             }
+            this.shift_start_index = -1;
         } else {
-            this._setFocus(hoverIndex_);
-            console.log(this.items[this.focusIndex].title);
             if (!holdShift_) {
-                this.selection.SHIFT_startId = this.focusIndex
+                this.shift_start_index = this.focusIndex;
             }
-
             // set selecting;
             switch (true) {
                 case holdCtrl_:
@@ -1250,17 +1283,21 @@ class PlaybackQueue extends ScrollView {
                         hoverItem_.playlistItemIndex,
                         !hoverItemSel_
                     );
+                    this.on_selection_changed();
                     break;
                 case holdShift_:
                     this._setSelection(
-                        this.selection.SHIFT_startId,
-                        this.focusIndex)
+                        // this.selection.SHIFT_startId,
+                        this.shift_start_index,
+                        hoverIndex_
+                    );
                     break;
                 default:
                     if (hoverItemSel_) {
-                        // 
+                        this.click_on_selection = true;
                     } else {
-                        this._setSelection(this.hoverIndex);
+                        this._setSelection(hoverIndex_);
+                        this.drag_is_active = true;
                     }
                     break;
             }
@@ -1270,6 +1307,21 @@ class PlaybackQueue extends ScrollView {
     on_mouse_lbtn_up(x: number, y: number, mask?: number) {
         let hoverIndex_ = this._findHoverIndex(x, y);
         let hoverItem_ = this.items[hoverIndex_];
+        let holdCtrl_ = utils.IsKeyPressed(VK_CONTROL);
+        let holdShift_ = utils.IsKeyPressed(VK_SHIFT);
+
+        if (this.drag_is_active) {
+        } else {
+            if (hoverItem_ && !holdCtrl_ && !holdShift_) {
+                this._setSelection(hoverIndex_);
+            }
+        }
+
+        clearTimeout(this.drag_timer);
+        this.drag_is_active = false;
+        this.clicked_index = -1;
+        this.click_on_selection = false;
+        Repaint();
     }
 
     on_mouse_rbtn_down(x: number, y: number) {
@@ -1277,9 +1329,8 @@ class PlaybackQueue extends ScrollView {
         let hoverItem_ = this.items[hoverIndex_];
 
         if (hoverItem_ == null) {
-            plman.ClearPlaylistSelection(plman.ActivePlaylist);
-        }
-        else {
+            this._setSelection();
+        } else {
             if (!plman.IsPlaylistItemSelected(
                 plman.ActivePlaylist,
                 hoverItem_.playlistItemIndex)
@@ -1288,6 +1339,15 @@ class PlaybackQueue extends ScrollView {
                 this._setFocus(hoverIndex_);
             }
         }
+    }
+
+    on_mouse_rbtn_up(x: number, y: number) {
+        try {
+            // Context Menu
+            PL_TrackContextMenu(plman.ActivePlaylist,
+                plman.GetPlaylistSelectedItems(plman.ActivePlaylist),
+                x, y);
+        } catch (e) { }
     }
 
     private selection = {
@@ -1857,6 +1917,7 @@ function on_mouse_leave() {
 }
 
 function on_mouse_rbtn_down(x: number, y: number, mask?: number) {
+    Activate(x, y);
     invoke(panels_vis[g_active_index], "on_mouse_rbtn_down", x, y);
 }
 
