@@ -3,7 +3,9 @@
 //                    title_format objects;
 // ------------------------------------------------------------
 
-// colors;
+// Colors;
+// TODO: 参考 ANTD 颜色，命名等
+//       Scrollbar 颜色主题规范
 
 interface IThemeColors {
     text: number;
@@ -16,26 +18,6 @@ interface IThemeColors {
 };
 
 /**
- * Colors for bottom playback bar;
- */
-const bottomColors: IThemeColors = {
-    text: RGB(180, 182, 184),
-    background: RGB(40, 40, 40),
-    highlight: RGB(251,114,153),
-    text_sel: RGB(255, 255, 255),
-    heart: RGB(195, 45, 46)
-}
-
-/**
- * Colors for sidebar;
- */
-const sidebarColors: IThemeColors = {
-    text: RGB(180, 182, 184),
-    background: RGB(20, 20, 20),
-    highlight: RGB(247, 217, 76)
-}
-
-/**
  * Colors of main panel area;
  */
 const mainColors: IThemeColors = {
@@ -44,6 +26,27 @@ const mainColors: IThemeColors = {
     background: RGB(35, 35, 35),
     highlight: RGB(247, 217, 76)
 }
+
+/**
+ * Colors for bottom playback bar;
+ */
+const bottomColors: IThemeColors = {
+    text: mainColors.text,
+    background: RGB(40, 40, 40),
+    highlight: RGB(251,114,153),
+    text_sel: RGB(255, 255, 255),
+    heart: RGB(195, 45, 46)
+}
+
+/**
+ * Colors for sidebar like playlist manager;
+ */
+const sidebarColors: IThemeColors = {
+    text: mainColors.text,
+    background: RGB(20, 20, 20),
+    highlight: RGB(247, 217, 76)
+}
+
 
 
 const Material = {
