@@ -9,6 +9,7 @@
 
 interface IThemeColors {
     text: number;
+	secondaryText?: number;
     text2?: number;
     background: number;
     highlight: number;
@@ -21,8 +22,8 @@ interface IThemeColors {
  * Colors of main panel area;
  */
 const mainColors: IThemeColors = {
-    // text: RGB(170, 170, 170),
     text: RGB(235, 235, 235),
+	secondaryText: RGB(217, 217, 217),
     background: RGB(35, 35, 35),
     highlight: RGB(247, 217, 76)
 }
@@ -43,10 +44,11 @@ const bottomColors: IThemeColors = {
  */
 const sidebarColors: IThemeColors = {
     text: mainColors.text,
+	secondaryText: mainColors.secondaryText,
     background: RGB(20, 20, 20),
-    highlight: RGB(247, 217, 76)
+    highlight: RGB(247, 217, 76),
+	HEART_RED: RGB(221, 0, 27) // Color for mood;
 }
-
 
 
 const Material = {
@@ -828,7 +830,7 @@ const PL_Colors: IThemeColors = {
     text: mainColors.text,
     background: RGB(30, 30, 30),
     highlight: mainColors.highlight,
-    heartRed: RGB(221, 0, 27)
+    HEART_RED: RGB(221, 0, 27)
 }
 
 
@@ -1061,7 +1063,7 @@ class PlaybackQueue extends ScrollView {
                 gr.DrawString(thisItem.pbLength, itemFont, colors.text, columns.trackLen.x, thisItem.y, columns.trackLen.width, rowHeight, StringFormat.Center);
 
                 if (thisItem.rating === "5") {
-                    gr.DrawString(Material.heart, iconFont, colors.heartRed,
+                    gr.DrawString(Material.heart, iconFont, colors.HEART_RED,
                         columns.mood.x, thisItem.y, columns.mood.width, rowHeight, StringFormat.Center);
                 } else {
                     gr.DrawString(Material.heart_empty, iconFont, colors.text,
@@ -1457,7 +1459,7 @@ class PLM_Item {
 class PLM_View extends ScrollView {
     items: PLM_Item[] = [];
     scrollbar: Scrollbar = new Scrollbar({
-        cursorColor: PL_Colors.text & 0x50ffffff,
+        cursorColor: sidebarColors.text & 0x50ffffff,
         backgroundColor: 0x00ffffff
     });
     header: PLM_Header = new PLM_Header({});
