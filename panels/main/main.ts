@@ -3,10 +3,13 @@
 //                    title_format objects;
 // ------------------------------------------------------------
 
-// colors;
+// Colors;
+// TODO: 参考 ANTD 颜色，命名等
+//       Scrollbar 颜色主题规范
 
 interface IThemeColors {
     text: number;
+	secondaryText?: number;
     text2?: number;
     background: number;
     highlight: number;
@@ -16,33 +19,35 @@ interface IThemeColors {
 };
 
 /**
+ * Colors of main panel area;
+ */
+const mainColors: IThemeColors = {
+    text: RGB(235, 235, 235),
+	secondaryText: RGB(217, 217, 217),
+    background: RGB(35, 35, 35),
+    highlight: RGB(247, 217, 76)
+}
+
+/**
  * Colors for bottom playback bar;
  */
 const bottomColors: IThemeColors = {
-    text: RGB(180, 182, 184),
-    background: RGB(33, 33, 33),
+    text: mainColors.text,
+    background: RGB(40, 40, 40),
     highlight: RGB(251,114,153),
     text_sel: RGB(255, 255, 255),
     heart: RGB(195, 45, 46)
 }
 
 /**
- * Colors for sidebar;
+ * Colors for sidebar like playlist manager;
  */
 const sidebarColors: IThemeColors = {
-    text: RGB(180, 182, 184),
+    text: mainColors.text,
+	secondaryText: mainColors.secondaryText,
     background: RGB(20, 20, 20),
-    highlight: RGB(247, 217, 76)
-}
-
-/**
- * Colors of main panel area;
- */
-const mainColors: IThemeColors = {
-    // text: RGB(170, 170, 170),
-    text: RGB(235, 235, 235),
-    background: RGB(35, 35, 35),
-    highlight: RGB(247, 217, 76)
+    highlight: RGB(247, 217, 76),
+	HEART_RED: RGB(221, 0, 27) // Color for mood;
 }
 
 
@@ -125,7 +130,8 @@ type pbButtonImageKeys = "pause" | "play" | "next" | "prev" | "heart" | "heart_e
     | "repeat_off" | "repeat_on" | "repeat1_on" | "shuffle_off" | "shuffle_on" | "volume"
     | "volume_mute";
 
-const pb_btns2: { [K in pbButtonKeys]: Icon } = {
+type TPlaybackButtons = {[K in pbButtonKeys ]: Icon };
+const pb_btns2: TPlaybackButtons = {
     playOrPause: null,
     next: null,
     prev: null,
@@ -455,6 +461,174 @@ const albumArt = new AlbumArtView({
 });
 
 // TODO: class BottomPanelView extends Component;
+class PlaybackControlPanel extends Component {
+	private timerId: number = -1;
+	playbackTime: string = "";
+	playbackLength  : string = "";
+	trackTitle: string = "";
+	titleFont = gdi.Font("Segoe UI Semibold", scale(13));
+	timeFont = gdi.Font("Segoe UI", scale(12));
+	timeWidth = 1;
+	volumeWidth = scale(80);
+	artworkWidth = scale(55);
+	colors: IThemeColors;
+
+	// children;
+	volume: Slider;
+	seekbar: Slider;
+	artwork: AlbumArtView;
+	artist: Textlink;
+	buttons: TPlaybackButtons;
+
+	constructor (attrs: object) {
+		super(attrs);
+		this.colors = attrs.colors;
+	}
+
+	on_init () {
+		let panelRefreshInterval = 1000; // ms;
+		let onPlaybackTimer_ = () => {
+			if (fb.IsPlaying && !fb.IsPaused && fb.PlaybackLength> 0){
+				this.playbackTime = FormatTime(fb.PlaybackTime);
+				this.playbackLength = FormatTime(fb.PlaybackLength);
+				Repaint();
+			} else {}
+			window.ClearTimeout(this.timerId);
+			this.timerId = window.SetTimeout(onPlaybackTimer_, panelRefreshInterval);
+		}
+
+		onPlaybackTimer_();
+
+		let npMetadb = fb.GetNowPlaying();
+		this.trackTitle = (
+			npMetadb == null ? "NOT PLAYING" :
+			TF_TRACK_TITLE.EvalWithMetadb(npMetadb);
+		);
+		if (fb.IsPlaying) {
+				this.playbackTime = FormatTime(fb.PlaybackTime);
+				this.playbackLength = FormatTime(fb.PlaybackLength);
+		}
+		this.timeWidth = MeasureString("+00:00+", this.timeFont).Width;
+	}
+
+	setChildPanels() {}
+
+
+    on_size() {
+		let {seekbar,volume,buttons,artwork,artist} = this;
+		// let buttons = pb_btns2;
+        let UI_x = this.x,
+            UI_y = this.y,
+            UI_w = this.width,
+            UI_h = this.height;
+
+        // play_pause button;
+        let bw_1 = buttons.playOrPause.width;
+        let by_1 = (UI_y + (scale(50) - bw_1) / 2) >> 0;
+        let bx_1 = (UI_x + UI_w / 2 - bw_1 / 2) >> 0;
+        let pad_1 = scale(12);
+        buttons.playOrPause.setSize(bx_1, by_1);
+
+        // prev
+        let bx_2 = bx_1 - bw_1 - pad_1;
+        buttons.prev.setSize(bx_2, by_1);
+
+        // next;
+        let bx_3 = bx_1 + bw_1 + pad_1;
+        buttons.next.setSize(bx_3, by_1);
+
+        // repeat
+        let bw_2 = buttons.shuffle.width;
+        let by_2 = (UI_y + (scale(50) - bw_2) / 2) >> 0;
+        let bx_4 = bx_2 - bw_2 - scale(16);
+        buttons.repeat.setSize(bx_4, by_2);
+
+        //shuffle;
+        let bx_5 = bx_3 + bw_1 + scale(16);
+        buttons.shuffle.setSize(bx_5, by_2);
+
+        // volume bar;
+        let vol_h = scale(18)
+        let vol_w = scale(80);
+        let vol_y = UI_y + (UI_h - vol_h) / 2;
+        let vol_x = UI_x + UI_w - vol_w - scale(24);
+        volume.setSize(vol_x, vol_y, vol_w, vol_h);
+
+        // volume mute button;
+        let bx_6 = vol_x - bw_2 - scale(4);
+        let by_6 = (UI_y + (UI_h - bw_2) / 2) >> 0;
+        buttons.volume.setSize(bx_6, by_6);
+
+        // love;
+        buttons.love.setSize(bx_6 - bw_2, by_6);
+
+        // seekbar;
+        let seek_max_w = scale(640);
+        let seek_min_w = scale(240);
+        let ui_min_w = scale(780);
+        let seek_w = UI_w * (seek_min_w / ui_min_w);
+        if (seek_w < seek_min_w) seek_w = seek_min_w;
+        else if (seek_w > seek_max_w) seek_w = seek_max_w;
+        let seek_x = UI_x + (UI_w - seek_w) / 2;
+        let seek_y = by_1 + bw_1 + scale(8);
+        seekbar.setSize(seek_x, seek_y, seek_w, scale(16));
+
+        // art;
+        let art_w = scale(48);
+        let art_pad = (UI_h - art_w) / 2;
+        artwork.setSize(UI_x + art_pad, UI_y + art_pad, art_w, art_w);
+
+
+        // artist text;
+        let artist_x = UI_x + art_pad + art_w + scale(8);
+        let artist_y = this.y + (this.height / 2);
+        let artist_w = seek_x - bw_2 - scale(8) - artist_x;
+        artist.setSize(artist_x, artist_y, artist_w, scale(20));
+    },
+
+    on_paint(gr: IGdiGraphics) {
+        //let colors = bottomColors;
+        //let buttons = this.buttons;
+		let {colors, buttons} = this;
+
+        // bg
+        gr.FillSolidRect(this.x, this.y, this.width, this.height, colors.background);
+
+        // playback time;
+        let pb_time_x = seekbar.x - this.time_w - scale(4);
+        let pb_time_y = seekbar.y;
+        gr.DrawString(this.pb_time, this.time_font, colors.text, pb_time_x, pb_time_y, this.time_w, seekbar.height, StringFormat.Center);
+
+        // playback length;
+        let pb_len_x = seekbar.x + seekbar.width + scale(4);
+        gr.DrawString(this.pb_length, this.time_font, colors.text, pb_len_x, pb_time_y, this.time_w, seekbar.height, StringFormat.Center);
+
+        // track title;
+        let title_x = albumArt.x + albumArt.width + scale(8);
+        let title_max_w = pb_time_x - buttons.love.width - scale(8) - title_x;
+        let title_y = this.y + this.height / 2 - scale(22) - scale(2);
+        gr.DrawString(this.track_title, this.title_font, colors.text, title_x, title_y, title_max_w, scale(22), StringFormat.LeftCenter);
+
+    }
+
+    on_playback_new_track() {
+        this.pb_time = "00:00";
+        this.pb_length = "--:--"
+        this.track_title = TF_TRACK_TITLE.EvalWithMetadb(fb.GetNowPlaying());
+        Repaint();
+    }
+
+    on_playback_stop(reason: number) {
+        if (reason != 2) {
+            this.track_title = "NOT PLAYING";
+            this.pb_time = "00:00";
+            this.pb_length = "--:--"
+            Repaint();
+        }
+    }
+
+}
+
 const bottomPanel = new Component({
     // properties;
     timerId: -1,
@@ -831,7 +1005,7 @@ const PL_Colors: IThemeColors = {
     text: mainColors.text,
     background: RGB(30, 30, 30),
     highlight: mainColors.highlight,
-    heartRed: RGB(221, 0, 27)
+    HEART_RED: RGB(221, 0, 27)
 }
 
 
@@ -1064,7 +1238,7 @@ class PlaybackQueue extends ScrollView {
                 gr.DrawString(thisItem.pbLength, itemFont, colors.text, columns.trackLen.x, thisItem.y, columns.trackLen.width, rowHeight, StringFormat.Center);
 
                 if (thisItem.rating === "5") {
-                    gr.DrawString(Material.heart, iconFont, colors.heartRed,
+                    gr.DrawString(Material.heart, iconFont, colors.HEART_RED,
                         columns.mood.x, thisItem.y, columns.mood.width, rowHeight, StringFormat.Center);
                 } else {
                     gr.DrawString(Material.heart_empty, iconFont, colors.text,
@@ -1460,7 +1634,7 @@ class PLM_Item {
 class PLM_View extends ScrollView {
     items: PLM_Item[] = [];
     scrollbar: Scrollbar = new Scrollbar({
-        cursorColor: PL_Colors.text & 0x50ffffff,
+        cursorColor: sidebarColors.text & 0x50ffffff,
         backgroundColor: 0x00ffffff
     });
     header: PLM_Header = new PLM_Header({});
