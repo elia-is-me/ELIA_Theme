@@ -20,7 +20,7 @@ interface IThemeColors {
  */
 const bottomColors: IThemeColors = {
     text: RGB(180, 182, 184),
-    background: RGB(40, 40, 40),
+    background: RGB(33, 33, 33),
     highlight: RGB(251,114,153),
     text_sel: RGB(255, 255, 255),
     heart: RGB(195, 45, 46)
@@ -90,6 +90,7 @@ const scrollbarWidth = scale(14);
 // Global Messages
 const Messages = {
     topbarSwitchTab: "topbar.switchtab",
+    showArtistPage: "show_artist_page",
 }
 
 const Prevent = {
@@ -390,14 +391,14 @@ const volumebar = new Slider({
 const TF_TRACK_TITLE = fb.TitleFormat("%title%");
 // \u30fb: Middle dot char code.
 const TF_ARTIST = fb.TitleFormat("$if2([%artist%],未知艺人)[\u30fb$year(%date%)]");
-
 const artistFont = gdi.Font("Microsoft YaHei", scale(12));
 
 const artistText = new Textlink({
     text: "ARTIST",
     font: artistFont,
-    color: bottomColors.text,
-    hoverColor: blendColors(bottomColors.text, bottomColors.background, 0.7),
+    textColor: blendColors(bottomColors.text, bottomColors.background, 0.2),
+    // mbottomColors.text,
+    textHoverColor: blendColors(bottomColors.text, bottomColors.background, 0.2),
     maxWidth: MeasureString("一二 三四、五六 七八" + "\u30fb0000", artistFont).Width,
 
     on_init() {
@@ -405,6 +406,11 @@ const artistText = new Textlink({
         this.setText(
             metadb ? TF_ARTIST.EvalWithMetadb(metadb) : "ARTIST"
         );
+    },
+
+    on_click() {
+        // Show artist page: artistName;
+        NotifyOtherPanels(Messages.showArtistPage, "");
     },
 
     on_playback_new_track() {
@@ -1709,7 +1715,7 @@ UI.on_size = function () {
     bottomPanel.setSize(this.x, this.y + this.height - PLAY_CONTROL_HEIGHT, this.width, PLAY_CONTROL_HEIGHT);
     topbar.setSize(this.x, this.y, this.width, TOP_H);
 
-	// Arrange others' layout;
+    // Arrange others' layout;
     ArrangeLayout(main_page_stat);
 }
 

@@ -433,12 +433,11 @@ class AlbumArtView extends Component {
 class Textlink extends Component {
     text: string = "";
     font: IGdiFont = gdi.Font("tahoma", 12);
-    fontUnderlined: IGdiFont;
+    _underlinedFont: IGdiFont;
     textColor: number = 0xff555555;
     textHoverColor: number = 0xff000000;
     maxWidth: number = 0;
     state: number = ButtonStates.normal;
-
 
     constructor(attrs: object) {
         super(attrs);
@@ -446,7 +445,7 @@ class Textlink extends Component {
         if (isObject(attrs)) {
             Object.assign(this, attrs);
         }
-        this.fontUnderlined = gdi.Font(this.font.Name, this.font.Size, 4);
+        this._underlinedFont = gdi.Font(this.font.Name, this.font.Size, 4);
     }
 
     setText(text: string) {
@@ -466,18 +465,19 @@ class Textlink extends Component {
             return;
         }
 
-        let font: IGdiFont, color: number;
+        let font_: IGdiFont; 
+        let textColor_: number;
 
         if (this.state === ButtonStates.normal) {
-            font = this.font;
-            color = this.textColor;
+            font_ = this.font;
+            textColor_ = this.textColor;
         }
         else {
-            font = this.fontUnderlined;
-            color = this.textHoverColor;
+            font_ = this._underlinedFont;
+            textColor_ = this.textHoverColor;
         }
 
-        gr.DrawString(this.text, font, color, this.x, this.y, this.width, this.height, StringFormat.LeftCenter);
+        gr.DrawString(this.text, font_, textColor_, this.x, this.y, this.width, this.height, StringFormat.LeftCenter);
     }
 
     changeState(newstate: number) {
