@@ -9,7 +9,7 @@
 
 interface IThemeColors {
     text: number;
-	secondaryText?: number;
+    secondaryText?: number;
     text2?: number;
     background: number;
     highlight: number;
@@ -23,7 +23,7 @@ interface IThemeColors {
  */
 const mainColors: IThemeColors = {
     text: RGB(235, 235, 235),
-	secondaryText: RGB(217, 217, 217),
+    secondaryText: RGB(217, 217, 217),
     background: RGB(35, 35, 35),
     highlight: RGB(247, 217, 76)
 }
@@ -33,8 +33,8 @@ const mainColors: IThemeColors = {
  */
 const bottomColors: IThemeColors = {
     text: mainColors.text,
-    background: RGB(40, 40, 40),
-    highlight: RGB(251,114,153),
+    background: RGB(17, 17, 17),
+    highlight: RGB(251, 114, 153),
     text_sel: RGB(255, 255, 255),
     heart: RGB(195, 45, 46)
 }
@@ -44,10 +44,10 @@ const bottomColors: IThemeColors = {
  */
 const sidebarColors: IThemeColors = {
     text: mainColors.text,
-	secondaryText: mainColors.secondaryText,
-    background: RGB(20, 20, 20),
+    secondaryText: mainColors.secondaryText,
+    background: RGB(24, 24, 24),
     highlight: RGB(247, 217, 76),
-	HEART_RED: RGB(221, 0, 27) // Color for mood;
+    HEART_RED: RGB(221, 0, 27) // Color for mood;
 }
 
 
@@ -130,7 +130,7 @@ type pbButtonImageKeys = "pause" | "play" | "next" | "prev" | "heart" | "heart_e
     | "repeat_off" | "repeat_on" | "repeat1_on" | "shuffle_off" | "shuffle_on" | "volume"
     | "volume_mute";
 
-type TPlaybackButtons = {[K in pbButtonKeys ]: Icon };
+type TPlaybackButtons = { [K in pbButtonKeys]: Icon };
 const pb_btns2: TPlaybackButtons = {
     playOrPause: null,
     next: null,
@@ -141,7 +141,7 @@ const pb_btns2: TPlaybackButtons = {
     volume: null
 }
 
-const createBottomButtons = () => {
+const createBottomButtons = (themeColors?: IThemeColors) => {
     const colors = bottomColors;
     let iconName = MaterialFont;
     let iconFont = gdi.Font(iconName, scale(22));
@@ -163,7 +163,15 @@ const createBottomButtons = () => {
         volume: imageFromCode(Material.volume, iconFont2, colors.text, bw_2, bw_2),
         volume_mute: imageFromCode(Material.volume_mute, iconFont2, colors.text, bw_2, bw_2),
     }
-    let buttons = pb_btns2;
+    let buttons: TPlaybackButtons = {
+        playOrPause: null,
+        next: null,
+        prev: null,
+        love: null,
+        repeat: null,
+        shuffle: null,
+        volume: null
+    }
 
     //
     const CMD_LOVE = 'Playback Statistics/Rating/5';
@@ -172,33 +180,27 @@ const createBottomButtons = () => {
 
     buttons.playOrPause = new Icon({
         image: images.pause,
-
         on_click: function () {
             fb.PlayOrPause();
             this.on_init();
             Repaint();
         },
-
         on_init: function () {
             this.setImage(fb.IsPlaying && !fb.IsPaused ? images.pause : images.play);
         },
-
         on_playback_new_track: function () {
             this.on_init();
             Repaint();
         },
-
         on_playback_stop: function (reason: number) {
             this.on_init();
             Repaint();
         },
-
         on_playback_pause: function () {
             this.on_init();
             Repaint();
         }
     });
-
     buttons.next = new Icon({
         image: images.next,
 
@@ -209,7 +211,6 @@ const createBottomButtons = () => {
 
     buttons.prev = new Icon({
         image: images.prev,
-
         on_click: function () {
             fb.Prev();
         }
@@ -217,7 +218,6 @@ const createBottomButtons = () => {
 
     buttons.love = new Icon({
         image: images.heart_empty,
-
         on_init: function () {
             var metadb = fb.GetNowPlaying();
             if (!metadb || !fb.IsMetadbInMediaLibrary(metadb)) {
@@ -226,7 +226,6 @@ const createBottomButtons = () => {
                 this.setImage(+TF_RATING.EvalWithMetadb(metadb) == 5 ? images.heart : images.heart_empty);
             }
         },
-
         on_click: function () {
             var metadb = fb.GetNowPlaying();
             if (metadb && fb.IsMetadbInMediaLibrary(metadb)) {
@@ -236,19 +235,16 @@ const createBottomButtons = () => {
             this.on_init();
             Repaint();
         },
-
         on_playback_new_track: function () {
             this.on_init();
             Repaint();
         },
-
         on_playback_stop: function (reason: number) {
             if (reason !== 2) {
                 this.on_init();
                 Repaint();
             }
         },
-
         on_playback_edited() {
             this.on_init();
             Repaint();
@@ -257,7 +253,6 @@ const createBottomButtons = () => {
 
     buttons.repeat = new Icon({
         image: images.repeat_off,
-
         on_init() {
             switch (plman.PlaybackOrder) {
                 case PlaybackOrder.repeat_playlist:
@@ -271,7 +266,6 @@ const createBottomButtons = () => {
                     break;
             }
         },
-
         on_click() {
             if (plman.PlaybackOrder < 2) {
                 plman.PlaybackOrder += 1;
@@ -284,7 +278,6 @@ const createBottomButtons = () => {
             this.on_init();
             Repaint();
         },
-
         on_playback_order_changed() {
             this.on_init();
             Repaint();
@@ -293,7 +286,6 @@ const createBottomButtons = () => {
 
     buttons.shuffle = new Icon({
         image: images.shuffle_off,
-
         on_init() {
             if (plman.PlaybackOrder === 4) {
                 this.setImage(images.shuffle_on);
@@ -301,7 +293,6 @@ const createBottomButtons = () => {
                 this.setImage(images.shuffle_off);
             }
         },
-
         on_click() {
             if (plman.PlaybackOrder === 4) {
                 plman.PlaybackOrder = 0; // reset to default
@@ -310,7 +301,6 @@ const createBottomButtons = () => {
             }
             this.on_init();
         },
-
         on_playback_order_changed() {
             this.on_init();
             Repaint();
@@ -319,17 +309,14 @@ const createBottomButtons = () => {
 
     buttons.volume = new Icon({
         image: images.volume,
-
         on_init() {
             this.setImage(
                 fb.Volume == -100 ? images.volume_mute : images.volume
             );
         },
-
         on_click() {
             fb.VolumeMute();
         },
-
         on_volume_change() {
             this.on_init();
             Repaint();
@@ -339,7 +326,7 @@ const createBottomButtons = () => {
     return buttons;
 }
 
-createBottomButtons();
+// createBottomButtons();
 
 function createThumbImg(colors: IThemeColors) {
     let tw = scale(14);
@@ -462,61 +449,75 @@ const albumArt = new AlbumArtView({
 
 // TODO: class BottomPanelView extends Component;
 class PlaybackControlPanel extends Component {
-	private timerId: number = -1;
-	playbackTime: string = "";
-	playbackLength  : string = "";
-	trackTitle: string = "";
-	titleFont = gdi.Font("Segoe UI Semibold", scale(13));
-	timeFont = gdi.Font("Segoe UI", scale(12));
-	timeWidth = 1;
-	volumeWidth = scale(80);
-	artworkWidth = scale(55);
-	colors: IThemeColors;
+    private timerId: number = -1;
+    playbackTime: string = "";
+    playbackLength: string = "";
+    trackTitle: string = "";
+    titleFont = gdi.Font("Segoe UI Semibold", scale(13));
+    timeFont = gdi.Font("Segoe UI", scale(12));
+    timeWidth = 1;
+    volumeWidth = scale(80);
+    artworkWidth = scale(55);
+    colors: IThemeColors;
 
-	// children;
-	volume: Slider;
-	seekbar: Slider;
-	artwork: AlbumArtView;
-	artist: Textlink;
-	buttons: TPlaybackButtons;
+    // children;
+    volume: Slider;
+    seekbar: Slider;
+    artwork: AlbumArtView;
+    artist: Textlink;
+    buttons: TPlaybackButtons;
 
-	constructor (attrs: object) {
-		super(attrs);
-		this.colors = attrs.colors;
-	}
+    constructor(attrs: {
+        colors: IThemeColors;
+        z?: number;
+    }) {
+        super(attrs);
+        this.colors = attrs.colors;
+        this.setChildPanels();
+    }
 
-	on_init () {
-		let panelRefreshInterval = 1000; // ms;
-		let onPlaybackTimer_ = () => {
-			if (fb.IsPlaying && !fb.IsPaused && fb.PlaybackLength> 0){
-				this.playbackTime = FormatTime(fb.PlaybackTime);
-				this.playbackLength = FormatTime(fb.PlaybackLength);
-				Repaint();
-			} else {}
-			window.ClearTimeout(this.timerId);
-			this.timerId = window.SetTimeout(onPlaybackTimer_, panelRefreshInterval);
-		}
+    on_init() {
+        let panelRefreshInterval = 1000; // ms;
+        let onPlaybackTimer_ = () => {
+            if (fb.IsPlaying && !fb.IsPaused && fb.PlaybackLength > 0) {
+                this.playbackTime = FormatTime(fb.PlaybackTime);
+                this.playbackLength = FormatTime(fb.PlaybackLength);
+                Repaint();
+            } else { }
+            window.ClearTimeout(this.timerId);
+            this.timerId = window.SetTimeout(onPlaybackTimer_, panelRefreshInterval);
+        }
 
-		onPlaybackTimer_();
+        onPlaybackTimer_();
 
-		let npMetadb = fb.GetNowPlaying();
-		this.trackTitle = (
-			npMetadb == null ? "NOT PLAYING" :
-			TF_TRACK_TITLE.EvalWithMetadb(npMetadb);
-		);
-		if (fb.IsPlaying) {
-				this.playbackTime = FormatTime(fb.PlaybackTime);
-				this.playbackLength = FormatTime(fb.PlaybackLength);
-		}
-		this.timeWidth = MeasureString("+00:00+", this.timeFont).Width;
-	}
+        let npMetadb = fb.GetNowPlaying();
+        this.trackTitle = (
+            npMetadb == null ? "NOT PLAYING" : TF_TRACK_TITLE.EvalWithMetadb(npMetadb)
+        );
+        if (fb.IsPlaying) {
+            this.playbackTime = FormatTime(fb.PlaybackTime);
+            this.playbackLength = FormatTime(fb.PlaybackLength);
+        }
+        this.timeWidth = MeasureString("+00:00+", this.timeFont).Width;
+    }
 
-	setChildPanels() {}
+    setChildPanels() {
+        this.buttons = createBottomButtons();
+        this.seekbar = seekbar;
+        this.volume = volumebar;
+        this.artist = artistText;
+        this.artwork = albumArt;
 
+        this.addChild(this.seekbar);
+        this.addChild(this.volume);
+        this.addChild(this.artist);
+        this.addChild(this.artwork);
+        Object.values(this.buttons).forEach(btn => this.addChild(btn));
+    }
 
     on_size() {
-		let {seekbar,volume,buttons,artwork,artist} = this;
-		// let buttons = pb_btns2;
+        let { seekbar, volume, buttons, artwork, artist } = this;
+        // let buttons = pb_btns2;
         let UI_x = this.x,
             UI_y = this.y,
             UI_w = this.width,
@@ -578,212 +579,216 @@ class PlaybackControlPanel extends Component {
         let art_pad = (UI_h - art_w) / 2;
         artwork.setSize(UI_x + art_pad, UI_y + art_pad, art_w, art_w);
 
-
         // artist text;
         let artist_x = UI_x + art_pad + art_w + scale(8);
         let artist_y = this.y + (this.height / 2);
         let artist_w = seek_x - bw_2 - scale(8) - artist_x;
         artist.setSize(artist_x, artist_y, artist_w, scale(20));
-    },
+    }
 
     on_paint(gr: IGdiGraphics) {
         //let colors = bottomColors;
         //let buttons = this.buttons;
-		let {colors, buttons} = this;
+        let { colors, buttons } = this;
 
         // bg
         gr.FillSolidRect(this.x, this.y, this.width, this.height, colors.background);
 
         // playback time;
-        let pb_time_x = seekbar.x - this.time_w - scale(4);
+        let pb_time_x = seekbar.x - this.timeWidth - scale(4);
         let pb_time_y = seekbar.y;
-        gr.DrawString(this.pb_time, this.time_font, colors.text, pb_time_x, pb_time_y, this.time_w, seekbar.height, StringFormat.Center);
+        gr.DrawString(this.playbackTime, this.timeFont, colors.text, pb_time_x, pb_time_y, this.timeWidth, seekbar.height, StringFormat.Center);
 
         // playback length;
         let pb_len_x = seekbar.x + seekbar.width + scale(4);
-        gr.DrawString(this.pb_length, this.time_font, colors.text, pb_len_x, pb_time_y, this.time_w, seekbar.height, StringFormat.Center);
+        gr.DrawString(this.playbackLength, this.timeFont, colors.text, pb_len_x, pb_time_y, this.timeWidth, seekbar.height, StringFormat.Center);
 
         // track title;
         let title_x = albumArt.x + albumArt.width + scale(8);
         let title_max_w = pb_time_x - buttons.love.width - scale(8) - title_x;
         let title_y = this.y + this.height / 2 - scale(22) - scale(2);
-        gr.DrawString(this.track_title, this.title_font, colors.text, title_x, title_y, title_max_w, scale(22), StringFormat.LeftCenter);
+        gr.DrawString(this.trackTitle, this.titleFont, colors.text, title_x, title_y, title_max_w, scale(22), StringFormat.LeftCenter);
 
     }
 
     on_playback_new_track() {
-        this.pb_time = "00:00";
-        this.pb_length = "--:--"
-        this.track_title = TF_TRACK_TITLE.EvalWithMetadb(fb.GetNowPlaying());
+        this.playbackTime = "00:00";
+        this.playbackLength = "--:--"
+        this.trackTitle = TF_TRACK_TITLE.EvalWithMetadb(fb.GetNowPlaying());
         Repaint();
     }
 
     on_playback_stop(reason: number) {
         if (reason != 2) {
-            this.track_title = "NOT PLAYING";
-            this.pb_time = "00:00";
-            this.pb_length = "--:--"
+            this.playbackTime = "00:00";
+            this.playbackLength = "--:--"
+            this.trackTitle = "NOT PLAYING";
             Repaint();
         }
     }
 
 }
 
-const bottomPanel = new Component({
-    // properties;
-    timerId: -1,
-    pb_time: "",
-    pb_length: "",
-    track_title: "",
-    title_font: gdi.Font("segoe ui semibold", scale(13)),
-    time_font: gdi.Font("segoe ui", scale(12)),
-    time_w: 1,
-    volume_w: scale(80),
-    art_w: scale(55),
-
-    on_init() {
-        // Add children;
-
-        // let timerId = -1;
-        let on_playback_time_ = () => {
-            if (fb.IsPlaying && !fb.IsPaused && fb.PlaybackLength > 0) {
-                this.pb_time = FormatTime(fb.PlaybackTime);
-                this.pb_length = FormatTime(fb.PlaybackLength);
-                Repaint();
-            } else {/** */ };
-            window.ClearTimeout(this.timerId);
-            this.timerId = window.SetTimeout(on_playback_time_, 1000);
-        }
-
-        on_playback_time_();
-
-        let np_metadb = fb.GetNowPlaying();
-        this.track_title = (
-            np_metadb == null ? "NOT PLAYING" : TF_TRACK_TITLE.EvalWithMetadb(np_metadb)
-        );
-        if (fb.IsPlaying) {
-            this.pb_time = FormatTime(fb.PlaybackTime);
-            this.pb_length = FormatTime(fb.PlaybackLength);
-        }
-
-        this.time_w = MeasureString("+00:00+", this.time_font).Width;
-    },
-
-    on_size() {
-        let buttons = pb_btns2;
-        let UI_x = this.x,
-            UI_y = this.y,
-            UI_w = this.width,
-            UI_h = this.height;
-
-        // play_pause button;
-        let bw_1 = buttons.playOrPause.width;
-        let by_1 = (UI_y + (scale(50) - bw_1) / 2) >> 0;
-        let bx_1 = (UI_x + UI_w / 2 - bw_1 / 2) >> 0;
-        let pad_1 = scale(12);
-        buttons.playOrPause.setSize(bx_1, by_1);
-
-        // prev
-        let bx_2 = bx_1 - bw_1 - pad_1;
-        buttons.prev.setSize(bx_2, by_1);
-
-        // next;
-        let bx_3 = bx_1 + bw_1 + pad_1;
-        buttons.next.setSize(bx_3, by_1);
-
-        // repeat
-        let bw_2 = buttons.shuffle.width;
-        let by_2 = (UI_y + (scale(50) - bw_2) / 2) >> 0;
-        let bx_4 = bx_2 - bw_2 - scale(16);
-        buttons.repeat.setSize(bx_4, by_2);
-
-        //shuffle;
-        let bx_5 = bx_3 + bw_1 + scale(16);
-        buttons.shuffle.setSize(bx_5, by_2);
-
-        // volume bar;
-        let vol_h = scale(18)
-        let vol_w = scale(80);
-        let vol_y = UI_y + (UI_h - vol_h) / 2;
-        let vol_x = UI_x + UI_w - vol_w - scale(24);
-        volumebar.setSize(vol_x, vol_y, vol_w, vol_h);
-
-        // volume mute button;
-        let bx_6 = vol_x - bw_2 - scale(4);
-        let by_6 = (UI_y + (UI_h - bw_2) / 2) >> 0;
-        buttons.volume.setSize(bx_6, by_6);
-
-        // love;
-        buttons.love.setSize(bx_6 - bw_2, by_6);
-
-        // seekbar;
-        let seek_max_w = scale(640);
-        let seek_min_w = scale(240);
-        let ui_min_w = scale(780);
-        let seek_w = UI_w * (seek_min_w / ui_min_w);
-        if (seek_w < seek_min_w) seek_w = seek_min_w;
-        else if (seek_w > seek_max_w) seek_w = seek_max_w;
-        let seek_x = UI_x + (UI_w - seek_w) / 2;
-        let seek_y = by_1 + bw_1 + scale(8);
-        seekbar.setSize(seek_x, seek_y, seek_w, scale(16));
-
-        // art;
-        let art_w = scale(48);
-        let art_pad = (UI_h - art_w) / 2;
-        albumArt.setSize(UI_x + art_pad, UI_y + art_pad, art_w, art_w);
-
-
-        // artist text;
-        let artist_x = UI_x + art_pad + art_w + scale(8);
-        let artist_y = this.y + (this.height / 2);
-        let artist_w = seek_x - bw_2 - scale(8) - artist_x;
-        artistText.setSize(artist_x, artist_y, artist_w, scale(20));
-    },
-
-    on_paint(gr: IGdiGraphics) {
-        let colors = bottomColors;
-        let buttons = pb_btns2;
-
-        // bg
-        gr.FillSolidRect(this.x, this.y, this.width, this.height, colors.background);
-
-        // playback time;
-        let pb_time_x = seekbar.x - this.time_w - scale(4);
-        let pb_time_y = seekbar.y;
-        gr.DrawString(this.pb_time, this.time_font, colors.text, pb_time_x, pb_time_y, this.time_w, seekbar.height, StringFormat.Center);
-
-        // playback length;
-        let pb_len_x = seekbar.x + seekbar.width + scale(4);
-        gr.DrawString(this.pb_length, this.time_font, colors.text, pb_len_x, pb_time_y, this.time_w, seekbar.height, StringFormat.Center);
-
-        // track title;
-        let title_x = albumArt.x + albumArt.width + scale(8);
-        let title_max_w = pb_time_x - buttons.love.width - scale(8) - title_x;
-        let title_y = this.y + this.height / 2 - scale(22) - scale(2);
-        gr.DrawString(this.track_title, this.title_font, colors.text, title_x, title_y, title_max_w, scale(22), StringFormat.LeftCenter);
-
-    },
-
-    on_playback_new_track() {
-        this.pb_time = "00:00";
-        this.pb_length = "--:--"
-        this.track_title = TF_TRACK_TITLE.EvalWithMetadb(fb.GetNowPlaying());
-        Repaint();
-    },
-
-    on_playback_stop(reason: number) {
-        if (reason != 2) {
-            this.track_title = "NOT PLAYING";
-            this.pb_time = "00:00";
-            this.pb_length = "--:--"
-            Repaint();
-        }
-    },
+const bottomPanel = new PlaybackControlPanel({
+    colors: bottomColors,
+    z: 1000
 });
 
-bottomPanel.z = 1000;
-Object.values(pb_btns2).forEach(btn => bottomPanel.addChild(btn));
-[volumebar, seekbar, albumArt, artistText].forEach(item => bottomPanel.addChild(item));
+// const bottomPanel = new Component({
+//     // properties;
+//     timerId: -1,
+//     pb_time: "",
+//     pb_length: "",
+//     track_title: "",
+//     title_font: gdi.Font("segoe ui semibold", scale(13)),
+//     time_font: gdi.Font("segoe ui", scale(12)),
+//     time_w: 1,
+//     volume_w: scale(80),
+//     art_w: scale(55),
+
+//     on_init() {
+//         // Add children;
+
+//         // let timerId = -1;
+//         let on_playback_time_ = () => {
+//             if (fb.IsPlaying && !fb.IsPaused && fb.PlaybackLength > 0) {
+//                 this.pb_time = FormatTime(fb.PlaybackTime);
+//                 this.pb_length = FormatTime(fb.PlaybackLength);
+//                 Repaint();
+//             } else {/** */ };
+//             window.ClearTimeout(this.timerId);
+//             this.timerId = window.SetTimeout(on_playback_time_, 1000);
+//         }
+
+//         on_playback_time_();
+
+//         let np_metadb = fb.GetNowPlaying();
+//         this.track_title = (
+//             np_metadb == null ? "NOT PLAYING" : TF_TRACK_TITLE.EvalWithMetadb(np_metadb)
+//         );
+//         if (fb.IsPlaying) {
+//             this.pb_time = FormatTime(fb.PlaybackTime);
+//             this.pb_length = FormatTime(fb.PlaybackLength);
+//         }
+
+//         this.time_w = MeasureString("+00:00+", this.time_font).Width;
+//     },
+
+//     on_size() {
+//         let buttons = pb_btns2;
+//         let UI_x = this.x,
+//             UI_y = this.y,
+//             UI_w = this.width,
+//             UI_h = this.height;
+
+//         // play_pause button;
+//         let bw_1 = buttons.playOrPause.width;
+//         let by_1 = (UI_y + (scale(50) - bw_1) / 2) >> 0;
+//         let bx_1 = (UI_x + UI_w / 2 - bw_1 / 2) >> 0;
+//         let pad_1 = scale(12);
+//         buttons.playOrPause.setSize(bx_1, by_1);
+
+//         // prev
+//         let bx_2 = bx_1 - bw_1 - pad_1;
+//         buttons.prev.setSize(bx_2, by_1);
+
+//         // next;
+//         let bx_3 = bx_1 + bw_1 + pad_1;
+//         buttons.next.setSize(bx_3, by_1);
+
+//         // repeat
+//         let bw_2 = buttons.shuffle.width;
+//         let by_2 = (UI_y + (scale(50) - bw_2) / 2) >> 0;
+//         let bx_4 = bx_2 - bw_2 - scale(16);
+//         buttons.repeat.setSize(bx_4, by_2);
+
+//         //shuffle;
+//         let bx_5 = bx_3 + bw_1 + scale(16);
+//         buttons.shuffle.setSize(bx_5, by_2);
+
+//         // volume bar;
+//         let vol_h = scale(18)
+//         let vol_w = scale(80);
+//         let vol_y = UI_y + (UI_h - vol_h) / 2;
+//         let vol_x = UI_x + UI_w - vol_w - scale(24);
+//         volumebar.setSize(vol_x, vol_y, vol_w, vol_h);
+
+//         // volume mute button;
+//         let bx_6 = vol_x - bw_2 - scale(4);
+//         let by_6 = (UI_y + (UI_h - bw_2) / 2) >> 0;
+//         buttons.volume.setSize(bx_6, by_6);
+
+//         // love;
+//         buttons.love.setSize(bx_6 - bw_2, by_6);
+
+//         // seekbar;
+//         let seek_max_w = scale(640);
+//         let seek_min_w = scale(240);
+//         let ui_min_w = scale(780);
+//         let seek_w = UI_w * (seek_min_w / ui_min_w);
+//         if (seek_w < seek_min_w) seek_w = seek_min_w;
+//         else if (seek_w > seek_max_w) seek_w = seek_max_w;
+//         let seek_x = UI_x + (UI_w - seek_w) / 2;
+//         let seek_y = by_1 + bw_1 + scale(8);
+//         seekbar.setSize(seek_x, seek_y, seek_w, scale(16));
+
+//         // art;
+//         let art_w = scale(48);
+//         let art_pad = (UI_h - art_w) / 2;
+//         albumArt.setSize(UI_x + art_pad, UI_y + art_pad, art_w, art_w);
+
+
+//         // artist text;
+//         let artist_x = UI_x + art_pad + art_w + scale(8);
+//         let artist_y = this.y + (this.height / 2);
+//         let artist_w = seek_x - bw_2 - scale(8) - artist_x;
+//         artistText.setSize(artist_x, artist_y, artist_w, scale(20));
+//     },
+
+//     on_paint(gr: IGdiGraphics) {
+//         let colors = bottomColors;
+//         let buttons = pb_btns2;
+
+//         // bg
+//         gr.FillSolidRect(this.x, this.y, this.width, this.height, colors.background);
+
+//         // playback time;
+//         let pb_time_x = seekbar.x - this.time_w - scale(4);
+//         let pb_time_y = seekbar.y;
+//         gr.DrawString(this.pb_time, this.time_font, colors.text, pb_time_x, pb_time_y, this.time_w, seekbar.height, StringFormat.Center);
+
+//         // playback length;
+//         let pb_len_x = seekbar.x + seekbar.width + scale(4);
+//         gr.DrawString(this.pb_length, this.time_font, colors.text, pb_len_x, pb_time_y, this.time_w, seekbar.height, StringFormat.Center);
+
+//         // track title;
+//         let title_x = albumArt.x + albumArt.width + scale(8);
+//         let title_max_w = pb_time_x - buttons.love.width - scale(8) - title_x;
+//         let title_y = this.y + this.height / 2 - scale(22) - scale(2);
+//         gr.DrawString(this.track_title, this.title_font, colors.text, title_x, title_y, title_max_w, scale(22), StringFormat.LeftCenter);
+
+//     },
+
+//     on_playback_new_track() {
+//         this.pb_time = "00:00";
+//         this.pb_length = "--:--"
+//         this.track_title = TF_TRACK_TITLE.EvalWithMetadb(fb.GetNowPlaying());
+//         Repaint();
+//     },
+
+//     on_playback_stop(reason: number) {
+//         if (reason != 2) {
+//             this.track_title = "NOT PLAYING";
+//             this.pb_time = "00:00";
+//             this.pb_length = "--:--"
+//             Repaint();
+//         }
+//     },
+// });
+
+// bottomPanel.z = 1000;
+// Object.values(pb_btns2).forEach(btn => bottomPanel.addChild(btn));
+// [volumebar, seekbar, albumArt, artistText].forEach(item => bottomPanel.addChild(item));
 
 const AD_properties = {
     marginLR: scale(48), // Move to global
@@ -943,7 +948,7 @@ const Topbar_Properties = {
 
 const Topbar_Colors: IThemeColors = {
     text: mainColors.text,
-    background: RGB(32, 32, 32),
+    background: RGB(0, 0, 0),
     highlight: mainColors.highlight
 };
 
@@ -995,7 +1000,7 @@ topbar.z = 1100;
 const PL_Properties = {
     rowHeight: scale(40),
     headerHeight: scale(24),
-    tfTrackInfo: fb.TitleFormat("%tracknumber%^^%artist%^^%title%^^%length%^^%rating%"),
+    tfTrackInfo: fb.TitleFormat("%tracknumber%^^%artist%^^%title%^^%length%^^%rating%^^[%album%]^^[%artist%]"),
     itemFont: gdi.Font("Microsoft YaHei", scale(14), 0),
     itemFont_2: gdi.Font("Microsoft YaHei", scale(12), 0),
     iconFont: gdi.Font("Material Icons", scale(16))
@@ -1003,7 +1008,7 @@ const PL_Properties = {
 
 const PL_Colors: IThemeColors = {
     text: mainColors.text,
-    background: RGB(30, 30, 30),
+    background: mainColors.background,
     highlight: mainColors.highlight,
     HEART_RED: RGB(221, 0, 27)
 }
@@ -1017,7 +1022,7 @@ class PL_Header extends Component {
     }
 
     on_paint(gr: IGdiGraphics) {
-        gr.FillSolidRect(this.x, this.y, this.width, this.height, mainColors.background);
+        // gr.FillSolidRect(this.x, this.y, this.width, this.height, mainColors.background);
         gr.DrawString(this.titleText, PL_Properties.itemFont, mainColors.text, this.x + scale(16), this.y, this.width - scale(32), this.height, StringFormat.LeftCenter);
     }
 
@@ -1032,12 +1037,17 @@ class PL_Header extends Component {
 
 const plHeader = new PL_Header({})
 
+const createColumn = (visible: boolean, x: number, width: number) => {
+    return { visible: visible, x: x, width: width }
+}
 const PL_Columns = {
-    index: { x: 0, width: scale(50) },
-    trackNo: { x: 0, width: scale(50) },
-    title: { x: 0, width: 0 },
-    trackLen: { x: 0, width: scale(8) + MeasureString("00:00", PL_Properties.itemFont).Width },
-    mood: { x: 0, width: scale(24) },
+    index: createColumn(false, 0, scale(150)),
+    trackNo: createColumn(true, 0, scale(60)),
+    title: createColumn(true, 0, 0),
+    artist: createColumn(true, 0, 0),
+    album: createColumn(false, 0, 0),
+    trackLen: createColumn(true, 0, scale(16) + MeasureString("00:00", PL_Properties.itemFont).Width),
+    mood: createColumn(true, 0, scale(48))
 }
 
 const PL_Select = {
@@ -1062,8 +1072,9 @@ class Pl_Item {
     playlistItemIndex: number;
     title: string = "";
     artist: string = "";
-    pbTime: string = "";
-    pbLength: string = "";
+    album: string = "";
+    playbackTime: string = "";
+    playbackLength: string = "";
     trackNo: string = "";
     rating: string = "";
 
@@ -1072,8 +1083,6 @@ class Pl_Item {
     trace(x: number, y: number) {
         return x > this.x && y > this.y && x <= this.x + this.width && y <= this.y + this.height;
     }
-
-    draw(gr: IGdiGraphics) { }
 }
 
 function isEmptyString(str: string) {
@@ -1138,15 +1147,43 @@ class PlaybackQueue extends ScrollView {
     setColumnSize() {
         const padLeft = scale(4);
         const padRight = this.scrollbar.width + scale(4);
-        const columns = PL_Columns;
+        const { index, trackNo, trackLen, mood, title, album, artist } = PL_Columns;
 
-        columns.index.x = this.x + padLeft;
-        // columns.trackNo.x = this.x + padLeft;
-        columns.trackNo.x = columns.index.x + columns.index.width;
-        columns.trackLen.x = this.x + this.width - padRight - columns.trackLen.width;
-        columns.mood.x = columns.trackLen.x - columns.mood.width;
-        columns.title.x = columns.trackNo.x + columns.trackNo.width;
-        columns.title.width = columns.mood.x - columns.title.x;
+        let whitespace_ = this.width - padLeft - padRight;
+        whitespace_ -= mood.width;
+        whitespace_ -= trackLen.width;
+        whitespace_ -= trackNo.width;
+        whitespace_ -= index.width;
+
+        // init width;
+        let titleWidth_ = scale(215);
+        let artistWidth_ = scale(100);
+        let albumWidth_ = scale(100);
+        //
+        let artistVis = (artist.visible && whitespace_ > titleWidth_);
+        let albumVis = (album.visible
+            && whitespace_ > titleWidth_ + artistWidth_ + albumWidth_ / 2);
+        let widthToAdd_ = whitespace_ - titleWidth_;
+        let floor_ = Math.floor;
+        //
+        if (artistVis) {
+            widthToAdd_ = floor_((whitespace_ - titleWidth_ - artistWidth_) / 2);
+        }
+        if (albumVis) {
+            widthToAdd_ = floor_((whitespace_ - titleWidth_ - artistWidth_ - albumWidth_) / 3);
+        }
+
+        index.x = this.x + padLeft;
+        index.width = (index.visible ? index.width : 0);
+        trackNo.x = index.x + index.width;
+        title.x = trackNo.x + trackNo.width;
+        title.width = titleWidth_ + widthToAdd_;
+        artist.x = title.x + title.width;
+        artist.width = (artistVis ? artistWidth_ + widthToAdd_ : 0);
+        album.x = artist.x + artist.width;
+        album.width = (albumVis ? albumWidth_ + widthToAdd_ : 0);
+        mood.x = album.x + album.width;
+        trackLen.x = mood.x + mood.width;
     }
 
     on_init() {
@@ -1196,7 +1233,7 @@ class PlaybackQueue extends ScrollView {
             let thisItem = items[itemIndex];
             thisItem.x = this.x;
             thisItem.width = this.width;
-            thisItem.y = this.y + thisItem.yOffset - this.scroll_ + headerHeight;
+            thisItem.y = this.y + thisItem.yOffset - this.scroll + headerHeight;
 
             // Visible items;
             if (thisItem.y + rowHeight >= this.y + headerHeight && thisItem.y < this.y + this.height) {
@@ -1209,8 +1246,10 @@ class PlaybackQueue extends ScrollView {
                     thisItem.trackNo = infostrings[0];
                     thisItem.title = infostrings[2];
                     thisItem.artist = infostrings[1];
-                    thisItem.pbLength = infostrings[3];
+                    thisItem.playbackLength = infostrings[3];
                     thisItem.rating = infostrings[4];
+                    thisItem.album = infostrings[5];
+                    thisItem.artist = infostrings[6];
                 }
 
                 // Draw items;
@@ -1224,8 +1263,20 @@ class PlaybackQueue extends ScrollView {
                         RGB(127, 127, 127));
                 }
 
-                gr.DrawString(itemIndex, itemFont, colors.text,
-                    columns.index.x, thisItem.y, columns.index.width, rowHeight, StringFormat.Center)
+                let columnArray = [
+                    columns.index,
+                    columns.trackNo,
+                    columns.title,
+                    columns.artist,
+                    columns.album, columns.mood,
+                    columns.trackLen];
+
+                // draw columns;
+
+                if (columns.index.visible && columns.index.width > 0) {
+                    gr.DrawString(itemIndex, itemFont, colors.text,
+                        columns.index.x, thisItem.y, columns.index.width, rowHeight, StringFormat.Center)
+                }
 
                 if (this.playingItemIndex === itemIndex) {
                     gr.DrawString(fb.IsPaused ? Material.volume_mute : Material.volume, iconFont, colors.highlight,
@@ -1235,7 +1286,15 @@ class PlaybackQueue extends ScrollView {
                 }
 
                 gr.DrawString(thisItem.title, itemFont, colors.text, columns.title.x, thisItem.y, columns.title.width, rowHeight, StringFormat.LeftCenter);
-                gr.DrawString(thisItem.pbLength, itemFont, colors.text, columns.trackLen.x, thisItem.y, columns.trackLen.width, rowHeight, StringFormat.Center);
+                if (columns.artist.visible && columns.artist.width > 0) {
+                    gr.DrawString(thisItem.artist, itemFont, colors.text,
+                        columns.artist.x, thisItem.y, columns.artist.width, rowHeight, StringFormat.LeftCenter);
+                }
+                if (columns.album.visible && columns.album.width > 0) {
+                    gr.DrawString(thisItem.album, itemFont, colors.text,
+                        columns.album.x, thisItem.y, columns.album.width, rowHeight, StringFormat.LeftCenter);
+                }
+                gr.DrawString(thisItem.playbackLength, itemFont, colors.text, columns.trackLen.x, thisItem.y, columns.trackLen.width, rowHeight, StringFormat.Center);
 
                 if (thisItem.rating === "5") {
                     gr.DrawString(Material.heart, iconFont, colors.HEART_RED,
@@ -1257,7 +1316,7 @@ class PlaybackQueue extends ScrollView {
             }
             plman.ActivePlaylist = 0;
         }
-        this.scroll_ = 0;
+        this.scroll = 0;
         this.initList();
         ThrottledRepaint();
     }
@@ -1297,7 +1356,7 @@ class PlaybackQueue extends ScrollView {
 
     on_playlist_switch() {
         this.initList();
-        this.scroll_ = 0;
+        this.scroll = 0;
         ThrottledRepaint();
     }
 
@@ -1323,7 +1382,10 @@ class PlaybackQueue extends ScrollView {
         ThrottledRepaint();
     }
 
-    on_metadb_changed(handleList: IFbMetadbList, fromhook: boolean) { }
+    on_metadb_changed(handleList: IFbMetadbList, fromhook: boolean) {
+        this.initList();
+        ThrottledRepaint();
+    }
 
     private _findHoverIndex(x: number, y: number) {
         if (!this.trace(x, y)) { return - 1; }
@@ -1373,7 +1435,7 @@ class PlaybackQueue extends ScrollView {
     private shift_start_index = -1;
 
     on_mouse_wheel(step: number) {
-        this.scrollTo(this.scroll_ - step * PL_Properties.rowHeight * 3);
+        this.scrollTo(this.scroll - step * PL_Properties.rowHeight * 3);
     }
 
     on_mouse_lbtn_dblclk(x: number, y: number, mask: number) {
@@ -1564,6 +1626,24 @@ const playback_queue = new PlaybackQueue({})
 playback_queue.addChild(playback_queue.scrollbar);
 playback_queue.addChild(plHeader);
 
+class PlaylistHeader extends Component { }
+
+class PlaylistToolbar extends Component { }
+
+class PlaylistView extends ScrollView {
+    scrollbar: Scrollbar;
+    header: PlaylistHeader;
+    toolbar: PlaylistToolbar;
+
+    constructor(obj: object) {
+        super(obj);
+    }
+
+    on_init() { };
+
+
+}
+
 class LibraryView extends Component {
     on_init() { }
 
@@ -1593,7 +1673,7 @@ const PLM_Properties = {
 const PLM_Colors: IThemeColors = {
     text: blendColors(mainColors.text, mainColors.background, 0.3),
     textActive: mainColors.text,
-    background: RGB(24, 24, 24),
+    background: sidebarColors.background,
     highlight: mainColors.highlight,
     background_sel: RGB(20, 20, 20),
     background_hover: RGB(10, 10, 10)
@@ -1603,8 +1683,8 @@ class PLM_Header extends Component {
     label: string = "PLAYLISTS";
 
     on_paint(gr: IGdiGraphics) {
-        gr.FillSolidRect(this.x, this.y, this.width, this.height,
-            mainColors.background);
+        // gr.FillSolidRect(this.x, this.y, this.width, this.height,
+        //     mainColors.background);
         gr.DrawString(this.label, PLM_Properties.headerFont,
             mainColors.text,
             this.x + scale(8), this.y, this.width - scale(16), this.height,
@@ -1659,6 +1739,7 @@ class PLM_View extends ScrollView {
             rowItem.height = rowHeight;
             rowItem.metadb = (playlistMetadbs.Count === 0 ? null : playlistMetadbs[0]);
             rowItem.listName = plman.GetPlaylistName(playlistIndex)
+            // FIXIT: isAuto 不能在foobar启动时被设置，force reload script 之后正常.
             rowItem.isAuto = plman.IsAutoPlaylist(playlistIndex);
             rowItem.yOffset = itemYOffset;
             itemYOffset += rowHeight;
@@ -1714,7 +1795,7 @@ class PLM_View extends ScrollView {
             rowItem.x = this.x;
             rowItem.width = this.width;
             rowItem.y = this.y + headerHeight
-                + rowItem.yOffset - this.scroll_;
+                + rowItem.yOffset - this.scroll;
 
             // items in visible area;
             if (rowItem.y + rowHeight >= this.y + headerHeight
@@ -2117,6 +2198,10 @@ function on_playlist_switch() {
 
 function on_item_focus_change(playlistIndex: number, from: number, to: number) {
     panels_vis.forEach(p => invoke(p, "on_item_focus_change", playlistIndex, from, to));
+}
+
+function on_metadb_changed(metadbs: IFbMetadbList, fromhook: boolean) {
+    panels_vis.forEach(p => invoke(p, "on_metadb_changed"));
 }
 
 // KNOWN ISSUES:

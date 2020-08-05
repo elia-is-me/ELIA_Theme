@@ -193,6 +193,26 @@ function _createFolder(folder: string) {
     }
 }
 
+let BuildFullPath = function(path: string) {
+    var tmpFileLoc = '',
+        pattern = /(.*?)\\/gm;
+    let result;
+    let fs = new ActiveXObject('Scripting.FileSystemObject');
+    let create = function(fo: string) {
+        try {
+            if (!fs.FolderExists(fo)) fs.CreateFolder(fo);
+        } catch (e) {
+            // fb.trace('BuildFullPath: ', e);
+        }
+    };
+    while ((result = pattern.exec(path))) {
+        tmpFileLoc = tmpFileLoc.concat(result[0]);
+        try {
+            create(tmpFileLoc);
+        } catch (e) {}
+    }
+};
+
 function _isFolder(folder: string) {
     return isString(folder) ? fso.FolderExists(folder) : false;
 }

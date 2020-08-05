@@ -101,18 +101,16 @@ class Component implements IBox, TEST {
     }
 
     setSize(x: number, y: number, width?: number, height?: number) {
-        let pre_vis = this.isVisible();
-        //
+        let visibleBefore_ = this.isVisible();
         this.x = x;
         this.y = y;
-        if (width != null && height != null) {
+        if (width != null) {
             this.width = width;
             this.height = height;
         }
-        let is_vis = this.isVisible();
-
-        if (is_vis) invoke(this, 'on_size');
-        if (is_vis !== pre_vis) g_panels_changed = true;
+        let visibleNow_ = this.isVisible();
+        if (visibleNow_) invoke(this, 'on_size');
+        if (visibleNow_ !== visibleBefore_) g_panels_changed = true;
     }
 
     onNotifyData(str: string, info: any) { }
@@ -465,7 +463,7 @@ class Textlink extends Component {
             return;
         }
 
-        let font_: IGdiFont; 
+        let font_: IGdiFont;
         let textColor_: number;
 
         if (this.state === ButtonStates.normal) {
@@ -518,18 +516,16 @@ class Textlink extends Component {
 abstract class ScrollView extends Component {
     totalHeight: number;
     scrolling: boolean = false;
-    private scroll__: number = 0;
-    get scroll_() { return this.scroll__ }
-    set scroll_(val: number) {
-        this.scroll__ = this._checkScroll(val);
-    }
+    private scroll_: number = 0;
+    get scroll () { return this.scroll_};
+    set scroll(val: number) { this.scroll_ = this.checkscroll(val) }
     private timerId: number = -1;
 
     constructor(attrs: object) {
         super(attrs);
     }
 
-    _checkScroll(val: number) {
+    checkscroll(val: number) {
         if (val > this.totalHeight - this.height) {
             val = this.totalHeight - this.height;
         }
@@ -539,32 +535,37 @@ abstract class ScrollView extends Component {
         return val;
     }
 
-    scrollTo(scroll_: number = this._checkScroll(this.scroll_)) {
-        scroll_ = this._checkScroll(scroll_);
-        if (scroll_ === this.scroll_) {
+    scrollTo(scroll_: number = this.checkscroll(this.scroll)) {
+        scroll_ = this.checkscroll(scroll_);
+        if (scroll_ === this.scroll) {
             return;
         }
 
         const onTimeout = () => {
-            if (Math.abs(scroll_ - this.scroll_) > 0.4) {
-                this.scroll_ += (scroll_ - this.scroll_) / 3;
+            if (Math.abs(scroll_ - this.scroll) > 0.4) {
+                this.scroll += (scroll_ - this.scroll) / 3;
                 this.scrolling = true;
                 window.ClearTimeout(this.timerId);
                 this.timerId = window.SetTimeout(onTimeout, 15);
             } else {
                 window.ClearTimeout(this.timerId);
-                this.scroll_ = Math.round(this.scroll_);
+                this.scroll = Math.round(this.scroll);
                 this.scrolling = false;
             }
             if (!this.isVisible()) {
                 window.ClearTimeout(this.timerId);
                 this.scrolling = false;
             }
+            this.onScrollStep(this.scroll);
             Repaint();
         }
 
         window.ClearTimeout(this.timerId);
         onTimeout();
+    }
+
+    onScrollStep(scroll_: number = this.scroll) {
+
     }
 }
 
@@ -595,7 +596,7 @@ class Scrollbar extends Component implements ICallbacks {
         let parentHeight = this.parent.height;
 
         if (totalHeight > parentHeight) {
-            let scroll_ = this.parent.scroll_;
+            let scroll_ = this.parent.scroll;
             this.cursorHeight = Math.max(Math.round((parentHeight / totalHeight) * this.height), minCursorHeight);
             this.cursorY = this.y + Math.round(((this.height - this.cursorHeight) * scroll_) / (totalHeight - parentHeight));
             // Draw background;
@@ -627,7 +628,7 @@ class Scrollbar extends Component implements ICallbacks {
             let offset = Math.round(
                 (this.parent.totalHeight - this.parent.height) * ratio
             );
-            this.parent.scroll_ = offset;
+            this.parent.scroll = offset;
             Repaint();
         } else {
             this.changeState(
