@@ -1,5 +1,5 @@
-'use strict'
-
+import { throttle, isObject, StringFormat, scale, CropImage, TextRenderingHint } from "./common"
+// import { SmoothingMode } from "@core/common"
 
 // Generate component id;
 const get_cid = (() => {
@@ -8,9 +8,9 @@ const get_cid = (() => {
 })();
 
 const by_z = (a: Component, b: Component) => a.z - b.z;
-const Repaint = () => window.Repaint();
-const ThrottledRepaint = throttle(Repaint, 15);
-let g_panels_changed = false;
+export const Repaint = () => window.Repaint();
+export const ThrottledRepaint = throttle(Repaint, 15);
+export let g_panels_changed = false;
 
 interface ICallbacks {
     on_paint?: (gr: IGdiGraphics) => void;
@@ -29,7 +29,7 @@ interface ICallbacks {
     on_key_up?: (vkey: number) => void;
 }
 
-interface IBox {
+export interface IBox {
     x: number;
     y: number;
     z?: number;
@@ -42,14 +42,15 @@ interface TEST {
     children: Component[];
 }
 
-class Component implements IBox, TEST {
+export class Component implements IBox, TEST {
     readonly cid: number = get_cid();
+    private _visible: boolean = true;
+    private _shouldUpdateOnInit = true;
     x: number = 0;
     y: number = 0;
     z: number = 0;
     width: number = 0;
     height: number = 0;
-    private _visible: boolean = true;
     parent: Component;
     children: Component[] = [];
 
@@ -91,8 +92,16 @@ class Component implements IBox, TEST {
         return this._visible && this.width > 0 && this.height > 0;
     }
 
-    get visible() { return this._visible }
-    set visible(val: boolean) { this._visible = val; }
+    get visible() {
+        return this._visible
+    }
+
+    set visible(val: boolean) {
+        if (val !== this._visible) {
+            this._visible = val;
+            this._shouldUpdateOnInit = true;
+        }
+    }
 
     trace(x: number, y: number) {
         return this.isVisible()
@@ -110,26 +119,38 @@ class Component implements IBox, TEST {
         }
         let visibleNow_ = this.isVisible();
         if (visibleNow_) invoke(this, 'on_size');
-        if (visibleNow_ !== visibleBefore_) g_panels_changed = true;
+        if (visibleNow_ !== visibleBefore_) this._shouldUpdateOnInit = true;
+    }
+
+    didUpdateOnInit() {
+        this._shouldUpdateOnInit = false;
+    }
+
+    resetUpdateState() {
+        this._shouldUpdateOnInit = true;
+    }
+
+    shouldUpdateOnInit() {
+        return this._shouldUpdateOnInit;
     }
 
     onNotifyData(str: string, info: any) { }
 }
 
 
-function invoke(obj: object, method: string, ...var_args: any[]) {
+export function invoke(obj: object, method: string, ...var_args: any[]) {
     if (!obj) { return }
     let func = (<any>obj)[method];
     return func == null ? null : func.apply(obj, var_args);
 }
 
-const ButtonStates = {
+export const ButtonStates = {
     normal: 0,
     hover: 1,
     down: 2
 };
 
-class Icon extends Component {
+export class Icon extends Component {
     state = ButtonStates.normal;
     image: IGdiBitmap;
     downImage: IGdiBitmap;
@@ -205,7 +226,7 @@ class Icon extends Component {
     }
 }
 
-class Slider extends Component {
+export class Slider extends Component {
     isDrag: boolean = false;
     progress: number = 0;
     thumbImg: IGdiBitmap;
@@ -296,7 +317,7 @@ class Slider extends Component {
     }
 }
 
-const AlbumArtId = {
+export const AlbumArtId = {
     front: 0,
     back: 1,
     disc: 2,
@@ -304,27 +325,7 @@ const AlbumArtId = {
     artist: 4
 };
 
-
-function drawNoCover(textColor: number, backColor: number) {
-    let fontName = "Segoe UI";
-    let font1 = gdi.Font(fontName, 270, 1);
-    let font2 = gdi.Font(fontName, 120, 1);
-    let cc = StringFormat(1, 1);
-    let img = gdi.CreateImage(500, 500);
-    let g = img.GetGraphics();
-
-    // g.SetSmoothingMode(SmoothingMode.HighQuality);
-    g.SetTextRenderingHint(TextRenderingHint.AntiAlias);
-    g.FillSolidRect(0, 0, 500, 500, textColor & 0x20ffffff);
-    g.DrawString("NO", font1, textColor & 0x25ffffff, 0, 0, 500, 275, cc);
-    g.DrawString("COVER", font2, textColor & 0x25ffffff, 2.5, 175, 500, 275, cc);
-    g.FillSolidRect(60, 388, 380, 50, textColor & 0x65ffffff);
-
-    img.ReleaseGraphics(g);
-    return img;
-}
-
-class AlbumArtView extends Component {
+export class AlbumArtView extends Component {
     currentArtId: number = AlbumArtId.front;
     tf = fb.TitleFormat("%album artist%^^%album");
     trackkey: string = "";
@@ -428,7 +429,7 @@ class AlbumArtView extends Component {
     }
 }
 
-class Textlink extends Component {
+export class Textlink extends Component {
     text: string = "";
     font: IGdiFont = gdi.Font("tahoma", 12);
     _underlinedFont: IGdiFont;
@@ -513,11 +514,11 @@ class Textlink extends Component {
 // Elements globally referred;
 // ---------------------------
 
-abstract class ScrollView extends Component {
+export abstract class ScrollView extends Component {
     totalHeight: number;
     scrolling: boolean = false;
     private scroll_: number = 0;
-    get scroll () { return this.scroll_};
+    get scroll() { return this.scroll_ };
     set scroll(val: number) { this.scroll_ = this.checkscroll(val) }
     private timerId: number = -1;
 
@@ -571,7 +572,7 @@ abstract class ScrollView extends Component {
 
 
 //
-class Scrollbar extends Component implements ICallbacks {
+export class Scrollbar extends Component implements ICallbacks {
     static defaultCursorWidth = scale(12);
 
     private minCursorHeight = scale(24);

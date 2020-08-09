@@ -1,0 +1,39 @@
+{
+  "name": "elia",
+  "version": "0.0.1",
+  "description": "ELIA-theme",
+  "main": "ELIA-theme.js",
+  "dependencies": {},
+  "devDependencies": {
+    "@babel/cli": "^7.10.5",
+    "@babel/core": "^7.11.1",
+    "@babel/preset-env": "^7.11.0",
+    "babel-plugin-module-resolver": "^4.0.0",
+    "babel-preset-env": "^1.7.0",
+    "babelify": "^10.0.0",
+    "browserify": "^16.5.2",
+    "gulp": "^4.0.0",
+    "gulp-cli": "^2.2.1",
+    "gulp-typescript": "^6.0.0-alpha.1",
+    "tsify": "^5.0.0",
+    "typescript": "^3.9.7",
+    "vinyl-source-stream": "^2.0.0",
+    "watchify": "^3.11.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/elia-is-me/ts_elia.git"
+  },
+  "keywords": [
+    "foobar2000"
+  ],
+  "author": "ELIA",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/elia-is-me/ts_elia/issues"
+  },
+  "homepage": "https://github.com/elia-is-me/ts_elia#readme"
+}

@@ -1,4 +1,12 @@
-// last modified: 2020年5月24日
+/**
+ * description:
+ */
+
+/**
+ * 不知为何在 tsconfig.json 里 include foo_spider_monkey_panel.d.ts 时，使用 browserify +
+ * tsify 编译始终报错，提示找不到变量 fb 什么的。
+ */
+/// <reference path="../../typings/foo_spider_monkey_panel.d.ts" />
 
 let doc = new ActiveXObject('htmlfile');
 let app = new ActiveXObject('Shell.Application');
@@ -15,24 +23,24 @@ let folders = {
     lastfm: folders_data + "lastfm\\"
 };
 
-function RGB(r: number, g: number, b: number) {
+export function RGB(r: number, g: number, b: number) {
     return (0xff000000 | (r << 16) | (g << 8) | (b));
 };
 
-function RGBA(r: number, g: number, b: number, a: number) {
+export function RGBA(r: number, g: number, b: number, a: number) {
     return ((a << 24) | (r << 16) | (g << 8) | (b));
 };
 
-function toRGB(color: number) { // returns an array like [192, 0, 0]
+export function toRGB(color: number) { // returns an array like [192, 0, 0]
     var a = color - 0xFF000000;
     return [a >> 16, a >> 8 & 0xFF, a & 0xFF];
 }
 
-function getAlpha(colour: number) {
+export function getAlpha(colour: number) {
     return ((colour >> 24) & 0xff);
 }
 
-function blendColors(c1: number, c2: number, factor: number) {
+export function blendColors(c1: number, c2: number, factor: number) {
     // When factor is 0, result is 100% color1, when factor is 1, result is 100% color2.
     var c1_ = toRGB(c1);
     var c2_ = toRGB(c2);
@@ -57,11 +65,10 @@ interface IHSLA_Color {
     a: number; // Alpha: float in [0, 1];
 }
 
-function rgba2hsla(rgba: IRGBA_Color): IHSLA_Color {
+export function rgba2hsla(rgba: IRGBA_Color): IHSLA_Color {
     const r = rgba.a / 255;
     const g = rgba.g / 255;
     const b = rgba.b / 255;
-
     const max = Math.max(r, g, b);
     const min = Math.max(r, g, b);
     let h = 0;
@@ -71,20 +78,18 @@ function rgba2hsla(rgba: IRGBA_Color): IHSLA_Color {
 
     if (chroma > 0) {
         s = Math.min((l <= 0.5 ? chroma / (2 * l) : chroma / (2 - (2 * l))), 1);
-
         switch (max) {
             case r: h = (g - b) / chroma + (g < b ? 6 : 0); break;
             case g: h = (b - r) / chroma + 2; break;
             case b: h = (r - g) / chroma + 4; break;
         }
-
         h *= 60;
         h = Math.round(h);
     }
     return { h: h, s: s, l: l, a: rgba.a };
 }
 
-function hslToRgb(hue: number, sat: number, light: number) {
+export function hslToRgb(hue: number, sat: number, light: number) {
     var t1, t2, r, g, b;
     hue = hue / 60;
     if (light <= 0.5) {
@@ -99,7 +104,7 @@ function hslToRgb(hue: number, sat: number, light: number) {
     return { r: r, g: g, b: b };
 }
 
-function hueToRgb(t1: number, t2: number, hue: number) {
+export function hueToRgb(t1: number, t2: number, hue: number) {
     if (hue < 0) hue += 6;
     if (hue >= 6) hue -= 6;
     if (hue < 1) return (t2 - t1) * hue + t1;
@@ -108,7 +113,7 @@ function hueToRgb(t1: number, t2: number, hue: number) {
     else return t1;
 }
 
-function lighten(color: number, factor: number): number {
+export function lighten(color: number, factor: number): number {
     let rgb_ = toRGB(color);
     let alpha = getAlpha(color);
     let hsla: IHSLA_Color = rgba2hsla({ r: rgb_[0], g: rgb_[1], b: rgb_[2], a: alpha });
@@ -117,7 +122,7 @@ function lighten(color: number, factor: number): number {
     return RGBA(rgb__.r, rgb__.g, rgb__.b, alpha);
 }
 
-function darken(color: number, factor: number): number {
+export function darken(color: number, factor: number): number {
     let rgb_ = toRGB(color);
     let alpha = getAlpha(color);
     let hsla: IHSLA_Color = rgba2hsla({ r: rgb_[0], g: rgb_[1], b: rgb_[2], a: alpha });
@@ -126,7 +131,7 @@ function darken(color: number, factor: number): number {
     return RGBA(rgb__.r, rgb__.g, rgb__.b, alpha);
 }
 // dpi scale
-const scale = (function () {
+export const scale = (function () {
     var factor = window.GetProperty("_Global.Zoom Factor(%, 0 = default)", 0) / 100;
     var round = Math.round;
     if (factor === 0) {
@@ -143,21 +148,21 @@ const scale = (function () {
     }
 })();
 
-function isFunction(obj: any) {
+export function isFunction(obj: any) {
     return Object.prototype.toString.call(obj) === "[object Function]"
 }
 
 // Array
-function isArray(item: any) {
+export function isArray(item: any) {
     return Object.prototype.toString.call(item) === '[object Array]';
 }
 
 // OBJECT
-function isObject(item: any) {
+export function isObject(item: any) {
     return typeof item === 'object' && item !== null && !isArray(item);
 }
 
-function isString(x: any) {
+export function isString(x: any) {
     return Object.prototype.toString.call(x) === "[object String]"
 }
 
@@ -193,12 +198,12 @@ function _createFolder(folder: string) {
     }
 }
 
-let BuildFullPath = function(path: string) {
+export let BuildFullPath = function (path: string) {
     var tmpFileLoc = '',
         pattern = /(.*?)\\/gm;
     let result;
     let fs = new ActiveXObject('Scripting.FileSystemObject');
-    let create = function(fo: string) {
+    let create = function (fo: string) {
         try {
             if (!fs.FolderExists(fo)) fs.CreateFolder(fo);
         } catch (e) {
@@ -209,7 +214,7 @@ let BuildFullPath = function(path: string) {
         tmpFileLoc = tmpFileLoc.concat(result[0]);
         try {
             create(tmpFileLoc);
-        } catch (e) {}
+        } catch (e) { }
     }
 };
 
@@ -234,7 +239,7 @@ let popup = {
     info: 64
 };
 
-var StringTrimming = {
+export const StringTrimming = {
     None: 0,
     Character: 1,
     Word: 2,
@@ -245,7 +250,7 @@ var StringTrimming = {
 
 // flags, can be combined of:
 // http://msdn.microsoft.com/en-us/library/ms534181(VS.85).aspx
-var StringFormatFlags = {
+export const StringFormatFlags = {
     DirectionRightToLeft: 0x00000001,
     DirectionVertical: 0x00000002,
     NoFitBlackBox: 0x00000004,
@@ -259,8 +264,7 @@ var StringFormatFlags = {
 
 // Used in SetSmoothingMode()
 // For more information, see: http://msdn.microsoft.com/en-us/library/ms534173(VS.85).aspx
-var SmoothingMode = {
-
+export const SmoothingMode = {
     Invalid: -1,
     Default: 0,
     HighSpeed: 1,
@@ -271,7 +275,7 @@ var SmoothingMode = {
 
 // Used in SetInterpolationMode()
 // For more information, see: http://msdn.microsoft.com/en-us/library/ms534141(VS.85).aspx
-var InterpolationMode = {
+export const InterpolationMode = {
     Invalid: -1,
     Default: 0,
     LowQuality: 1,
@@ -283,7 +287,7 @@ var InterpolationMode = {
     HighQualityBicubic: 7
 };
 
-var TextRenderingHint = {
+export const TextRenderingHint = {
     SystemDefault: 0,
     SingleBitPerPixelGridFit: 1,
     SingleBitPerPixel: 2,
@@ -292,7 +296,7 @@ var TextRenderingHint = {
     ClearTypeGridFit: 5
 };
 
-const PlaybackOrder = {
+export const PlaybackOrder = {
     normal: 0,
     repeat_playlist: 1,
     repeat_track: 2,
@@ -304,13 +308,13 @@ const PlaybackOrder = {
 
 // Helper function for DrawString() and MeasureString()
 // args: h_align, v_align, trimming, flags
-function StringFormat(h_align = 0, v_align = 0, trimming = 0, flags = 0) {
+export function StringFormat(h_align = 0, v_align = 0, trimming = 0, flags = 0) {
     return ((h_align << 28) | (v_align << 24) | (trimming << 20) | flags);
 }
 StringFormat.LeftCenter = StringFormat(0, 1, StringTrimming.EllipsisCharacter, StringFormatFlags.NoWrap);
 StringFormat.Center = StringFormat(1, 1, StringTrimming.Character, StringFormatFlags.NoWrap);
 
-function debounce(fn: Function, delay: number) {
+export function debounce(fn: Function, delay: number) {
     var timer: number = null;
     delay = delay || 250;
     return function () {
@@ -323,7 +327,7 @@ function debounce(fn: Function, delay: number) {
     };
 }
 
-function throttle(fn: Function, threshhold: number, scope?: any) {
+export function throttle(fn: Function, threshhold: number, scope?: any) {
     threshhold || (threshhold = 250);
     var last: number,
         deferTimer: number;
@@ -346,11 +350,6 @@ function throttle(fn: Function, threshhold: number, scope?: any) {
     };
 }
 
-// Localization function, not impl yet;
-function l18n(text: string | number) {
-    return text;
-}
-
 /**
  * 
  * @param {IGdiBitmap} image 
@@ -358,7 +357,7 @@ function l18n(text: string | number) {
  * @param {number} height 
  * @param {number?} itp 
  */
-function CropImage(image: IGdiBitmap, width: number, height?: number, itp: number = 0) {
+export function CropImage(image: IGdiBitmap, width: number, height?: number, itp: number = 0) {
     if (height == null) {
         height = width;
     }
@@ -380,7 +379,7 @@ function CropImage(image: IGdiBitmap, width: number, height?: number, itp: numbe
     return tmp_img.Resize(width, height, itp);
 }
 
-function imageFromCode(code: string, font: IGdiFont, color: number, width: number, height: number, fmt = StringFormat(1, 1)): IGdiBitmap {
+export function imageFromCode(code: string, font: IGdiFont, color: number, width: number, height: number, fmt = StringFormat(1, 1)): IGdiBitmap {
     var img = gdi.CreateImage(width, height);
     var g = img.GetGraphics();
     g.SetTextRenderingHint(TextRenderingHint.AntiAlias);
@@ -393,39 +392,13 @@ function imageFromCode(code: string, font: IGdiFont, color: number, width: numbe
  * @param {string} str
  * @param {IGdiFont} str
  */
-const MeasureString = (() => {
+export const MeasureString = (() => {
     let g = gdi.CreateImage(1, 1).GetGraphics();
     return (str: string | number, font: IGdiFont) => g.MeasureString(str, font, 0, 0, 99999, 999, StringFormat.LeftCenter);
 })();
 
-const MF_STRING = 0x00000000;
-const MF_GRAYED = 0x00000001;
+export enum MenuFlag {
+    STRING = 0x00000000,
+    GRAYED = 0x00000001,
+}
 
-const VK_CONTROL = 0x11;
-const VK_SHIFT = 0x10;
-const VK_BACK = 0x08;
-const VK_MENU = 0x12; // Alt key
-const VK_ALT = 0x12;
-const VK_PAUSE = 0x13;
-const VK_ESCAPE = 0x1b;
-const VK_SPACE = 0x20;
-const VK_DELETE = 0x2e;
-const VK_PRIOR = 0x21; // PAGE UP key
-const VK_NEXT = 0x22; // PAGE DOWN key
-const VK_PGUP = 0x21;
-const VK_PGDN = 0x22;
-const VK_END = 0x23;
-const VK_HOME = 0x24;
-const VK_LEFT = 0x25;
-const VK_UP = 0x26;
-const VK_RIGHT = 0x27;
-const VK_DOWN = 0x28;
-const VK_INSERT = 0x2d;
-const VK_SPACEBAR = 0x20;
-const VK_RETURN = 0x0d; // Enter
-const VK_LSHIFT = 0xa0; // Left SHIFT key
-const VK_RSHIFT = 0xa1; // Right SHIFT key
-const VK_LCONTROL = 0xa2; // Left CONTROL key
-const VK_RCONTROL = 0xa3; // Right CONTROL key
-const VK_LMENU = 0xa4; // Left MENU key
-const VK_RMENU = 0xa5; // Right MENU key

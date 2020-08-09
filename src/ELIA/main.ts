@@ -1,4 +1,15 @@
-﻿// ------------------------------------------------------------
+﻿import { RGB, scale, blendColors } from "./common/common"
+import { imageFromCode } from "./common/common";
+import { SmoothingMode, } from "./common/common"
+import { Component, invoke } from "./common/components";
+import { Icon, Slider, ScrollView, Scrollbar, AlbumArtView, Textlink } from "./common/components"
+import { Repaint, ThrottledRepaint } from "./common/components"
+import { PlaybackOrder } from "./common/common"
+import { MeasureString, StringFormat } from "./common/common"
+import { MenuFlag } from "./common/common"
+import { KeyCode } from "./common/keyCodes"
+
+// ------------------------------------------------------------
 // Global resources: theme colors, icon codes, command string,
 //                    title_format objects;
 // ------------------------------------------------------------
@@ -1452,8 +1463,8 @@ class PlaybackQueue extends ScrollView {
             hoverItem_ &&
             plman.IsPlaylistItemSelected(plman.ActivePlaylist, hoverItem_.playlistItemIndex));
         // console.log("hover item selected?", hoverItemSel_);
-        let holdCtrl_ = utils.IsKeyPressed(VK_CONTROL);
-        let holdShift_ = utils.IsKeyPressed(VK_SHIFT);
+        let holdCtrl_ = utils.IsKeyPressed(KeyCode.Ctrl);
+        let holdShift_ = utils.IsKeyPressed(KeyCode.Shift);
 
         // Set focus;
         hoverItem_ && this._setFocus(hoverIndex_);
@@ -1507,8 +1518,8 @@ class PlaybackQueue extends ScrollView {
     on_mouse_lbtn_up(x: number, y: number, mask?: number) {
         let hoverIndex_ = this._findHoverIndex(x, y);
         let hoverItem_ = this.items[hoverIndex_];
-        let holdCtrl_ = utils.IsKeyPressed(VK_CONTROL);
-        let holdShift_ = utils.IsKeyPressed(VK_SHIFT);
+        let holdCtrl_ = utils.IsKeyPressed(KeyCode.Ctrl);
+        let holdShift_ = utils.IsKeyPressed(KeyCode.Shift);
 
         if (this.drag_is_active) {
         } else {
@@ -1563,19 +1574,19 @@ function PL_TrackContextMenu(playlistIndex: number, metadbs: IFbMetadbList, x: n
 
     //
     const menuAddTo = window.CreatePopupMenu();
-    menuAddTo.AppendTo(menuRoot, MF_STRING, "Add to playlist");
-    menuAddTo.AppendMenuItem(MF_STRING, 2000, 'New playlist...');
+    menuAddTo.AppendTo(menuRoot, MenuFlag.STRING, "Add to playlist");
+    menuAddTo.AppendMenuItem(MenuFlag.STRING, 2000, 'New playlist...');
     if (plman.PlaylistCount > 0) {
         menuAddTo.AppendMenuSeparator();
     }
     for (let index = 0; index < plman.PlaylistCount; index++) {
         menuAddTo.AppendMenuItem(
-            (plman.IsAutoPlaylist(index) || index === playlistIndex) ? MF_GRAYED : MF_STRING,
+            (plman.IsAutoPlaylist(index) || index === playlistIndex) ? MenuFlag.GRAYED : MenuFlag.STRING,
             2001 + index, plman.GetPlaylistName(index));
     }
 
     //
-    menuRoot.AppendMenuItem(isAutoPlaylist ? MF_GRAYED : MF_STRING, 1, "Remove from playlist");
+    menuRoot.AppendMenuItem(isAutoPlaylist ? MenuFlag.GRAYED : MenuFlag.STRING, 1, "Remove from playlist");
     menuRoot.AppendMenuSeparator();
 
     // TODO: Navigate artist | album;
@@ -1626,7 +1637,15 @@ const playback_queue = new PlaybackQueue({})
 playback_queue.addChild(playback_queue.scrollbar);
 playback_queue.addChild(plHeader);
 
-class PlaylistHeader extends Component { }
+class PlaylistHeader extends Component {
+    type: number;
+    title: string;
+    subtitle: string;
+    description: string;
+    artwork: IGdiBitmap;
+    defaultArtwork: IGdiBitmap;
+    imageWidth_: number;
+}
 
 class PlaylistToolbar extends Component { }
 
@@ -1959,6 +1978,7 @@ UI.onNotifyData = function (message: string, data: any) {
  * UI.on_init be executed only once at start up .
  */
 UI.on_init = function () {
+    console.log("UI init, should only once");
     NotifyOtherPanels(Messages.topbarSwitchTab, Topbar_Properties.focusTabIndex);
 }
 
@@ -1980,7 +2000,7 @@ UI.on_size = function () {
 
 let panels: Component[] = [];
 let panels_vis: Component[] = [];
-let panels_vis_updated = false;
+// TODO
 
 function flatternPanels(root: Component) {
     if (root == null) return [];
@@ -1992,7 +2012,7 @@ function flatternPanels(root: Component) {
     return results;
 }
 
-function findVisibleComponents(root: Component) {
+function findVisiblePanels(root: Component) {
     if (!root.isVisible()) return [];
 
     let children = root.children;
@@ -2000,7 +2020,7 @@ function findVisibleComponents(root: Component) {
 
     for (let i = 0; i < children.length; i++) {
         if (children[i].isVisible()) {
-            visibles = visibles.concat(findVisibleComponents(children[i]));
+            visibles = visibles.concat(findVisiblePanels(children[i]));
         }
     }
 
@@ -2010,17 +2030,24 @@ function findVisibleComponents(root: Component) {
 function RefreshPanels() {
     panels = flatternPanels(UI);
     let panelsPrev = panels_vis;
-    panels_vis = findVisibleComponents(UI);
+    panels_vis = panels.filter(p => p.isVisible());//findVisiblePanels(UI);
+    //
     panels_vis
         .filter(p => panelsPrev.indexOf(p) === -1)
-        .forEach(p => invoke(p, "on_init"));
+        .forEach(p => {
+            invoke(p, "on_init")
+            p.didUpdateOnInit();
+        });
+    panelsPrev
+        .filter(p => panels_vis.indexOf(p) === -1)
+        .forEach(p => p.resetUpdateState());
 }
 
 function NotifyOtherPanels(message: string, data: any) {
-    if (g_panels_changed) {
-        RefreshPanels();
-        g_panels_changed = false;
-    }
+    // if (g_panels_changed) {
+    RefreshPanels();
+    // g_panels_changed = false;
+    // }
     panels.map(panel =>
         panel.onNotifyData && panel.onNotifyData.call(panel, message, data))
 }
@@ -2045,10 +2072,10 @@ function on_size() {
     if (!ww || !wh) return;
 
     UI.setSize(0, 0, Math.max(ww, winMinWidth), wh);
-    if (g_panels_changed) {
-        RefreshPanels();
-        g_panels_changed = false;
-    }
+    // if (g_panels_changed) {
+    RefreshPanels();
+    //     g_panels_changed = false;
+    // }
 }
 
 
