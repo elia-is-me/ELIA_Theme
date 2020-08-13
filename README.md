@@ -8,9 +8,10 @@
 ##  Compile
 
 - Install nodejs (v6.13.4)
-- cd `ts_elia` folder and install typescript(v3.7), gulp, etc:
-``` 
+- cd `ts_elia` folder and install typescript, gulp, etc:
+``` bash
 npm install --save-dev typescript gulp-cli gulp@4.0.0 gulp-typescript
+npm install --save-dev browserify vinyl-source-stream tsify
 ```
 - `npx gulp`
 
