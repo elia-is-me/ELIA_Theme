@@ -1,5 +1,4 @@
 import { throttle, isObject, StringFormat, scale, CropImage, TextRenderingHint } from "./common"
-// import { SmoothingMode } from "@core/common"
 
 // Generate component id;
 const get_cid = (() => {
@@ -10,7 +9,6 @@ const get_cid = (() => {
 const by_z = (a: Component, b: Component) => a.z - b.z;
 export const Repaint = () => window.Repaint();
 export const ThrottledRepaint = throttle(Repaint, 15);
-export let g_panels_changed = false;
 
 interface ICallbacks {
     on_paint?: (gr: IGdiGraphics) => void;
@@ -74,8 +72,7 @@ export class Component implements IBox, TEST {
         node.parent = this;
         this.children.push(node);
         this.children.sort(by_z);
-
-        g_panels_changed = true;
+        this.resetUpdateState();
     }
 
     removeChild(node: Component) {
@@ -85,7 +82,7 @@ export class Component implements IBox, TEST {
             node.parent = null;
             this.children = this.children.filter(child => child.parent === this);
         }
-        g_panels_changed = true;
+        this.resetUpdateState();
     }
 
     isVisible() {
@@ -118,8 +115,12 @@ export class Component implements IBox, TEST {
             this.height = height;
         }
         let visibleNow_ = this.isVisible();
-        if (visibleNow_) invoke(this, 'on_size');
-        if (visibleNow_ !== visibleBefore_) this._shouldUpdateOnInit = true;
+        if (visibleNow_) {
+            invoke(this, 'on_size');
+        }
+        if (visibleNow_ !== visibleBefore_) {
+            this._shouldUpdateOnInit = true;
+        }
     }
 
     didUpdateOnInit() {
@@ -144,14 +145,14 @@ export function invoke(obj: object, method: string, ...var_args: any[]) {
     return func == null ? null : func.apply(obj, var_args);
 }
 
-export const ButtonStates = {
-    normal: 0,
-    hover: 1,
-    down: 2
+export enum ButtonStates {
+    normal = 0,
+    hover = 1,
+    down = 2
 };
 
 export class Icon extends Component {
-    state = ButtonStates.normal;
+    state: ButtonStates = ButtonStates.normal;
     image: IGdiBitmap;
     downImage: IGdiBitmap;
     hoverImage: IGdiBitmap;
@@ -242,20 +243,15 @@ export class Slider extends Component {
         if (isObject(attrs)) {
             Object.assign(this, attrs);
         }
-
-        // let min_h = Math.max(this.progress)
     }
 
     on_size() {
-        let pre_vis = this.isVisible();
-        let min_h = Math.max(this.progressHeight,
+        let minHeight_ = Math.max(this.progressHeight,
             this.thumbImg ? this.thumbImg.Height : 0,
             this.thumbDownImg ? this.thumbDownImg.Height : 0,
             this.height);
-        this.height = min_h;
-
-        if (pre_vis !== this.isVisible()) {
-            g_panels_changed = true;
+        if (this.height < minHeight_) {
+            console.log("ELIA Warn: Slider 's height is not proper.")
         }
     }
 
@@ -436,7 +432,7 @@ export class Textlink extends Component {
     textColor: number = 0xff555555;
     textHoverColor: number = 0xff000000;
     maxWidth: number = 0;
-    state: number = ButtonStates.normal;
+    state: ButtonStates = ButtonStates.normal;
 
     constructor(attrs: object) {
         super(attrs);
@@ -578,7 +574,7 @@ export class Scrollbar extends Component implements ICallbacks {
     private minCursorHeight = scale(24);
     private cursorHeight: number;
     private cursorY: number;
-    state: number;
+    state: ButtonStates;
     private cursorDelta: number;
     cursorColor: number;
     backgroundColor: number;
@@ -626,16 +622,13 @@ export class Scrollbar extends Component implements ICallbacks {
         if (this.state === ButtonStates.down) {
             let cursorY = y - this.cursorDelta
             let ratio = (cursorY - this.y) / (this.height - this.cursorHeight);
-            let offset = Math.round(
-                (this.parent.totalHeight - this.parent.height) * ratio
-            );
+            let offset = Math.round((this.parent.totalHeight - this.parent.height) * ratio);
             this.parent.scroll = offset;
             Repaint();
         } else {
-            this.changeState(
-                this.traceCursor(x, y) ? ButtonStates.hover : ButtonStates.normal
-            );
+            this.changeState(this.traceCursor(x, y) ? ButtonStates.hover : ButtonStates.normal);
         }
+
     }
 
     on_mouse_lbtn_down(x: number, y: number) {
@@ -647,7 +640,7 @@ export class Scrollbar extends Component implements ICallbacks {
 
     on_mouse_lbtn_up(x: number, y: number) {
         this.changeState(
-            this.traceCursor(x, y) ? ButtonStates.hover : ButtonStates.down
+            this.traceCursor(x, y) ? ButtonStates.hover : ButtonStates.normal
         );
     }
 

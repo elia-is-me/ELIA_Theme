@@ -6,17 +6,7 @@
         "pretty": true,
         "sourceMap": false,
         "rootDir": "./",
-        "baseUrl": "./",
-        "paths": {
-            "@core/*": ["./ELIA/common/*"]
-        },
-        "lib":[
-            "ES2018",
-            "ScriptHost",
-            "DOM"
-
-        
-        ]
+        "baseUrl": "./"
     },
     "include": [
         "./"
