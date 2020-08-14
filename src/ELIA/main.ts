@@ -1864,6 +1864,18 @@ const TOP_H = scale(48);
 //         controller: controller
 //       }
 
+Class UILayout extends Component {
+	constructor(attrs: object){
+		super(attrs);
+	}
+
+	on_init() {}
+
+	on_paint(gr: IGdiGraphics) {
+		gr.FillSolidRect(this.x, this.y, this.width, this.height, 0xff000000);
+	}
+}
+
 const UI = new Component({
     on_init() { },
 });
