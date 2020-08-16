@@ -61,7 +61,6 @@ const sidebarColors: IThemeColors = {
     HEART_RED: RGB(221, 0, 27) // Color for mood;
 }
 
-
 const Material = {
     sort: '\ue0c3',
     edit: '\ue254',
@@ -136,12 +135,13 @@ function formatPlaybackTime(sec: number) {
     return pad(minutes) + ":" + pad(seconds);
 }
 
-type pbButtonKeys = "playOrPause" | "next" | "prev" | "love" | "repeat" | "shuffle" | "volume";
-type pbButtonImageKeys = "pause" | "play" | "next" | "prev" | "heart" | "heart_empty"
-    | "repeat_off" | "repeat_on" | "repeat1_on" | "shuffle_off" | "shuffle_on" | "volume"
-    | "volume_mute";
+type ButtonKeys = "playOrPause" | "next" | "prev" | "love" | "repeat" | "shuffle" | "volume";
+type ImageKeys = "pause" | "play" | "next" | "prev" | "heart" | "heart_empty"
+    | "repeat_off" | "repeat_on" | "repeat1_on" | "shuffle_off" | "shuffle_on"
+    | "volume" | "volume_mute";
+type TPlaybackButtons = { [K in ButtonKeys]: Icon };
 
-type TPlaybackButtons = { [K in pbButtonKeys]: Icon };
+
 
 const createBottomButtons = (themeColors?: IThemeColors) => {
     const colors = bottomColors;
@@ -150,7 +150,7 @@ const createBottomButtons = (themeColors?: IThemeColors) => {
     let iconFont2 = gdi.Font(iconName, scale(18));
     let bw_1 = scale(32);
     let bw_2 = scale(32);
-    let images: { [K in pbButtonImageKeys]: IGdiBitmap } = {
+    let images: { [K in ImageKeys]: IGdiBitmap } = {
         pause: imageFromCode(Material.pause, iconFont, colors.text, bw_1, bw_1),
         play: imageFromCode(Material.play_arrow, iconFont, colors.text, bw_1, bw_1),
         next: imageFromCode(Material.skip_next, iconFont, colors.text, bw_1, bw_1),
@@ -328,9 +328,12 @@ const createBottomButtons = (themeColors?: IThemeColors) => {
     return buttons;
 }
 
-// createBottomButtons();
+interface SliderThumbImage {
+    normal: IGdiBitmap;
+    down: IGdiBitmap;
+}
 
-function createThumbImg(colors: IThemeColors) {
+function createThumbImg(colors: IThemeColors): SliderThumbImage {
     let tw = scale(14);
     let thumbImg = gdi.CreateImage(tw, tw);
     let g = thumbImg.GetGraphics();
@@ -347,7 +350,7 @@ function createThumbImg(colors: IThemeColors) {
     g2.FillEllipse(0, 0, tw - 1, tw - 1, colors.highlight);
     downThumbImg.ReleaseGraphics(g2);
 
-    return { thumbImg: thumbImg, downThumbImg: downThumbImg };
+    return { normal: thumbImg, down: downThumbImg };
 }
 
 const thumbImages = createThumbImg(bottomColors);
@@ -355,30 +358,30 @@ const progressHeight = scale(3);
 const slider_secondaryColor = blendColors(bottomColors.text, bottomColors.background, 0.7);
 const seekbar = new Slider({
     progressHeight: progressHeight,
-    thumbImg: thumbImages.thumbImg,
-    downThumbImg: thumbImages.downThumbImg,
+    thumbImage: thumbImages.normal,
+    pressedThumbImage: thumbImages.down,
     progressColor: bottomColors.highlight,
     secondaryColor: slider_secondaryColor,
     accentColor: bottomColors.highlight,
-    get_progress() {
+    getProgress() {
         return fb.PlaybackTime / fb.PlaybackLength;
     },
-    set_progress(val: number) {
+    setProgress(val: number) {
         fb.PlaybackTime = fb.PlaybackLength * val;
     }
 });
 
 const volumebar = new Slider({
     progressHeight: progressHeight,
-    thumbImg: thumbImages.thumbImg,
-    downThumbImg: thumbImages.downThumbImg,
+    thumbImage: thumbImages.normal,
+    pressedThumbImage: thumbImages.down,
     progressColor: bottomColors.highlight,
     secondaryColor: slider_secondaryColor,
     accentColor: bottomColors.highlight,
-    get_progress() {
+    getProgress() {
         return vol2pos(fb.Volume);
     },
-    set_progress(val: number) {
+    setProgress(val: number) {
         fb.Volume = pos2vol(val);
     }
 });
@@ -1700,16 +1703,16 @@ const TOP_H = scale(48);
 //         controller: controller
 //       }
 
-Class UILayout extends Component {
-	constructor(attrs: object){
-		super(attrs);
-	}
+class UILayout extends Component {
+    constructor(attrs: object) {
+        super(attrs);
+    }
 
-	on_init() {}
+    on_init() { }
 
-	on_paint(gr: IGdiGraphics) {
-		gr.FillSolidRect(this.x, this.y, this.width, this.height, 0xff000000);
-	}
+    on_paint(gr: IGdiGraphics) {
+        gr.FillSolidRect(this.x, this.y, this.width, this.height, 0xff000000);
+    }
 }
 
 const UI = new Component({
@@ -2059,6 +2062,18 @@ function on_playlist_selection_changed() {
     panels_vis.forEach(p => invoke(p, "on_selection_changed"));
 }
 
+function on_playlist_items_added(playlistIndex?: number) {
+    panels_vis.forEach(p => invoke(p, "on_playlist_items_added", playlistIndex));
+}
+
+function on_playlist_items_removed(playlistIndex?: number, newCount?: number) {
+    panels_vis.forEach(p => invoke(p, "on_playlist_items_removed", playlistIndex, newCount));
+}
+
+function on_playlist_items_reordered(playlistIndex?: number) {
+    panels_vis.forEach(p => invoke(p, "on_playlist_items_reordered", playlistIndex));
+}
+
 function on_playlists_changed() {
     panels_vis.forEach(p => invoke(p, "on_playlists_changed"));
 }
@@ -2099,6 +2114,9 @@ let systemCallbacks = {
     "on_playback_new_track": on_playback_new_track,
     "on_selection_changed": on_selection_changed,
     "on_playlist_selection_changed": on_playlist_selection_changed,
+    "on_playlist_items_added": on_playlist_items_added,
+    "on_playlsit_items_removed": on_playlist_items_removed,
+    "on_playlist_items_reordered": on_playlist_items_reordered,
     "on_playlists_changed": on_playlists_changed,
     "on_playlist_switch": on_playlist_switch,
     "on_item_focus_change": on_item_focus_change,

@@ -227,29 +227,49 @@ export class Icon extends Component {
     }
 }
 
-export class Slider extends Component {
+interface ISliderOptions {
+    progressHeight: number;
+    thumbImage: IGdiBitmap;
+    pressedThumbImage?: IGdiBitmap;
+    progressColor: number;
+    secondaryColor: number;
+    accentColor: number;
+    getProgress(): number;
+    setProgress(val: number): void;
+}
+
+export class Slider extends Component implements ISliderOptions {
     isDrag: boolean = false;
     progress: number = 0;
-    thumbImg: IGdiBitmap;
-    thumbDownImg?: IGdiBitmap;
+    thumbImage: IGdiBitmap;
+    pressedThumbImage: IGdiBitmap;
     progressColor: number = 0;
     secondaryColor: number = 0;
     accentColor: number = 0;
     progressHeight: number;
 
-    constructor(attrs: object) {
-        super(attrs);
+    constructor(opts: ISliderOptions) {
+        super(opts);
 
-        if (isObject(attrs)) {
-            Object.assign(this, attrs);
-        }
+        this.progressHeight = opts.progressHeight;
+        this.thumbImage = opts.thumbImage;
+        this.pressedThumbImage = (opts.pressedThumbImage && opts.thumbImage);
+        this.progressColor = opts.progressColor;
+        this.secondaryColor = opts.secondaryColor;
+        this.accentColor = opts.accentColor;
+        this.getProgress = opts.getProgress;
+        this.setProgress = opts.setProgress;
     }
 
+    /** 
+     * `getProgress & setProgress` should be over wright when instance created
+     * or when extended.
+     */
+    getProgress(): number { return 0 }
+    setProgress(val: number): void { }
+
     on_size() {
-        let minHeight_ = Math.max(this.progressHeight,
-            this.thumbImg ? this.thumbImg.Height : 0,
-            this.thumbDownImg ? this.thumbDownImg.Height : 0,
-            this.height);
+        let minHeight_ = Math.max(this.progressHeight, this.thumbImage.Height, this.pressedThumbImage.Height);
         if (this.height < minHeight_) {
             console.log("ELIA Warn: Slider 's height is not proper.")
         }
@@ -257,13 +277,13 @@ export class Slider extends Component {
 
     trace(x: number, y: number) {
         if (!this.isVisible()) return false;
-        let pad = (this.thumbImg ? (this.thumbImg.Width / 2) >> 0 : 0);
+        let pad = (this.thumbImage ? (this.thumbImage.Width / 2) >> 0 : 0);
         return x > this.x - pad && x <= this.x + this.width + pad
             && y > this.y && y <= this.y + this.height;
     }
 
     on_paint(gr: IGdiGraphics) {
-        this.progress = invoke(this, "get_progress");
+        this.progress = this.getProgress();
 
         if (!isFinite(this.progress)) {
             this.progress = 0;
@@ -279,10 +299,10 @@ export class Slider extends Component {
             gr.FillSolidRect(this.x, p_y, this.width * this.progress, this.progressHeight, this.progressColor);
         }
 
-        if (this.thumbImg) {
-            let img = this.thumbImg;
-            if (this.isDrag && this.thumbDownImg) {
-                img = this.thumbDownImg;
+        if (this.thumbImage) {
+            let img = this.thumbImage;
+            if (this.isDrag && this.pressedThumbImage) {
+                img = this.pressedThumbImage;
             }
             let img_x = this.x + this.width * this.progress - img.Width / 2;
             let img_y = this.y + (this.height - img.Height) / 2;
@@ -295,7 +315,7 @@ export class Slider extends Component {
         if (this.isDrag) {
             x -= this.x;
             let progress_ = x < 0 ? 0 : x > this.width ? 1 : x / this.width;
-            invoke(this, "set_progress", progress_);
+            this.setProgress(progress_);
             Repaint();
         }
     }
