@@ -1,4 +1,4 @@
-﻿import { RGB, scale, blendColors } from "./common/common"
+﻿import { RGB, scale, blendColors, TextRenderingHint, StringTrimming, StringFormatFlags } from "./common/common"
 import { imageFromCode } from "./common/common";
 import { SmoothingMode, } from "./common/common"
 import { Component, invoke } from "./common/components";
@@ -15,8 +15,6 @@ import { KeyCode } from "./common/keyCodes"
 // ------------------------------------------------------------
 
 // Colors;
-// TODO: 参考 ANTD 颜色，命名等
-//       Scrollbar 颜色主题规范
 
 interface IThemeColors {
     text: number;
@@ -440,7 +438,7 @@ const artistText = new Textlink({
 
 const albumArt = new AlbumArtView({
     on_init() {
-        this.getArt(fb.GetNowPlaying());
+        this.getArtwork(fb.GetNowPlaying());
     },
 
     on_playback_new_track() {
@@ -875,33 +873,159 @@ class PL_Header extends Component {
     parentOffsetY: number;
     subtitleText: string = "";
     descriptionText: string = "";
+    primaryColor: number;
+    secondaryColor: number;
     artworkImage: IGdiBitmap;
+    artworkHeight: number;
     _stubImage: IGdiBitmap;
     imageWidth: number;
     titleFont: IGdiFont;
     subtitleFont: IGdiFont;
     descriptionFont: IGdiFont;
+    parentOffsetY: number;
+    minHeight: number;
+
 
     constructor(options: {
         type: ListHeaderType,
         titleText?: string;
         subtitleText?: string;
-        discriptionText: string;
+        discriptionText?: string;
+        primaryColor: number;
+        secondaryColor: number;
     }) {
         super({})
         this.type = options.type;
         this.titleText = (options.titleText || "");
         this.subtitleText = (options.subtitleText || "");
         this.descriptionText = (options.discriptionText || "");
+        this.primaryColor = options.primaryColor;
+        this.secondaryColor = options.secondaryColor;
 
+        // Set fonts;
         let fontName_ = "Segoe UI Semibold";
         this.titleFont = gdi.Font(fontName_, scale(28));
         this.subtitleFont = gdi.Font(fontName_, scale(22));
         this.descriptionFont = gdi.Font(fontName_, scale(12));
+
+        // Set stub image;
+        let stubImageWidth_ = 500;
+        this._stubImage = gdi.CreateImage(stubImageWidth_, stubImageWidth_);
+        let g_ = this._stubImage.GetGraphics();
+        g_.FillSolidRect(0, 0, stubImageWidth_, stubImageWidth_, 0x20FFFFFF & RGB(242, 242, 242));
+        g_.SetTextRenderingHint(TextRenderingHint.AntiAlias);
+        g_.DrawString("No Art", gdi.Font("Segoe UI", 102, 1), RGB(97, 97, 97), 0, 0, stubImageWidth_, stubImageWidth_, StringFormat.Center);
+        g_.SetTextRenderingHint(TextRenderingHint.SystemDefault);
+        this._stubImage.ReleaseGraphics(g_);
+
+        this.minHeight = scale(240);
+    }
+
+    private getArtworkHeight_(paneWidth: number): number {
+        if (paneWidth >= scale(745)) return scale(200);
+        if (paneWidth <= scale(620)) return scale(100);
+        return ((paneWidth - scale(620)) * (100 / 125) + scale(100)) >> 0;
+    }
+
+    getProperHeight(paneWidth: number): number {
+        /**
+         * Calculate text area min height;
+         */
+        let descriptionFontHeight = this.descriptionFont.Height;
+        let titleFontHeight = this.titleFont.Height;
+        let subtitleFontHeight = this.subtitleFont.Height;
+        let tempImg = gdi.CreateImage(1, 1);
+        let tempGr = tempImg.GetGraphics();
+        let paddingTop = scale(32);
+
+        // Padding top;
+        let totalHeight = paddingTop;
+
+        let artworkHeight = this.getArtworkHeight_(paneWidth);
+        let paddingBottom = scale(8)
+        let paddingLeft = scale(32);
+        let minHeight_ = artworkHeight + paddingTop + paddingBottom;
+        let gap = scale(24);
+        let textAreaWidth = paneWidth - 2 * paddingLeft - gap;
+        let titleText = (isEmptyString(this.titleText) ? "NO TITLE" : this.titleText);
+        let titleTextFullWidth = measureStringFreeWidth(tempGr, titleText, this.titleFont);
+
+        // Title;
+        if (titleTextFullWidth > textAreaWidth) {
+            totalHeight += 1.1 * 2 * titleFontHeight;
+        } else {
+            totalHeight += 1.1 * titleFontHeight;
+        }
+
+        // Subtitle;
+        totalHeight += 1.2 * subtitleFontHeight;
+
+        // Description
+        if (isEmptyString(this.descriptionText)) {
+            totalHeight += 1.2 * descriptionFontHeight;
+        }
+
+        // Padding bottom;
+        totalHeight += paddingBottom;
+
+        // Release resource;
+        tempImg.ReleaseGraphics(tempGr);
+
+        return Math.max(minHeight_, totalHeight);
+    }
+
+    on_size() {
+        this.artworkHeight = this.getArtworkHeight_(this.width);
     }
 
     on_paint(gr: IGdiGraphics) {
+        let primaryColor = this.primaryColor;
+        let secondaryColor = this.secondaryColor;
+        let paddingLeft = scale(32);
+        let paddingTop = scale(32);
+        let paddingBottom = scale(8);
+        let { titleFont, subtitleFont, descriptionFont } = this;
+
+        /**
+         * Draw artwork;
+         */
+        const image_ = this.artworkImage || this._stubImage;
+        const artworkWidth = this.artworkHeight;
+        image_ && gr.DrawImage(image_, this.x + paddingLeft, this.y + paddingTop, artworkWidth, artworkWidth, 0, 0, image_.Width, image_.Height);
+
+        const textX = this.x + paddingLeft + artworkWidth + scale(20);
+        let textY_ = this.y + paddingTop;
+        const textAreaWidth = this.width - paddingLeft - artworkWidth - scale(20) - paddingLeft;
+
+        // Type,
+        gr.DrawString("Playlist", descriptionFont, secondaryColor, textX, textY_, textAreaWidth, 1.5 * descriptionFont.Height, StringFormat.LeftTopNoTrim)
+        textY_ += 2 * descriptionFont.Height;
+
+        // Title;
+        gr.SetTextRenderingHint(TextRenderingHint.AntiAlias);
+        const titleText_ = (this.titleText || "NO TITLE");
+        const titleFullWidth_ = measureStringFreeWidth(gr, titleText_, titleFont);
+        if (titleFullWidth_ > textAreaWidth) {
+            gr.DrawString(titleText_, titleFont, primaryColor, textX, textY_, textAreaWidth, 2.5 * titleFont.Height, StringFormat(0, 0, StringTrimming.EllipsisCharacter, StringFormatFlags.DisplayFormatControl));
+            textY_ += 1.1 * titleFont.Height * 2;
+        } else {
+            gr.DrawString(titleText_, titleFont, primaryColor, textX, textY_, textAreaWidth, 2 * titleFont.Height, StringFormat.LeftTop);
+            textY_ += 1.2 * titleFont.Height;
+        }
+
+        // Description;
+        if (!isEmptyString(this.descriptionText)) {
+            gr.DrawString(this.descriptionText, descriptionFont, secondaryColor, textX, textY_, textAreaWidth, 2 * descriptionFont.Height, StringFormat.LeftTop);
+            textY_ += 1.3 * descriptionFont.Height;
+        }
+
+        // Subtitle;
+        // ...
     }
+}
+
+function measureStringFreeWidth(gr: IGdiGraphics, text: string | number, font: IGdiFont): number {
+    return gr.MeasureString(text, font, 0, 0, 9999, 999, StringFormat(0, 0, StringTrimming.None, StringFormatFlags.NoWrap)).Width;
 }
 
 const createColumn = (visible: boolean, x: number, width: number) => {
@@ -963,6 +1087,7 @@ function isValidPlaylist(playlistIndex: number) {
 class PlaybackQueue extends ScrollView {
 
     items: Pl_Item[] = [];
+    itemsTotalHeight: number;
     visibleItems: Pl_Item[] = [];
     selectedIndexes: number[] = [];
 
@@ -970,7 +1095,7 @@ class PlaybackQueue extends ScrollView {
     hoverIndex: number = -1;
     focusIndex: number = -1;
 
-    scrollbar: Scrollbar ;
+    scrollbar: Scrollbar;
     headerView: PL_Header;
 
     constructor(attrs: object) {
@@ -984,12 +1109,19 @@ class PlaybackQueue extends ScrollView {
         this.addChild(this.scrollbar);
         this.scrollbar.z = 100;
         //
-        this.headerView = new PL_Header({});
+        this.headerView = new PL_Header({
+            type: ListHeaderType.playlist,
+            primaryColor: mainColors.text,
+            secondaryColor: mainColors.secondaryText
+        });
         this.addChild(this.headerView);
     }
 
 
     initList() {
+        /**
+         * Set playlist items;
+         */
         const pl_metadbs = plman.GetPlaylistItems(plman.ActivePlaylist);
         const pl_items: Pl_Item[] = [];
         const pl_itemCount = plman.PlaylistItemCount(plman.ActivePlaylist);
@@ -1009,7 +1141,8 @@ class PlaybackQueue extends ScrollView {
             itemYOffset += rowHeight;
         }
         this.items = pl_items;
-        this.totalHeight = rowHeight * (pl_items.length + 1) + PL_Properties.headerHeight;
+        this.itemsTotalHeight = rowHeight * (pl_items.length + scale(8));
+        this.totalHeight = this.itemsTotalHeight + this.headerView.height;
 
         if (fb.IsPlaying) {
             let ItemLocation = plman.GetPlayingItemLocation();
@@ -1073,7 +1206,6 @@ class PlaybackQueue extends ScrollView {
 
     }
     on_size() {
-        let rowHeight = PL_Properties.rowHeight;
         let items = this.items;
 
         for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
@@ -1090,12 +1222,15 @@ class PlaybackQueue extends ScrollView {
             scrollbarWidth,
             this.height - PL_Properties.headerHeight);
 
-        this.headerView.setSize(this.x, this.y, this.width, PL_Properties.headerHeight);
+        const headerViewHeight = this.headerView.getProperHeight(this.width);
+        this.headerView.setSize(this.x, this.y - this.scroll, this.width, headerViewHeight);
+
+        this.totalHeight = this.itemsTotalHeight + headerViewHeight;
     }
     on_paint(gr: IGdiGraphics) {
 
         let rowHeight = PL_Properties.rowHeight;
-        let headerHeight = PL_Properties.headerHeight;
+        let headerHeight = this.headerView.height;
         let tf_TrackInfo = PL_Properties.tfTrackInfo;
         let items = this.items;
         let itemFont = PL_Properties.itemFont;
@@ -1105,6 +1240,8 @@ class PlaybackQueue extends ScrollView {
 
         // Draw background;
         gr.FillSolidRect(this.x, this.y, this.width, this.height, colors.background);
+
+        this.headerView.y = this.y - this.scroll;
 
         //
         this.visibleItems.length = 0;
@@ -1117,7 +1254,7 @@ class PlaybackQueue extends ScrollView {
             thisItem.y = this.y + thisItem.yOffset - this.scroll + headerHeight;
 
             // Visible items;
-            if (thisItem.y + rowHeight >= this.y + headerHeight && thisItem.y < this.y + this.height) {
+            if (thisItem.y + rowHeight >= this.y && thisItem.y < this.y + this.height) {
 
                 this.visibleItems.push(thisItem);
 
@@ -1600,7 +1737,7 @@ class PLM_Item {
     }
 }
 
-class PLM_View extends ScrollView {
+class PlaylistManagerView extends ScrollView {
     items: PLM_Item[] = [];
     scrollbar: Scrollbar = new Scrollbar({
         cursorColor: scrollbarColor.cursor,
@@ -1722,7 +1859,7 @@ class PLM_View extends ScrollView {
     }
 }
 
-const plm_pane = new PLM_View({});
+const plm_pane = new PlaylistManagerView({});
 
 
 // --------------------------
@@ -1732,25 +1869,20 @@ const plm_pane = new PLM_View({});
 const PLAY_CONTROL_HEIGHT = scale(76);
 const TOP_H = scale(48);
 
-// TODO:
-// UI = {
-//         root: root,
-//         controller: controller
-//       }
 
 class UILayout extends Component {
 
-	playbackControlView: BottomPanelView;
-	bigArtworkView: ArtDisplay;
-	topbarView: TopBar;
-	playlistView: PlaybackQueue;
-	libraryView: LibraryView; // 
-	playlistManagerView: PLM_View;
+    playbackControlView: PlaybackControlPanel;
+    bigArtworkView: ArtDisplay;
+    topbarView: TopBar;
+    playlistView: PlaybackQueue;
+    libraryView: LibraryView; // 
+    playlistManagerView: PlaylistManagerView;
 
 
-	constructor(attrs: object){
-		super(attrs);
-	}
+    constructor(attrs: object) {
+        super(attrs);
+    }
 
     on_init() { }
 

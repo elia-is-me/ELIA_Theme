@@ -313,6 +313,8 @@ export function StringFormat(h_align = 0, v_align = 0, trimming = 0, flags = 0) 
 }
 StringFormat.LeftCenter = StringFormat(0, 1, StringTrimming.EllipsisCharacter, StringFormatFlags.NoWrap);
 StringFormat.Center = StringFormat(1, 1, StringTrimming.Character, StringFormatFlags.NoWrap);
+StringFormat.LeftTop = StringFormat(0, 0, StringTrimming.EllipsisCharacter, StringFormatFlags.NoWrap);
+StringFormat.LeftTopNoTrim = StringFormat(0, 0, StringTrimming.None, StringFormatFlags.NoWrap);
 
 export function debounce(fn: Function, delay: number) {
     var timer: number = null;
