@@ -882,9 +882,9 @@ class PL_Header extends Component {
     titleFont: IGdiFont;
     subtitleFont: IGdiFont;
     descriptionFont: IGdiFont;
-    parentOffsetY: number;
     minHeight: number;
 
+    paddings: IPaddings;
 
     constructor(options: {
         type: ListHeaderType,
@@ -901,6 +901,8 @@ class PL_Header extends Component {
         this.descriptionText = (options.discriptionText || "");
         this.primaryColor = options.primaryColor;
         this.secondaryColor = options.secondaryColor;
+
+        this.paddings = { top: 0, bottom: 0, left: 0, right: 0 };
 
         // Set fonts;
         let fontName_ = "Segoe UI Semibold";
@@ -922,9 +924,26 @@ class PL_Header extends Component {
     }
 
     private getArtworkHeight_(paneWidth: number): number {
-        if (paneWidth >= scale(745)) return scale(200);
-        if (paneWidth <= scale(620)) return scale(100);
-        return ((paneWidth - scale(620)) * (100 / 125) + scale(100)) >> 0;
+        let thin = scale(600);
+        let wide = scale(920);
+        if (paneWidth < thin) return scale(160);
+        if (paneWidth < wide) return scale(200);
+        return scale(240);
+    }
+
+    getProperPaddings(paneWidth: number): IPaddings {
+        let thin = scale(600);
+        let wide = scale(920);
+        let extraWide = scale(1120);
+        if (paneWidth < thin) {
+            return { top: scale(12), bottom: scale(12), left: scale(20), right: scale(20) }
+        }
+        if (paneWidth < wide) {
+            return { top: scale(12), bottom: scale(12), left: scale(32), right: scale(32) }
+        }
+        if (paneWidth < extraWide) {
+            return { top: scale(32), bottom: scale(32), left: scale(44), right: scale(44) }
+        }
     }
 
     getProperHeight(paneWidth: number): number {
@@ -936,14 +955,15 @@ class PL_Header extends Component {
         let subtitleFontHeight = this.subtitleFont.Height;
         let tempImg = gdi.CreateImage(1, 1);
         let tempGr = tempImg.GetGraphics();
-        let paddingTop = scale(32);
+        let paddings = this.getProperPaddings(paneWidth);
+        let paddingTop = paddings.top;
 
         // Padding top;
         let totalHeight = paddingTop;
 
         let artworkHeight = this.getArtworkHeight_(paneWidth);
-        let paddingBottom = scale(8)
-        let paddingLeft = scale(32);
+        let paddingBottom = paddings.bottom;
+        let paddingLeft = paddings.left;
         let minHeight_ = artworkHeight + paddingTop + paddingBottom;
         let gap = scale(24);
         let textAreaWidth = paneWidth - 2 * paddingLeft - gap;
@@ -1084,6 +1104,13 @@ function isValidPlaylist(playlistIndex: number) {
     return (playlistIndex >= 0 && playlistIndex < plman.PlaylistCount);
 }
 
+interface IPaddings {
+    top: number;
+    bottom: number;
+    left: number;
+    right: number;
+}
+
 class PlaybackQueue extends ScrollView {
 
     items: Pl_Item[] = [];
@@ -1094,6 +1121,8 @@ class PlaybackQueue extends ScrollView {
     playingItemIndex: number = -1;
     hoverIndex: number = -1;
     focusIndex: number = -1;
+
+    paddings: IPaddings;
 
     scrollbar: Scrollbar;
     headerView: PL_Header;
@@ -1115,6 +1144,9 @@ class PlaybackQueue extends ScrollView {
             secondaryColor: mainColors.secondaryText
         });
         this.addChild(this.headerView);
+
+        // init padding values to 0;
+        this.paddings = { top: 0, bottom: 0, left: 0, right: 0 };
     }
 
 
@@ -1141,7 +1173,7 @@ class PlaybackQueue extends ScrollView {
             itemYOffset += rowHeight;
         }
         this.items = pl_items;
-        this.itemsTotalHeight = rowHeight * (pl_items.length + scale(8));
+        this.itemsTotalHeight = rowHeight * pl_items.length + scale(32);
         this.totalHeight = this.itemsTotalHeight + this.headerView.height;
 
         if (fb.IsPlaying) {
@@ -1156,6 +1188,31 @@ class PlaybackQueue extends ScrollView {
         }
 
         plman.SetActivePlaylistContext();
+    }
+
+    getPaddingOnWidth_(panelWidth: number): IPaddings {
+        let thin = scale(750);
+        let wide = scale(1150);
+        let paddings: IPaddings = { top: 0, bottom: 0, right: 0, left: 0 };
+
+        if (panelWidth < thin) {
+            paddings.top = scale(16);
+            paddings.bottom = scale(16);
+            paddings.right = scale(24);
+            paddings.left = scale(24);
+        } else if (panelWidth < wide) {
+            paddings.top = scale(24);
+            paddings.bottom = scale(24);
+            paddings.left = scale(40);
+            paddings.right = scale(40);
+        } else {
+            paddings.top = scale(40);
+            paddings.bottom = scale(40);
+            paddings.right = scale(40);
+            paddings.left = scale(40);
+        }
+
+        return paddings;
     }
 
     setColumnSize() {
@@ -1206,8 +1263,9 @@ class PlaybackQueue extends ScrollView {
 
     }
     on_size() {
-        let items = this.items;
+        this.paddings = this.getPaddingOnWidth_(this.width);
 
+        let items = this.items;
         for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
             let thisItem = items[itemIndex];
             thisItem.x = this.x;
@@ -1217,10 +1275,10 @@ class PlaybackQueue extends ScrollView {
         this.setColumnSize();
 
         this.scrollbar.setSize(
-            this.x + this.width - scale(14),
-            this.y + PL_Properties.headerHeight,
+            this.x + this.width - scrollbarWidth,
+            this.y,
             scrollbarWidth,
-            this.height - PL_Properties.headerHeight);
+            this.height);
 
         const headerViewHeight = this.headerView.getProperHeight(this.width);
         this.headerView.setSize(this.x, this.y - this.scroll, this.width, headerViewHeight);
