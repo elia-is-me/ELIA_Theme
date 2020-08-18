@@ -136,6 +136,10 @@ export class Component implements IBox, TEST {
     }
 
     onNotifyData(str: string, info: any) { }
+
+    repaint() {
+        window.RepaintRect(this.x, this.y, this.width, this.height);
+    }
 }
 
 
@@ -342,9 +346,9 @@ export const AlbumArtId = {
 };
 
 export class AlbumArtView extends Component {
-    currentArtId: number = AlbumArtId.front;
+    albumArtId: number = AlbumArtId.front;
     tf = fb.TitleFormat("%album artist%^^%album");
-    trackkey: string = "";
+    protected trackKey: string = "";
     currentImg: IGdiBitmap;
     defaultImg: IGdiBitmap = this._drawNocoverImg(0xafffffff, 0x0fffffff);
     metadb: IFbMetadb;
@@ -367,7 +371,6 @@ export class AlbumArtView extends Component {
         let img = gdi.CreateImage(500, 500);
         let g = img.GetGraphics();
 
-        // g.SetSmoothingMode(SmoothingMode.HighQuality);
         g.SetTextRenderingHint(TextRenderingHint.AntiAlias);
         g.FillSolidRect(0, 0, 500, 500, textColor & 0x20ffffff);
         g.DrawString("NO", font1, textColor & 0x25ffffff, 0, 0, 500, 275, cc);
@@ -382,17 +385,17 @@ export class AlbumArtView extends Component {
         return (image == null) ? null : CropImage(image, this.width, this.height);
     }
 
-    getArt(metadb?: IFbMetadb) {
+    getArtwork(metadb?: IFbMetadb) {
         let trackkey_ = "##@!~";
 
         if (metadb != null) {
             trackkey_ = this.tf.EvalWithMetadb(metadb);
             this.metadb = metadb;
-            let img = utils.GetAlbumArtV2(metadb, this.currentArtId);
+            let img = utils.GetAlbumArtV2(metadb, this.albumArtId);
 
             // for tracks download from neteaseCloudMusic which prefer store
             // alum art image at 'disc' slot;
-            if (img == null && this.currentArtId === AlbumArtId.front) {
+            if (img == null && this.albumArtId === AlbumArtId.front) {
                 img = utils.GetAlbumArtV2(metadb, AlbumArtId.disc);
             }
 
@@ -405,22 +408,16 @@ export class AlbumArtView extends Component {
             this.currentImg = null;;
         }
 
-        this.trackkey = trackkey_;
+        this.trackKey = trackkey_;
     }
 
     on_paint(gr: IGdiGraphics) {
         let img = this.currentImg || this.defaultImg;
-
-        if (img == null) {
-            gr.FillSolidRect(this.x, this.y, this.width, this.height, 0xff00FFFF);
-        }
-        else {
-            gr.DrawImage(img, this.x, this.y, this.width, this.height, 0, 0, img.Width, img.Height);
-        }
+        gr.DrawImage(img, this.x, this.y, this.width, this.height, 0, 0, img.Width, img.Height);
     }
 
     on_init() {
-        this.getArt(fb.GetNowPlaying());
+        this.getArtwork(fb.GetNowPlaying());
     }
 
     // TODO: debounced function;
@@ -429,18 +426,6 @@ export class AlbumArtView extends Component {
             if (this.defaultImg && this.defaultImg.Width !== this.width) {
                 this.defaultImg = CropImage(this._rawDefaultImg, this.width, this.height);
             }
-        }
-    }
-
-    on_playback_new_track() {
-        this.getArt(fb.GetNowPlaying());
-        Repaint();
-    }
-
-    on_playback_stop(reason: number) {
-        if (reason !== 2) {
-            this.getArt();
-            Repaint();
         }
     }
 }

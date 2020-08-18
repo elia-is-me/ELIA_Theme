@@ -452,7 +452,6 @@ const albumArt = new AlbumArtView({
     }
 });
 
-// TODO: class BottomPanelView extends Component;
 class PlaybackControlPanel extends Component {
     private timerId: number = -1;
     playbackTime: string = "";
@@ -859,29 +858,45 @@ const PL_Colors: IThemeColors = {
     HEART_RED: RGB(221, 0, 27)
 }
 
+enum ListHeaderType {
+    album,
+    artist,
+    playlist
+}
 
 class PL_Header extends Component {
+    type: ListHeaderType;
     titleText: string = "";
+    subtitleText: string = "";
+    descriptionText: string = "";
+    artworkImage: IGdiBitmap;
+    _stubImage: IGdiBitmap;
+    imageWidth: number;
+    titleFont: IGdiFont;
+    subtitleFont: IGdiFont;
+    descriptionFont: IGdiFont;
 
-    on_init() {
-        this.titleText = plman.GetPlaylistName(plman.ActivePlaylist);
+    constructor(options: {
+        type: ListHeaderType,
+        titleText?: string;
+        subtitleText?: string;
+        discriptionText: string;
+    }) {
+        super({})
+        this.type = options.type;
+        this.titleText = (options.titleText || "");
+        this.subtitleText = (options.subtitleText || "");
+        this.descriptionText = (options.discriptionText || "");
+
+        let fontName_ = "Segoe UI Semibold";
+        this.titleFont = gdi.Font(fontName_, scale(28));
+        this.subtitleFont = gdi.Font(fontName_, scale(22));
+        this.descriptionFont = gdi.Font(fontName_, scale(12));
     }
 
     on_paint(gr: IGdiGraphics) {
-        // gr.FillSolidRect(this.x, this.y, this.width, this.height, mainColors.background);
-        gr.DrawString(this.titleText, PL_Properties.itemFont, mainColors.text, this.x + scale(16), this.y, this.width - scale(32), this.height, StringFormat.LeftCenter);
-    }
-
-    on_playlists_changed() {
-        this.titleText = plman.GetPlaylistName(plman.ActivePlaylist);
-    }
-
-    on_playlist_switch() {
-        this.titleText = plman.GetPlaylistName(plman.ActivePlaylist);
     }
 }
-
-const plHeader = new PL_Header({})
 
 const createColumn = (visible: boolean, x: number, width: number) => {
     return { visible: visible, x: x, width: width }
