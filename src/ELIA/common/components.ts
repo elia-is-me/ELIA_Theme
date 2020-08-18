@@ -519,13 +519,27 @@ export abstract class ScrollView extends Component {
     totalHeight: number;
     scrolling: boolean = false;
     private scroll_: number = 0;
-    get scroll() { return this.scroll_ };
-    set scroll(val: number) { this.scroll_ = this.checkscroll(val) }
     private timerId: number = -1;
 
     constructor(attrs: object) {
         super(attrs);
     }
+
+	get scroll() { 
+		return this.scroll_ 
+	};
+
+	set scroll(val: number) { 
+		if (val !== this.scroll) {
+		this.scroll_ = this.checkscroll(val) 
+			this.onDidChangeScroll(val);
+		}
+	}
+
+	/**
+	 * Overwrite it if want to do something after scroll value changed.
+	 */
+	onDidChangeScroll(val: number) { }
 
     checkscroll(val: number) {
         if (val > this.totalHeight - this.height) {
@@ -558,16 +572,11 @@ export abstract class ScrollView extends Component {
                 window.ClearTimeout(this.timerId);
                 this.scrolling = false;
             }
-            this.onScrollStep(this.scroll);
             Repaint();
         }
 
         window.ClearTimeout(this.timerId);
         onTimeout();
-    }
-
-    onScrollStep(scroll_: number = this.scroll) {
-
     }
 }
 

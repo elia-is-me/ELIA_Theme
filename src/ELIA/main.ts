@@ -61,6 +61,15 @@ const sidebarColors: IThemeColors = {
     HEART_RED: RGB(221, 0, 27) // Color for mood;
 }
 
+/**
+ * Scrollbar color;
+ */
+const scrollbarColor = {
+    cursor: 0x50ffffff & mainColors.text,
+    background: 0, // opacity
+}
+
+
 const Material = {
     sort: '\ue0c3',
     edit: '\ue254',
@@ -786,35 +795,28 @@ class SwitchTab extends Component {
 
 /* TODO */
 const Topbar_Properties = {
-    height: scale(48),
+    height: scale(56),
     tabFont: gdi.Font(globalFontName, scale(14)),
     focusTabIndex: +window.GetProperty("Topbar.focusTab", 0),
 }
 
 const Topbar_Colors: IThemeColors = {
     text: mainColors.text,
-    background: RGB(0, 0, 0),
+    background: RGB(37, 37, 37),
     highlight: mainColors.highlight
 };
 
 class TopBar extends Component {
 
-    switchTabs: SwitchTab;
-    colors: IThemeColors = mainColors;
+    colors: IThemeColors;
+    logoIcon: IGdiBitmap;
+    searchInput: any;
+    searchButton: any;
+    backButton: Icon;
 
     constructor(attr: object) {
         super(attr);
 
-        this.switchTabs = new SwitchTab({
-            font: Topbar_Properties.tabFont,
-            // TODO: Replace strings with CHINESE;
-            // items: ["播放列表", "专辑", "歌曲", "音乐人"],
-            items: ["PLAYLISTS", "ALBUMS", "SONGS", "ARTISTS"]
-        });
-        this.switchTabs.onTabChange = (to: number) => {
-            NotifyOtherPanels(Messages.topbarSwitchTab, to)
-        }
-        this.addChild(this.switchTabs);
         this.colors = Topbar_Colors;
     }
 
@@ -823,11 +825,6 @@ class TopBar extends Component {
     }
 
     on_size() {
-        let tabHeight = this.height;
-        let tabsWidth = this.switchTabs.calcTotalWidth();
-        let tabX = this.x + scale(8);
-        let tabY = this.y
-        this.switchTabs.setSize(tabX, tabY, tabsWidth, tabHeight);
     }
 
     on_paint(gr: IGdiGraphics) {
@@ -858,15 +855,24 @@ const PL_Colors: IThemeColors = {
     HEART_RED: RGB(221, 0, 27)
 }
 
+interface IPlaylistHeader {
+    getParentOffsetY(): number;
+}
+
+
 enum ListHeaderType {
     album,
     artist,
     playlist
 }
 
+/**
+ * Flow with list items;
+ */
 class PL_Header extends Component {
     type: ListHeaderType;
     titleText: string = "";
+    parentOffsetY: number;
     subtitleText: string = "";
     descriptionText: string = "";
     artworkImage: IGdiBitmap;
@@ -959,14 +965,28 @@ class PlaybackQueue extends ScrollView {
     items: Pl_Item[] = [];
     visibleItems: Pl_Item[] = [];
     selectedIndexes: number[] = [];
-    scrollbar: Scrollbar = new Scrollbar({
-        cursorColor: PL_Colors.text & 0x50ffffff,
-        backgroundColor: 0x00ffffff
-    });
 
     playingItemIndex: number = -1;
     hoverIndex: number = -1;
     focusIndex: number = -1;
+
+    scrollbar: Scrollbar ;
+    headerView: PL_Header;
+
+    constructor(attrs: object) {
+        super(attrs);
+
+        //
+        this.scrollbar = new Scrollbar({
+            cursorColor: scrollbarColor.cursor,
+            backgroundColor: 0,
+        });
+        this.addChild(this.scrollbar);
+        this.scrollbar.z = 100;
+        //
+        this.headerView = new PL_Header({});
+        this.addChild(this.headerView);
+    }
 
 
     initList() {
@@ -1070,7 +1090,7 @@ class PlaybackQueue extends ScrollView {
             scrollbarWidth,
             this.height - PL_Properties.headerHeight);
 
-        plHeader.setSize(this.x, this.y, this.width, PL_Properties.headerHeight);
+        this.headerView.setSize(this.x, this.y, this.width, PL_Properties.headerHeight);
     }
     on_paint(gr: IGdiGraphics) {
 
@@ -1484,8 +1504,8 @@ function PL_TrackContextMenu(playlistIndex: number, metadbs: IFbMetadbList, x: n
 
 
 const playback_queue = new PlaybackQueue({})
-playback_queue.addChild(playback_queue.scrollbar);
-playback_queue.addChild(plHeader);
+//playback_queue.addChild(playback_queue.scrollbar);
+//playback_queue.addChild(playlistHeader);
 
 class PlaylistHeader extends Component {
     type: number;
@@ -1583,8 +1603,8 @@ class PLM_Item {
 class PLM_View extends ScrollView {
     items: PLM_Item[] = [];
     scrollbar: Scrollbar = new Scrollbar({
-        cursorColor: sidebarColors.text & 0x50ffffff,
-        backgroundColor: 0x00ffffff
+        cursorColor: scrollbarColor.cursor,
+        backgroundColor: 0,
     });
     header: PLM_Header = new PLM_Header({});
 
@@ -1719,9 +1739,18 @@ const TOP_H = scale(48);
 //       }
 
 class UILayout extends Component {
-    constructor(attrs: object) {
-        super(attrs);
-    }
+
+	playbackControlView: BottomPanelView;
+	bigArtworkView: ArtDisplay;
+	topbarView: TopBar;
+	playlistView: PlaybackQueue;
+	libraryView: LibraryView; // 
+	playlistManagerView: PLM_View;
+
+
+	constructor(attrs: object){
+		super(attrs);
+	}
 
     on_init() { }
 
@@ -2034,7 +2063,7 @@ function on_mouse_wheel(step: number) {
     if (g_active_index === -1) {
         return;
     }
-    // else;
+
     if ((<any>panels_vis[g_active_index])["on_mouse_wheel"]) {
         (<any>panels_vis[g_active_index]).on_mouse_wheel(step);
     } else {
@@ -2105,7 +2134,14 @@ function on_metadb_changed(metadbs: IFbMetadbList, fromhook: boolean) {
     panels_vis.forEach(p => invoke(p, "on_metadb_changed"));
 }
 
+/**
+ * foo_spider_monkey_panel.dll does not provide a globalThis var and the
+ * `window` object is readonly that none new properties  & methods can be assin
+ * to it.  
+ * It's commonly used way to create a `globalThis`
+ */
 const globalThis_ = Function("return this")();
+
 /**
  * These callback functions will automatically triggered by fb on various
  * events. since I do not know how to create global vars & functions, I decide
@@ -2139,3 +2175,5 @@ let systemCallbacks = {
 };
 
 Object.assign(globalThis_, systemCallbacks);
+
+// vim: set fileencoding=utf-8 bomb et:/
