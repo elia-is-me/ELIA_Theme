@@ -1,6 +1,7 @@
 ﻿import { RGB, scale, blendColors, TextRenderingHint, StringTrimming, StringFormatFlags } from "./common/common"
 import { imageFromCode } from "./common/common";
 import { SmoothingMode, } from "./common/common"
+import { cloneObject } from "./common/common"
 import { Component, invoke } from "./common/components";
 import { Icon, Slider, ScrollView, Scrollbar, AlbumArtView, Textlink } from "./common/components"
 import { Repaint, ThrottledRepaint } from "./common/components"
@@ -931,19 +932,31 @@ class PL_Header extends Component {
         return scale(240);
     }
 
+    private getParentPaddings_(): IPaddings{
+        let paddings_: IPaddings = { top: 0, bottom: 0, left: 0, right: 0 };
+        let sourcePaddings: IPaddings;
+        if (this.parent && (<any>this.parent).paddings) {
+            sourcePaddings  = this.parent.paddings;
+        } else {
+            sourcePaddings = this.paddings;
+        }
+        return cloneObject(sourcePaddings);
+    }
+
     getProperPaddings(paneWidth: number): IPaddings {
         let thin = scale(600);
         let wide = scale(920);
         let extraWide = scale(1120);
+        let paddings = this.getParentPaddings_();
         if (paneWidth < thin) {
-            return { top: scale(12), bottom: scale(12), left: scale(20), right: scale(20) }
-        }
-        if (paneWidth < wide) {
-            return { top: scale(12), bottom: scale(12), left: scale(32), right: scale(32) }
+            paddings.top = paddings.bottom = scale(12);
+        } else if (paneWidth < wide) {
+            paddings.top = paddings.bottom = scale(12);
         }
         if (paneWidth < extraWide) {
-            return { top: scale(32), bottom: scale(32), left: scale(44), right: scale(44) }
+            paddings.top = paddings.bottom = scale(32);
         }
+        return paddings;
     }
 
     getProperHeight(paneWidth: number): number {
@@ -1001,9 +1014,10 @@ class PL_Header extends Component {
     on_paint(gr: IGdiGraphics) {
         let primaryColor = this.primaryColor;
         let secondaryColor = this.secondaryColor;
-        let paddingLeft = scale(32);
-        let paddingTop = scale(32);
-        let paddingBottom = scale(8);
+        let paddings = this.paddings;
+        let paddingLeft = paddings.left;
+        let paddingTop = paddings.top;
+        let paddingBottom = paddings.bottom;
         let { titleFont, subtitleFont, descriptionFont } = this;
 
         /**
@@ -1216,8 +1230,9 @@ class PlaybackQueue extends ScrollView {
     }
 
     setColumnSize() {
-        const padLeft = scale(4);
-        const padRight = this.scrollbar.width + scale(4);
+        const paddings = this.paddings;
+        const padLeft = paddings.left;
+        const padRight = this.scrollbar.width + paddings.right;
         const { index, trackNo, trackLen, mood, title, album, artist } = PL_Columns;
 
         let whitespace_ = this.width - padLeft - padRight;
@@ -1335,8 +1350,7 @@ class PlaybackQueue extends ScrollView {
                 }
 
                 if (this.focusIndex === itemIndex) {
-                    gr.DrawRect(this.x, thisItem.y, this.width - 1, rowHeight - 1, scale(1),
-                        RGB(127, 127, 127));
+                    gr.DrawRect(this.x, thisItem.y, this.width - 1, rowHeight - 1, scale(1), RGB(127, 127, 127));
                 }
 
                 let columnArray = [
@@ -1361,14 +1375,17 @@ class PlaybackQueue extends ScrollView {
                     gr.DrawString(thisItem.trackNo, itemFont, colors.text, columns.trackNo.x, thisItem.y, columns.trackNo.width, rowHeight, StringFormat.Center);
                 }
 
-                gr.DrawString(thisItem.title, itemFont, colors.text, columns.title.x, thisItem.y, columns.title.width, rowHeight, StringFormat.LeftCenter);
+                let gap = scale(12);
+
+                gr.DrawString(thisItem.title, itemFont, colors.text, columns.title.x, thisItem.y, columns.title.width - gap, rowHeight, StringFormat.LeftCenter);
+
                 if (columns.artist.visible && columns.artist.width > 0) {
                     gr.DrawString(thisItem.artist, itemFont, colors.text,
-                        columns.artist.x, thisItem.y, columns.artist.width, rowHeight, StringFormat.LeftCenter);
+                        columns.artist.x, thisItem.y, columns.artist.width - gap, rowHeight, StringFormat.LeftCenter);
                 }
                 if (columns.album.visible && columns.album.width > 0) {
                     gr.DrawString(thisItem.album, itemFont, colors.text,
-                        columns.album.x, thisItem.y, columns.album.width, rowHeight, StringFormat.LeftCenter);
+                        columns.album.x, thisItem.y, columns.album.width - gap, rowHeight, StringFormat.LeftCenter);
                 }
                 gr.DrawString(thisItem.playbackLength, itemFont, colors.text, columns.trackLen.x, thisItem.y, columns.trackLen.width, rowHeight, StringFormat.Center);
 
@@ -1420,7 +1437,6 @@ class PlaybackQueue extends ScrollView {
                 this.items[plIndex].playlistItemIndex);
         }
         ThrottledRepaint();
-        // Repaint();
     }
 
     on_item_focus_change(playlistIndex: number, from?: number, to?: number) {
