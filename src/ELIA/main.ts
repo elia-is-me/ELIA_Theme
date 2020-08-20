@@ -1,7 +1,7 @@
 ﻿import { RGB, scale, blendColors, TextRenderingHint, StringTrimming, StringFormatFlags } from "./common/common"
 import { imageFromCode } from "./common/common";
 import { SmoothingMode, } from "./common/common"
-import { cloneObject } from "./common/common"
+import { deepClone } from "./common/common"
 import { Component, invoke } from "./common/components";
 import { Icon, Slider, ScrollView, Scrollbar, AlbumArtView, Textlink } from "./common/components"
 import { Repaint, ThrottledRepaint } from "./common/components"
@@ -870,6 +870,7 @@ enum ListHeaderType {
  */
 class PL_Header extends Component {
     type: ListHeaderType;
+    typeText: string;
     titleText: string = "";
     parentOffsetY: number;
     subtitleText: string = "";
@@ -908,8 +909,8 @@ class PL_Header extends Component {
         // Set fonts;
         let fontName_ = "Segoe UI Semibold";
         this.titleFont = gdi.Font(fontName_, scale(28));
-        this.subtitleFont = gdi.Font(fontName_, scale(22));
-        this.descriptionFont = gdi.Font(fontName_, scale(12));
+        this.subtitleFont = gdi.Font(fontName_, scale(24));
+        this.descriptionFont = gdi.Font(fontName_, scale(14));
 
         // Set stub image;
         let stubImageWidth_ = 500;
@@ -932,22 +933,24 @@ class PL_Header extends Component {
         return scale(240);
     }
 
-    private getParentPaddings_(): IPaddings{
-        let paddings_: IPaddings = { top: 0, bottom: 0, left: 0, right: 0 };
+    /**
+     * Get a clone of parent's paddings value;
+     */
+    private getParentPaddings_(): IPaddings {
         let sourcePaddings: IPaddings;
-        if (this.parent && (<any>this.parent).paddings) {
-            sourcePaddings  = this.parent.paddings;
+        if (this.parent && (<PlaybackQueue>this.parent).paddings) {
+            sourcePaddings = (<PlaybackQueue>this.parent).paddings;
         } else {
             sourcePaddings = this.paddings;
         }
-        return cloneObject(sourcePaddings);
+        return deepClone(sourcePaddings);
     }
 
     getProperPaddings(paneWidth: number): IPaddings {
         let thin = scale(600);
         let wide = scale(920);
         let extraWide = scale(1120);
-        let paddings = this.getParentPaddings_();
+        let paddings = deepClone(this.getParentPaddings_());
         if (paneWidth < thin) {
             paddings.top = paddings.bottom = scale(12);
         } else if (paneWidth < wide) {
@@ -1007,8 +1010,58 @@ class PL_Header extends Component {
         return Math.max(minHeight_, totalHeight);
     }
 
+    setTitles() {
+        switch (this.type) {
+            case ListHeaderType.playlist:
+                this.typeText = "Playlist";
+                this.titleText = plman.GetPlaylistName(this.playlistIndex)
+                this.descriptionText = plman.PlaylistItemCount(this.playlistIndex)
+                    + " items"
+                    + " \u2022 "
+                    + utils.FormatDuration(plman.GetPlaylistItems(this.playlistIndex).CalcTotalDuration());
+                break;
+            case ListHeaderType.album:
+                this.typeText = "Album";
+                this.titleText = "";
+                this.subtitleText = "";
+                this.descriptionText = "";
+                break;
+            case ListHeaderType.artist:
+                this.typeText = "Artist";
+                this.titleText = "";
+                this.subtitleText = "";
+                this.descriptionText = "";
+                break;
+            default:
+                this.typeText = "UNKNOWN TYPE";
+                this.titleText = "No Title";
+                this.subtitleText = "";
+                this.descriptionText = "";
+                break;
+        }
+    }
+
+    setType(type: ListHeaderType) {
+    }
+
+    private _playlistIndex: number;
+
+    get playlistIndex() {
+        return this._playlistIndex;
+    }
+
+    set playlistIndex(value: number) {
+        this._playlistIndex = value;
+        this.setTitles();
+    }
+
+    setPlaylistIndex(value: number): void {
+        this.playlistIndex = value;
+    }
+
     on_size() {
         this.artworkHeight = this.getArtworkHeight_(this.width);
+        this.paddings = this.getProperPaddings(this.width);
     }
 
     on_paint(gr: IGdiGraphics) {
@@ -1032,7 +1085,7 @@ class PL_Header extends Component {
         const textAreaWidth = this.width - paddingLeft - artworkWidth - scale(20) - paddingLeft;
 
         // Type,
-        gr.DrawString("Playlist", descriptionFont, secondaryColor, textX, textY_, textAreaWidth, 1.5 * descriptionFont.Height, StringFormat.LeftTopNoTrim)
+        gr.DrawString(this.typeText, descriptionFont, secondaryColor, textX, textY_, textAreaWidth, 1.5 * descriptionFont.Height, StringFormat.LeftTopNoTrim)
         textY_ += 2 * descriptionFont.Height;
 
         // Title;
@@ -1046,6 +1099,7 @@ class PL_Header extends Component {
             gr.DrawString(titleText_, titleFont, primaryColor, textX, textY_, textAreaWidth, 2 * titleFont.Height, StringFormat.LeftTop);
             textY_ += 1.2 * titleFont.Height;
         }
+        gr.SetTextRenderingHint(textRenderingHint);
 
         // Description;
         if (!isEmptyString(this.descriptionText)) {
@@ -1056,6 +1110,7 @@ class PL_Header extends Component {
         // Subtitle;
         // ...
     }
+
 }
 
 function measureStringFreeWidth(gr: IGdiGraphics, text: string | number, font: IGdiFont): number {
@@ -1132,6 +1187,7 @@ class PlaybackQueue extends ScrollView {
     visibleItems: Pl_Item[] = [];
     selectedIndexes: number[] = [];
 
+    playlistIndex: number;
     playingItemIndex: number = -1;
     hoverIndex: number = -1;
     focusIndex: number = -1;
@@ -1275,6 +1331,7 @@ class PlaybackQueue extends ScrollView {
     on_init() {
         // TODO: try to cache playlist items;
         this.initList();
+        this.headerView.setPlaylistIndex(plman.ActivePlaylist);
 
     }
     on_size() {
@@ -1353,14 +1410,6 @@ class PlaybackQueue extends ScrollView {
                     gr.DrawRect(this.x, thisItem.y, this.width - 1, rowHeight - 1, scale(1), RGB(127, 127, 127));
                 }
 
-                let columnArray = [
-                    columns.index,
-                    columns.trackNo,
-                    columns.title,
-                    columns.artist,
-                    columns.album, columns.mood,
-                    columns.trackLen];
-
                 // draw columns;
 
                 if (columns.index.visible && columns.index.width > 0) {
@@ -1368,11 +1417,12 @@ class PlaybackQueue extends ScrollView {
                         columns.index.x, thisItem.y, columns.index.width, rowHeight, StringFormat.Center)
                 }
 
+                // Playlist item index || playing icon;
                 if (this.playingItemIndex === itemIndex) {
                     gr.DrawString(fb.IsPaused ? Material.volume_mute : Material.volume, iconFont, colors.highlight,
-                        columns.trackNo.x, thisItem.y, columns.trackNo.width, rowHeight, StringFormat.Center);
+                        columns.trackNo.x + scale(4), thisItem.y, columns.trackNo.width, rowHeight, StringFormat.LeftCenter);
                 } else {
-                    gr.DrawString(thisItem.trackNo, itemFont, colors.text, columns.trackNo.x, thisItem.y, columns.trackNo.width, rowHeight, StringFormat.Center);
+                    gr.DrawString(thisItem.trackNo, itemFont, colors.text, columns.trackNo.x + scale(4), thisItem.y, columns.trackNo.width, rowHeight, StringFormat.LeftCenter);
                 }
 
                 let gap = scale(12);
@@ -1411,21 +1461,25 @@ class PlaybackQueue extends ScrollView {
         }
         this.scroll = 0;
         this.initList();
+        this.headerView.setPlaylistIndex(plman.ActivePlaylist);
         ThrottledRepaint();
     }
 
     on_playlist_items_added(playlistIndex: number) {
         this.initList();
+        this.headerView.setPlaylistIndex(plman.ActivePlaylist);
         ThrottledRepaint();
     }
 
     on_playlist_items_removed(playlistIndex: number, newCount: number) {
         this.initList();
+        this.headerView.setPlaylistIndex(plman.ActivePlaylist);
         ThrottledRepaint();
     }
 
     on_playlist_items_reordered(playlistIndex: number) {
         this.initList();
+        this.headerView.setPlaylistIndex(plman.ActivePlaylist);
         ThrottledRepaint();
     }
 
@@ -1447,8 +1501,9 @@ class PlaybackQueue extends ScrollView {
     }
 
     on_playlist_switch() {
-        this.initList();
         this.scroll = 0;
+        this.initList();
+        this.headerView.setPlaylistIndex(plman.ActivePlaylist);
         ThrottledRepaint();
     }
 
@@ -2285,11 +2340,11 @@ function on_mouse_wheel(step: number) {
 }
 
 function on_playback_order_changed(newOrder: number) {
-    panels_vis.forEach(p => invoke(p, "on_playback_order_changed"));
+    panels_vis.forEach(p => invoke(p, "on_playback_order_changed", newOrder));
 }
 
 function on_playback_stop(reason: number) {
-    panels_vis.forEach(p => invoke(p, "on_playback_stop"));
+    panels_vis.forEach(p => invoke(p, "on_playback_stop", reason));
 }
 
 function on_playback_edited() {
@@ -2337,7 +2392,7 @@ function on_item_focus_change(playlistIndex: number, from: number, to: number) {
 }
 
 function on_metadb_changed(metadbs: IFbMetadbList, fromhook: boolean) {
-    panels_vis.forEach(p => invoke(p, "on_metadb_changed"));
+    panels_vis.forEach(p => invoke(p, "on_metadb_changed", metadbs, fromhook));
 }
 
 /**
