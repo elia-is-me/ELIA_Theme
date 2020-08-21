@@ -11,7 +11,7 @@ export const Repaint = () => window.Repaint();
 export const ThrottledRepaint = throttle(Repaint, 15);
 
 interface ICallbacks {
-    on_paint?: (gr: IGdiGraphics) => void;
+    on_paint: (gr: IGdiGraphics) => void;
     on_size?: () => void;
     on_mouse_move?: (x: number, y: number) => void;
     on_mouse_lbtn_down?: (x: number, y: number) => void;
@@ -40,7 +40,7 @@ interface TEST {
     children: Component[];
 }
 
-export class Component implements IBox, TEST {
+export class Component implements IBox, TEST, ICallbacks {
     readonly cid: number = get_cid();
     private _visible: boolean = true;
     private _shouldUpdateOnInit = true;
@@ -231,7 +231,7 @@ export class Icon extends Component {
     }
 }
 
-interface ISliderOptions {
+export interface ISliderOptions {
     progressHeight: number;
     thumbImage: IGdiBitmap;
     pressedThumbImage?: IGdiBitmap;
@@ -240,6 +240,11 @@ interface ISliderOptions {
     accentColor: number;
     getProgress(): number;
     setProgress(val: number): void;
+}
+
+export interface SliderThumbImage {
+    normal: IGdiBitmap;
+    down: IGdiBitmap;
 }
 
 export class Slider extends Component implements ISliderOptions {
@@ -525,21 +530,21 @@ export abstract class ScrollView extends Component {
         super(attrs);
     }
 
-	get scroll() { 
-		return this.scroll_ 
-	};
+    get scroll() {
+        return this.scroll_
+    };
 
-	set scroll(val: number) { 
-		if (val !== this.scroll) {
-		this.scroll_ = this.checkscroll(val) 
-			this.onDidChangeScroll(val);
-		}
-	}
+    set scroll(val: number) {
+        if (val !== this.scroll) {
+            this.scroll_ = this.checkscroll(val)
+            this.onDidChangeScroll(val);
+        }
+    }
 
 	/**
 	 * Overwrite it if want to do something after scroll value changed.
 	 */
-	onDidChangeScroll(val: number) { }
+    onDidChangeScroll(val: number) { }
 
     checkscroll(val: number) {
         if (val > this.totalHeight - this.height) {

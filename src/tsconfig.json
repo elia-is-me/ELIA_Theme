@@ -6,7 +6,7 @@
         "pretty": true,
         "sourceMap": false,
         "rootDir": "./",
-        "baseUrl": "./"
+        // "baseUrl": "./"
     },
     "include": [
         "./"
