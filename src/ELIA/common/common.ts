@@ -1,27 +1,12 @@
-/**
- * description:
- */
+/*------------------------------------------------------------------------------------
+ *  Commonly used utilites, constants, etc. 
+ *------------------------------------------------------------------------------------*/
 
-/**
+/*
  * 不知为何在 tsconfig.json 里 include foo_spider_monkey_panel.d.ts 时，使用 browserify +
  * tsify 编译始终报错，提示找不到变量 fb 什么的。
  */
 /// <reference path="../../typings/foo_spider_monkey_panel.d.ts" />
-
-let doc = new ActiveXObject('htmlfile');
-let app = new ActiveXObject('Shell.Application');
-let WshShell = new ActiveXObject('WScript.Shell');
-let fso = new ActiveXObject('Scripting.FileSystemObject');
-
-let folders_home = fb.ProfilePath + "data_elia\\";
-let folders_data = fb.ProfilePath + "js_data\\";
-let folders = {
-    home: folders_home,
-    images: folders_home + "images\\",
-    data: folders_data,
-    artists: folders_data + "artists\\",
-    lastfm: folders_data + "lastfm\\"
-};
 
 export function RGB(r: number, g: number, b: number) {
     return (0xff000000 | (r << 16) | (g << 8) | (b));
@@ -40,8 +25,10 @@ export function getAlpha(colour: number) {
     return ((colour >> 24) & 0xff);
 }
 
+/**
+ *  When factor is 0, result is 100% color1, when factor is 1, result is 100% color2.
+ */
 export function blendColors(c1: number, c2: number, factor: number) {
-    // When factor is 0, result is 100% color1, when factor is 1, result is 100% color2.
     var c1_ = toRGB(c1);
     var c2_ = toRGB(c2);
     var r = Math.round(c1_[0] + factor * (c2_[0] - c1_[0]));
@@ -166,38 +153,6 @@ export function isString(x: any) {
     return Object.prototype.toString.call(x) === "[object String]"
 }
 
-function _tagged(value: string) {
-    return value != '' && value != '?';
-}
-
-function _q(value: string) {
-    return '"' + value + '"';
-}
-
-function _jsonParse(value: string) {
-    try {
-        let data = JSON.parse(value);
-        return data;
-    } catch (e) {
-        return [];
-    }
-}
-
-function _run() {
-    try {
-        WshShell.Run([].slice.call(arguments).map(_q).join(' '));
-        return true;
-    } catch (e) {
-        return false;
-    }
-}
-
-function _createFolder(folder: string) {
-    if (!_isFolder(folder)) {
-        fso.CreateFolder(folder);
-    }
-}
-
 export let BuildFullPath = function (path: string) {
     var tmpFileLoc = '',
         pattern = /(.*?)\\/gm;
@@ -216,27 +171,6 @@ export let BuildFullPath = function (path: string) {
             create(tmpFileLoc);
         } catch (e) { }
     }
-};
-
-function _isFolder(folder: string) {
-    return isString(folder) ? fso.FolderExists(folder) : false;
-}
-
-// https://github.com/robinvdvleuten/shvl
-function _get(object: any, path: string | string[], default_val: any) {
-    return (object = (<string[]>((<any>path).split ? (<string>path).split('.') : path)).reduce(function (obj: any, p: string) {
-        return obj && obj[p]
-    }, object)) === undefined ? default_val : object;
-};
-
-let popup = {
-    ok: 0,
-    yes_no: 4,
-    yes: 6,
-    no: 7,
-    stop: 16,
-    question: 32,
-    info: 64
 };
 
 export const StringTrimming = {
@@ -404,6 +338,11 @@ export enum MenuFlag {
     GRAYED = 0x00000001,
 }
 
+/**
+ * 
+ *  See https://github.com/microsoft/vscode/blob/f74e473238aca7b79c08be761d99a0232838ca4c/src/vs/base/common/objects.ts
+ *  Copyright (c) Microsoft Corporation.
+ */
 export function deepClone<T>(obj: T): T {
     if (!obj || typeof obj !== 'object') {
         return obj;
