@@ -44,9 +44,23 @@ export class Component implements IBox, TEST, ICallbacks {
     readonly cid: number = get_cid();
     private _visible: boolean = true;
     private _shouldUpdateOnInit = true;
+    private _shouldSortChildren = false;
     x: number = 0;
     y: number = 0;
-    z: number = 0;
+
+    private _zIndex: number = 0;
+
+    get z() {
+        return this._zIndex;
+    }
+
+    set z(zIndex: number) {
+        if (this.z !== zIndex) {
+            this._zIndex = zIndex;
+            this.parent && (this.parent._shouldSortChildren = true);
+        }
+    }
+
     width: number = 0;
     height: number = 0;
     parent: Component;
@@ -59,6 +73,7 @@ export class Component implements IBox, TEST, ICallbacks {
     on_paint(gr: IGdiGraphics) { }
     on_size() { }
     on_init() { }
+    on_click(x: number, y: number) { }
 
     addChild(node: Component) {
         if (!(node instanceof Component)) {
@@ -71,7 +86,8 @@ export class Component implements IBox, TEST, ICallbacks {
 
         node.parent = this;
         this.children.push(node);
-        this.children.sort(by_z);
+        // this.children.sort(by_z);
+        this._shouldSortChildren = true;
         this.resetUpdateState();
     }
 
@@ -116,10 +132,15 @@ export class Component implements IBox, TEST, ICallbacks {
         }
         let visibleNow_ = this.isVisible();
         if (visibleNow_) {
-            invoke(this, 'on_size');
+            this.on_size && this.on_size();
         }
         if (visibleNow_ !== visibleBefore_) {
             this._shouldUpdateOnInit = true;
+        }
+
+        if (this._shouldSortChildren) {
+            this.children.sort(by_z);
+            this._shouldSortChildren = false;
         }
     }
 
@@ -143,11 +164,11 @@ export class Component implements IBox, TEST, ICallbacks {
 }
 
 
-export function invoke(obj: object, method: string, ...var_args: any[]) {
-    if (!obj) { return }
-    let func = (<any>obj)[method];
-    return func == null ? null : func.apply(obj, var_args);
-}
+// export function invoke(obj: object, method: string, ...var_args: any[]) {
+//     if (!obj) { return }
+//     let func = (<any>obj)[method];
+//     return func == null ? null : func.apply(obj, var_args);
+// }
 
 export enum ButtonStates {
     normal = 0,
@@ -220,7 +241,8 @@ export class Icon extends Component {
     on_mouse_lbtn_up(x: number, y: number) {
         if (this.state === ButtonStates.down) {
             if (this.trace(x, y)) {
-                invoke(this, "on_click", x, y);
+                this.on_click && this.on_click(x, y);
+                // invoke(this, "on_click", x, y);
             }
         }
         this.changeState(ButtonStates.hover);
@@ -460,9 +482,7 @@ export class Textlink extends Component {
             return;
         }
         this.text = text;
-        // this.on_size();      
-        invoke(this, "on_size");
-
+        this.on_size && this.on_size();
     }
 
     on_paint(gr: IGdiGraphics) {
@@ -505,7 +525,7 @@ export class Textlink extends Component {
     on_mouse_lbtn_up(x: number, y: number) {
         if (this.state === ButtonStates.down) {
             if (this.trace(x, y)) {
-                invoke(this, "on_click", x, y);
+                this.on_click && this.on_click(x, y);
             }
         }
         this.changeState(ButtonStates.hover);
