@@ -3,11 +3,11 @@
 //====================================
 
 import { scale, RGB, TextRenderingHint, StringFormat, deepClone, StringTrimming, StringFormatFlags, MeasureString, MenuFlag } from "../common/common";
-import { IThemeColors, mainColors, scrollbarColor, scrollbarWidth, textRenderingHint } from "./Theme";
+import { IThemeColors, mainColors, scrollbarColor, scrollbarWidth } from "./Theme";
 import { ThrottledRepaint, Repaint } from "../common/common";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
-import { Component } from "../common/BasePart";
+import { Component, textRenderingHint } from "../common/BasePart";
 import { Material } from "../common/iconCode";
 import { KeyCode } from "../common/keyCodes";
 

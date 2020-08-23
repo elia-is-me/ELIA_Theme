@@ -1,7 +1,7 @@
 ﻿import { RGB, scale, StopReason } from "./common/common"
-import { Component } from "./common/BasePart";
+import { Component, textRenderingHint } from "./common/BasePart";
 import { PlaybackControlView } from "./ui/PlaybackControlView";
-import { bottomColors, textRenderingHint } from "./ui/Theme";
+import { bottomColors} from "./ui/Theme";
 import { TopBar } from "./ui/TopbarView";
 import { PlaybackQueue } from "./ui/PlaylistView";
 import { PlaylistManagerView } from "./ui/PlaylistManagerView";
@@ -50,7 +50,7 @@ class LibraryView extends Component {
     }
 }
 
-const playlistManager = new PlaylistManagerView({});
+const playlistManager = new PlaylistManagerView();
 
 /**
  * Root part of this panel;

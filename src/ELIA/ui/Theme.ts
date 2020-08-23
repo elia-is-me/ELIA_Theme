@@ -55,7 +55,3 @@ export const scrollbarWidth = scale(14);
 
 export const globalFontName = "Microsoft YaHei";
 
-
-const useClearType = window.GetProperty('_Global.Font Use ClearType', true);
-const useAntiAlias = window.GetProperty('_Global.Font Antialias(Only when useClearType = false', true);
-export const textRenderingHint = useClearType ? 5 : useAntiAlias ? 4 : 0;

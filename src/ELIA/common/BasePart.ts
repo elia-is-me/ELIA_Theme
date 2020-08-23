@@ -145,3 +145,14 @@ export class Component implements IBox, TEST, ICallbacks {
 		window.RepaintRect(this.x, this.y, this.width, this.height);
 	}
 }
+
+export interface IPaddings {
+	top?: number;
+	bottom?: number;
+	left?: number;
+	right?: number;
+}
+
+const useClearType = window.GetProperty('_Global.Font Use ClearType', true);
+const useAntiAlias = window.GetProperty('_Global.Font Antialias(Only when useClearType = false', true);
+export const textRenderingHint = useClearType ? 5 : useAntiAlias ? 4 : 0;
