@@ -3,7 +3,9 @@
 // -------------------------
 
 import { scale, blendColors, RGB, StringFormat } from "../common/common";
-import { Component, ScrollView, Scrollbar } from "../common/components";
+import { Scrollbar } from "../common/Scrollbar";
+import { ScrollView } from "../common/ScrollView";
+import { Component } from "../common/BasePart";
 import { Material, MaterialFont } from "../common/iconCode";
 import { scrollbarWidth, IThemeColors, mainColors, sidebarColors, scrollbarColor, globalFontName } from "./Theme";
 

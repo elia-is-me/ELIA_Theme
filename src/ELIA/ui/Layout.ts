@@ -1,4 +1,4 @@
-import { Component } from "../common/components";
+import { Component } from "../common/BasePart";
 import { TopBar } from "./TopbarView";
 import { PlaybackControlView } from "./PlaybackControlView";
 import { PlaylistManagerView, PLM_Properties } from "./PlaylistManagerView";

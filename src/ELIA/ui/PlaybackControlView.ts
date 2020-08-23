@@ -2,7 +2,12 @@
 // Playback control bar;
 // ---------------------
 
-import { Icon, Repaint, Slider, Textlink, AlbumArtView, Component, SliderThumbImage } from "../common/components";
+import { Repaint } from "../common/common";
+import { Textlink } from "../common/Textlink";
+import { AlbumArtView } from "../common/AlbumArtView";
+import { Slider, SliderThumbImage } from "../common/Slider";
+import { Icon } from "../common/IconButton";
+import { Component } from "../common/BasePart";
 import { Material, MaterialFont } from "../common/iconCode"
 import { scale, imageFromCode, PlaybackOrder, SmoothingMode, blendColors, MeasureString, StringFormat } from "../common/common";
 import { IThemeColors, bottomColors } from "./Theme";

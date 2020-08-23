@@ -1,5 +1,7 @@
 import { scale, MeasureString, RGB, StringFormat } from "../common/common";
-import { Component, ThrottledRepaint, Icon } from "../common/components";
+import { ThrottledRepaint } from "../common/common";
+import { Icon } from "../common/IconButton";
+import { Component } from "../common/BasePart";
 import { globalFontName, IThemeColors, mainColors } from "./Theme";
 
 class TabItem {

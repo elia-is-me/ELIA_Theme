@@ -1,5 +1,5 @@
 ﻿import { RGB, scale, StopReason } from "./common/common"
-import { Component } from "./common/components";
+import { Component } from "./common/BasePart";
 import { PlaybackControlView } from "./ui/PlaybackControlView";
 import { bottomColors, textRenderingHint } from "./ui/Theme";
 import { TopBar } from "./ui/TopbarView";

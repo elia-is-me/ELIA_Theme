@@ -4,7 +4,10 @@
 
 import { scale, RGB, TextRenderingHint, StringFormat, deepClone, StringTrimming, StringFormatFlags, MeasureString, MenuFlag } from "../common/common";
 import { IThemeColors, mainColors, scrollbarColor, scrollbarWidth, textRenderingHint } from "./Theme";
-import { Component, ScrollView, Scrollbar, ThrottledRepaint, Repaint } from "../common/components";
+import { ThrottledRepaint, Repaint } from "../common/common";
+import { Scrollbar } from "../common/Scrollbar";
+import { ScrollView } from "../common/ScrollView";
+import { Component } from "../common/BasePart";
 import { Material } from "../common/iconCode";
 import { KeyCode } from "../common/keyCodes";
 
