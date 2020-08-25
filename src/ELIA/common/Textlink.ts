@@ -1,23 +1,41 @@
 import { isObject, StringFormat } from "./common";
-import { Component } from "./BasePart";
-import { ButtonStates } from "./IconButton";
+import { ButtonStates , Clickable} from "./IconButton";
 import { Repaint } from "./common";
 
-export class Textlink extends Component {
+export interface ITextLinkProps {
+	text: string;
+	font: IGdiFont;
+	textColor: number;
+	textHoverColor?: number;
+}
+
+
+export class TextLink extends Clickable {
     text: string = "";
-    font: IGdiFont = gdi.Font("tahoma", 12);
-    _underlinedFont: IGdiFont;
-    textColor: number = 0xff555555;
-    textHoverColor: number = 0xff000000;
+	textWidth: number = 0;
     maxWidth: number = 0;
-    state: ButtonStates = ButtonStates.normal;
-    constructor(attrs: object) {
-        super(attrs);
-        if (isObject(attrs)) {
-            Object.assign(this, attrs);
-        }
-        this._underlinedFont = gdi.Font(this.font.Name, this.font.Size, 4);
+	_fontMap: Map<ButtonStates, IGdiFont> = new Map();
+	_colorMap: Map<ButtonStates, number> = new Map();
+
+	constructor(attrs: ITextLinkProps) {
+		super({});
+
+		this.text = text;
+
+		const font = (attrs.font && gdi.Font("tahoma", scale(12)));
+        const underlinedFont = gdi.Font(font.Name, font.Size, 4);
+		this._fontMap.set(ButtonStates.normal, font);
+		this._fontMap.set(ButtonStates.hover, underlinedFont);
+		this._fontMap.set(ButtonStates.down, underlinedFont);
+
+		const textHoverColor = (attrs.textHoverColor && attrs.textColor);
+		this._colorMap.set(ButtonStates.normal, attrs.textColor);
+		this._colorMap.set(ButtonStates.hover, attrs.textHoverColor);
+		this._colorMap.set(ButtonStates.down, attrs.textHoverColor);
+
+		this.textWidth = MeasureString(this.text, this.font).Width;
     }
+
     setText(text: string) {
         if (text == null) {
             this.text = "";
@@ -31,41 +49,8 @@ export class Textlink extends Component {
         if (this.text == null || this.text.length === 0) {
             return;
         }
-        let font_: IGdiFont;
-        let textColor_: number;
-        if (this.state === ButtonStates.normal) {
-            font_ = this.font;
-            textColor_ = this.textColor;
-        }
-        else {
-            font_ = this._underlinedFont;
-            textColor_ = this.textHoverColor;
-        }
+        let font_: IGdiFont = this._fontMap.get(this.state);
+        let textColor_: number = this._colorMap.get(this.state);
         gr.DrawString(this.text, font_, textColor_, this.x, this.y, this.width, this.height, StringFormat.LeftCenter);
-    }
-    changeState(newstate: number) {
-        if (this.state !== newstate) {
-            this.state = newstate;
-            Repaint();
-        }
-    }
-    on_mouse_move(x: number, y: number) {
-        if (this.state === ButtonStates.normal) {
-            this.changeState(ButtonStates.hover);
-        }
-    }
-    on_mouse_lbtn_down(x: number, y: number) {
-        this.changeState(ButtonStates.down);
-    }
-    on_mouse_lbtn_up(x: number, y: number) {
-        if (this.state === ButtonStates.down) {
-            if (this.trace(x, y)) {
-                this.on_click && this.on_click(x, y);
-            }
-        }
-        this.changeState(ButtonStates.hover);
-    }
-    on_mouse_leave() {
-        this.changeState(ButtonStates.normal);
     }
 }
