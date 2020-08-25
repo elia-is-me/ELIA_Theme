@@ -1,3 +1,5 @@
+import { isObject } from "./common";
+
 /**
  * A too simple way to generate component id;
  */
@@ -38,6 +40,23 @@ export interface TEST {
 	children: Component[];
 }
 
+export interface IInjectableCallbacks {
+	on_init?: () => void;
+	on_size?: () => void;
+	on_click?: (x: number, y: number) => void;
+	on_playback_order_changed?: (newOrder?: number) => void;
+	on_playback_stop?: (reason?: number) => void;
+	on_playback_edited?: () => void;
+	on_playback_pause?: (isPaused?: boolean) => void;
+	on_playback_new_track?: (metadb?: IFbMetadb) => void;
+	// on_playlist_items_added?:(playlistIndex?: number) => void;
+	// on_playlist_items_removed?:(playlistIndex?: number) => void;
+	// on_playlist_items_reordered?: (playlistIndex?: number) => void;
+	on_playlists_changed?: () => void;
+	on_playlist_switch?: () => void;
+	on_metadb_changed?: (metadbs?: IFbMetadbList, fromhook?: boolean) => void;
+}
+
 
 export class Component implements IBox, TEST, ICallbacks {
 	readonly cid: number = get_cid();
@@ -60,8 +79,11 @@ export class Component implements IBox, TEST, ICallbacks {
 	height: number = 0;
 	parent: Component;
 	children: Component[] = [];
-	constructor(attrs: object) {
+	constructor(attrs: object, callbacks?: IInjectableCallbacks) {
 		Object.assign(this, attrs);
+		if (isObject(callbacks)) {
+			Object.assign(this, callbacks)
+		}
 	}
 	on_paint(gr: IGdiGraphics) { }
 	on_size() { }

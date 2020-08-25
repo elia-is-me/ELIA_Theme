@@ -1,5 +1,5 @@
 import { isObject, Repaint, scale, StringFormat, TextRenderingHint, isFunction } from "./common";
-import { Component, IPaddings, textRenderingHint } from "./BasePart";
+import { Component, IPaddings, textRenderingHint, IInjectableCallbacks } from "./BasePart";
 import { SerializableIcon } from "./IconType";
 
 export enum ButtonStates {
@@ -11,10 +11,6 @@ export enum ButtonStates {
 export abstract class Clickable extends Component {
 
 	state: ButtonStates = ButtonStates.normal;
-
-	constructor () {
-		super({})
-	}
 
 	changeState(state: number) {
 		if (this.state !== state) {
@@ -53,10 +49,13 @@ export class Icon extends Clickable {
 	hoverImage: IGdiBitmap;
 	private hoverAlpha = 200;
 	private downAlpha = 128;
-	constructor(attrs: object) {
-		super();
-		if (isObject(attrs)) {
-			Object.assign(this, attrs);
+	constructor(opts: object, callbacks?: IInjectableCallbacks) {
+		super(opts, callbacks);
+		if (isObject(opts)) {
+			Object.assign(this, opts);
+		}
+		if (isObject(callbacks)) {
+			Object.assign(this, callbacks);
 		}
 		this.setImage(this.image, this.hoverImage, this.downImage);
 	}
@@ -103,7 +102,7 @@ export class Button extends Clickable {
 	private _colorMap: Map<ButtonStates, number> = new Map();
 	paddings: IPaddings;
 
-	constructor(attrs: {
+	constructor(opts: {
 		icon?: SerializableIcon;
 		text: string;
 		font: IGdiFont;
@@ -111,14 +110,14 @@ export class Button extends Clickable {
 		paddings?: IPaddings;
 		onClick?: (x?: number, y?: number) => void;
 	}) {
-		super();
+		super(opts);
 
-		this.icon = (attrs.icon || null);
-		this.text = attrs.text;
-		this.colors = attrs.colors;
-		this.font = attrs.font;
-		this.paddings = this.getProperPaddings(attrs.paddings);
-		attrs.onClick && (this.on_click = attrs.onClick.bind(this));
+		this.icon = (opts.icon || null);
+		this.text = opts.text;
+		this.colors = opts.colors;
+		this.font = opts.font;
+		this.paddings = this.getProperPaddings(opts.paddings);
+		opts.onClick && (this.on_click = opts.onClick.bind(this));
 
 		this.setColors();
 	}
@@ -181,7 +180,7 @@ export class Icon2 extends Clickable {
 	fontIcon: SerializableIcon;
 
 	constructor(opts: IIconOptions) {
-		super();
+		super(opts);
 
 		this.fontIcon = opts.fontIcon;
 

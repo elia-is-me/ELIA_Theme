@@ -3,7 +3,7 @@
 // ---------------------
 
 import { Repaint } from "../common/common";
-import { Textlink } from "../common/Textlink";
+import { TextLink } from "../common/TextLink";
 import { AlbumArtView } from "../common/AlbumArtView";
 import { Slider, SliderThumbImage } from "../common/Slider";
 import { Icon } from "../common/IconButton";
@@ -282,12 +282,13 @@ const TF_TRACK_TITLE = fb.TitleFormat("%title%");
 const TF_ARTIST = fb.TitleFormat("$if2([%artist%],未知艺人)[\u30fb$year(%date%)]");
 const artistFont = gdi.Font("Microsoft YaHei", scale(12));
 
-const artistText = new Textlink({
+const artistText = new TextLink({
 	text: "ARTIST",
 	font: artistFont,
 	textColor: blendColors(bottomColors.text, bottomColors.background, 0.2),
 	textHoverColor: blendColors(bottomColors.text, bottomColors.background, 0.2),
-	maxWidth: MeasureString("一二 三四、五六 七八" + "\u30fb0000", artistFont).Width,
+	// maxWidth: MeasureString("一二 三四、五六 七八" + "\u30fb0000", artistFont).Width,
+}, {
 
 	on_init() {
 		let metadb = fb.GetNowPlaying();
@@ -358,7 +359,7 @@ export class PlaybackControlView extends Component {
 	volume: Slider;
 	seekbar: Slider;
 	artwork: AlbumArtView;
-	artist: Textlink;
+	artist: TextLink;
 	buttons: TPlaybackButtons;
 
 	constructor(attrs: {
