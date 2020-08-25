@@ -1,11 +1,13 @@
 ﻿import { RGB, scale, StopReason } from "./common/common"
 import { Component, textRenderingHint } from "./common/BasePart";
 import { PlaybackControlView } from "./ui/PlaybackControlView";
-import { bottomColors} from "./ui/Theme";
-import { TopBar } from "./ui/TopbarView";
+import { bottomColors, mainColors} from "./ui/Theme";
+import { TopBar, Topbar_Properties } from "./ui/TopbarView";
 import { PlaybackQueue } from "./ui/PlaylistView";
 import { PlaylistManagerView } from "./ui/PlaylistManagerView";
 import { Layout, PartsManager } from "./ui/Layout";
+import { SerializableIcon } from "./common/IconType";
+import { Material, MaterialFont } from "./common/iconCode";
 
 
 const playbackControlBar = new PlaybackControlView({
@@ -35,8 +37,33 @@ class ArtDisplay extends Component {
     }
 }
 
+type IconKeysType = "menu" | "settings";
+const iconSize = scale(20);
+const icons: {
+	[keys in IconKeysType]: SerializableIcon
+} = {
+	menu: new SerializableIcon({
+		code: Material.menu,
+		name: MaterialFont,
+		size: iconSize,
+		width: 0,
+		height: 0,
+	}),
+	settings: new SerializableIcon({
+		code: Material.gear,
+		name: MaterialFont,
+		size: iconSize,
+		width: 0,
+		height: 0
+	})
+}
 
-const topbar = new TopBar({})
+const topbar = new TopBar({
+    backgroundColor: RGB(37, 37, 37),
+    foreColor: mainColors.text,
+    hoverColor: mainColors.secondaryText,
+    icons: icons
+})
 const playlistView = new PlaybackQueue({})
 
 class LibraryView extends Component {

@@ -1,8 +1,10 @@
-import { scale, MeasureString, RGB, StringFormat } from "../common/common";
+import { scale, MeasureString, RGB, StringFormat, TextRenderingHint } from "../common/common";
 import { ThrottledRepaint } from "../common/common";
-import { Icon } from "../common/IconButton";
-import { Component } from "../common/BasePart";
+import { Icon, ButtonStates, Button, Icon2 } from "../common/IconButton";
+import { Component, textRenderingHint } from "../common/BasePart";
 import { globalFontName, IThemeColors, mainColors } from "./Theme";
+import { SerializableIcon } from "../common/IconType";
+import { MaterialFont, Material } from "../common/iconCode";
 
 class TabItem {
 	private defaultPadding = scale(4);
@@ -113,6 +115,37 @@ class SwitchTab extends Component {
 	}
 }
 
+const iconHeight = scale(40);
+const iconFontSize = scale(20);
+type IconKeysType = "menu" | "settings";
+
+
+const icons: {
+	[keys in IconKeysType]: SerializableIcon
+} = {
+	menu: new SerializableIcon({
+		code: Material.menu,
+		name: MaterialFont,
+		size: iconFontSize,
+		width: iconHeight,
+		height: iconHeight,
+	}),
+	settings: new SerializableIcon({
+		code: Material.gear,
+		name: MaterialFont,
+		size: iconFontSize,
+		width: iconHeight,
+		height: iconHeight
+	})
+}
+
+
+interface ITopbarOptions {
+	backgroundColor: number;
+	foreColor: number;
+	hoverColor: number;
+	icons: { [keys in IconKeysType]: SerializableIcon }
+}
 
 /* TODO */
 export const Topbar_Properties = {
@@ -129,16 +162,43 @@ const Topbar_Colors: IThemeColors = {
 
 export class TopBar extends Component {
 
-	colors: IThemeColors;
 	logoIcon: IGdiBitmap;
 	searchInput: any;
 	searchButton: any;
 	backButton: Icon;
+	foreColor: number;
+	backgroundColor: number;
+	icons: { [keys in IconKeysType]: SerializableIcon };
+	private _icoWidth: number = scale(40);
+	private _iconColorMap: Map<ButtonStates, number>;
+	private _logoFont = gdi.Font("Impact", scale(18));
+	private _logoText = "foobar2000"
 
-	constructor(attr: object) {
-		super(attr);
+	mainIco: Icon2;
+	settingsIco: Icon2;
 
-		this.colors = Topbar_Colors;
+	constructor(opts: ITopbarOptions) {
+		super({});
+
+		this.foreColor = opts.foreColor;
+		this.backgroundColor = opts.backgroundColor;
+		this.icons = opts.icons;
+
+		this.mainIco = new Icon2({
+			fontIcon: this.icons.menu,
+			normalColor: this.foreColor,
+			hoverColor: opts.hoverColor
+		});
+
+		this.addChild(this.mainIco);
+
+		this.settingsIco = new Icon2({
+			fontIcon: this.icons.settings,
+			normalColor: this.foreColor,
+			hoverColor: opts.hoverColor
+		});
+
+		this.addChild(this.settingsIco);
 	}
 
 	on_init() {
@@ -146,9 +206,24 @@ export class TopBar extends Component {
 	}
 
 	on_size() {
+		let icoOffsetTop = ((this.height - this._icoWidth) / 2) | 0;
+		let padLeft = scale(16);
+		let { _icoWidth } = this;
+
+		this.mainIco.setSize(this.x + padLeft, this.y + icoOffsetTop, _icoWidth, _icoWidth);
+		this.settingsIco.setSize(this.x + this.width - padLeft - _icoWidth, this.y + icoOffsetTop, _icoWidth, _icoWidth);
 	}
 
 	on_paint(gr: IGdiGraphics) {
-		gr.FillSolidRect(this.x, this.y, this.width, this.height, this.colors.background);
+
+		gr.FillSolidRect(this.x, this.y, this.width, this.height, this.backgroundColor);
+
+		const {_logoFont, _logoText, foreColor} = this;
+		const logoX = this.mainIco.x + this.mainIco.width + scale(16);
+
+		gr.SetTextRenderingHint(TextRenderingHint.AntiAlias);
+		gr.DrawString(_logoText, _logoFont, foreColor, logoX, this.y, 1000, this.height, StringFormat.LeftCenter);
+		gr.SetTextRenderingHint(textRenderingHint);
+
 	}
 }

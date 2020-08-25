@@ -1,12 +1,12 @@
 import { StringFormat, TextRenderingHint } from "./common";
-import { textRenderingHint } from "./BasePart";
+import { textRenderingHint, Component } from "./BasePart";
 
-class IIconInfo {
+interface IIconInfo {
     name: string;
     code: string;
     size: number;
-    width: number;
-    height: number;
+    width?: number;
+    height?: number;
 }
 export class SerializableIcon implements IIconInfo {
     name: string;
@@ -19,8 +19,9 @@ export class SerializableIcon implements IIconInfo {
         this.name = info.name;
         this.code = info.code;
         this.size = info.size;
-        this.width = info.width;
-        this.height = info.height;
+        let defaultHeight = this.size * 1.3;
+        this.width = (info.width && defaultHeight);
+        this.height = (info.height && defaultHeight);
         this.iconFont = gdi.Font(this.name, this.size);
     }
     stringify(): string {

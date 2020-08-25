@@ -1,5 +1,5 @@
-import { isObject, Repaint, scale, StringFormat } from "./common";
-import { Component, IPaddings } from "./BasePart";
+import { isObject, Repaint, scale, StringFormat, TextRenderingHint, isFunction } from "./common";
+import { Component, IPaddings, textRenderingHint } from "./BasePart";
 import { SerializableIcon } from "./IconType";
 
 export enum ButtonStates {
@@ -8,15 +8,53 @@ export enum ButtonStates {
 	down = 2
 };
 
-export class Icon extends Component {
+export abstract class Clickable extends Component {
+
 	state: ButtonStates = ButtonStates.normal;
+
+	constructor () {
+		super({})
+	}
+
+	changeState(state: number) {
+		if (this.state !== state) {
+			this.state = state;
+			this.repaint();
+		}
+	}
+
+	on_mouse_move (x: number, y: number) {
+		if (this.state === ButtonStates.normal) {
+			this.changeState(ButtonStates.hover);
+		}
+	}
+
+	on_mouse_lbtn_down(x: number, y: number) {
+		this.changeState(ButtonStates.down);
+	}
+
+	on_mouse_lbtn_up(x: number, y:number) {
+		if (this.state === ButtonStates.down) {
+			if (this.trace(x, y)) {
+				this.on_click && this.on_click(x,y);
+			}
+		}
+		this.changeState(ButtonStates.hover);
+	}
+
+	on_mouse_leave() {
+		this.changeState(ButtonStates.normal);
+	}
+}
+
+export class Icon extends Clickable {
 	image: IGdiBitmap;
 	downImage: IGdiBitmap;
 	hoverImage: IGdiBitmap;
 	private hoverAlpha = 200;
 	private downAlpha = 128;
 	constructor(attrs: object) {
-		super(attrs);
+		super();
 		if (isObject(attrs)) {
 			Object.assign(this, attrs);
 		}
@@ -49,32 +87,6 @@ export class Icon extends Component {
 		}
 		gr.DrawImage(img, this.x, this.y, this.width, this.height, 0, 0, img.Width, img.Height, 0, alpha);
 	}
-	changeState(state_: number) {
-		if (this.state !== state_) {
-			this.state = state_;
-			Repaint();
-		}
-	}
-	on_mouse_move(x: number, y: number) {
-		if (this.state === ButtonStates.normal) {
-			this.changeState(ButtonStates.hover);
-		}
-	}
-	on_mouse_lbtn_down(x: number, y: number) {
-		this.changeState(ButtonStates.down);
-	}
-	on_mouse_lbtn_up(x: number, y: number) {
-		if (this.state === ButtonStates.down) {
-			if (this.trace(x, y)) {
-				this.on_click && this.on_click(x, y);
-				// invoke(this, "on_click", x, y);
-			}
-		}
-		this.changeState(ButtonStates.hover);
-	}
-	on_mouse_leave() {
-		this.changeState(ButtonStates.normal);
-	}
 }
 
 export interface IButtonColors {
@@ -83,8 +95,7 @@ export interface IButtonColors {
 	downColor?: number;
 }
 
-export class Button extends Component {
-	state: ButtonStates = ButtonStates.normal;
+export class Button extends Clickable {
 	icon?: SerializableIcon;
 	text: string;
 	font: IGdiFont;
@@ -100,7 +111,7 @@ export class Button extends Component {
 		paddings?: IPaddings;
 		onClick?: (x?: number, y?: number) => void;
 	}) {
-		super({});
+		super();
 
 		this.icon = (attrs.icon || null);
 		this.text = attrs.text;
@@ -154,30 +165,47 @@ export class Button extends Component {
 		gr.DrawString(text, font, btnColor, textX, this.y, textW, this.height, StringFormat.LeftCenter);
 	}
 
-	changeState(state_: number) {
-		if (this.state !== state_) {
-			this.state = state_;
-			Repaint();
+}
+
+interface IIconOptions {
+	fontIcon: SerializableIcon;
+	normalColor: number;
+	hoverColor: number;
+	downColor?: number;
+	onClick?: (x: number, y: number) => void;
+}
+
+export class Icon2 extends Clickable {
+
+	private _colorMap: Map<ButtonStates, number> = new Map();
+	fontIcon: SerializableIcon;
+
+	constructor(opts: IIconOptions) {
+		super();
+
+		this.fontIcon = opts.fontIcon;
+
+		this._colorMap.set(ButtonStates.normal, opts.normalColor);
+		this._colorMap.set(ButtonStates.hover, opts.hoverColor);
+		if (opts.downColor ==null || opts.downColor === 0) {
+			this._colorMap.set(ButtonStates.down, opts.hoverColor);
+		} else {
+			this._colorMap.set(ButtonStates.down, opts.downColor);
+		}
+
+		if (isFunction(opts.onClick)) {
+			this.on_click= opts.onClick.bind(this);
 		}
 	}
-	on_mouse_move(x: number, y: number) {
-		if (this.state === ButtonStates.normal) {
-			this.changeState(ButtonStates.hover);
-		}
-	}
-	on_mouse_lbtn_down(x: number, y: number) {
-		this.changeState(ButtonStates.down);
-	}
-	on_mouse_lbtn_up(x: number, y: number) {
-		if (this.state === ButtonStates.down) {
-			if (this.trace(x, y)) {
-				this.on_click && this.on_click(x, y);
-			}
-		}
-		this.changeState(ButtonStates.hover);
-	}
-	on_mouse_leave() {
-		this.changeState(ButtonStates.normal);
+
+	on_paint(gr: IGdiGraphics) {
+		const {fontIcon, _colorMap} = this;
+		const {code, iconFont} = fontIcon;
+		const iconColor = _colorMap.get(this.state);
+
+		gr.SetTextRenderingHint(TextRenderingHint.AntiAlias);
+		gr.DrawString(code, iconFont, iconColor, this.x, this.y, this.width, this.height, StringFormat.Center);
+		gr.SetTextRenderingHint(textRenderingHint);
 	}
 
 }
