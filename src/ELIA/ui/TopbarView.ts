@@ -1,10 +1,11 @@
-import { scale, MeasureString, RGB, StringFormat, TextRenderingHint } from "../common/common";
+import { scale, MeasureString, RGB, StringFormat, TextRenderingHint, setAlpha } from "../common/common";
 import { ThrottledRepaint } from "../common/common";
 import { Icon, ButtonStates, Button, Icon2 } from "../common/IconButton";
 import { Component, textRenderingHint } from "../common/BasePart";
 import { globalFontName, IThemeColors, mainColors } from "./Theme";
 import { SerializableIcon } from "../common/IconType";
 import { MaterialFont, Material } from "../common/iconCode";
+import { SearchBox } from "../common/SearchBox";
 
 class TabItem {
 	private defaultPadding = scale(4);
@@ -115,30 +116,7 @@ class SwitchTab extends Component {
 	}
 }
 
-const iconHeight = scale(40);
-const iconFontSize = scale(20);
 type IconKeysType = "menu" | "settings";
-
-
-const icons: {
-	[keys in IconKeysType]: SerializableIcon
-} = {
-	menu: new SerializableIcon({
-		code: Material.menu,
-		name: MaterialFont,
-		size: iconFontSize,
-		width: iconHeight,
-		height: iconHeight,
-	}),
-	settings: new SerializableIcon({
-		code: Material.gear,
-		name: MaterialFont,
-		size: iconFontSize,
-		width: iconHeight,
-		height: iconHeight
-	})
-}
-
 
 interface ITopbarOptions {
 	backgroundColor: number;
@@ -176,6 +154,7 @@ export class TopBar extends Component {
 
 	mainIco: Icon2;
 	settingsIco: Icon2;
+	searchBox: SearchBox;
 
 	constructor(opts: ITopbarOptions) {
 		super({});
@@ -199,6 +178,18 @@ export class TopBar extends Component {
 		});
 
 		this.addChild(this.settingsIco);
+
+		this.searchBox = new SearchBox({
+			backgroundColor: RGB(18, 18, 18),
+			foreColor: mainColors.text,
+			iconColors: {
+				normal: mainColors.text,
+				hover: setAlpha(mainColors.text, 250),
+				down: setAlpha(mainColors.text, 127)
+			}
+		})
+
+		this.addChild(this.searchBox);
 	}
 
 	on_init() {
@@ -212,13 +203,15 @@ export class TopBar extends Component {
 
 		this.mainIco.setSize(this.x + padLeft, this.y + icoOffsetTop, _icoWidth, _icoWidth);
 		this.settingsIco.setSize(this.x + this.width - padLeft - _icoWidth, this.y + icoOffsetTop, _icoWidth, _icoWidth);
+
+		this.searchBox.setSize(this.x + scale(272), this.y + scale(8), scale(400), this.height - scale(16));
 	}
 
 	on_paint(gr: IGdiGraphics) {
 
 		gr.FillSolidRect(this.x, this.y, this.width, this.height, this.backgroundColor);
 
-		const {_logoFont, _logoText, foreColor} = this;
+		const { _logoFont, _logoText, foreColor } = this;
 		const logoX = this.mainIco.x + this.mainIco.width + scale(16);
 
 		gr.SetTextRenderingHint(TextRenderingHint.AntiAlias);

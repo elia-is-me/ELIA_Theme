@@ -26,6 +26,14 @@ export function getAlpha(colour: number) {
 }
 
 /**
+ *  Set a color's alpha value, alpha <= [0 - 255]. The origenal alpha info will
+ *  be negelected.
+ */
+export function setAlpha(color: number, alpha: number) {
+    return (color & 0x00ffffff) | (alpha << 24);
+}
+
+/**
  *  When factor is 0, result is 100% color1, when factor is 1, result is 100% color2.
  */
 export function blendColors(c1: number, c2: number, factor: number) {

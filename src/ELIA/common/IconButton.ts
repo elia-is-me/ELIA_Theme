@@ -19,7 +19,7 @@ export abstract class Clickable extends Component {
 		}
 	}
 
-	on_mouse_move (x: number, y: number) {
+	on_mouse_move(x: number, y: number) {
 		if (this.state === ButtonStates.normal) {
 			this.changeState(ButtonStates.hover);
 		}
@@ -29,10 +29,10 @@ export abstract class Clickable extends Component {
 		this.changeState(ButtonStates.down);
 	}
 
-	on_mouse_lbtn_up(x: number, y:number) {
+	on_mouse_lbtn_up(x: number, y: number) {
 		if (this.state === ButtonStates.down) {
 			if (this.trace(x, y)) {
-				this.on_click && this.on_click(x,y);
+				this.on_click && this.on_click(x, y);
 			}
 		}
 		this.changeState(ButtonStates.hover);
@@ -145,7 +145,7 @@ export class Button extends Clickable {
 	on_paint(gr: IGdiGraphics) {
 
 		const { icon, text, font, paddings } = this;
-		let  btnColor: number = this._colorMap.get(this.state);
+		let btnColor: number = this._colorMap.get(this.state);
 
 		/**
 		 * draw icon;
@@ -153,7 +153,7 @@ export class Button extends Clickable {
 		if (icon != null) {
 			let iconX = this.x + paddings.left;
 			let iconY = this.y + ((this.height - icon.height) / 2) | 0;
-			icon.draw(gr, btnColor	, 0, iconX, iconY);
+			icon.draw(gr, btnColor, 0, iconX, iconY);
 		}
 
 		/**
@@ -174,6 +174,10 @@ interface IIconOptions {
 	onClick?: (x: number, y: number) => void;
 }
 
+/**
+ * Icon2 的接口用起来很混乱，迷惑。
+ */
+
 export class Icon2 extends Clickable {
 
 	private _colorMap: Map<ButtonStates, number> = new Map();
@@ -186,20 +190,20 @@ export class Icon2 extends Clickable {
 
 		this._colorMap.set(ButtonStates.normal, opts.normalColor);
 		this._colorMap.set(ButtonStates.hover, opts.hoverColor);
-		if (opts.downColor ==null || opts.downColor === 0) {
+		if (opts.downColor == null || opts.downColor === 0) {
 			this._colorMap.set(ButtonStates.down, opts.hoverColor);
 		} else {
 			this._colorMap.set(ButtonStates.down, opts.downColor);
 		}
 
 		if (isFunction(opts.onClick)) {
-			this.on_click= opts.onClick.bind(this);
+			this.on_click = opts.onClick.bind(this);
 		}
 	}
 
 	on_paint(gr: IGdiGraphics) {
-		const {fontIcon, _colorMap} = this;
-		const {code, iconFont} = fontIcon;
+		const { fontIcon, _colorMap } = this;
+		const { code, iconFont } = fontIcon;
 		const iconColor = _colorMap.get(this.state);
 
 		gr.SetTextRenderingHint(TextRenderingHint.AntiAlias);

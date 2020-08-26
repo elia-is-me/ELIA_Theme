@@ -72,9 +72,8 @@ export interface IInputBoxOptions {
     textcolor: number;
     backcolor: number;
     backselectioncolor: number;
-    default_text: string;
-    text: string;
-    empty_text: string;
+    default_text?: string;
+    empty_text?: string;
     func: () => void;
 }
 
@@ -86,10 +85,10 @@ export class InputBox extends Component {
     backcolor: number;
     bordercolor: number;
     backselectioncolor: number;
-    default_text: string;
-    text: string;
+    default_text: string = "";
+    text: string = "";
     prev_text: string = "3@!";
-    empty_text: string;
+    empty_text: string = "";
     stext: string = "";
 
     autovalidation: boolean = false;
@@ -122,7 +121,7 @@ export class InputBox extends Component {
     }
 
 
-    draw(gr: IGdiGraphics) {
+    on_paint(gr: IGdiGraphics) {
         const { x, y } = this;
         const DT = (this.edit ? this.DT_edit : this.DT);
 

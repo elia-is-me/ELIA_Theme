@@ -28,7 +28,8 @@ export const Material = {
     play_arrow: '\ue037',
     pause: '\ue034',
     skip_next: '\ue044',
-    skip_prev: '\ue045'
+    skip_prev: '\ue045',
+    down_arrow: '\ue5c5'
 };
 
 export const MaterialFont = "Material Icons";

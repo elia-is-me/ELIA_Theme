@@ -85,9 +85,12 @@ export class Component implements IBox, TEST, ICallbacks {
 			Object.assign(this, callbacks)
 		}
 	}
+	/**
+	 * 'on_init' 考虑的是当一个部件从隐藏切换到显示后，有一个默认的方法更新/初始化该部件。这么做是否合理现在值得怀疑。
+	 */
+	on_init() { }
 	on_paint(gr: IGdiGraphics) { }
 	on_size() { }
-	on_init() { }
 	on_click(x: number, y: number) { }
 	addChild(node: Component) {
 		if (!(node instanceof Component)) {

@@ -22,7 +22,7 @@ export const PL_Properties = {
 
 const PL_Colors: IThemeColors = {
 	text: mainColors.text,
-	background: mainColors.background,
+	background: RGB(28, 28, 28),
 	highlight: mainColors.highlight,
 	HEART_RED: RGB(221, 0, 27)
 }
