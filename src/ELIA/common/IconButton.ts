@@ -3,14 +3,14 @@ import { Component, IPaddings, textRenderingHint, IInjectableCallbacks } from ".
 import { SerializableIcon } from "./IconType";
 
 export enum ButtonStates {
-	normal = 0,
-	hover = 1,
-	down = 2
+	Normal = 0,
+	Hover = 1,
+	Down = 2
 };
 
 export abstract class Clickable extends Component {
 
-	state: ButtonStates = ButtonStates.normal;
+	state: ButtonStates = ButtonStates.Normal;
 
 	changeState(state: number) {
 		if (this.state !== state) {
@@ -20,26 +20,26 @@ export abstract class Clickable extends Component {
 	}
 
 	on_mouse_move(x: number, y: number) {
-		if (this.state === ButtonStates.normal) {
-			this.changeState(ButtonStates.hover);
+		if (this.state === ButtonStates.Normal) {
+			this.changeState(ButtonStates.Hover);
 		}
 	}
 
 	on_mouse_lbtn_down(x: number, y: number) {
-		this.changeState(ButtonStates.down);
+		this.changeState(ButtonStates.Down);
 	}
 
 	on_mouse_lbtn_up(x: number, y: number) {
-		if (this.state === ButtonStates.down) {
+		if (this.state === ButtonStates.Down) {
 			if (this.trace(x, y)) {
 				this.on_click && this.on_click(x, y);
 			}
 		}
-		this.changeState(ButtonStates.hover);
+		this.changeState(ButtonStates.Hover);
 	}
 
 	on_mouse_leave() {
-		this.changeState(ButtonStates.normal);
+		this.changeState(ButtonStates.Normal);
 	}
 }
 
@@ -68,7 +68,7 @@ export class Icon extends Clickable {
 	on_paint(gr: IGdiGraphics) {
 		let img = this.image;
 		let alpha = 255;
-		if (this.state === ButtonStates.hover) {
+		if (this.state === ButtonStates.Hover) {
 			if (this.hoverImage) {
 				img = this.hoverImage;
 			}
@@ -76,7 +76,7 @@ export class Icon extends Clickable {
 				alpha = this.hoverAlpha;
 			}
 		}
-		else if (this.state === ButtonStates.down) {
+		else if (this.state === ButtonStates.Down) {
 			if (this.downImage) {
 				img = this.downImage;
 			}
@@ -101,6 +101,7 @@ export class Button extends Clickable {
 	colors: IButtonColors;
 	private _colorMap: Map<ButtonStates, number> = new Map();
 	paddings: IPaddings;
+	gap: number;
 
 	constructor(opts: {
 		icon?: SerializableIcon;
@@ -108,6 +109,7 @@ export class Button extends Clickable {
 		font: IGdiFont;
 		colors: IButtonColors;
 		paddings?: IPaddings;
+		gap?: number;
 		onClick?: (x?: number, y?: number) => void;
 	}) {
 		super(opts);
@@ -117,6 +119,7 @@ export class Button extends Clickable {
 		this.colors = opts.colors;
 		this.font = opts.font;
 		this.paddings = this.getProperPaddings(opts.paddings);
+		this.gap = (opts.gap || 0);
 		opts.onClick && (this.on_click = opts.onClick.bind(this));
 
 		this.setColors();
@@ -124,12 +127,12 @@ export class Button extends Clickable {
 
 	private setColors() {
 		const colors = this.colors;
-		this._colorMap.set(ButtonStates.normal, colors.textColor);
-		this._colorMap.set(ButtonStates.hover, colors.hoverColor);
+		this._colorMap.set(ButtonStates.Normal, colors.textColor);
+		this._colorMap.set(ButtonStates.Hover, colors.hoverColor);
 		if (colors.downColor && colors.downColor > 0) {
-			this._colorMap.set(ButtonStates.down, colors.downColor);
+			this._colorMap.set(ButtonStates.Down, colors.downColor);
 		} else {
-			this._colorMap.set(ButtonStates.down, colors.hoverColor);
+			this._colorMap.set(ButtonStates.Down, colors.hoverColor);
 		}
 	}
 
@@ -188,12 +191,12 @@ export class Icon2 extends Clickable {
 
 		this.fontIcon = opts.fontIcon;
 
-		this._colorMap.set(ButtonStates.normal, opts.normalColor);
-		this._colorMap.set(ButtonStates.hover, opts.hoverColor);
+		this._colorMap.set(ButtonStates.Normal, opts.normalColor);
+		this._colorMap.set(ButtonStates.Hover, opts.hoverColor);
 		if (opts.downColor == null || opts.downColor === 0) {
-			this._colorMap.set(ButtonStates.down, opts.hoverColor);
+			this._colorMap.set(ButtonStates.Down, opts.hoverColor);
 		} else {
-			this._colorMap.set(ButtonStates.down, opts.downColor);
+			this._colorMap.set(ButtonStates.Down, opts.downColor);
 		}
 
 		if (isFunction(opts.onClick)) {

@@ -25,14 +25,14 @@ export class TextLink extends Clickable {
 
 		const font_ = (opts.font && gdi.Font("tahoma", scale(12)));
 		const underlinedFont = gdi.Font(font_.Name, font_.Size, 4);
-		this._fontMap.set(ButtonStates.normal, font_);
-		this._fontMap.set(ButtonStates.hover, underlinedFont);
-		this._fontMap.set(ButtonStates.down, underlinedFont);
+		this._fontMap.set(ButtonStates.Normal, font_);
+		this._fontMap.set(ButtonStates.Hover, underlinedFont);
+		this._fontMap.set(ButtonStates.Down, underlinedFont);
 
 		const textHoverColor_ = (opts.textHoverColor && opts.textColor);
-		this._colorMap.set(ButtonStates.normal, opts.textColor);
-		this._colorMap.set(ButtonStates.hover, textHoverColor_);
-		this._colorMap.set(ButtonStates.down, textHoverColor_);
+		this._colorMap.set(ButtonStates.Normal, opts.textColor);
+		this._colorMap.set(ButtonStates.Hover, textHoverColor_);
+		this._colorMap.set(ButtonStates.Down, textHoverColor_);
 
 		this.textWidth = MeasureString(this.text, font_).Width;
 	}
@@ -44,7 +44,7 @@ export class TextLink extends Clickable {
 			return;
 		}
 		this.text = text;
-		this.textWidth = MeasureString(this.text, this._fontMap.get(ButtonStates.normal)).Width;
+		this.textWidth = MeasureString(this.text, this._fontMap.get(ButtonStates.Normal)).Width;
 	}
 
 	on_paint(gr: IGdiGraphics) {

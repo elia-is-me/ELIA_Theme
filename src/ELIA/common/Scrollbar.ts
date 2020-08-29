@@ -2,7 +2,8 @@ import { scale, Repaint } from "./common";
 import { Component, ICallbacks } from "./BasePart";
 import { ButtonStates } from "./IconButton";
 import { ScrollView } from "./ScrollView";
-//
+
+
 export class Scrollbar extends Component implements ICallbacks {
     static defaultCursorWidth = scale(12);
     private minCursorHeight = scale(24);
@@ -46,7 +47,7 @@ export class Scrollbar extends Component implements ICallbacks {
         }
     }
     on_mouse_move(x: number, y: number) {
-        if (this.state === ButtonStates.down) {
+        if (this.state === ButtonStates.Down) {
             let cursorY = y - this.cursorDelta;
             let ratio = (cursorY - this.y) / (this.height - this.cursorHeight);
             let offset = Math.round((this.parent.totalHeight - this.parent.height) * ratio);
@@ -54,19 +55,19 @@ export class Scrollbar extends Component implements ICallbacks {
             Repaint();
         }
         else {
-            this.changeState(this.traceCursor(x, y) ? ButtonStates.hover : ButtonStates.normal);
+            this.changeState(this.traceCursor(x, y) ? ButtonStates.Hover : ButtonStates.Normal);
         }
     }
     on_mouse_lbtn_down(x: number, y: number) {
         if (this.traceCursor(x, y)) {
             this.cursorDelta = y - this.cursorY;
-            this.changeState(ButtonStates.down);
+            this.changeState(ButtonStates.Down);
         }
     }
     on_mouse_lbtn_up(x: number, y: number) {
-        this.changeState(this.traceCursor(x, y) ? ButtonStates.hover : ButtonStates.normal);
+        this.changeState(this.traceCursor(x, y) ? ButtonStates.Hover : ButtonStates.Normal);
     }
     on_mouse_leave() {
-        this.changeState(ButtonStates.normal);
+        this.changeState(ButtonStates.Normal);
     }
 }

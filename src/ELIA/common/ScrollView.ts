@@ -1,8 +1,6 @@
 import { Component } from "./BasePart";
 import { Repaint } from "./common";
-// ---------------------------
-// Elements globally referred;
-// ---------------------------
+
 export abstract class ScrollView extends Component {
     totalHeight: number;
     scrolling: boolean = false;

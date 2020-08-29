@@ -32,9 +32,9 @@ interface IPlaylistHeader {
 }
 
 enum ListHeaderType {
-	album,
-	artist,
-	playlist
+	Album,
+	Artist,
+	Playlist
 }
 
 /**
@@ -184,7 +184,7 @@ class PL_Header extends Component {
 
 	setTitles() {
 		switch (this.type) {
-			case ListHeaderType.playlist:
+			case ListHeaderType.Playlist:
 				this.typeText = "Playlist";
 				this.titleText = plman.GetPlaylistName(this.playlistIndex)
 				this.descriptionText = plman.PlaylistItemCount(this.playlistIndex)
@@ -192,13 +192,13 @@ class PL_Header extends Component {
 					+ " \u2022 "
 					+ utils.FormatDuration(plman.GetPlaylistItems(this.playlistIndex).CalcTotalDuration());
 				break;
-			case ListHeaderType.album:
+			case ListHeaderType.Album:
 				this.typeText = "Album";
 				this.titleText = "";
 				this.subtitleText = "";
 				this.descriptionText = "";
 				break;
-			case ListHeaderType.artist:
+			case ListHeaderType.Artist:
 				this.typeText = "Artist";
 				this.titleText = "";
 				this.subtitleText = "";
@@ -381,7 +381,7 @@ export class PlaybackQueue extends ScrollView {
 		this.scrollbar.z = 100;
 		//
 		this.headerView = new PL_Header({
-			type: ListHeaderType.playlist,
+			type: ListHeaderType.Playlist,
 			primaryColor: mainColors.text,
 			secondaryColor: mainColors.secondaryText
 		});
