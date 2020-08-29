@@ -93,7 +93,7 @@ class PLM_Header extends Component {
     }
 
     on_size() {
-        this.addPlaylistBtn.setSize(this.x, this.y + scale(20), this.width, scale(40));
+        this.addPlaylistBtn.setBoundary(this.x, this.y + scale(20), this.width, scale(40));
     }
 
     on_paint(gr: IGdiGraphics) {
@@ -206,14 +206,14 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
             }
         }
 
-        this.scrollbar.setSize(
+        this.scrollbar.setBoundary(
             this.x + this.width - scale(14),
             this.y + PLM_Properties.headerHeight,
             scrollbarWidth,
             this.height - PLM_Properties.headerHeight
         );
 
-        this.header.setSize(
+        this.header.setBoundary(
             this.x, this.y, this.width, PLM_Properties.headerHeight
         );
     }

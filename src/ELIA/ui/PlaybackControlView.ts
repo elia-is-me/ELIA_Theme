@@ -423,40 +423,40 @@ export class PlaybackControlView extends Component {
 		let by_1 = (UI_y + (scale(50) - bw_1) / 2) >> 0;
 		let bx_1 = (UI_x + UI_w / 2 - bw_1 / 2) >> 0;
 		let pad_1 = scale(12);
-		buttons.playOrPause.setSize(bx_1, by_1);
+		buttons.playOrPause.setBoundary(bx_1, by_1);
 
 		// prev
 		let bx_2 = bx_1 - bw_1 - pad_1;
-		buttons.prev.setSize(bx_2, by_1);
+		buttons.prev.setBoundary(bx_2, by_1);
 
 		// next;
 		let bx_3 = bx_1 + bw_1 + pad_1;
-		buttons.next.setSize(bx_3, by_1);
+		buttons.next.setBoundary(bx_3, by_1);
 
 		// repeat
 		let bw_2 = buttons.shuffle.width;
 		let by_2 = (UI_y + (scale(50) - bw_2) / 2) >> 0;
 		let bx_4 = bx_2 - bw_2 - scale(16);
-		buttons.repeat.setSize(bx_4, by_2);
+		buttons.repeat.setBoundary(bx_4, by_2);
 
 		//shuffle;
 		let bx_5 = bx_3 + bw_1 + scale(16);
-		buttons.shuffle.setSize(bx_5, by_2);
+		buttons.shuffle.setBoundary(bx_5, by_2);
 
 		// volume bar;
 		let vol_h = scale(18)
 		let vol_w = scale(80);
 		let vol_y = UI_y + (UI_h - vol_h) / 2;
 		let vol_x = UI_x + UI_w - vol_w - scale(24);
-		volume.setSize(vol_x, vol_y, vol_w, vol_h);
+		volume.setBoundary(vol_x, vol_y, vol_w, vol_h);
 
 		// volume mute button;
 		let bx_6 = vol_x - bw_2 - scale(4);
 		let by_6 = (UI_y + (UI_h - bw_2) / 2) >> 0;
-		buttons.volume.setSize(bx_6, by_6);
+		buttons.volume.setBoundary(bx_6, by_6);
 
 		// love;
-		buttons.love.setSize(bx_6 - bw_2, by_6);
+		buttons.love.setBoundary(bx_6 - bw_2, by_6);
 
 		// seekbar;
 		let seek_max_w = scale(640);
@@ -467,18 +467,18 @@ export class PlaybackControlView extends Component {
 		else if (seek_w > seek_max_w) seek_w = seek_max_w;
 		let seek_x = UI_x + (UI_w - seek_w) / 2;
 		let seek_y = by_1 + bw_1 + scale(8);
-		seekbar.setSize(seek_x, seek_y, seek_w, scale(16));
+		seekbar.setBoundary(seek_x, seek_y, seek_w, scale(16));
 
 		// art;
 		let art_w = scale(48);
 		let art_pad = (UI_h - art_w) / 2;
-		artwork.setSize(UI_x + art_pad, UI_y + art_pad, art_w, art_w);
+		artwork.setBoundary(UI_x + art_pad, UI_y + art_pad, art_w, art_w);
 
 		// artist text;
 		let artist_x = UI_x + art_pad + art_w + scale(8);
 		let artist_y = this.y + (this.height / 2);
 		let artist_w = seek_x - bw_2 - scale(8) - artist_x;
-		artist.setSize(artist_x, artist_y, artist_w, scale(20));
+		artist.setBoundary(artist_x, artist_y, artist_w, scale(20));
 	}
 
 	on_paint(gr: IGdiGraphics) {

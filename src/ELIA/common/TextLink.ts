@@ -11,9 +11,9 @@ export interface ITextLinkProps {
 
 
 export class TextLink extends Clickable {
+
 	text: string = "";
 	textWidth: number = 0;
-	maxWidth: number = 0;
 	_fontMap: Map<ButtonStates, IGdiFont> = new Map();
 	_colorMap: Map<ButtonStates, number> = new Map();
 
@@ -44,8 +44,9 @@ export class TextLink extends Clickable {
 			return;
 		}
 		this.text = text;
-		this.on_size && this.on_size();
+		this.textWidth = MeasureString(this.text, this._fontMap.get(ButtonStates.normal)).Width;
 	}
+
 	on_paint(gr: IGdiGraphics) {
 		if (this.text == null || this.text.length === 0) {
 			return;
@@ -54,4 +55,5 @@ export class TextLink extends Clickable {
 		let textColor_: number = this._colorMap.get(this.state);
 		gr.DrawString(this.text, font_, textColor_, this.x, this.y, this.width, this.height, StringFormat.LeftCenter);
 	}
+
 }

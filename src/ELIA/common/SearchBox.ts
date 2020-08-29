@@ -131,11 +131,11 @@ export class SearchBox extends Component {
         let btnY = (this.y + this.height - iconHeight)
         let marginLeft = scale(8);
 
-        searchBtn.setSize(this.x + marginLeft, btnY, iconHeight, iconHeight);
-        menuBtn.setSize(this.x + this.width - marginLeft - iconHeight, btnY, iconHeight, iconHeight);
-        clearBtn.setSize(menuBtn.x - iconHeight - scale(4), btnY, iconHeight, iconHeight);
+        searchBtn.setBoundary(this.x + marginLeft, btnY, iconHeight, iconHeight);
+        menuBtn.setBoundary(this.x + this.width - marginLeft - iconHeight, btnY, iconHeight, iconHeight);
+        clearBtn.setBoundary(menuBtn.x - iconHeight - scale(4), btnY, iconHeight, iconHeight);
 
-        inputbox.setSize(searchBtn.x + searchBtn.width, btnY, clearBtn.x - searchBtn.x - searchBtn.width, iconHeight);
+        inputbox.setBoundary(searchBtn.x + searchBtn.width, btnY, clearBtn.x - searchBtn.x - searchBtn.width, iconHeight);
 
     }
 

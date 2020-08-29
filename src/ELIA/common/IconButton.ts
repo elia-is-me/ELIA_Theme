@@ -63,7 +63,7 @@ export class Icon extends Clickable {
 		this.image = img;
 		this.hoverImage = hoverImg;
 		this.downImage = downImg;
-		this.setSize(this.x, this.y, img.Width, img.Height);
+		this.setBoundary(this.x, this.y, img.Width, img.Height);
 	}
 	on_paint(gr: IGdiGraphics) {
 		let img = this.image;

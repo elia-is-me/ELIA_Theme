@@ -157,6 +157,7 @@ export class TopBar extends Component {
 	searchBox: SearchBox;
 
 	constructor(opts: ITopbarOptions) {
+
 		super({});
 
 		this.foreColor = opts.foreColor;
@@ -166,7 +167,8 @@ export class TopBar extends Component {
 		this.mainIco = new Icon2({
 			fontIcon: this.icons.menu,
 			normalColor: this.foreColor,
-			hoverColor: opts.hoverColor
+			hoverColor: setAlpha(this.foreColor, 200),
+			downColor: setAlpha(this.foreColor, 128)
 		});
 
 		this.addChild(this.mainIco);
@@ -174,7 +176,8 @@ export class TopBar extends Component {
 		this.settingsIco = new Icon2({
 			fontIcon: this.icons.settings,
 			normalColor: this.foreColor,
-			hoverColor: opts.hoverColor
+			hoverColor: setAlpha(this.foreColor, 200),
+			downColor: setAlpha(this.foreColor, 128) 
 		});
 
 		this.addChild(this.settingsIco);
@@ -184,7 +187,7 @@ export class TopBar extends Component {
 			foreColor: mainColors.text,
 			iconColors: {
 				normal: mainColors.text,
-				hover: setAlpha(mainColors.text, 250),
+				hover: setAlpha(mainColors.text, 200),
 				down: setAlpha(mainColors.text, 127)
 			}
 		})
@@ -201,10 +204,10 @@ export class TopBar extends Component {
 		let padLeft = scale(16);
 		let { _icoWidth } = this;
 
-		this.mainIco.setSize(this.x + padLeft, this.y + icoOffsetTop, _icoWidth, _icoWidth);
-		this.settingsIco.setSize(this.x + this.width - padLeft - _icoWidth, this.y + icoOffsetTop, _icoWidth, _icoWidth);
+		this.mainIco.setBoundary(this.x + padLeft, this.y + icoOffsetTop, _icoWidth, _icoWidth);
+		this.settingsIco.setBoundary(this.x + this.width - padLeft - _icoWidth, this.y + icoOffsetTop, _icoWidth, _icoWidth);
 
-		this.searchBox.setSize(this.x + scale(272), this.y + scale(8), scale(400), this.height - scale(16));
+		this.searchBox.setBoundary(this.x + scale(272), this.y + scale(8), scale(400), this.height - scale(16));
 	}
 
 	on_paint(gr: IGdiGraphics) {

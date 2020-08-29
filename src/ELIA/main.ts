@@ -1,8 +1,8 @@
 ﻿import { RGB, scale, StopReason } from "./common/common"
-import { Component, textRenderingHint } from "./common/BasePart";
+import { textRenderingHint } from "./common/BasePart";
 import { PlaybackControlView } from "./ui/PlaybackControlView";
 import { bottomColors, mainColors} from "./ui/Theme";
-import { TopBar, Topbar_Properties } from "./ui/TopbarView";
+import { TopBar } from "./ui/TopbarView";
 import { PlaybackQueue } from "./ui/PlaylistView";
 import { PlaylistManagerView } from "./ui/PlaylistManagerView";
 import { Layout, PartsManager } from "./ui/Layout";
@@ -13,29 +13,6 @@ import { Material, MaterialFont } from "./common/iconCode";
 const playbackControlBar = new PlaybackControlView({
     colors: bottomColors,
 });
-
-class ArtDisplay extends Component {
-
-    objTF = fb.TitleFormat("%album artist%^^%album%");
-    trackKey: string = "";
-    currentImage: IGdiBitmap;
-    defaultImage: IGdiBitmap;
-
-    on_init() { }
-
-    on_size() { }
-
-    on_paint(gr: IGdiGraphics) {
-        gr.FillSolidRect(this.x, this.y, this.width, this.height, RGB(145, 85, 47));
-    }
-
-    on_metadb_changed() {
-    }
-
-    getImages() {
-
-    }
-}
 
 type IconKeysType = "menu" | "settings";
 const iconSize = scale(20);
@@ -65,17 +42,6 @@ const topbar = new TopBar({
     icons: icons
 })
 const playlistView = new PlaybackQueue({})
-
-class LibraryView extends Component {
-    on_init() { }
-
-    on_size() { }
-
-    on_paint(gr: IGdiGraphics) {
-        gr.FillSolidRect(this.x, this.y, this.width, this.height, RGB(107, 95, 112));
-        // gr.DrawString("Library View Panel", logfont, 0xffffffff, this.x, this.y, this.width, this.height, StringFormat.Center);
-    }
-}
 
 const playlistManager = new PlaylistManagerView();
 
@@ -110,11 +76,10 @@ function on_size() {
     let wh = window.Height;
     if (!ww || !wh) return;
 
-    layout.setSize(0, 0, Math.max(ww, windowMinWidth), wh);
+    layout.setBoundary(0, 0, Math.max(ww, windowMinWidth), wh);
     layoutManager.updateParts();
 
 }
-
 
 const mouseCursor = { x: -1, y: -1 };
 let mouseIsDragWindow = false;
@@ -289,4 +254,3 @@ let systemCallbacks = {
 
 Object.assign(globalThis_, systemCallbacks);
 
-// vim: set fileencoding=utf-8 bomb et:/

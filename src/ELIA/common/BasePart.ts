@@ -1,4 +1,4 @@
-import { isObject } from "./common";
+import { isObject, TextRenderingHint } from "./common";
 
 /**
  * A too simple way to generate component id;
@@ -8,6 +8,9 @@ const get_cid = (() => {
 	return () => ++count;
 })();
 
+/**
+ * Used by a component part to sort it's children parts.
+ */
 const sortByZIndex = (a: Component, b: Component) => a.z - b.z;
 
 export interface ICallbacks {
@@ -27,17 +30,12 @@ export interface ICallbacks {
 	on_key_up?: (vkey: number) => void;
 }
 
-export interface IBox {
+export interface IBoxModel {
 	x: number;
 	y: number;
 	z?: number;
 	width: number;
 	height: number;
-}
-
-export interface TEST {
-	parent: Component;
-	children: Component[];
 }
 
 export interface IInjectableCallbacks {
@@ -57,8 +55,7 @@ export interface IInjectableCallbacks {
 	on_metadb_changed?: (metadbs?: IFbMetadbList, fromhook?: boolean) => void;
 }
 
-
-export class Component implements IBox, TEST, ICallbacks {
+export abstract class Component implements IBoxModel, ICallbacks {
 	readonly cid: number = get_cid();
 	private _visible: boolean = true;
 	private _shouldUpdateOnInit = true;
@@ -132,7 +129,7 @@ export class Component implements IBox, TEST, ICallbacks {
 			&& x > this.x && x <= this.x + this.width
 			&& y > this.y && y <= this.y + this.height;
 	}
-	setSize(x: number, y: number, width?: number, height?: number) {
+	setBoundary(x: number, y: number, width?: number, height?: number) {
 		let visibleBefore_ = this.isVisible();
 		this.x = x;
 		this.y = y;
@@ -152,6 +149,31 @@ export class Component implements IBox, TEST, ICallbacks {
 			this._shouldSortChildren = false;
 		}
 	}
+
+	setPosition(x: number, y: number) {
+		this.x = x;
+		this.y = y;
+	}
+
+	setDimension(width: number, height: number) {
+		let visibilityBefore_ = this.isVisible();
+		this.width = width;
+		this.height = height;
+		let visibilityNow_ = this.isVisible();
+
+		if (visibilityNow_) {
+			this.on_size();
+		}
+
+		if (visibilityNow_ !== visibilityBefore_) {
+			this._shouldUpdateOnInit = true;
+		}
+
+		if (this._shouldSortChildren) {
+			this.children.sort(sortByZIndex)
+		}
+	}
+
 	didUpdateOnInit() {
 		this._shouldUpdateOnInit = false;
 	}
@@ -180,4 +202,4 @@ export interface IPaddings {
 
 const useClearType = window.GetProperty('_Global.Font Use ClearType', true);
 const useAntiAlias = window.GetProperty('_Global.Font Antialias(Only when useClearType = false', true);
-export const textRenderingHint = useClearType ? 5 : useAntiAlias ? 4 : 0;
+export const textRenderingHint = useClearType ? TextRenderingHint.ClearTypeGridFit : useAntiAlias ? TextRenderingHint.AntiAlias : 0;

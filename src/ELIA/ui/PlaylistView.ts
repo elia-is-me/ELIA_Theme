@@ -517,14 +517,14 @@ export class PlaybackQueue extends ScrollView {
 
 		this.setColumnSize();
 
-		this.scrollbar.setSize(
+		this.scrollbar.setBoundary(
 			this.x + this.width - scrollbarWidth,
 			this.y,
 			scrollbarWidth,
 			this.height);
 
 		const headerViewHeight = this.headerView.getProperHeight(this.width);
-		this.headerView.setSize(this.x, this.y - this.scroll, this.width, headerViewHeight);
+		this.headerView.setBoundary(this.x, this.y - this.scroll, this.width, headerViewHeight);
 
 		this.totalHeight = this.itemsTotalHeight + headerViewHeight;
 	}

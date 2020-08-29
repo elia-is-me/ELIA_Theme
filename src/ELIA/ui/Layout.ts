@@ -75,8 +75,8 @@ export class Layout extends Component {
         /**
          * Set pinned parts;
          */
-		this.topbar.setSize(x, y, width, TOPBAR_HEIGHT);
-		this.playbackControlBar.setSize(x, x + height - CONTROL_BAR_HEIGHT, width, CONTROL_BAR_HEIGHT);
+		this.topbar.setBoundary(x, y, width, TOPBAR_HEIGHT);
+		this.playbackControlBar.setBoundary(x, x + height - CONTROL_BAR_HEIGHT, width, CONTROL_BAR_HEIGHT);
 
         /**
          * Set others;
@@ -87,8 +87,8 @@ export class Layout extends Component {
 
 		switch (viewState) {
 			case ViewStates.default:
-				playlistManager.setSize(x, listY, plmanMinWidth, listHeight);
-				playlistView.setSize(x + playlistManager.width, listY, width - playlistManager.width, listHeight);
+				playlistManager.setBoundary(x, listY, plmanMinWidth, listHeight);
+				playlistView.setBoundary(x + playlistManager.width, listY, width - playlistManager.width, listHeight);
 				break;
 			default:
 				break;
