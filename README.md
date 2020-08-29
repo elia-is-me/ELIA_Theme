@@ -1,14 +1,14 @@
-# ELIA's Scripts
+# ELIA's Foobar2K Theme Script
 
 ## For
 
 * [foobar2000 audio player](https://www.foobar2000.org/)
-* [foo_uie_spider_monkey_panel.dll](https://theqwertiest.github.io/foo_spider_monkey_panel/)
+* [foo_spider_monkey_panel.dll](https://theqwertiest.github.io/foo_spider_monkey_panel/)
 
 ##  Compile
 
-- Install nodejs (v6.13.4)
-- cd `ts_elia` folder and install typescript, gulp, etc:
+- Install `nodejs (v6.13.4)`
+- cd `ts_elia` folder and install `typescript`, `gulp`, etc:
 ``` bash
 npm install --save-dev typescript gulp-cli gulp@4.0.0 gulp-typescript
 npm install --save-dev browserify vinyl-source-stream tsify
@@ -19,9 +19,11 @@ Output files will be at `./out` folder
 
 ## Use
 
-- Make sure foobar2000, foo_uie_spider_monkey_panel.dll have been installed. For better experience, install foo_playcount.dll also;
-- Create a scratchbox and place spider_monkey_panel in it;
-- Click on panel and then import 'elia-theme-main.js' in `./out` folder;
+> NOTE: this theme is in dev status, functions incomplete.
+
+- Make sure foobar2000, foo_spider_monkey_panel.dll have been installed. For better experience, install foo_playcount.dll also;
+- Create a scratchbox and place a foo_spider_monkey_panel in it;
+- Click on panel and then import `elia-theme-main.js` in `./out` folder;
 - Apply scratchbox to your foobar2000
 
 ## Take Care
