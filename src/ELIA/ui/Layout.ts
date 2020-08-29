@@ -10,16 +10,16 @@ import { scale } from "../common/common";
  * foo_spider_monkey_panel.dll does not provide a globalThis var and the
  * `window` object is readonly that none new properties  & methods can be assign
  * to it.  
- * It's commonly used way to create a `globalThis`.
+ * It's a commonly used way to create a `globalThis`.
  */
 const globalThis_ = Function("return this")();
 
 const CONTROL_BAR_HEIGHT = scale(76);
 const TOPBAR_HEIGHT = scale(48);
-const plmanMinWidth = PLM_Properties.minWidth;
+const PLMAN_MIN_WIDTH = PLM_Properties.minWidth;
 
 enum ViewStates {
-	default,
+	Default,
 }
 
 export class Layout extends Component {
@@ -38,7 +38,7 @@ export class Layout extends Component {
 	}) {
 		super({})
 
-		this.viewState = ViewStates.default;
+		this.viewState = ViewStates.Default;
 
 		//
 		this.topbar = options.topbar;
@@ -63,7 +63,7 @@ export class Layout extends Component {
 		this.topbar.visible = true;
 		this.playbackControlBar.visible = true;
 
-		if (viewState === ViewStates.default) {
+		if (viewState === ViewStates.Default) {
 			this.playlistManager.visible = true;
 			this.playlistView.visible = true;
 		} else { }
@@ -86,8 +86,8 @@ export class Layout extends Component {
 		const listHeight = this.height - this.topbar.height - this.playbackControlBar.height;
 
 		switch (viewState) {
-			case ViewStates.default:
-				playlistManager.setBoundary(x, listY, plmanMinWidth, listHeight);
+			case ViewStates.Default:
+				playlistManager.setBoundary(x, listY, PLMAN_MIN_WIDTH, listHeight);
 				playlistView.setBoundary(x + playlistManager.width, listY, width - playlistManager.width, listHeight);
 				break;
 			default:
@@ -116,29 +116,33 @@ export class Layout extends Component {
 }
 
 export class PartsManager {
+
 	parts: Component[];
 	visibleParts: Component[];
 	rootPart: Component;
 
 	private activeId: number;
 	activePart: Component;
+	focusedPart: CompositionEvent;
+	private focusedId: number;
 
 	constructor(rootPart: Component) {
 		this.rootPart = rootPart;
 		this.parts = [];
 		this.visibleParts = [];
 		this.activeId = -1;
+		this.focusedId = -1;
 	}
 
-	private flatternParts(rootPart: Component) {
-		if (rootPart == null) return [];
-		let children = rootPart.children;
-		let results = [rootPart];
-		for (let i = 0; i < children.length; i++) {
-			results = results.concat(this.flatternParts(children[i]));
-		}
-		return results;
-	}
+	// private flatternParts(rootPart: Component) {
+	// 	if (rootPart == null) return [];
+	// 	let children = rootPart.children;
+	// 	let results = [rootPart];
+	// 	for (let i = 0; i < children.length; i++) {
+	// 		results = results.concat(this.flatternParts(children[i]));
+	// 	}
+	// 	return results;
+	// }
 
 	private findVisibleParts(rootPart: Component): Component[] {
 		if (!rootPart.isVisible()) return [];
@@ -184,13 +188,23 @@ export class PartsManager {
 		this.visibleParts.forEach(p => this.invoke(p, method, args));
 	}
 
+	invokeFocusedPart(method: string, ...args: any[]) {
+		const focusedPart = this.visibleParts[this.focusedId];
+		if (!focusedPart) {
+			console.log("method:   ", "Invalid focused part!");
+			return;
+		}
+		let func = (<any>focusedPart)[method];
+		return func == null ? null : func.apply(focusedPart, args);
+	}
+
 	private invoke(part: Component, method: string, ...args: any[]) {
 		if (!part) return;
 		let func = (<any>part)[method];
 		return func == null ? null : func.apply(part, args);
 	}
 
-	activate(x: number, y: number) {
+	setActive(x: number, y: number) {
 		const deactiveId_ = this.activeId;
 		const visibleParts = this.visibleParts;
 
@@ -201,6 +215,28 @@ export class PartsManager {
 			this.invokeById(deactiveId_, "on_mouse_leave")
 			this.invokeById(this.activeId, "on_mouse_move", x, y);
 		}
+	}
+
+	setFocus(x: number, y: number) {
+		let defocusedId_ = this.focusedId;
+		this.focusedId = this.findActivePart(this.visibleParts, x, y);
+
+		if (this.focusedId !== defocusedId_) {
+			this.invokeById(defocusedId_, "on_change_focus", false);
+			this.invokeById(this.focusedId, "on_change_focus", true);
+		}
+	}
+
+	setFocusPart(part: Component) {
+
+		let defocusedId_ = this.focusedId;
+		let partId = this.visibleParts.indexOf(part);
+
+		if (partId > -1 && partId !== defocusedId_) {
+			this.invokeById(defocusedId_, "on_change_focus", false);
+			this.invokeById(partId, "on_change_focuse", true);
+		}
+
 	}
 
 	updateParts() {

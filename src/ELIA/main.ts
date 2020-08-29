@@ -1,7 +1,7 @@
 ﻿import { RGB, scale, StopReason } from "./common/common"
 import { textRenderingHint } from "./common/BasePart";
 import { PlaybackControlView } from "./ui/PlaybackControlView";
-import { bottomColors, mainColors} from "./ui/Theme";
+import { bottomColors, mainColors } from "./ui/Theme";
 import { TopBar } from "./ui/TopbarView";
 import { PlaybackQueue } from "./ui/PlaylistView";
 import { PlaylistManagerView } from "./ui/PlaylistManagerView";
@@ -14,25 +14,26 @@ const playbackControlBar = new PlaybackControlView({
     colors: bottomColors,
 });
 
-type IconKeysType = "menu" | "settings";
+type IconKeysType = "menu" | "settings" | "apps";
 const iconSize = scale(20);
 const icons: {
-	[keys in IconKeysType]: SerializableIcon
+    [keys in IconKeysType]: SerializableIcon
 } = {
-	menu: new SerializableIcon({
-		code: Material.menu,
-		name: MaterialFont,
-		size: iconSize,
-		width: 0,
-		height: 0,
-	}),
-	settings: new SerializableIcon({
-		code: Material.gear,
-		name: MaterialFont,
-		size: iconSize,
-		width: 0,
-		height: 0
-	})
+    menu: new SerializableIcon({
+        code: Material.menu,
+        name: MaterialFont,
+        size: iconSize,
+    }),
+    settings: new SerializableIcon({
+        code: Material.gear,
+        name: MaterialFont,
+        size: iconSize,
+    }),
+    apps: new SerializableIcon({
+        code: Material.apps,
+        name: MaterialFont,
+        size: iconSize,
+    })
 }
 
 const topbar = new TopBar({
@@ -56,7 +57,7 @@ const layout = new Layout({
 });
 const layoutManager = new PartsManager(layout);
 
-const windowMinWidth = scale(780);
+const PANEL_MIN_WIDTH = scale(780);
 
 function on_paint(gr: IGdiGraphics) {
 
@@ -66,7 +67,11 @@ function on_paint(gr: IGdiGraphics) {
     const len = visibleParts.length;
 
     for (let i = 0; i < len; i++) {
-        visibleParts[i].on_paint(gr);
+        /**
+         * 有时希望 part 的 visible 属性更改后可以立刻生效（而不是等 on_size 之后再生效）
+         * 但这就显得 visibleParts 存在似乎没有必要了。
+         */
+        visibleParts[i].visible && visibleParts[i].on_paint(gr);
     }
 }
 
@@ -76,7 +81,7 @@ function on_size() {
     let wh = window.Height;
     if (!ww || !wh) return;
 
-    layout.setBoundary(0, 0, Math.max(ww, windowMinWidth), wh);
+    layout.setBoundary(0, 0, Math.max(ww, PANEL_MIN_WIDTH), wh);
     layoutManager.updateParts();
 
 }
@@ -94,7 +99,7 @@ function on_mouse_move(x: number, y: number) {
     mouseCursor.y = y;
 
     if (!mouseIsDragWindow) {
-        layoutManager.activate(x, y);
+        layoutManager.setActive(x, y);
     }
 
     layoutManager.invokeActivePart("on_mouse_move", x, y);
@@ -102,8 +107,9 @@ function on_mouse_move(x: number, y: number) {
 
 function on_mouse_lbtn_down(x: number, y: number) {
     mouseIsDragWindow = true;
-    layoutManager.activate(x, y);
+    layoutManager.setActive(x, y);
     layoutManager.invokeActivePart("on_mouse_lbtn_down", x, y);
+    layoutManager.setFocus(x, y);
 }
 
 function on_mouse_lbtn_dblclk(x: number, y: number) {
@@ -116,21 +122,28 @@ function on_mouse_lbtn_up(x: number, y: number) {
 
     if (mouseIsDragWindow) {
         mouseIsDragWindow = false;
-        layoutManager.activate(x, y);
+        layoutManager.setActive(x, y);
     }
 }
 
 function on_mouse_leave() {
-    layoutManager.activate(-1, -1);
+    layoutManager.setActive(-1, -1);
 }
 
 function on_mouse_rbtn_down(x: number, y: number) {
-    layoutManager.activate(x, y);
+    layoutManager.setActive(x, y);
     layoutManager.invokeActivePart("on_mouse_rbtn_down", x, y);
+
+    layoutManager.setFocus(x, y);
 }
 
 function on_mouse_rbtn_up(x: number, y: number) {
     layoutManager.invokeActivePart("on_mouse_rbtn_up", x, y);
+
+    /**
+     * Return true to disable spider_monkey_panel's default right-click popup
+     * menu.
+     */
     return true;
 }
 
@@ -154,6 +167,31 @@ function on_mouse_wheel(step: number) {
             tmp = tmp.parent;
         }
     }
+}
+
+function on_focus(isFocused: boolean) {
+    if (!isFocused) {
+        /**
+         * Lost focus.
+         */
+        layoutManager.setFocus(-1, -1);
+    }
+}
+
+function on_key_down(vkey: number) {
+    switch (vkey) {
+        // ...
+        // some global key bindings;
+
+        // 
+        default:
+            layoutManager.invokeFocusedPart("on_key_down", vkey);
+            break;
+    }
+}
+
+function on_char(code: number) {
+    layoutManager.invokeFocusedPart("on_char", code);
 }
 
 function on_playback_order_changed(newOrder: number) {
@@ -236,6 +274,9 @@ let systemCallbacks = {
     "on_mouse_rbtn_down": on_mouse_rbtn_down,
     "on_mouse_rbtn_up": on_mouse_rbtn_up,
     "on_mouse_wheel": on_mouse_wheel,
+    "on_focus": on_focus,
+    "on_key_down": on_key_down,
+    "on_char": on_char,
     "on_playback_order_changed": on_playback_order_changed,
     "on_playback_stop": on_playback_stop,
     "on_playback_edited": on_playback_edited,
@@ -253,4 +294,10 @@ let systemCallbacks = {
 };
 
 Object.assign(globalThis_, systemCallbacks);
+
+/* Control wants all keys           */
+const DLGC_WANTALLKEYS = 0x0004;
+window.DlgCode = DLGC_WANTALLKEYS;
+
+
 

@@ -29,7 +29,8 @@ export const Material = {
     pause: '\ue034',
     skip_next: '\ue044',
     skip_prev: '\ue045',
-    down_arrow: '\ue5c5'
+    arrow_drop_down: '\ue5c5',
+    apps: '\ue5c3'
 };
 
 export const MaterialFont = "Material Icons";

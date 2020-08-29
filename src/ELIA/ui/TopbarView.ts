@@ -5,7 +5,7 @@ import { Component, textRenderingHint } from "../common/BasePart";
 import { globalFontName, IThemeColors, mainColors } from "./Theme";
 import { SerializableIcon } from "../common/IconType";
 import { MaterialFont, Material } from "../common/iconCode";
-import { SearchBox } from "../common/SearchBox";
+import { SearchBox } from "./SearchBox";
 
 class TabItem {
 	private defaultPadding = scale(4);
@@ -116,7 +116,7 @@ class SwitchTab extends Component {
 	}
 }
 
-type IconKeysType = "menu" | "settings";
+type IconKeysType = "menu" | "settings" | "apps";
 
 interface ITopbarOptions {
 	backgroundColor: number;
@@ -154,6 +154,7 @@ export class TopBar extends Component {
 
 	mainIco: Icon2;
 	settingsIco: Icon2;
+	switchIco: Icon2;
 	searchBox: SearchBox;
 
 	constructor(opts: ITopbarOptions) {
@@ -171,28 +172,34 @@ export class TopBar extends Component {
 			downColor: setAlpha(this.foreColor, 128)
 		});
 
-		this.addChild(this.mainIco);
-
 		this.settingsIco = new Icon2({
 			fontIcon: this.icons.settings,
 			normalColor: this.foreColor,
 			hoverColor: setAlpha(this.foreColor, 200),
-			downColor: setAlpha(this.foreColor, 128) 
+			downColor: setAlpha(this.foreColor, 128)
 		});
 
-		this.addChild(this.settingsIco);
+		this.switchIco = new Icon2({
+			fontIcon: this.icons.apps,
+			normalColor: this.foreColor,
+			hoverColor: setAlpha(this.foreColor, 200),
+			downColor: setAlpha(this.foreColor, 128)
+		});
 
 		this.searchBox = new SearchBox({
-			backgroundColor: RGB(18, 18, 18),
+			backgroundColor: RGB(30, 30, 30),
+			backgroundActiveColor: RGB(77, 77, 77),
 			foreColor: mainColors.text,
 			iconColors: {
 				normal: mainColors.text,
 				hover: setAlpha(mainColors.text, 200),
 				down: setAlpha(mainColors.text, 127)
 			}
-		})
+		});
 
-		this.addChild(this.searchBox);
+		[this.mainIco, this.switchIco, this.searchBox, this.settingsIco]
+			.forEach(child => this.addChild(child))
+
 	}
 
 	on_init() {
@@ -206,6 +213,7 @@ export class TopBar extends Component {
 
 		this.mainIco.setBoundary(this.x + padLeft, this.y + icoOffsetTop, _icoWidth, _icoWidth);
 		this.settingsIco.setBoundary(this.x + this.width - padLeft - _icoWidth, this.y + icoOffsetTop, _icoWidth, _icoWidth);
+		this.switchIco.setBoundary(this.settingsIco.x - _icoWidth - scale(4), this.y + icoOffsetTop, _icoWidth, _icoWidth);
 
 		this.searchBox.setBoundary(this.x + scale(272), this.y + scale(8), scale(400), this.height - scale(16));
 	}

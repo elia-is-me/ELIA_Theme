@@ -1,4 +1,4 @@
-import { Component } from "./BasePart";
+﻿import { Component } from "./BasePart";
 import { blendColors } from "./common";
 
 const IDC_ARROW = 32512;
@@ -69,22 +69,24 @@ const cInputbox = {
 export interface IInputBoxOptions {
     font: IGdiFont;
     font_italic: IGdiFont;
-    textcolor: number;
-    backcolor: number;
-    backselectioncolor: number;
+    foreColor: number;
+    backgroundColor?: number;
+    backgroundActiveColor?: number;
+    backgroundSelectionColor: number;
     default_text?: string;
     empty_text?: string;
     func: () => void;
 }
 
-export class InputBox extends Component {
+export class InputBox extends Component implements IInputBoxOptions{
 
     font: IGdiFont;
     font_italic: IGdiFont;
-    textcolor: number;
-    backcolor: number;
+    foreColor: number;
+    backgroundColor?: number;
+    backgroundActiveColor?: number;
     bordercolor: number;
-    backselectioncolor: number;
+    backgroundSelectionColor: number;
     default_text: string = "";
     text: string = "";
     prev_text: string = "3@!";
@@ -93,8 +95,8 @@ export class InputBox extends Component {
 
     autovalidation: boolean = false;
 
-    offset: number;
-    Cpos: number;
+    offset: number = 0;
+    Cpos: number = 0;
     Cx: number;
     edit: boolean = false;
     select: boolean = false;
@@ -114,9 +116,15 @@ export class InputBox extends Component {
     private DT = DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX | DT_CALCRECT | DT_END_ELLIPSIS;
 
     func: () => void;
+    Spos: number = 0;
 
     constructor(opts: IInputBoxOptions) {
         super(opts);
+
+        Object.assign(this, opts);
+
+        console.log("empty_text: ", this.empty_text);
+
         this.func.bind(this);
     }
 
@@ -129,7 +137,11 @@ export class InputBox extends Component {
         gr.SetSmoothingMode(0);
         if (this.bordercolor)
             gr.FillSolidRect(x - 2, y + 0, (this.width + 4), this.height - 0, this.bordercolor);
-        gr.FillSolidRect(x - 1, y + 1, (this.width + 2), this.height - 2, this.backcolor);
+        if (this.edit && this.backgroundActiveColor != null) {
+            gr.FillSolidRect(x - 1, y + 1, (this.width + 2), this.height - 2, this.backgroundActiveColor);
+        } else if (this.backgroundColor != null) {
+            gr.FillSolidRect(x - 1, y + 1, (this.width + 2), this.height - 2, this.backgroundColor);
+        }
 
         // adjust offset to always see the cursor
         if (!this.drag && !this.select) {
@@ -163,9 +175,9 @@ export class InputBox extends Component {
                 this.text_selected = this.text.substring(this.SelEnd, this.SelBegin);
             }
             if ((this.x + px1 + (px2 - px1)) > this.x + this.width) {
-                gr.FillSolidRect(this.x + px1, this.y + 1, this.width - px1, this.height - 3, this.backselectioncolor & 0x50ffffff);
+                gr.FillSolidRect(this.x + px1, this.y + 1, this.width - px1, this.height - 3, this.backgroundSelectionColor & 0x50ffffff);
             } else {
-                gr.FillSolidRect(this.x + px1, this.y + 1, px2 - px1, this.height - 3, this.backselectioncolor & 0x50ffffff);
+                gr.FillSolidRect(this.x + px1, this.y + 1, px2 - px1, this.height - 3, this.backgroundSelectionColor & 0x50ffffff);
             }
         } else {
             this.select = false;
@@ -174,9 +186,9 @@ export class InputBox extends Component {
 
         // draw text
         if (this.text.length > 0) {
-            gr.GdiDrawText(this.text.substr(this.offset), this.font, this.edit ? this.textcolor : blendColors(this.textcolor, (this.backcolor == 0 ? 0xff000000 : this.backcolor), 0.35), this.x, this.y, this.width, this.height, DT);
+            gr.GdiDrawText(this.text.substr(this.offset), this.font, this.edit ? this.foreColor : blendColors(this.foreColor, (this.backgroundColor == 0 ? 0xff000000 : this.backgroundColor), 0.35), this.x, this.y, this.width, this.height, DT);
         } else {
-            gr.GdiDrawText(this.empty_text, this.font_italic, blendColors(this.textcolor, (this.backcolor == 0 ? 0xff000000 : this.backcolor), 0.35), this.x, this.y, this.width, this.height, DT);
+            gr.GdiDrawText(this.empty_text, this.font_italic, blendColors(this.foreColor, (this.backgroundColor == 0 ? 0xff000000 : this.backgroundColor), 0.35), this.x, this.y, this.width, this.height, DT);
         }
         // draw cursor
         if (this.edit && !this.select)
@@ -185,6 +197,7 @@ export class InputBox extends Component {
 
     drawcursor(gr: IGdiGraphics) {
         if (cInputbox.cursor_state) {
+            console.log(this.Cpos, this.offset);
             if (this.Cpos >= this.offset) {
                 this.Cx = this.GetCx(this.Cpos);
                 var x1 = this.x + this.Cx;
@@ -192,9 +205,14 @@ export class InputBox extends Component {
                 var y1 = this.y + 1;
                 var y2 = this.y + this.height - 3;
                 var lt = 1;
-                gr.DrawLine(x1, y1, x2, y2, lt, this.textcolor);
+                console.log("drawing cursor");
+                gr.DrawLine(x1, y1, x2, y2, lt, this.foreColor);
             }
         }
+    }
+
+    repaint() {
+        this.parent.repaint();
     }
 
     CalcText() {
@@ -222,7 +240,7 @@ export class InputBox extends Component {
         return i;
     }
 
-    on_focus(is_focused: boolean) {
+    on_focus_(is_focused: boolean) {
         if (!is_focused && this.edit) {
             if (this.text.length == 0) {
                 this.text = this.default_text;
@@ -379,11 +397,11 @@ export class InputBox extends Component {
         _menu.AppendMenuItem(this.select ? MF_STRING : MF_GRAYED | MF_DISABLED, 2, "Cut");
         _menu.AppendMenuSeparator();
         _menu.AppendMenuItem(cInputbox.clipboard ? MF_STRING : MF_GRAYED | MF_DISABLED, 3, "Paste");
-        if (utils.IsKeyPressed(VK_SHIFT)) {
-            _menu.AppendMenuSeparator();
-            _menu.AppendMenuItem(MF_STRING, 20, "Properties");
-            _menu.AppendMenuItem(MF_STRING, 21, "Configure...");
-        }
+        // if (utils.IsKeyPressed(VK_SHIFT)) {
+        //     _menu.AppendMenuSeparator();
+        //     _menu.AppendMenuItem(MF_STRING, 20, "Properties");
+        //     _menu.AppendMenuItem(MF_STRING, 21, "Configure...");
+        // }
         idx = _menu.TrackPopupMenu(x, y);
         switch (idx) {
             case 1:
@@ -801,6 +819,92 @@ export class InputBox extends Component {
         //         this.prev_text = this.text;
         //     }
         // }
+    }
+
+    on_char(code: number, mask?: number) {
+        if (code == 1 && this.edit && mask == KMask.ctrl) {
+            this.Spos = 0;
+            this.Cpos = this.text.length;
+            this.select = true;
+            this.repaint();
+        }
+        if (code > 31 && this.edit) {
+            //save text before update
+            this.stext = this.text;
+            if (this.select) {
+                var p1 = this.SelBegin;
+                var p2 = this.SelEnd;
+                this.text_selected = "";
+                this.Cpos = this.SelBegin;
+                this.SelEnd = this.SelBegin;
+            } else {
+                var p1 = this.Cpos;
+                var p2 = (this.text.length - this.Cpos) * -1;
+            }
+            if (this.Cpos < this.text.length) {
+                this.text = this.text.slice(0, p1) + String.fromCharCode(code) + this.text.slice(p2);
+            } else {
+                this.text = this.text + String.fromCharCode(code);
+            }
+            this.Cpos++;
+            if (this.select) {
+                this.CalcText();
+                if (this.TWidth <= (this.width)) {
+                    this.offset = 0;
+                } else {
+                    if (this.Cpos - this.offset < 0) {
+                        this.offset = this.offset > 0 ? this.Cpos - 1 : 0;
+                    }
+                }
+                this.select = false;
+            }
+            this.repaint();
+        }
+
+        // autosearch: has text changed after on_key or on_char ?
+        // if (this.autovalidation) {
+        // 	if (this.text != this.prev_text) {
+        // 		// launch timer to process the search
+        // 		gfunc_launch_timer && window.ClearTimeout(gfunc_launch_timer);
+        // 		gfunc_launch_timer = window.SetTimeout(function () {
+        // 				gfunc();
+        // 				gfunc_launch_timer && window.ClearTimeout(gfunc_launch_timer);
+        // 				gfunc_launch_timer = false;
+        // 			}, 500);
+        // 		this.prev_text = this.text;
+        // 	}
+        // }
+
+    }
+
+    on_mouse_lbtn_down(x: number, y: number) {
+        this.check("down", x, y);
+    }
+
+    on_mouse_lbtn_up(x: number, y: number) {
+        this.check("up", x, y);
+    }
+
+    on_mouse_lbtn_dblclk(x: number, y: number) {
+        this.check("dblclk", x, y);
+    }
+
+    on_mouse_rbtn_up(x: number, y: number) {
+        this.check("right", x, y);
+    }
+
+    on_mouse_move(x: number, y: number) {
+        this.check("move", x, y);
+    }
+
+    on_mouse_leave() {
+        this.check("move", -1, -1);
+    }
+
+    on_change_focus(is_focused: boolean) {
+        if (!is_focused) {
+            this.check("down", -1, -1);
+        }
     }
 
 }

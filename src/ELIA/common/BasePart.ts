@@ -1,4 +1,5 @@
 import { isObject, TextRenderingHint } from "./common";
+import { PartsManager } from "../ui/Layout";
 
 /**
  * A too simple way to generate component id;
@@ -76,6 +77,7 @@ export abstract class Component implements IBoxModel, ICallbacks {
 	height: number = 0;
 	parent: Component;
 	children: Component[] = [];
+	manager: PartsManager;
 	constructor(attrs: object, callbacks?: IInjectableCallbacks) {
 		Object.assign(this, attrs);
 		if (isObject(callbacks)) {
@@ -94,7 +96,7 @@ export abstract class Component implements IBoxModel, ICallbacks {
 			throw new Error("Component.addChild: Invalid param.");
 		}
 		;
-		if (node.parent != null) {
+		if (node.parent != null && node.parent !== this) {
 			node.parent.removeChild(node);
 		}
 		node.parent = this;
