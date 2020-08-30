@@ -53,5 +53,6 @@ export const scrollbarColor = {
 
 export const scrollbarWidth = scale(14);
 
-export const globalFontName = "Microsoft YaHei";
+// export const globalFontName = "Microsoft YaHei";
+export const globalFontName = "Segoe UI";
 

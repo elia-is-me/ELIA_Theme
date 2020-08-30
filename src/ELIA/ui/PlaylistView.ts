@@ -79,8 +79,8 @@ class PL_Header extends Component {
 		this.paddings = { top: 0, bottom: 0, left: 0, right: 0 };
 
 		// Set fonts;
-		let fontName_ = "Segoe UI Semibold";
-		this.titleFont = gdi.Font(fontName_, scale(28));
+		let fontName_ = "Segoe UI";
+		this.titleFont = gdi.Font("Segoe UI", scale(28), 1);
 		this.subtitleFont = gdi.Font(fontName_, scale(24));
 		this.descriptionFont = gdi.Font(fontName_, scale(14));
 
@@ -347,11 +347,11 @@ class Pl_Item {
 
 }
 
-function isEmptyString(str: string) {
+export function isEmptyString(str: string) {
 	return !str || 0 === str.length;
 }
 
-function isValidPlaylist(playlistIndex: number) {
+export function isValidPlaylist(playlistIndex: number) {
 	return (playlistIndex >= 0 && playlistIndex < plman.PlaylistCount);
 }
 

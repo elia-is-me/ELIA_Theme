@@ -2,7 +2,7 @@
 // Playlist Manager
 // -------------------------
 
-import { scale, blendColors, RGB, StringFormat, ThrottledRepaint, RGBA, rgba2hsla } from "../common/common";
+import { scale, blendColors, RGB, StringFormat, ThrottledRepaint, RGBA, rgba2hsla, MenuFlag } from "../common/common";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
 import { Component } from "../common/BasePart";
@@ -10,7 +10,12 @@ import { Material, MaterialFont } from "../common/iconCode";
 import { scrollbarWidth, IThemeColors, mainColors, sidebarColors, scrollbarColor, globalFontName } from "./Theme";
 import { Icon, Button, IButtonColors } from "../common/IconButton";
 import { SerializableIcon } from "../common/IconType";
+import { isValidPlaylist } from "./PlaylistView";
 
+const mouseCursor = {
+    x: -1,
+    y: -1
+}
 
 type IconSets = "volume" | "gear" | "queue_music";
 
@@ -145,6 +150,9 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
     colors: IPlaylistManagerColors;
     icons: { volume: SerializableIcon; gear: SerializableIcon; queue_music: SerializableIcon; };
 
+    playingIco: SerializableIcon;
+    pauseIco: SerializableIcon;
+
     constructor(attrs: IPlaylistManagerProps = PLM_Properties) {
         super(attrs);
 
@@ -162,6 +170,18 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
         });
         this.addChild(this.scrollbar);
         this.addChild(this.header);
+
+        this.playingIco = new SerializableIcon({
+            name: MaterialFont,
+            code: Material.volume,
+            size: scale(16)
+        });
+
+        this.pauseIco = new SerializableIcon({
+            name: MaterialFont,
+            code: Material.volume_mute,
+            size: scale(16)
+        })
     }
 
     initList() {
@@ -242,7 +262,9 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 
                 let isActive = rowItem.index === plman.ActivePlaylist;
                 let textColor = (isActive ? colors.textActive : colors.text);
-                let indicateWidth = scale(4);
+                if (itemIndex === this.hoverId) {
+                    textColor = colors.textActive;
+                }
 
                 if (isActive) {
                     gr.FillSolidRect(rowItem.x, rowItem.y, rowItem.width, rowItem.height, colors.text & 0x1fffffff);
@@ -252,11 +274,24 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
                 let icon_ = (rowItem.isAuto ? icons.gear : icons.queue_music);
                 icon_.draw(gr, textColor, 0x000000, rowItem.x + paddingL, rowItem.y + iconOffsetRowY);
 
+                //
+                let iconX = this.x + this.width - scale(40) - this.scrollbar.width - scale(8);
+                if (fb.IsPlaying && (rowItem.index === plman.PlayingPlaylist)) {
+                    (fb.IsPaused ? this.pauseIco : this.playingIco)
+                        .setSize(scale(40), this.rowHeight)
+                        .draw(gr, colors.highlight, 0, iconX, rowItem.y);
+                }
+
+                let textWidth = rowItem.width - paddingL - paddingR - icon_.width - scale(4);
+                if (fb.IsPlaying && (rowItem.index === plman.PlayingPlaylist)) {
+                    textWidth = iconX - (rowItem.x + paddingL + icon_.width + scale(4)) - scale(4);
+                }
+
                 // draw list name;
                 gr.DrawString(rowItem.listName, itemFont, textColor,
                     rowItem.x + paddingL + icon_.width + scale(4),
                     rowItem.y,
-                    rowItem.width - paddingL - paddingR - icon_.width - scale(4),
+                    textWidth,
                     rowHeight,
                     StringFormat.LeftCenter);
             }
@@ -275,6 +310,256 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
     on_mouse_wheel(step: number) {
         this.scrollTo(this.scroll - step * PLM_Properties.rowHeight * 3);
     }
+
+    private getHoverId(x: number, y: number) {
+        if (!this.trace(x, y)) {
+            return -1
+        };
+        return this.items.findIndex(item => item.trace(x, y));
+    }
+
+    /**
+     * Item index value in array `this.items[]`;
+     */
+    private hoverId: number = -1;
+
+    private dragSourceId: number = -1;
+    private dragTargetId: number = -1;
+    private dragTimer: number = -1;
+
+    on_mouse_move(x: number, y: number) {
+
+        mouseCursor.x = x;
+        mouseCursor.y = y;
+
+        let hoverId_ = this.getHoverId(x, y);
+        if (hoverId_ !== this.hoverId) {
+            this.hoverId = hoverId_;
+        }
+
+        this.updateDrag(x, y);
+
+        this.repaint();
+
+        if (this.dragSourceId > -1 && this.totalHeight > this.height) {
+            if (this.hoverId > -1) {
+                if (this.dragTimer > -1) {
+                    window.ClearInterval(this.dragTimer);
+                    this.dragTimer = -1;
+                }
+            } else {
+                if (y < this.y + this.header.height) {
+                    if (this.dragTimer === -1) {
+                        this.dragTimer = window.SetInterval(() => {
+                            this.scrollTo(this.scroll - this.rowHeight)
+                            this.updateDrag(x, y);
+                        }, 100);
+                    }
+                } else if (y > this.y + this.height) {
+                    if (this.dragTimer === -1) {
+                        this.dragTimer = window.SetInterval(() => {
+                            this.scrollTo(this.scroll + this.rowHeight);
+                            this.updateDrag(x, y);
+                        }, 100)
+                    }
+                }
+            }
+        }
+
+    }
+
+    private updateDrag(x: number, y: number) {
+
+        if (this.dragSourceId === -1) {
+            this.dragTargetId = -1;
+            return;
+        }
+
+        if (this.items.length === 0) {
+            return;
+        }
+
+        if (isValidPlaylist(this.hoverId)) {
+            let centerY = (this.items[this.hoverId].y + this.rowHeight / 2) >> 0;
+            if (this.hoverId < this.dragSourceId) {
+                this.dragTargetId = (y < centerY ? this.hoverId : this.hoverId + 1);
+            } else if (this.hoverId > this.dragSourceId) {
+                this.dragTargetId = (y > centerY ? this.hoverId : this.hoverId - 1);
+            } else {
+                this.dragTargetId = -1;
+            }
+        } else {
+            let lastItem = this.items[this.items.length - 1];
+            if (y <= this.items[0].y && y >= this.items[0].y - this.rowHeight) {
+                this.dragTargetId = 0;
+            } else if (y >= lastItem.y) {
+                this.dragTargetId = plman.PlaylistCount - 1;
+            } else {
+                this.dragTargetId = -1;
+            }
+        }
+
+        this.repaint();
+
+    }
+
+    on_mouse_lbtn_down(x: number, y: number) {
+        let hoverId_ = this.getHoverId(x, y);
+        if (hoverId_ !== this.hoverId) {
+            this.hoverId = hoverId_;
+            this.repaint();
+        }
+        this.dragSourceId = (isValidPlaylist(this.hoverId) ? this.hoverId : -1);
+    }
+
+    on_mouse_lbtn_up(x: number, y: number) {
+        this.hoverId = this.getHoverId(x, y);
+
+        if (this.dragSourceId === this.hoverId && isValidPlaylist(this.hoverId)) {
+            plman.ActivePlaylist = this.hoverId;
+        }
+
+        if (this.dragSourceId > -1 && this.dragSourceId !== this.dragTargetId) {
+            this.handleDrop();
+        }
+
+        this.dragSourceId = -1;
+        this.dragTargetId = -1;
+        if (this.dragTimer > -1) {
+            window.ClearInterval(this.dragTimer);
+            this.dragTimer = -1
+        }
+
+        this.repaint();
+    }
+
+    private handleDrop() {
+        let success_ = plman.MovePlaylist(this.dragSourceId, this.dragTargetId);
+        if (success_) {
+            let scroll = this.scroll;
+            this.initList();
+            this.scroll = scroll;
+        }
+    }
+
+    on_mouse_lbtn_dblclk(x: number, y: number) {
+        /** Do nothing. */
+    }
+
+    on_mouse_rbtn_down(x: number, y: number) {
+        this.dragSourceId = -1;
+        this.dragTargetId = -1;
+        if (this.dragTimer > -1) {
+            window.ClearInterval(this.dragTimer);
+            this.dragTimer = -1
+        }
+    }
+
+    on_mouse_rbtn_up(x: number, y: number) {
+        this.hoverId = this.getHoverId(x, y);
+
+        // handle right click;
+        if (isValidPlaylist(this.hoverId)) {
+            this.showContextMenu(this.hoverId, x, y);
+        } else { }
+
+        this.repaint();
+    }
+
+    private contextMenuOpen: boolean = false;
+
+    on_mouse_leave() {
+        if (this.contextMenuOpen) {
+            this.hoverId = this.getHoverId(mouseCursor.x, mouseCursor.y);
+        } else {
+            this.hoverId = -1;
+        }
+        this.repaint();
+    }
+
+    showContextMenu(playlistIndex: number, x: number, y: number) {
+        if (!isValidPlaylist(playlistIndex)) {
+            return;
+        }
+
+        this.contextMenuOpen = true;
+
+        const metadbs = plman.GetPlaylistItems(playlistIndex);
+        const hasContents = metadbs.Count > 0;
+        const rootMenu = window.CreatePopupMenu();
+
+        rootMenu.AppendMenuItem(!hasContents ? MenuFlag.GRAYED : MenuFlag.STRING, 1, 'Play');
+        rootMenu.AppendMenuItem(MenuFlag.STRING, 2, 'Rename');
+        rootMenu.AppendMenuItem(MenuFlag.STRING, 3, 'Delete');
+        rootMenu.AppendMenuItem(MenuFlag.STRING, 4, 'Create new playlist');
+
+        if (plman.IsAutoPlaylist(playlistIndex)) {
+            rootMenu.AppendMenuSeparator();
+            rootMenu.AppendMenuItem(MenuFlag.STRING, 5, 'Edit autoplaylist...');
+        }
+
+        const contents = window.CreatePopupMenu();
+        const Context = fb.CreateContextMenuManager();
+        const idOffset = 1000;
+
+        if (hasContents) {
+            Context.InitContext(metadbs);
+            Context.BuildMenu(contents, idOffset, -1);
+            // ---
+            rootMenu.AppendMenuSeparator();
+            contents.AppendTo(
+                rootMenu,
+                hasContents ? MenuFlag.STRING : MenuFlag.GRAYED,
+                metadbs.Count + (metadbs.Count > 1 ? " tracks" : " track"));
+        }
+
+        const id = rootMenu.TrackPopupMenu(x, y);
+
+        switch (true) {
+            case id === 1:
+                break;
+            case id === 2:
+                // Rename;
+                const index_ = playlistIndex;
+                plman.ActivePlaylist = playlistIndex;
+                fb.RunMainMenuCommand("Rename playlist");
+                plman.ActivePlaylist = index_;
+                break;
+
+            case id === 3:
+                if (plman.ActivePlaylist === playlistIndex) {
+                    if (isValidPlaylist(playlistIndex - 1)) {
+                        plman.ActivePlaylist = playlistIndex - 1;
+                    } else {
+                        plman.ActivePlaylist = 0;
+                    }
+                }
+                plman.RemovePlaylist(playlistIndex);
+                break;
+            case id === 4:
+                fb.RunMainMenuCommand("New playlist");
+                fb.RunMainMenuCommand("Rename playlist");
+                break;
+            case id === 5:
+                if (plman.IsAutoPlaylist(playlistIndex)) {
+                    plman.ShowAutoPlaylistUI(playlistIndex);
+                } else {
+                    console.log("WARN: ", "Is not an autoplaylist");
+                }
+                break;
+            case id >= idOffset:
+                Context.ExecuteByID(id - idOffset);
+                break;
+            default:
+                break;
+        }
+
+        this.contextMenuOpen = false;
+        this.on_mouse_leave();
+
+    }
+
+
 
     on_playlists_changed() {
         this.initList();

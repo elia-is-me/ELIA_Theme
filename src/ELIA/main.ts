@@ -1,7 +1,7 @@
 ﻿import { RGB, scale, StopReason } from "./common/common"
 import { textRenderingHint } from "./common/BasePart";
 import { PlaybackControlView } from "./ui/PlaybackControlView";
-import { bottomColors, mainColors } from "./ui/Theme";
+import { bottomColors, mainColors, globalFontName } from "./ui/Theme";
 import { TopBar } from "./ui/TopbarView";
 import { PlaylistView } from "./ui/PlaylistView";
 import { PlaylistManagerView } from "./ui/PlaylistManagerView";
