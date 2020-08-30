@@ -3,7 +3,7 @@ import { textRenderingHint } from "./common/BasePart";
 import { PlaybackControlView } from "./ui/PlaybackControlView";
 import { bottomColors, mainColors } from "./ui/Theme";
 import { TopBar } from "./ui/TopbarView";
-import { PlaybackQueue } from "./ui/PlaylistView";
+import { PlaylistView } from "./ui/PlaylistView";
 import { PlaylistManagerView } from "./ui/PlaylistManagerView";
 import { Layout, PartsManager } from "./ui/Layout";
 import { SerializableIcon } from "./common/IconType";
@@ -42,7 +42,7 @@ const topbar = new TopBar({
     hoverColor: mainColors.secondaryText,
     icons: icons
 })
-const playlistView = new PlaybackQueue({})
+const playlistView = new PlaylistView({})
 
 const playlistManager = new PlaylistManagerView();
 
@@ -59,12 +59,25 @@ const layoutManager = new PartsManager(layout);
 
 const PANEL_MIN_WIDTH = scale(780);
 
+const __DEV__ = window.GetProperty("__DEV__", true);
+let profiler: IFbProfiler;
+let profilerCount = 0;
+let totalTime = 0;
+if (__DEV__) {
+    profiler = fb.CreateProfiler("MAIN");
+}
+
 function on_paint(gr: IGdiGraphics) {
 
     gr.SetTextRenderingHint(textRenderingHint);
 
     const visibleParts = layoutManager.visibleParts;
     const len = visibleParts.length;
+
+
+    if (__DEV__) {
+        profiler.Reset();
+    }
 
     for (let i = 0; i < len; i++) {
         /**
@@ -73,6 +86,12 @@ function on_paint(gr: IGdiGraphics) {
          */
         visibleParts[i].visible && visibleParts[i].on_paint(gr);
     }
+
+    if (__DEV__) {
+        profiler.Print();
+    }
+
+
 }
 
 function on_size() {

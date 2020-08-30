@@ -16,7 +16,7 @@ export interface IThemeColors {
  */
 export const mainColors: IThemeColors = {
 	text: RGB(235, 235, 235),
-	secondaryText: RGB(217, 217, 217),
+	secondaryText: RGB(170, 170, 170),
 	background: RGB(35, 35, 35),
 	highlight: RGB(247, 217, 76)
 }

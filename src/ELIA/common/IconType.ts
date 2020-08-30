@@ -37,12 +37,19 @@ export class SerializableIcon implements IIconInfo {
         const obj: IIconInfo[] = JSON.parse(str);
         return new SerializableIcon(obj[0]);
     }
-    draw(gr: IGdiGraphics, foreColor: number, backColor: number = 0, x: number, y: number) {
+
+    setSize(width: number, height: number) {
+        this.width = width;
+        this.height = height;
+        return this;
+    }
+
+    draw(gr: IGdiGraphics, foreColor: number, backColor: number = 0, x: number, y: number, sf: number = StringFormat.Center) {
         gr.SetTextRenderingHint(TextRenderingHint.AntiAlias);
         if (backColor > 0) {
             gr.FillSolidRect(x, y, this.width, this.height, backColor);
         }
-        gr.DrawString(this.code, this.iconFont, foreColor, x, y, this.width, this.height, StringFormat.Center);
+        gr.DrawString(this.code, this.iconFont, foreColor, x, y, this.width, this.height, sf);
         gr.SetTextRenderingHint(textRenderingHint);
     }
     createImage(foreColor: number, backColor: number = 0) {

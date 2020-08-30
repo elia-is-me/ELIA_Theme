@@ -2,7 +2,7 @@ import { Component } from "../common/BasePart";
 import { TopBar } from "./TopbarView";
 import { PlaybackControlView } from "./PlaybackControlView";
 import { PlaylistManagerView, PLM_Properties } from "./PlaylistManagerView";
-import { PlaybackQueue } from "./PlaylistView";
+import { PlaylistView } from "./PlaylistView";
 import { scale } from "../common/common";
 
 
@@ -26,7 +26,7 @@ export class Layout extends Component {
 	topbar: TopBar;
 	playbackControlBar: PlaybackControlView;
 	playlistManager: PlaylistManagerView;
-	playlistView: PlaybackQueue
+	playlistView: PlaylistView
 
 	viewState: ViewStates;
 
@@ -34,7 +34,7 @@ export class Layout extends Component {
 		topbar: TopBar;
 		playbackControlBar: PlaybackControlView;
 		playlsitManager: PlaylistManagerView;
-		playlistView: PlaybackQueue;
+		playlistView: PlaylistView;
 	}) {
 		super({})
 
@@ -191,7 +191,6 @@ export class PartsManager {
 	invokeFocusedPart(method: string, ...args: any[]) {
 		const focusedPart = this.visibleParts[this.focusedId];
 		if (!focusedPart) {
-			console.log("method:   ", "Invalid focused part!");
 			return;
 		}
 		let func = (<any>focusedPart)[method];

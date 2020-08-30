@@ -162,8 +162,8 @@ export class Button extends Clickable {
 		/**
 		 * draw text;
 		 */
-		let textX = this.x + paddings.left + (icon ? icon.width : 0);
-		let textW = this.width - paddings.left - paddings.right - (icon ? icon.width : 0);
+		let textX = this.x + paddings.left + (icon ? icon.width + this.gap : 0);
+		let textW = this.width - paddings.left - paddings.right - (icon ? icon.width + this.gap : 0);
 		gr.DrawString(text, font, btnColor, textX, this.y, textW, this.height, StringFormat.LeftCenter);
 	}
 

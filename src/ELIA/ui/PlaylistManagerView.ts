@@ -86,6 +86,7 @@ class PLM_Header extends Component {
             font: font,
             colors: colors,
             paddings: { left: scale(16), right: scale(8) },
+            gap: scale(4),
             onClick: null
         });
 
@@ -105,7 +106,7 @@ class PLM_Header extends Component {
 
         // split line;
         let lineY = this.y + scale(40 + 10 + 20);
-        let lineX1 = this.x + scale(28);
+        let lineX1 = this.x + scale(20);
         let lineX2 = this.x + this.width - scale(16);
 
         gr.DrawLine(lineX1, lineY, lineX2, lineY, scale(1), RGB(100, 100, 100));
@@ -164,7 +165,7 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
     }
 
     initList() {
-        const rowHeight = PLM_Properties.rowHeight;
+        const rowHeight = this.rowHeight;
         const items: PLM_Item[] = [];
         const itemCount = plman.PlaylistCount;
         let itemYOffset = 0;
@@ -177,9 +178,6 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
             rowItem.height = rowHeight;
             rowItem.metadb = (playlistMetadbs.Count === 0 ? null : playlistMetadbs[0]);
             rowItem.listName = plman.GetPlaylistName(playlistIndex)
-
-            // FIXIT: isAuto 不能在foobar启动时被设置，force reload script 之后正常.
-            // 单独给一个 onReady，在启动时。
             rowItem.isAuto = plman.IsAutoPlaylist(playlistIndex);
             rowItem.yOffset = itemYOffset;
             itemYOffset += rowHeight;
@@ -187,8 +185,6 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 
         this.items = items;
         this.totalHeight = rowHeight * itemCount + PLM_Properties.headerHeight;
-
-        console.log("init playlist manager");
     }
 
     on_init() {
@@ -249,8 +245,7 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
                 let indicateWidth = scale(4);
 
                 if (isActive) {
-                    gr.FillSolidRect(rowItem.x, rowItem.y, rowItem.width, rowItem.height,
-                        colors.text & 0x1fffffff);
+                    gr.FillSolidRect(rowItem.x, rowItem.y, rowItem.width, rowItem.height, colors.text & 0x1fffffff);
                 }
 
                 // draw icon;
@@ -259,9 +254,9 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 
                 // draw list name;
                 gr.DrawString(rowItem.listName, itemFont, textColor,
-                    rowItem.x + paddingL + rowHeight,
+                    rowItem.x + paddingL + icon_.width + scale(4),
                     rowItem.y,
-                    rowItem.width - paddingL - paddingR - rowHeight,
+                    rowItem.width - paddingL - paddingR - icon_.width - scale(4),
                     rowHeight,
                     StringFormat.LeftCenter);
             }
