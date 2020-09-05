@@ -188,7 +188,7 @@ export abstract class Component implements IBoxModel, ICallbacks {
 		return this._shouldUpdateOnInit;
 	}
 
-	onNotifyData(str: string, info: any) { }
+	onNotifyData?(str: string, info: any) { }
 
 	repaint() {
 		window.RepaintRect(this.x, this.y, this.width, this.height);

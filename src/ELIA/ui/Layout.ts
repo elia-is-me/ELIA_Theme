@@ -126,23 +126,36 @@ export class PartsManager {
 	focusedPart: CompositionEvent;
 	private focusedId: number;
 
-	constructor(rootPart: Component) {
+	constructor(rootPart?: Component) {
+		if (rootPart) {
+			this.rootPart = rootPart;
+			this.parts = [];
+			this.visibleParts = [];
+			this.activeId = -1;
+			this.focusedId = -1;
+		}
+		return this;
+	}
+
+	private flatternParts(rootPart: Component) {
+		if (rootPart == null) return [];
+		let children = rootPart.children;
+		let results = [rootPart];
+		for (let i = 0; i < children.length; i++) {
+			results = results.concat(this.flatternParts(children[i]));
+		}
+		return results;
+	}
+
+	setRoot(rootPart: Component) {
+
 		this.rootPart = rootPart;
 		this.parts = [];
 		this.visibleParts = [];
 		this.activeId = -1;
 		this.focusedId = -1;
-	}
 
-	// private flatternParts(rootPart: Component) {
-	// 	if (rootPart == null) return [];
-	// 	let children = rootPart.children;
-	// 	let results = [rootPart];
-	// 	for (let i = 0; i < children.length; i++) {
-	// 		results = results.concat(this.flatternParts(children[i]));
-	// 	}
-	// 	return results;
-	// }
+	}
 
 	private findVisibleParts(rootPart: Component): Component[] {
 		if (!rootPart.isVisible()) return [];
@@ -255,5 +268,24 @@ export class PartsManager {
 			.forEach(p => {
 				p.resetUpdateState();
 			});
+
+		this.parts = this.flatternParts(this.rootPart);
+
 	}
 }
+
+export const layoutManager = new PartsManager();
+
+export function notifyOthers(message: string, data?: any) {
+
+	let parts = layoutManager.parts;
+
+	if (parts == null || parts.length === 0) {
+		return;
+	}
+
+	parts.map(part =>
+		part.onNotifyData && part.onNotifyData.call(part, message, data));
+
+}
+

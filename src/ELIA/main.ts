@@ -5,7 +5,7 @@ import { bottomColors, mainColors, globalFontName } from "./ui/Theme";
 import { TopBar } from "./ui/TopbarView";
 import { PlaylistView } from "./ui/PlaylistView";
 import { PlaylistManagerView } from "./ui/PlaylistManagerView";
-import { Layout, PartsManager } from "./ui/Layout";
+import { Layout, PartsManager, layoutManager } from "./ui/Layout";
 import { SerializableIcon } from "./common/IconType";
 import { Material, MaterialFont } from "./common/iconCode";
 
@@ -41,7 +41,8 @@ const topbar = new TopBar({
     foreColor: mainColors.text,
     hoverColor: mainColors.secondaryText,
     icons: icons
-})
+});
+
 const playlistView = new PlaylistView({})
 
 const playlistManager = new PlaylistManagerView();
@@ -55,7 +56,12 @@ const layout = new Layout({
     playlsitManager: playlistManager,
     playlistView: playlistView
 });
-const layoutManager = new PartsManager(layout);
+
+layout.onNotifyData = function (message: string, data: any) {
+
+}
+
+layoutManager.setRoot(layout);
 
 const PANEL_MIN_WIDTH = scale(780);
 
