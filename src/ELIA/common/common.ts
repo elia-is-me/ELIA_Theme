@@ -372,6 +372,12 @@ export function deepClone<T>(obj: T): T {
 }
 
 export const enum StopReason {
+
+export function isEmptyString(str: string) {
+	return !str || 0 === str.length;
+}
+
+export enum StopReason {
 	InvokedByUser = 0,
 	EndOfFile = 1,
 	StartingAnotherTrack = 2,
