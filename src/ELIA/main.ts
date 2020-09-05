@@ -57,11 +57,44 @@ const layout = new Layout({
     playlistView: playlistView
 });
 
+layoutManager.setRoot(layout);
+
+/* =============== /
+ *  Set layout
+ * =============== */
+
 layout.onNotifyData = function (message: string, data: any) {
 
 }
 
-layoutManager.setRoot(layout);
+layout.onReady = function () {
+
+    checkDefautPlaylist();
+
+}
+
+
+function checkDefautPlaylist() {
+
+    const defaultPlaylistName = "Default";
+    const compareName = defaultPlaylistName.toLowerCase();
+    const playlistCount = plman.PlaylistCount;
+
+    for (let i = 0; i < playlistCount; i++) {
+        const playlistName = plman.GetPlaylistName(i).toLowerCase();
+        if (playlistName === compareName) {
+            return;
+        }
+    }
+
+    // 'Default' playlsit does not exists;
+    const fail = plman.CreatePlaylist(plman.PlaylistCount, defaultPlaylistName);
+
+    if (fail == -1) {
+         console.log("ELIA THEME: fail to create default playlist.")
+    }
+
+}
 
 const PANEL_MIN_WIDTH = scale(780);
 
@@ -323,6 +356,11 @@ Object.assign(globalThis_, systemCallbacks);
 /* Control wants all keys           */
 const DLGC_WANTALLKEYS = 0x0004;
 window.DlgCode = DLGC_WANTALLKEYS;
+
+/* When all ready; */
+window.SetTimeout(() => {
+    layout.onReady();
+}, 5);
 
 
 

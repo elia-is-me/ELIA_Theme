@@ -113,6 +113,9 @@ export class Layout extends Component {
 	on_paint(gr: IGdiGraphics) {
 
 	}
+
+	ready?: () => void;
+	onReady?: () => void;
 }
 
 export class PartsManager {
