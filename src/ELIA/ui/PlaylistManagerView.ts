@@ -12,6 +12,8 @@ import { Icon, Button, IButtonColors } from "../common/IconButton";
 import { SerializableIcon } from "../common/IconType";
 import { isValidPlaylist } from "./PlaylistView";
 
+const IDC_ARROW = 32512;
+
 const mouseCursor = {
     x: -1,
     y: -1
@@ -305,14 +307,37 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
             gr.FillSolidRect(this.x, topY + 2, this.width, 1, RGB(22, 22, 22));
             gr.FillSolidRect(this.x, topY + 2, this.width, 1, RGB(24, 24, 24));
         }
+
+        // draw drag target line;
+        let { dragSourceId, dragTargetId } = this;
+        if (dragTargetId > -1 && dragTargetId !== dragSourceId) {
+            let lineWidth = scale(2);
+            let lineY = this.y + this.header.height + this.items[dragTargetId].yOffset - this.scroll;
+            if (dragTargetId > dragSourceId) {
+                lineY += this.rowHeight;
+            }
+            if (lineY > this.y + this.height) {
+                lineY -= this.rowHeight;
+            }
+            if (lineY < this.y) {
+                lineY += this.rowHeight;
+            }
+            gr.DrawLine(this.x, lineY, this.x + this.width, lineY, lineWidth, colors.text);
+        }
+
     }
 
     on_mouse_wheel(step: number) {
-        this.scrollTo(this.scroll - step * PLM_Properties.rowHeight * 3);
+        this.scrollTo(this.scroll - step * this.rowHeight * 3);
+    }
+
+    private _isHoverList(x: number, y: number) {
+        let listTop = this.y + this.header.height;
+        return this.isVisible() && x > this.x && x <= this.x + this.width && y > listTop && y < this.y + this.height;
     }
 
     private getHoverId(x: number, y: number) {
-        if (!this.trace(x, y)) {
+        if (!this._isHoverList(x, y)) {
             return -1
         };
         return this.items.findIndex(item => item.trace(x, y));
@@ -390,7 +415,7 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
             }
         } else {
             let lastItem = this.items[this.items.length - 1];
-            if (y <= this.items[0].y && y >= this.items[0].y - this.rowHeight) {
+            if (y <= this.items[0].y) {
                 this.dragTargetId = 0;
             } else if (y >= lastItem.y) {
                 this.dragTargetId = plman.PlaylistCount - 1;
@@ -435,11 +460,11 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 
     private handleDrop() {
         let success_ = plman.MovePlaylist(this.dragSourceId, this.dragTargetId);
-        if (success_) {
-            let scroll = this.scroll;
-            this.initList();
-            this.scroll = scroll;
-        }
+        // if (success_) {
+        //     let scroll = this.scroll;
+        //     this.initList();
+        //     this.scroll = scroll;
+        // }
     }
 
     on_mouse_lbtn_dblclk(x: number, y: number) {
@@ -466,10 +491,9 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
         this.repaint();
     }
 
-    private contextMenuOpen: boolean = false;
 
     on_mouse_leave() {
-        if (this.contextMenuOpen) {
+        if (this._contextMenuOpen) {
             this.hoverId = this.getHoverId(mouseCursor.x, mouseCursor.y);
         } else {
             this.hoverId = -1;
@@ -477,12 +501,14 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
         this.repaint();
     }
 
+    private _contextMenuOpen: boolean = false;
+
     showContextMenu(playlistIndex: number, x: number, y: number) {
         if (!isValidPlaylist(playlistIndex)) {
             return;
         }
 
-        this.contextMenuOpen = true;
+        this._contextMenuOpen = true;
 
         const metadbs = plman.GetPlaylistItems(playlistIndex);
         const hasContents = metadbs.Count > 0;
@@ -554,7 +580,7 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
                 break;
         }
 
-        this.contextMenuOpen = false;
+        this._contextMenuOpen = false;
         this.on_mouse_leave();
 
     }
