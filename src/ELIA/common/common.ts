@@ -181,7 +181,7 @@ export const BuildFullPath = function (path: string) {
 	}
 };
 
-export enum StringTrimming {
+export const enum StringTrimming {
 	None = 0,
 	Character = 1,
 	Word = 2,
@@ -192,7 +192,7 @@ export enum StringTrimming {
 
 // flags, can be combined of:
 // http://msdn.microsoft.com/en-us/library/ms534181(VS.85).aspx
-export enum StringFormatFlags {
+export const enum StringFormatFlags {
 	DirectionRightToLeft = 0x00000001,
 	DirectionVertical = 0x00000002,
 	NoFitBlackBox = 0x00000004,
@@ -206,7 +206,7 @@ export enum StringFormatFlags {
 
 // Used in SetSmoothingMode()
 // For more information, see: http://msdn.microsoft.com/en-us/library/ms534173(VS.85).aspx
-export enum SmoothingMode {
+export const enum SmoothingMode {
 	Invalid = -1,
 	Default = 0,
 	HighSpeed = 1,
@@ -217,7 +217,7 @@ export enum SmoothingMode {
 
 // Used in SetInterpolationMode()
 // For more information, see: http://msdn.microsoft.com/en-us/library/ms534141(VS.85).aspx
-export enum InterpolationMode {
+export const enum InterpolationMode {
 	Invalid = -1,
 	Default = 0,
 	LowQuality = 1,
@@ -229,7 +229,8 @@ export enum InterpolationMode {
 	HighQualityBicubic = 7
 };
 
-export enum TextRenderingHint {
+
+export const enum TextRenderingHint {
 	SystemDefault = 0,
 	SingleBitPerPixelGridFit = 1,
 	SingleBitPerPixel = 2,
@@ -238,14 +239,14 @@ export enum TextRenderingHint {
 	ClearTypeGridFit = 5
 };
 
-export const PlaybackOrder = {
-	normal: 0,
-	repeat_playlist: 1,
-	repeat_track: 2,
-	random: 3,
-	shuffle_tracks: 4,
-	shuffle_albums: 5,
-	shuffle_folders: 6
+export const enum PlaybackOrder {
+	Normal = 0,
+	RepeatPlaylist = 1,
+	RepeatTrack = 2,
+	Random = 3,
+	ShuffleTracks = 4,
+	ShuffleAlbums = 5,
+	ShuffleFolders = 6
 };
 
 // Helper function for DrawString() and MeasureString()
@@ -341,7 +342,7 @@ export const MeasureString = (() => {
 	return (str: string | number, font: IGdiFont) => g.MeasureString(str, font, 0, 0, 99999, 999, StringFormat.LeftCenter);
 })();
 
-export enum MenuFlag {
+export const enum MenuFlag {
 	STRING = 0x00000000,
 	GRAYED = 0x00000001,
 }
@@ -370,7 +371,7 @@ export function deepClone<T>(obj: T): T {
 	return result;
 }
 
-export enum StopReason {
+export const enum StopReason {
 	InvokedByUser = 0,
 	EndOfFile = 1,
 	StartingAnotherTrack = 2,

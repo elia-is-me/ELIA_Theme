@@ -151,10 +151,10 @@ const createBottomButtons = (themeColors?: IThemeColors) => {
 		image: images.repeat_off,
 		on_init() {
 			switch (plman.PlaybackOrder) {
-				case PlaybackOrder.repeat_playlist:
+				case PlaybackOrder.RepeatPlaylist:
 					this.setImage(images.repeat_on);
 					break;
-				case PlaybackOrder.repeat_track:
+				case PlaybackOrder.RepeatTrack:
 					this.setImage(images.repeat1_on);
 					break;
 				default: // repeat off

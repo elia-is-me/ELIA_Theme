@@ -18,7 +18,7 @@ const CONTROL_BAR_HEIGHT = scale(76);
 const TOPBAR_HEIGHT = scale(48);
 const PLMAN_MIN_WIDTH = PLM_Properties.minWidth;
 
-enum ViewStates {
+const enum ViewStates {
 	Default,
 }
 

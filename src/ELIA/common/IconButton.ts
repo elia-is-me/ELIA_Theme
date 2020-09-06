@@ -2,7 +2,7 @@ import { isObject, Repaint, scale, StringFormat, TextRenderingHint, isFunction }
 import { Component, IPaddings, textRenderingHint, IInjectableCallbacks } from "./BasePart";
 import { SerializableIcon } from "./IconType";
 
-export enum ButtonStates {
+export const enum ButtonStates {
 	Normal = 0,
 	Hover = 1,
 	Down = 2

@@ -31,7 +31,7 @@ const PL_Colors: IThemeColors = {
 }
 
 
-enum ListHeaderType {
+const enum ListHeaderType {
 	Album,
 	Artist,
 	Playlist
