@@ -2,7 +2,7 @@
 // Simple Playlist View
 //====================================
 
-import { scale, RGB, TextRenderingHint, StringFormat, deepClone, StringTrimming, StringFormatFlags, MeasureString, MenuFlag, isEmptyString, StopReason } from "../common/common";
+import { scale, RGB, TextRenderingHint, StringFormat, deepClone, StringTrimming, StringFormatFlags, MeasureString, MenuFlag, isEmptyString, StopReason, CropImage } from "../common/common";
 import { IThemeColors, mainColors, scrollbarColor, scrollbarWidth } from "./Theme";
 import { ThrottledRepaint, Repaint } from "../common/common";
 import { Scrollbar } from "../common/Scrollbar";
@@ -11,6 +11,7 @@ import { Component, textRenderingHint, IBoxModel } from "../common/BasePart";
 import { Material, MaterialFont } from "../common/iconCode";
 import { KeyCode } from "../common/keyCodes";
 import { SerializableIcon } from "../common/IconType";
+import { AlbumArtId } from "../common/AlbumArtView";
 
 const PL_Properties = {
 	rowHeight: scale(40),
@@ -39,7 +40,8 @@ const enum ListHeaderType {
 /**
  * Flow with list items;
  */
-class PL_Header extends Component {
+class PlaylistHeaderView extends Component {
+
 	type: ListHeaderType;
 	typeText: string;
 	titleText: string = "";
@@ -224,10 +226,39 @@ class PL_Header extends Component {
 	set playlistIndex(value: number) {
 		this._playlistIndex = value;
 		this.setTitles();
+		this.setArtwork();
 	}
 
 	setPlaylistIndex(value: number): void {
 		this.playlistIndex = value;
+	}
+
+	async setArtwork() {
+		let playlistMetadbs = plman.GetPlaylistItems(this.playlistIndex);
+		let artsworks: IGdiBitmap[] = [];
+		let index = 0;
+		let trackCount = Math.min(playlistMetadbs.Count, 50);
+		let playlistIndex = this.playlistIndex;
+
+		while (index < trackCount && artsworks.length < 1) {
+			let result = await utils.GetAlbumArtAsyncV2(window.ID, playlistMetadbs[index], AlbumArtId.front);
+			if (result.image == null) {
+				result = await utils.GetAlbumArtAsyncV2(window.ID, playlistMetadbs[index], AlbumArtId.disc);
+			}
+			if (result.image != null) {
+				artsworks.push(result.image);
+			}
+			index++;
+		}
+
+		if (playlistIndex === this.playlistIndex && artsworks.length > 0) {
+			let artworkWidth = this.artworkHeight;
+			let img = CropImage(artsworks[0], artworkWidth, artworkWidth);
+			this.artworkImage = img;
+		} else {
+			this.artworkImage = this._stubImage;
+		}
+		this.repaint();
 	}
 
 	on_size() {
@@ -380,7 +411,7 @@ export class PlaylistView extends ScrollView {
 	paddings: IPaddings;
 
 	scrollbar: Scrollbar;
-	headerView: PL_Header;
+	headerView: PlaylistHeaderView;
 
 	playingIco: SerializableIcon;
 	pauseIco: SerializableIcon;
@@ -400,7 +431,7 @@ export class PlaylistView extends ScrollView {
 		this.addChild(this.scrollbar);
 		this.scrollbar.z = 100;
 		//
-		this.headerView = new PL_Header({
+		this.headerView = new PlaylistHeaderView({
 			type: ListHeaderType.Playlist,
 			primaryColor: mainColors.text,
 			secondaryColor: mainColors.secondaryText
@@ -444,7 +475,6 @@ export class PlaylistView extends ScrollView {
 		this._columnsMap.forEach(col => col.height = PL_Properties.rowHeight);
 
 	}
-
 
 	initList() {
 		/**
