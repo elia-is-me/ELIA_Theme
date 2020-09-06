@@ -1,11 +1,11 @@
-= Theme Plugins README
+# Theme Plugins
 
-== For
+## For
 
 > Not yet any plugins created till now.
 
-Plugin scripts for this theme only;
+Plugin scripts for this theme only.
 
-== Others
+## Others
 
 ...
