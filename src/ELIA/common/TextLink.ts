@@ -9,7 +9,6 @@ export interface ITextLinkProps {
 	textHoverColor?: number;
 }
 
-
 export class TextLink extends Clickable {
 
 	text: string = "";
@@ -23,7 +22,7 @@ export class TextLink extends Clickable {
 
 		this.text = opts.text;
 
-		const font_ = (opts.font && gdi.Font("tahoma", scale(12)));
+		const font_ = (opts.font || gdi.Font("tahoma", scale(12)));
 		const underlinedFont = gdi.Font(font_.Name, font_.Size, 4);
 		this._fontMap.set(ButtonStates.Normal, font_);
 		this._fontMap.set(ButtonStates.Hover, underlinedFont);

@@ -10,7 +10,7 @@ import { Icon } from "../common/IconButton";
 import { Component } from "../common/BasePart";
 import { Material, MaterialFont } from "../common/iconCode"
 import { scale, imageFromCode, PlaybackOrder, SmoothingMode, blendColors, MeasureString, StringFormat } from "../common/common";
-import { IThemeColors, bottomColors } from "./Theme";
+import { IThemeColors, bottomColors, globalFontName } from "./Theme";
 
 function pos2vol(pos: number) {
 	return (50 * Math.log(0.99 * pos + 0.01)) / Math.LN10;
@@ -280,7 +280,7 @@ const volumebar = new Slider({
 const TF_TRACK_TITLE = fb.TitleFormat("%title%");
 // \u30fb: Middle dot char code.
 const TF_ARTIST = fb.TitleFormat("$if2([%artist%],未知艺人)[\u30fb$year(%date%)]");
-const artistFont = gdi.Font("Microsoft YaHei", scale(12));
+const artistFont = gdi.Font(globalFontName, scale(12));
 
 const artistText = new TextLink({
 	text: "ARTIST",

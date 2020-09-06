@@ -2,7 +2,7 @@
 // Simple Playlist View
 //====================================
 
-import { scale, RGB, TextRenderingHint, StringFormat, deepClone, StringTrimming, StringFormatFlags, MeasureString, MenuFlag, isEmptyString, StopReason, CropImage } from "../common/common";
+import { scale, RGB, TextRenderingHint, StringFormat, deepClone, StringTrimming, StringFormatFlags, MeasureString, MenuFlag, isEmptyString, CropImage } from "../common/common";
 import { IThemeColors, mainColors, scrollbarColor, scrollbarWidth } from "./Theme";
 import { ThrottledRepaint, Repaint } from "../common/common";
 import { Scrollbar } from "../common/Scrollbar";
