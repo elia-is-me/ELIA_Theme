@@ -503,6 +503,12 @@ export class PlaylistView extends ScrollView {
 		this.itemsTotalHeight = rowHeight * playlistItems.length + scale(32);
 		this.totalHeight = this.itemsTotalHeight + this.headerView.height;
 
+		this.setPlayintItem();
+
+		plman.SetActivePlaylistContext();
+	}
+
+	protected setPlayintItem() {
 		if (fb.IsPlaying) {
 			let ItemLocation = plman.GetPlayingItemLocation();
 			if (ItemLocation.IsValid && ItemLocation.PlaylistIndex === plman.ActivePlaylist) {
@@ -513,8 +519,6 @@ export class PlaylistView extends ScrollView {
 		} else {
 			this.playingItemIndex = -1;
 		}
-
-		plman.SetActivePlaylistContext();
 	}
 
 	initColumns() {
@@ -836,18 +840,29 @@ export class PlaylistView extends ScrollView {
 		}
 	}
 
-	on_playback_new_track() {
-		if (fb.IsPlaying) {
-			let ItemLocation = plman.GetPlayingItemLocation();
-			if (ItemLocation.IsValid && ItemLocation.PlaylistIndex === plman.ActivePlaylist) {
-				this.playingItemIndex = ItemLocation.PlaylistItemIndex;
-			} else {
-				this.playingItemIndex = -1;
-			}
-		} else {
-			this.playingItemIndex = -1;
+	protected showNowPlaying() {
+		if (this.playingItemIndex === -1) {
+			return;
 		}
 
+		let listTopY = this.headerView.y + this.headerView.height;
+		if (listTopY < this.y) {
+			listTopY = this.y;
+		}
+		let listBottomY = this.y + this.height;
+		let playingItem = this.items[this.playingItemIndex];
+		let rowHeight = PL_Properties.rowHeight;
+		let playingItemVis = (playingItem.y >= listTopY && playingItem.y + rowHeight < listBottomY);
+
+		if (!playingItemVis) {
+			let targetScroll = this.headerView.height + this.playingItemIndex * PL_Properties.rowHeight - (this.height - PL_Properties.rowHeight) / 2;
+			this.scrollTo(targetScroll);
+		}
+	}
+
+	on_playback_new_track() {
+		this.setPlayintItem();
+		this.showNowPlaying();
 		ThrottledRepaint();
 	}
 
@@ -1012,6 +1027,11 @@ export class PlaylistView extends ScrollView {
 				x, y);
 		} catch (e) { }
 	}
+
+	private _showNowPlaying() {
+
+	}
+
 
 }
 
