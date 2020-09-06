@@ -124,7 +124,7 @@ export class SearchBox extends Component {
 			backgroundColor: this.backgroundColor,
 			backgroundActiveColor: this.backgroundActiveColor,
 			backgroundSelectionColor: RGB(180, 180, 180),
-			empty_text: "Search",
+			empty_text: "Search Library",
 			func() { }
 		});
 
@@ -192,3 +192,10 @@ export class SearchBox extends Component {
 	}
 
 }
+
+/**
+ * TODO:
+ * 
+ * - Search 动作?
+ * - Search 种类?
+ */

@@ -71,3 +71,9 @@ export class Scrollbar extends Component implements ICallbacks {
         this.changeState(ButtonStates.Normal);
     }
 }
+
+/**
+ * TODO:
+ * 
+ * - auto hide featue;
+ */

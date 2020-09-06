@@ -522,3 +522,12 @@ export class PlaybackControlView extends Component {
 
 }
 
+/**
+ * TODO:
+ * 
+ * - 进度条圈圈长得不正
+ * - 'shuffle' btn context menu;
+ * - info area context menu;
+ * - info area onClick action;
+ * - artist onClick action; // 等等
+ */

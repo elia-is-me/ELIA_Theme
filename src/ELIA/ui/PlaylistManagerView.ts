@@ -598,4 +598,5 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
  * TODO:
  * 
  * - 有一个问题，拖放列表时，会忘掉拖的是哪个列表，而界面上没有提示。
+ * - AddPlaylist btn action?
  */

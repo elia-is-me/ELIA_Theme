@@ -231,3 +231,13 @@ export class TopBar extends Component {
 
 	}
 }
+
+
+/**
+ * TODO:
+ * 
+ * - menu btn onClick action?
+ * - switch btn?
+ * - settings btn?
+ * - add a now playing panel popup btn;
+ */
