@@ -247,7 +247,7 @@ interface IFbUtils {
      * @param {boolean=} [force=true] When true, it will use the first item of the active playlist if it is unable to get the focus item.
      * @return {FbMetadbHandle}
      */
-    GetFocusItem(force: boolean): IFbMetadb;
+    GetFocusItem(force?: boolean): IFbMetadb;
 
     /**
      * Returns all Media Library items as a handle list.
