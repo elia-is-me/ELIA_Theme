@@ -276,9 +276,9 @@ function on_selection_changed() {
     layoutManager.invokeVisibleParts("on_selection_changed");
 }
 
-// function on_playlist_selection_changed() {
-//     layoutManager.invokeVisibleParts("on_selection_changed");
-// }
+function on_playlist_selection_changed() {
+    layoutManager.invokeVisibleParts("on_selection_changed");
+}
 
 function on_playlist_items_added(playlistIndex?: number) {
     layoutManager.invokeVisibleParts("on_playlist_items_added", playlistIndex);

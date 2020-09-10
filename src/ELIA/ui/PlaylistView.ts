@@ -24,6 +24,9 @@ const mouseCursor = {
 	y: -1
 }
 
+const selHolder = fb.AcquireUiSelectionHolder();
+selHolder.SetPlaylistSelectionTracking();
+
 class DragDropHelper {
 	isActive: boolean = false;
 	x: number = -1;
@@ -1297,6 +1300,13 @@ export class PlaylistView extends ScrollView {
 				plman.GetPlaylistSelectedItems(plman.ActivePlaylist),
 				x, y);
 		} catch (e) { }
+	}
+
+	on_focus (isFocused: boolean) {
+		if (isFocused) {
+			plman.SetActivePlaylistContext();
+			selHolder.SetPlaylistSelectionTracking();
+		}
 	}
 
 }
