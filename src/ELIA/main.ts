@@ -91,7 +91,7 @@ function checkDefautPlaylist() {
     const fail = plman.CreatePlaylist(plman.PlaylistCount, defaultPlaylistName);
 
     if (fail == -1) {
-         console.log("ELIA THEME: fail to create default playlist.")
+        console.log("ELIA THEME: fail to create default playlist.")
     }
 
 }
@@ -300,8 +300,8 @@ function on_playlist_switch() {
     layoutManager.invokeVisibleParts("on_playlist_switch");
 }
 
-function on_item_focus_change() {
-    layoutManager.invokeVisibleParts("on_item_focus_change");
+function on_item_focus_change(playlistIndex?: number, from?: number, to?: number) {
+    layoutManager.invokeVisibleParts("on_item_focus_change", playlistIndex, from, to);
 }
 
 function on_metadb_changed(metadbs: IFbMetadbList, fromhook: boolean) {

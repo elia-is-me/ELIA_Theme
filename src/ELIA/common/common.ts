@@ -385,3 +385,9 @@ export const enum StopReason {
 
 export const Repaint = () => window.Repaint();
 export const ThrottledRepaint = throttle(Repaint, 15);
+
+
+export const enum VKeyCode {
+	Shift = 0x10,
+	Control = 0x11,
+}
