@@ -31,6 +31,19 @@ function formatPlaybackTime(sec: number) {
 	return pad(minutes) + ":" + pad(seconds);
 }
 
+const CMD_LOVE = 'Playback Statistics/Rating/5';
+const CMD_UNLOVE = 'Playback Statistics/Rating/<not set>';
+const TF_RATING = fb.TitleFormat('%rating%');
+
+export function toggleMood(metadb: IFbMetadb) {
+	if (metadb && fb.IsMetadbInMediaLibrary(metadb)) {
+		let moodOn = +TF_RATING.EvalWithMetadb(metadb) === 5;
+		fb.RunContextCommandWithMetadb(
+			moodOn ? CMD_UNLOVE : CMD_LOVE, metadb, 8
+		);
+	}
+}
+
 type ButtonKeys = "playOrPause" | "next" | "prev" | "love" | "repeat" | "shuffle" | "volume";
 type ImageKeys = "pause" | "play" | "next" | "prev" | "heart" | "heart_empty"
 	| "repeat_off" | "repeat_on" | "repeat1_on" | "shuffle_off" | "shuffle_on"
@@ -70,9 +83,6 @@ const createBottomButtons = (themeColors?: IThemeColors) => {
 	}
 
 	//
-	const CMD_LOVE = 'Playback Statistics/Rating/5';
-	const CMD_UNLOVE = 'Playback Statistics/Rating/<not set>';
-	const TF_RATING = fb.TitleFormat('%rating%');
 
 	buttons.playOrPause = new Icon({
 		image: images.pause,
@@ -524,7 +534,7 @@ export class PlaybackControlView extends Component {
 
 /**
  * TODO:
- * 
+ *
  * - 进度条圈圈长得不正
  * - 'shuffle' btn context menu;
  * - info area context menu;
