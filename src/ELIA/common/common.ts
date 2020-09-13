@@ -390,4 +390,57 @@ export const ThrottledRepaint = throttle(Repaint, 15);
 export const enum VKeyCode {
 	Shift = 0x10,
 	Control = 0x11,
+	Alt = 0x12,
+	F1 = 0x70,
+	F2= 0x71,
+	F3 = 0x72,
+	F4 = 0x73,
+	F5 = 0x74 ,
+	F6 = 0x75,
+	F12 = 0x7B,
+	Backspace = 0x08,
+	Tab = 0x09,
+	Return = 0x0D,
+	Escape = 0x1B,
+	PageUp = 0x21,
+	PageDown = 0x22,
+	End = 0x23,
+	Home = 0x24,
+	Left = 0x25,
+	Right = 0x27,
+	Down = 0x28,
+	Insert = 0x2D,
+	Delete = 0x2E,
+	SpaceBar = 0x20
 }
+
+
+export const  enum KMask {
+	none = 0,
+	ctrl = 1,
+	shift = 2,
+	ctrlshift = 3,
+	ctrlalt = 4,
+	ctrlaltshift = 5,
+	alt = 6
+};
+
+export function GetKeyboardMask() {
+	const c = utils.IsKeyPressed(VKeyCode.Control) ? true : false;
+	const a = utils.IsKeyPressed(VKeyCode.Alt) ? true : false;
+	const s = utils.IsKeyPressed(VKeyCode.Shift) ? true : false;
+	let ret = KMask.none;
+	if (c && !a && !s)
+		ret = KMask.ctrl;
+	if (!c && !a && s)
+		ret = KMask.shift;
+	if (c && !a && s)
+		ret = KMask.ctrlshift;
+	if (c && a && !s)
+		ret = KMask.ctrlalt;
+	if (c && a && s)
+		ret = KMask.ctrlaltshift;
+	if (!c && a && !s)
+		ret = KMask.alt;
+	return ret;
+};

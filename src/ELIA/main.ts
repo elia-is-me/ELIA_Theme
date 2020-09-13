@@ -1,4 +1,4 @@
-﻿import { RGB, scale, StopReason } from "./common/common"
+﻿import { RGB, scale, StopReason, VKeyCode, GetKeyboardMask, KMask } from "./common/common"
 import { textRenderingHint } from "./common/BasePart";
 import { PlaybackControlView } from "./ui/PlaybackControlView";
 import { bottomColors, mainColors, globalFontName } from "./ui/Theme";
@@ -237,15 +237,17 @@ function on_focus(isFocused: boolean) {
 }
 
 function on_key_down(vkey: number) {
-    switch (vkey) {
-        // ...
-        // some global key bindings;
+    const mask = GetKeyboardMask();
 
-        // 
-        default:
-            layoutManager.invokeFocusedPart("on_key_down", vkey);
-            break;
+    if (mask === KMask.none) {
+        switch (vkey) {
+            case VKeyCode.F12:
+                fb.ShowConsole();
+                break;
+        }
     }
+
+    layout.playlistView.isVisible() && layout.playlistView.on_key_down(vkey, mask);
 }
 
 function on_char(code: number) {
@@ -343,7 +345,7 @@ let systemCallbacks = {
     "on_selection_changed": on_selection_changed,
     // "on_playlist_selection_changed": on_playlist_selection_changed,
     "on_playlist_items_added": on_playlist_items_added,
-    "on_playlsit_items_removed": on_playlist_items_removed,
+    "on_playlist_items_removed": on_playlist_items_removed,
     "on_playlist_items_reordered": on_playlist_items_reordered,
     "on_playlists_changed": on_playlists_changed,
     "on_playlist_switch": on_playlist_switch,

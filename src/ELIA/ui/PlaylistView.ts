@@ -2,9 +2,9 @@
 // Simple Playlist View
 //====================================
 
-import { TextRenderingHint, StringTrimming, StringFormatFlags, MenuFlag, VKeyCode } from "../common/common";
+import { TextRenderingHint, StringTrimming, StringFormatFlags, MenuFlag, VKeyCode, GetKeyboardMask, KMask } from "../common/common";
 import { scale, RGB, deepClone, MeasureString, isEmptyString, CropImage, StringFormat } from "../common/common";
-import { IThemeColors, mainColors, scrollbarColor, scrollbarWidth } from "./Theme";
+import { IThemeColors, mainColors, scrollbarColor, scrollbarWidth, globalFontName } from "./Theme";
 import { ThrottledRepaint } from "../common/common";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
@@ -13,6 +13,7 @@ import { Material, MaterialFont } from "../common/iconCode";
 import { SerializableIcon } from "../common/IconType";
 import { AlbumArtId } from "../common/AlbumArtView";
 import { toggleMood } from "./PlaybackControlView";
+import { PLM_Properties } from "./PlaylistManagerView";
 
 const __DEV__ = window.GetProperty("__DEV__", true);
 
@@ -99,6 +100,7 @@ const tfTrackInfo = fb.TitleFormat("%tracknumber%^^[%artist%]^^%title%^^%length%
 const PlaylistProperties = {
 	rowHeight: scale(40),
 	itemFont: gdi.Font("Microsoft YaHei", scale(14), 0),
+	emptyFont: gdi.Font(globalFontName, scale(20))
 }
 
 const PlaylistColors: IThemeColors = {
@@ -517,7 +519,8 @@ export class PlaylistView extends ScrollView {
 			let posLeft = moodColumn.x + pad;
 			let posRight = moodColumn.x + pad + moodHotWidth;
 			if (x > posLeft && x <= posRight) {
-				return this._findHoverItem(x, y).rowIndex;
+				let hoverItem = this._findHoverItem(x, y);
+				return hoverItem ? hoverItem.rowIndex : -1;
 			} else {
 				return -1;
 			}
@@ -851,6 +854,25 @@ export class PlaylistView extends ScrollView {
 			}
 		}
 
+		// draw selection indication rectangle;
+		// TODO;
+
+		// draw when playlist is empty;
+		if (this.items.length === 0) {
+			const textY = this.y + this.headerView.height + scale(48);
+			const textLeft = this.x + padLeft + scale(12);
+			const emptyFont = PlaylistProperties.emptyFont;
+			const textColor = colors.secondaryText;
+
+			if (plman.IsAutoPlaylist(plman.ActivePlaylist)) {
+				gr.DrawString("Autoplaylist is empty?", emptyFont, textColor,
+					textLeft, textY, this.width - 2 * padLeft, this.height, StringFormat.LeftTop);
+			} else {
+				gr.DrawString("Playlist is empty?", emptyFont, textColor,
+					textLeft, textY, this.width - 2 * padLeft, this.height, StringFormat.LeftTop);
+
+			}
+		}
 	}
 
 	on_playlists_changed() {
@@ -894,9 +916,13 @@ export class PlaylistView extends ScrollView {
 		ThrottledRepaint();
 	}
 
+	getTrack(index: number) {
+		return this.items[index];
+	}
+
 	on_item_focus_change(playlistIndex: number) {
-		if (playlistIndex !== plman.ActivePlaylist) {
-			return;
+		if (this.focusIndex !== plman.GetPlaylistFocusItemIndex(plman.ActivePlaylist)) {
+			this.focusIndex = plman.GetPlaylistFocusItemIndex(plman.ActivePlaylist);
 		}
 		this.repaint();
 	}
@@ -1367,7 +1393,55 @@ export class PlaylistView extends ScrollView {
 		}
 	}
 
-	on_key_down(vkey?: number ) {
+	on_key_down(vkey: number, mask = KMask.none) {
+
+		if (selecting.isActive || dnd.isActive) {
+			return;
+		}
+
+		if (mask === KMask.none) {
+			switch (vkey) {
+				case VKeyCode.Delete:
+					if (!plman.IsAutoPlaylist(plman.ActivePlaylist)) {
+						plman.UndoBackup(plman.ActivePlaylist);
+						plman.RemovePlaylistSelection(plman.ActivePlaylist, false);
+					}
+					break;
+				case VKeyCode.Escape:
+					this.setSelection();
+					break;
+			}
+		} else if (mask === KMask.ctrl) {
+			// Ctrl + A;
+			if (vkey === 65) {
+				this.setSelection(0, this.items.length - 1);
+			}
+			// Ctrl + X;
+			if (vkey === 88) {
+				if (!plman.IsPlaylistLocked(plman.ActivePlaylist)) {
+					let items = plman.GetPlaylistSelectedItems(plman.ActivePlaylist);
+					if (fb.CopyHandleListToClipboard(items)) {
+						plman.UndoBackup(plman.ActivePlaylist);
+						plman.RemovePlaylistSelection(plman.ActivePlaylist);
+					}
+				}
+			}
+
+			// Ctrl + C;
+			if (vkey === 67) {
+				let items = plman.GetPlaylistSelectedItems(plman.ActivePlaylist);
+				fb.CopyHandleListToClipboard(items);
+			}
+
+			// Ctrl + V;
+			if (vkey === 86) {
+				if (!plman.IsPlaylistLocked(plman.ActivePlaylist) && fb.CheckClipboardContents()) {
+					let items = fb.GetClipboardContents(window.ID);
+					plman.UndoBackup(plman.ActivePlaylist);
+					plman.InsertPlaylistItems(plman.ActivePlaylist, this.focusIndex + 1, items, true);
+				}
+			}
+		}
 
 	}
 

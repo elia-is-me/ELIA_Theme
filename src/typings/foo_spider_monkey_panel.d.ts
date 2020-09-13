@@ -241,7 +241,7 @@ interface IFbUtils {
      *    return true;
      * }
      */
-    GetClipboardContents(): IFbMetadbList;
+    GetClipboardContents(winow_id: number): IFbMetadbList;
 
     /**
      * @param {boolean=} [force=true] When true, it will use the first item of the active playlist if it is unable to get the focus item.
