@@ -200,8 +200,8 @@ export class PartsManager {
 		return func == null ? null : func.apply(activePart, args);
 	}
 
-	invokeVisibleParts(method: string, ...args: any[]) {
-		this.visibleParts.forEach(p => this.invoke(p, method, args));
+	invokeVisibleParts(method: string, ...args: any) {
+		this.visibleParts.forEach(p => this.invoke(p, method, args[0], args[1], args[2]));
 	}
 
 	invokeFocusedPart(method: string, ...args: any[]) {
@@ -213,10 +213,25 @@ export class PartsManager {
 		return func == null ? null : func.apply(focusedPart, args);
 	}
 
-	private invoke(part: Component, method: string, ...args: any[]) {
+	private invoke(part: Component, method: string, ...args: any) {
 		if (!part) return;
-		let func = (<any>part)[method];
-		return func == null ? null : func.apply(part, args);
+		let func = (part as any)[method];
+		if (func == null) {
+			return null;
+		}
+
+		switch (args.length) {
+			case 0:
+				return func.call(part);
+			case 1:
+				return func.call(part, args[0]);
+			case 2:
+				return func.call(part, args[0], args[1]);
+			case 3:
+				return func.call(part, args[0], args[1], args[2]);
+			default:
+				return func.apply(part, args);
+		}
 	}
 
 	setActive(x: number, y: number) {
@@ -291,4 +306,3 @@ export function notifyOthers(message: string, data?: any) {
 		part.onNotifyData && part.onNotifyData.call(part, message, data));
 
 }
-

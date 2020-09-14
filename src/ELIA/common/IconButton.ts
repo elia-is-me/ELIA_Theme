@@ -28,12 +28,10 @@ export abstract class Clickable extends Component {
 
 	disable() {
 		this.state = ButtonStates.Disable;
-		this.repaint();
 	}
 
 	enable() {
 		this.state = ButtonStates.Normal;
-		this.repaint();
 	}
 
 

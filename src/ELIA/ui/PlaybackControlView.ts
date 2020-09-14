@@ -2,7 +2,7 @@
 // Playback control bar;
 // ---------------------
 
-import { Repaint } from "../common/common";
+import { Repaint, StopReason } from "../common/common";
 import { TextLink } from "../common/TextLink";
 import { AlbumArtView } from "../common/AlbumArtView";
 import { Slider, SliderThumbImage } from "../common/Slider";
@@ -151,7 +151,7 @@ const createBottomButtons = (themeColors?: IThemeColors) => {
 			this.repaint();
 		},
 		on_playback_stop: function (reason: number) {
-			if (reason !== 2) {
+			if (reason !== StopReason.StartingAnotherTrack) {
 				this.on_init();
 				this.repaint();
 			}
