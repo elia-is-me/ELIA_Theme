@@ -131,6 +131,11 @@ const createBottomButtons = (themeColors?: IThemeColors) => {
 			} else {
 				this.setImage(+TF_RATING.EvalWithMetadb(metadb) == 5 ? images.heart : images.heart_empty);
 			}
+			if (!metadb || !fb.IsPlaying) {
+				(this as Icon).disable();
+			} else {
+				(this as Icon).enable();
+			}
 		},
 		on_click: function () {
 			var metadb = fb.GetNowPlaying();
@@ -139,21 +144,21 @@ const createBottomButtons = (themeColors?: IThemeColors) => {
 				fb.RunContextCommandWithMetadb(loved_ ? CMD_UNLOVE : CMD_LOVE, metadb, 8);
 			}
 			this.on_init();
-			Repaint();
+			this.repaint();
 		},
 		on_playback_new_track: function () {
 			this.on_init();
-			Repaint();
+			this.repaint();
 		},
 		on_playback_stop: function (reason: number) {
 			if (reason !== 2) {
 				this.on_init();
-				Repaint();
+				this.repaint();
 			}
 		},
 		on_playback_edited() {
 			this.on_init();
-			Repaint();
+			this.repaint();
 		}
 	});
 

@@ -5,19 +5,37 @@ import { SerializableIcon } from "./IconType";
 export const enum ButtonStates {
 	Normal = 0,
 	Hover = 1,
-	Down = 2
+	Down = 2,
+	Disable = 4,
 };
 
 export abstract class Clickable extends Component {
 
 	state: ButtonStates = ButtonStates.Normal;
 
+	/**
+	 * changeState(state) will not change a disabled button's state;
+	 */
 	changeState(state: number) {
+		if (this.state === ButtonStates.Disable || state === ButtonStates.Disable) {
+			return;
+		}
 		if (this.state !== state) {
 			this.state = state;
 			this.repaint();
 		}
 	}
+
+	disable() {
+		this.state = ButtonStates.Disable;
+		this.repaint();
+	}
+
+	enable() {
+		this.state = ButtonStates.Normal;
+		this.repaint();
+	}
+
 
 	on_mouse_move(x: number, y: number) {
 		if (this.state === ButtonStates.Normal) {
@@ -76,7 +94,9 @@ export class Icon extends Clickable {
 				alpha = this.hoverAlpha;
 			}
 		}
-		else if (this.state === ButtonStates.Down) {
+		else if (this.state === ButtonStates.Down
+			|| this.state === ButtonStates.Disable
+		) {
 			if (this.downImage) {
 				img = this.downImage;
 			}
