@@ -1,4 +1,4 @@
-import { StringFormat, scale, MeasureString } from "./common";
+import { StringFormat, scale, MeasureString, isEmptyString } from "./common";
 import { ButtonStates, Clickable } from "./IconButton";
 import { IInjectableCallbacks } from "./BasePart";
 
@@ -7,12 +7,14 @@ export interface ITextLinkProps {
 	font: IGdiFont;
 	textColor: number;
 	textHoverColor?: number;
+	maxWidth?: number;
 }
 
 export class TextLink extends Clickable {
 
 	text: string = "";
 	textWidth: number = 0;
+	maxWidth: number = 0;
 	_fontMap: Map<ButtonStates, IGdiFont> = new Map();
 	_colorMap: Map<ButtonStates, number> = new Map();
 
@@ -20,20 +22,24 @@ export class TextLink extends Clickable {
 
 		super(opts, callbacks);
 
-		this.text = opts.text;
-
+		// set font;
 		const font_ = (opts.font || gdi.Font("tahoma", scale(12)));
 		const underlinedFont = gdi.Font(font_.Name, font_.Size, 4);
 		this._fontMap.set(ButtonStates.Normal, font_);
 		this._fontMap.set(ButtonStates.Hover, underlinedFont);
 		this._fontMap.set(ButtonStates.Down, underlinedFont);
 
+		// set colors;
 		const textHoverColor_ = (opts.textHoverColor && opts.textColor);
 		this._colorMap.set(ButtonStates.Normal, opts.textColor);
 		this._colorMap.set(ButtonStates.Hover, textHoverColor_);
 		this._colorMap.set(ButtonStates.Down, textHoverColor_);
 
-		this.textWidth = MeasureString(this.text, font_).Width;
+		// set text max width;
+		this.maxWidth = (opts.maxWidth || 0);
+
+		// init text link;
+		this.setText(opts.text);
 	}
 
 	setText(text: string) {
@@ -44,10 +50,24 @@ export class TextLink extends Clickable {
 		}
 		this.text = text;
 		this.textWidth = MeasureString(this.text, this._fontMap.get(ButtonStates.Normal)).Width;
+		if (this.maxWidth > 0) {
+			this.setSize({
+				width: (this.textWidth > this.maxWidth ? this.maxWidth : this.textWidth)
+			});
+		} else {
+			this.setSize({
+				width: this.textWidth
+			})
+		}
+	}
+
+	setMaxWidth(maxWidth: number = 0) {
+		this.maxWidth = maxWidth;
+		this.setText(this.text);
 	}
 
 	on_paint(gr: IGdiGraphics) {
-		if (this.text == null || this.text.length === 0) {
+		if (isEmptyString(this.text)) {
 			return;
 		}
 		let font_: IGdiFont = this._fontMap.get(this.state);

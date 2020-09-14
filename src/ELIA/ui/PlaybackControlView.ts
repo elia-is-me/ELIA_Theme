@@ -302,7 +302,6 @@ const artistText = new TextLink({
 	font: artistFont,
 	textColor: blendColors(bottomColors.text, bottomColors.background, 0.2),
 	textHoverColor: blendColors(bottomColors.text, bottomColors.background, 0.2),
-	// maxWidth: MeasureString("一二 三四、五六 七八" + "\u30fb0000", artistFont).Width,
 }, {
 
 	on_init() {
@@ -384,6 +383,8 @@ export class PlaybackControlView extends Component {
 		super(attrs);
 		this.colors = attrs.colors;
 		this.setChildPanels();
+
+		this.timeWidth = MeasureString("+00:00+", this.timeFont).Width;
 	}
 
 	on_init() {
@@ -408,7 +409,6 @@ export class PlaybackControlView extends Component {
 			this.playbackTime = formatPlaybackTime(fb.PlaybackTime);
 			this.playbackLength = formatPlaybackTime(fb.PlaybackLength);
 		}
-		this.timeWidth = MeasureString("+00:00+", this.timeFont).Width;
 	}
 
 	setChildPanels() {
@@ -428,76 +428,79 @@ export class PlaybackControlView extends Component {
 	on_size() {
 		let { seekbar, volume, buttons, artwork, artist } = this;
 		// let buttons = pb_btns2;
-		let UI_x = this.x,
-			UI_y = this.y,
-			UI_w = this.width,
-			UI_h = this.height;
+		let left = this.x,
+			top = this.y,
+			width = this.width,
+			height = this.height;
 
 		// play_pause button;
 		let bw_1 = buttons.playOrPause.width;
-		let by_1 = (UI_y + (scale(50) - bw_1) / 2) >> 0;
-		let bx_1 = (UI_x + UI_w / 2 - bw_1 / 2) >> 0;
+		let by_1 = (top + (scale(50) - bw_1) / 2) >> 0;
+		let bx_1 = (left + width / 2 - bw_1 / 2) >> 0;
 		let pad_1 = scale(12);
-		buttons.playOrPause.setBoundary(bx_1, by_1);
+		buttons.playOrPause.setPosition(bx_1, by_1);
 
 		// prev
 		let bx_2 = bx_1 - bw_1 - pad_1;
-		buttons.prev.setBoundary(bx_2, by_1);
+		buttons.prev.setPosition(bx_2, by_1);
 
 		// next;
 		let bx_3 = bx_1 + bw_1 + pad_1;
-		buttons.next.setBoundary(bx_3, by_1);
+		buttons.next.setPosition(bx_3, by_1);
 
 		// repeat
 		let bw_2 = buttons.shuffle.width;
-		let by_2 = (UI_y + (scale(50) - bw_2) / 2) >> 0;
+		let by_2 = (top + (scale(50) - bw_2) / 2) >> 0;
 		let bx_4 = bx_2 - bw_2 - scale(16);
-		buttons.repeat.setBoundary(bx_4, by_2);
+		buttons.repeat.setPosition(bx_4, by_2);
 
 		//shuffle;
 		let bx_5 = bx_3 + bw_1 + scale(16);
-		buttons.shuffle.setBoundary(bx_5, by_2);
+		buttons.shuffle.setPosition(bx_5, by_2);
 
 		// volume bar;
 		let vol_h = scale(18)
 		let vol_w = scale(80);
-		let vol_y = UI_y + (UI_h - vol_h) / 2;
-		let vol_x = UI_x + UI_w - vol_w - scale(24);
+		let vol_y = top + (height - vol_h) / 2;
+		let vol_x = left + width - vol_w - scale(24);
 		volume.setBoundary(vol_x, vol_y, vol_w, vol_h);
 
 		// volume mute button;
 		let bx_6 = vol_x - bw_2 - scale(4);
-		let by_6 = (UI_y + (UI_h - bw_2) / 2) >> 0;
-		buttons.volume.setBoundary(bx_6, by_6);
+		let by_6 = (top + (height - bw_2) / 2) >> 0;
+		buttons.volume.setPosition(bx_6, by_6);
 
 		// love;
-		buttons.love.setBoundary(bx_6 - bw_2, by_6);
+		buttons.love.setPosition(bx_6 - bw_2, by_6);
 
 		// seekbar;
 		let seek_max_w = scale(640);
 		let seek_min_w = scale(240);
 		let ui_min_w = scale(780);
-		let seek_w = UI_w * (seek_min_w / ui_min_w);
+		let seek_w = width * (seek_min_w / ui_min_w);
 		if (seek_w < seek_min_w) seek_w = seek_min_w;
 		else if (seek_w > seek_max_w) seek_w = seek_max_w;
-		let seek_x = UI_x + (UI_w - seek_w) / 2;
+		let seek_x = left + (width - seek_w) / 2;
 		let seek_y = by_1 + bw_1 + scale(8);
 		seekbar.setBoundary(seek_x, seek_y, seek_w, scale(16));
 
 		// art;
 		let art_w = scale(48);
-		let art_pad = (UI_h - art_w) / 2;
-		artwork.setBoundary(UI_x + art_pad, UI_y + art_pad, art_w, art_w);
+		let art_pad = (height - art_w) / 2;
+		artwork.setBoundary(left + art_pad, top + art_pad, art_w, art_w);
 
 		// artist text;
-		let artist_x = UI_x + art_pad + art_w + scale(8);
 		let artist_y = this.y + (this.height / 2);
-		let artist_w = seek_x - bw_2 - scale(8) - artist_x;
-		artist.setBoundary(artist_x, artist_y, artist_w, scale(20));
+		let pb_time_x = seekbar.x - this.timeWidth - scale(4);
+		let artist_x = albumArt.x + albumArt.width + scale(8);
+		let artist_max_w = pb_time_x - scale(16) - artist_x;
+		artist.setMaxWidth(artist_max_w);
+		artist.setSize({ height: scale(20) });
+		artist.setPosition(artist_x, artist_y);
 	}
 
 	on_paint(gr: IGdiGraphics) {
-		let { colors, buttons } = this;
+		let { colors } = this;
 
 		// bg
 		gr.FillSolidRect(this.x, this.y, this.width, this.height, colors.background);
@@ -513,7 +516,7 @@ export class PlaybackControlView extends Component {
 
 		// track title;
 		let title_x = albumArt.x + albumArt.width + scale(8);
-		let title_max_w = pb_time_x - buttons.love.width - scale(8) - title_x;
+		let title_max_w = pb_time_x - scale(16) - title_x;
 		let title_y = this.y + this.height / 2 - scale(22) - scale(2);
 		gr.DrawString(this.trackTitle, this.titleFont, colors.text, title_x, title_y, title_max_w, scale(22), StringFormat.LeftCenter);
 

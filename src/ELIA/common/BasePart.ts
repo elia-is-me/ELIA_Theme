@@ -1,5 +1,6 @@
 import { isObject, TextRenderingHint } from "./common";
 import { PartsManager } from "../ui/Layout";
+import { sidebarColors } from "../ui/Theme";
 
 /**
  * A too simple way to generate component id;
@@ -131,7 +132,7 @@ export abstract class Component implements IBoxModel, ICallbacks {
 			&& x > this.x && x <= this.x + this.width
 			&& y > this.y && y <= this.y + this.height;
 	}
-	setBoundary(x: number, y: number, width?: number, height?: number) {
+	setBoundary(x: number, y: number, width: number, height: number) {
 		let visibleBefore_ = this.isVisible();
 		this.x = x;
 		this.y = y;
@@ -149,6 +150,34 @@ export abstract class Component implements IBoxModel, ICallbacks {
 		if (this._shouldSortChildren) {
 			this.children.sort(sortByZIndex);
 			this._shouldSortChildren = false;
+		}
+	}
+
+	setSize(size: { width?: number; height?: number }): void;
+	setSize(width: number, height: number): void;
+	setSize(arg_1: number | { width?: number; height?: number }, arg_2?: number): any {
+		if (typeof arg_1 == "number") {
+			let visibleBefore_ = this.isVisible();
+			this.width = arg_1;
+			this.height = arg_2;
+
+			let visibleNow_ = this.isVisible();
+			if (visibleNow_) {
+				this.on_size && this.on_size();
+			}
+
+			if (visibleNow_ !== visibleBefore_) {
+				this._shouldUpdateOnInit = true;
+			}
+
+			if (this._shouldSortChildren) {
+				this.children.sort(sortByZIndex);
+				this._shouldSortChildren = false;
+			}
+		} else if (typeof arg_1 == "object") {
+			let width = (arg_1.width || this.width);
+			let height = (arg_1.height || this.height);
+			this.setSize(width, height);
 		}
 	}
 
