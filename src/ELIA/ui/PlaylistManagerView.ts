@@ -11,6 +11,7 @@ import { scrollbarWidth, IThemeColors, mainColors, sidebarColors, scrollbarColor
 import { Icon, Button, IButtonColors } from "../common/IconButton";
 import { SerializableIcon } from "../common/IconType";
 import { isValidPlaylist } from "./PlaylistView";
+import { notifyOthers } from "./Layout";
 
 const IDC_ARROW = 32512;
 
@@ -94,7 +95,9 @@ class PLM_Header extends Component {
             colors: colors,
             paddings: { left: scale(16), right: scale(8) },
             gap: scale(4),
-            onClick: null
+            onClick: () => {
+                notifyOthers("Show.AddPlaylistPanel");
+            }
         });
 
         this.addChild(this.addPlaylistBtn);
@@ -596,7 +599,7 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 
 /**
  * TODO:
- * 
+ *
  * - 有一个问题，拖放列表时，会忘掉拖的是哪个列表，而界面上没有提示。
  * - AddPlaylist btn action?
  */

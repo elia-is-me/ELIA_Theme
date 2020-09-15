@@ -8,6 +8,7 @@ import { PlaylistManagerView } from "./ui/PlaylistManagerView";
 import { Layout, PartsManager, layoutManager } from "./ui/Layout";
 import { SerializableIcon } from "./common/IconType";
 import { Material, MaterialFont } from "./common/iconCode";
+import { AddPlaylistPanel } from "./ui/AddPlaylistPanel";
 
 
 const playbackControlBar = new PlaybackControlView({
@@ -47,6 +48,10 @@ const playlistView = new PlaylistView({})
 
 const playlistManager = new PlaylistManagerView();
 
+const addPlaylistPanel = new AddPlaylistPanel({
+
+})
+
 /**
  * Root part of this panel;
  */
@@ -54,7 +59,8 @@ const layout = new Layout({
     topbar: topbar,
     playbackControlBar: playbackControlBar,
     playlsitManager: playlistManager,
-    playlistView: playlistView
+    playlistView: playlistView,
+    addPlaylistPanel: addPlaylistPanel
 });
 
 layoutManager.setRoot(layout);

@@ -3,7 +3,8 @@ import { TopBar } from "./TopbarView";
 import { PlaybackControlView } from "./PlaybackControlView";
 import { PlaylistManagerView, PLM_Properties } from "./PlaylistManagerView";
 import { PlaylistView } from "./PlaylistView";
-import { scale } from "../common/common";
+import { scale, ThrottledRepaint } from "../common/common";
+import { AddPlaylistPanel } from "./AddPlaylistPanel";
 
 
 /**
@@ -27,6 +28,7 @@ export class Layout extends Component {
 	playbackControlBar: PlaybackControlView;
 	playlistManager: PlaylistManagerView;
 	playlistView: PlaylistView
+	addPlaylistPanel: AddPlaylistPanel;
 
 	viewState: ViewStates;
 
@@ -35,6 +37,7 @@ export class Layout extends Component {
 		playbackControlBar: PlaybackControlView;
 		playlsitManager: PlaylistManagerView;
 		playlistView: PlaylistView;
+		addPlaylistPanel: AddPlaylistPanel;
 	}) {
 		super({})
 
@@ -45,11 +48,13 @@ export class Layout extends Component {
 		this.playbackControlBar = options.playbackControlBar;
 		this.playlistManager = options.playlsitManager;
 		this.playlistView = options.playlistView;
+		this.addPlaylistPanel = options.addPlaylistPanel;
 
 		this.addChild(this.topbar);
 		this.addChild(this.playbackControlBar);
 		this.addChild(this.playlistManager);
 		this.addChild(this.playlistView);
+		this.addChild(this.addPlaylistPanel);
 
 		this.setPartsZIndex(this.viewState);
 		this.setPartsVisible(this.viewState);
@@ -103,6 +108,12 @@ export class Layout extends Component {
 			default:
 				break;
 		}
+
+		if (this.addPlaylistPanel.visible) {
+			this.addPlaylistPanel.setPosition(
+				this.x + (this.width - this.addPlaylistPanel.width) / 2,
+				this.y + (this.height - this.addPlaylistPanel.height) / 2);
+		}
 	}
 
     /**
@@ -113,6 +124,7 @@ export class Layout extends Component {
 		this.playbackControlBar.z = 10;
 		this.playlistView.z = 0;
 		this.playlistManager.z = 0;
+		this.addPlaylistPanel.z = 1000;
 	}
 
     /**
@@ -134,6 +146,12 @@ export class Layout extends Component {
 				if (this.playlistManager.visible) {
 					this.playlistManager.on_init();
 				}
+				this.on_size();
+				layoutManager.updateParts();
+				this.repaint();
+				break;
+			case "Show.AddPlaylistPanel":
+				this.addPlaylistPanel.visible = true;
 				this.on_size();
 				layoutManager.updateParts();
 				this.repaint();

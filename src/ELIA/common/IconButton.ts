@@ -1,6 +1,7 @@
-import { isObject, Repaint, scale, StringFormat, TextRenderingHint, isFunction } from "./common";
+import { isObject, Repaint, scale, StringFormat, TextRenderingHint, isFunction, setAlpha, MeasureString } from "./common";
 import { Component, IPaddings, textRenderingHint, IInjectableCallbacks } from "./BasePart";
 import { SerializableIcon } from "./IconType";
+import { globalFontName } from "../ui/Theme";
 
 export const enum ButtonStates {
 	Normal = 0,
@@ -185,6 +186,71 @@ export class Button extends Clickable {
 		gr.DrawString(text, font, btnColor, textX, this.y, textW, this.height, StringFormat.LeftCenter);
 	}
 
+}
+
+export interface IButtonColors {
+	textColor: number;
+	textHoverColor?: number;
+	textDownColor?: number;
+	backgroundColor?: number;
+	backgroundHoverColor?: number;
+	backgroundDownColor?: number;
+}
+
+export const defaultButtonFont = gdi.Font(globalFontName, scale(14));
+
+export interface IButton2Options extends IButtonColors {
+	text: string;
+	textFont?: IGdiFont;
+
+}
+
+export class Button2 extends Clickable {
+	icon?: SerializableIcon;
+	text: string;
+	textFont: IGdiFont;
+	private _textColor: Map<ButtonStates, number> = new Map();
+	private _backgroundColor: Map<ButtonStates, number> = new Map();
+	private paddings: { top: number; left: number; }
+
+	constructor(opts: IButton2Options) {
+		super({})
+
+		this.setColors(opts);
+		this.text = opts.text;;
+		this.textFont = (opts.textFont && defaultButtonFont);
+		this.paddings = { top: 0, left: 0 };
+	}
+
+	setColors(colors: IButtonColors) {
+		this._textColor.set(ButtonStates.Normal, colors.textColor)
+		this._textColor.set(ButtonStates.Hover, (colors.hoverColor != null) ? colors.hoverColor : setAlpha(colors.textColor, 200));
+		this._textColor.set(ButtonStates.Down, (colors.textDownColor != null) ? colors.textDownColor : setAlpha(colors.textColor, 127));
+		this._textColor.set(ButtonStates.Disable, this._textColor.get(ButtonStates.Down));
+
+		this._backgroundColor.set(ButtonStates.Normal, colors.backgroundColor);
+		this._backgroundColor.set(ButtonStates.Hover, colors.backgroundHoverColor);
+		this._backgroundColor.set(ButtonStates.Down, colors.backgroundDownColor);
+		this._backgroundColor.set(ButtonStates.Disable, this._backgroundColor.get(ButtonStates.Down));
+	}
+
+	on_size() {
+		let textSize = MeasureString(this.text, this.textFont);
+		this.paddings.top = (this.height - textSize.Height) / 2;
+		this.paddings.left = (this.width - textSize.Width) / 2;
+	}
+
+	on_paint(gr: IGdiGraphics) {
+		let {text, textFont} = this;
+		let textColor = this._textColor.get(this.state);
+		let backgroundColor = this._backgroundColor.get(this.state);
+		let {left, top} = this.paddings;
+
+		if (backgroundColor != null) {
+			gr.FillSolidRect(this.x, this.y, this.width, this.height, backgroundColor);
+		}
+		gr.DrawString(text, textFont, textColor, this.x + left, this.y + top, this.width, this.height, StringFormat.LeftCenter);
+	}
 }
 
 interface IIconOptions {
