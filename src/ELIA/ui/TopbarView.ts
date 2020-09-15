@@ -6,6 +6,7 @@ import { globalFontName, IThemeColors, mainColors } from "./Theme";
 import { SerializableIcon } from "../common/IconType";
 import { MaterialFont, Material } from "../common/iconCode";
 import { SearchBox } from "./SearchBox";
+import { notifyOthers } from "./Layout";
 
 class TabItem {
 	private defaultPadding = scale(4);
@@ -171,6 +172,10 @@ export class TopBar extends Component {
 			hoverColor: setAlpha(this.foreColor, 200),
 			downColor: setAlpha(this.foreColor, 128)
 		});
+
+		this.mainIco.on_click = (x: number, y: number) => {
+			notifyOthers("Toggle.PlaylistManager");
+		}
 
 		this.settingsIco = new Icon2({
 			fontIcon: this.icons.settings,

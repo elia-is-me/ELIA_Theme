@@ -63,10 +63,6 @@ layoutManager.setRoot(layout);
  *  Set layout
  * =============== */
 
-layout.onNotifyData = function (message: string, data: any) {
-
-}
-
 layout.onReady = function () {
 
     checkDefautPlaylist();

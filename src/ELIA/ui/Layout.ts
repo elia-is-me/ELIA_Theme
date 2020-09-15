@@ -52,10 +52,10 @@ export class Layout extends Component {
 		this.addChild(this.playlistView);
 
 		this.setPartsZIndex(this.viewState);
+		this.setPartsVisible(this.viewState);
 	}
 
 	on_size() {
-		this.setPartsVisible(this.viewState);
 		this.setPartsLayout(this.viewState);
 	}
 
@@ -87,8 +87,18 @@ export class Layout extends Component {
 
 		switch (viewState) {
 			case ViewStates.Default:
-				playlistManager.setBoundary(x, listY, PLMAN_MIN_WIDTH, listHeight);
-				playlistView.setBoundary(x + playlistManager.width, listY, width - playlistManager.width, listHeight);
+				playlistManager.visible &&
+					playlistManager.setBoundary(x, listY, PLMAN_MIN_WIDTH, listHeight);
+				if (playlistManager.visible) {
+					playlistView.setBoundary(
+						playlistManager.x + playlistManager.width,
+						listY,
+						this.x + this.width - (playlistManager.x + playlistManager.width),
+						listHeight
+					);
+				} else {
+					playlistView.setBoundary(x, listY, width, listHeight);
+				}
 				break;
 			default:
 				break;
@@ -116,6 +126,20 @@ export class Layout extends Component {
 
 	ready?: () => void;
 	onReady?: () => void;
+
+	onNotifyData(message: string, data: any) {
+		switch (message) {
+			case "Toggle.PlaylistManager":
+				this.playlistManager.visible = !this.playlistManager.visible;
+				if (this.playlistManager.visible) {
+					this.playlistManager.on_init();
+				}
+				this.on_size();
+				layoutManager.updateParts();
+				this.repaint();
+				break;
+		}
+	}
 }
 
 export class PartsManager {
@@ -302,7 +326,9 @@ export function notifyOthers(message: string, data?: any) {
 		return;
 	}
 
-	parts.map(part =>
-		part.onNotifyData && part.onNotifyData.call(part, message, data));
+	parts.forEach(part => {
+		part.onNotifyData && part.onNotifyData(message, data)
+	});
+
 
 }
