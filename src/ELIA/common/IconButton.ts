@@ -188,7 +188,7 @@ export class Button extends Clickable {
 
 }
 
-export interface IButtonColors {
+export interface IButton2Colors {
 	textColor: number;
 	textHoverColor?: number;
 	textDownColor?: number;
@@ -199,10 +199,9 @@ export interface IButtonColors {
 
 export const defaultButtonFont = gdi.Font(globalFontName, scale(14));
 
-export interface IButton2Options extends IButtonColors {
+export interface IButton2Options extends IButton2Colors {
 	text: string;
 	textFont?: IGdiFont;
-
 }
 
 export class Button2 extends Clickable {
@@ -222,9 +221,9 @@ export class Button2 extends Clickable {
 		this.paddings = { top: 0, left: 0 };
 	}
 
-	setColors(colors: IButtonColors) {
+	setColors(colors: IButton2Colors) {
 		this._textColor.set(ButtonStates.Normal, colors.textColor)
-		this._textColor.set(ButtonStates.Hover, (colors.hoverColor != null) ? colors.hoverColor : setAlpha(colors.textColor, 200));
+		this._textColor.set(ButtonStates.Hover, (colors.textHoverColor != null) ? colors.textHoverColor : setAlpha(colors.textColor, 200));
 		this._textColor.set(ButtonStates.Down, (colors.textDownColor != null) ? colors.textDownColor : setAlpha(colors.textColor, 127));
 		this._textColor.set(ButtonStates.Disable, this._textColor.get(ButtonStates.Down));
 

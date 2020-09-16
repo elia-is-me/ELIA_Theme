@@ -1,6 +1,7 @@
 import { Component } from "../common/BasePart";
-import { RGB, scale, StringFormat } from "../common/common";
-import { Button } from "../common/IconButton";
+import { MeasureString, RGB, RGBA, scale, StringFormat } from "../common/common";
+import { Button2 } from "../common/IconButton";
+import { InputBox } from "../common/Inputbox";
 import { IThemeColors, mainColors, globalFontName } from "./Theme";
 
 const panelColors = {
@@ -49,23 +50,15 @@ export class AddPlaylistPanel extends Component {
 		top: number;
 	};
 
-	saveBtn: Button;
-	cancelBtn: Button;
+	saveBtn: Button2;
+	cancelBtn: Button2;
+	inputbox: InputBox;
+	inputbox_height: number;
 
 	constructor(opts: IPanelOptions) {
 		super(opts);
 
 		Object.assign(this, defaultOptions, opts);
-
-		// set colors;
-		// this.colors.textColor = opts.colors.text;
-		// this.colors.secondaryColor = opts.colors.secondaryText;
-		// this.colors.backgroundColor = opts.colors.background;
-		// this.colors.highlightColor = opts.colors.highlight;
-
-		// set font;
-		// this.titleFont = opts.titleFont;
-		// this.textFont = opts.textFont;
 
 		this.paddings = {
 			top: scale(44),
@@ -73,22 +66,37 @@ export class AddPlaylistPanel extends Component {
 		}
 
 		// create buttons;
-		this.saveBtn = new Button({
+		this.saveBtn = new Button2({
 			text: "Save",
-			font: this.textFont,
-			colors: {
-				textColor: this.colors.secondaryColor,
-				hoverColor: this.colors.textColor,
-			}
+			textColor: this.colors.textColor,
+			textHoverColor: this.colors.secondaryColor
 		});
+		this.saveBtn.setSize(scale(80), scale(32));
+		this.saveBtn.on_click = () => { }
 
-		this.cancelBtn = new Button({
+		this.cancelBtn = new Button2({
 			text: "Cancel",
-			font: this.textFont,
-			colors: {
-				textColor: this.colors.secondaryColor,
-				hoverColor: this.colors.textColor,
-			}
+			textColor: this.colors.textColor,
+			textHoverColor: this.colors.secondaryColor
+		});
+		this.cancelBtn.setSize(scale(80), scale(32));
+		this.cancelBtn.on_click = () => { };
+
+		// inputbox;
+		this.inputbox = new InputBox({
+			font: gdi.Font(globalFontName, scale(14)),
+			font_italic: gdi.Font(globalFontName, scale(14), 2),
+			foreColor: this.colors.textColor,
+			backgroundActiveColor: RGB(255, 255, 255),
+			backgroundSelectionColor: RGBA(33, 136, 255, 130),
+			empty_text: "",
+			func() {}
+		});
+		
+		this.inputbox_height = MeasureString("ABCDgl汉字", this.inputbox.font).Height + scale(4);
+
+		;[this.saveBtn, this.cancelBtn].forEach(btn => {
+			this.addChild(btn);
 		});
 
 		this.visible = false;
@@ -96,8 +104,27 @@ export class AddPlaylistPanel extends Component {
 
 	}
 
+	on_size() {
+		const {inputbox, cancelBtn, saveBtn} = this;
+		const {top, left} = this.paddings;
+
+		inputbox.setBoundary(
+			this.x + left + scale(4),
+			this.y + top + scale(46),
+			this.width - 2 * left - scale(8),
+			this.inputbox_height
+		);
+
+		saveBtn.setPosition(
+			this.x + this.width - saveBtn.width - left, 
+			inputbox.y + inputbox.height + scale(16));
+		cancelBtn.setPosition(
+			saveBtn.x - cancelBtn.width - scale(24), 
+			saveBtn.y);
+	}
+
 	on_paint(gr: IGdiGraphics) {
-		const { textColor, secondaryColor, backgroundColor, highlightColor } = this.colors;
+		const { textColor, backgroundColor } = this.colors;
 		const titleFont = this.titleFont;
 		const padLeft = this.paddings.left;
 		const padTop = this.paddings.top;
