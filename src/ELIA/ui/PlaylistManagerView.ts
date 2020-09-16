@@ -12,6 +12,8 @@ import { Icon, Button, IButtonColors } from "../common/IconButton";
 import { SerializableIcon } from "../common/IconType";
 import { isValidPlaylist } from "./PlaylistView";
 import { notifyOthers } from "./Layout";
+import { IInputPopupOptions } from "./InputPopupPanel";
+import { IAlertDialogOptions } from "./AlertDialog";
 
 const IDC_ARROW = 32512;
 
@@ -96,7 +98,9 @@ class PLM_Header extends Component {
             paddings: { left: scale(16), right: scale(8) },
             gap: scale(4),
             onClick: () => {
-                notifyOthers("Show.AddPlaylistPanel");
+                notifyOthers("Popup.InputPopupPanel", {
+                    title: "Create new playlist"
+                });
             }
         });
 
@@ -543,6 +547,7 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
         }
 
         const id = rootMenu.TrackPopupMenu(x, y);
+        let options: IInputPopupOptions;
 
         switch (true) {
             case id === 1:
@@ -550,24 +555,41 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
             case id === 2:
                 // Rename;
                 const index_ = playlistIndex;
-                plman.ActivePlaylist = playlistIndex;
-                fb.RunMainMenuCommand("Rename playlist");
-                plman.ActivePlaylist = index_;
+                // plman.ActivePlaylist = playlistIndex;
+                // fb.RunMainMenuCommand("Rename playlist");
+                // plman.ActivePlaylist = index_;
+                options = {
+                    title: "Rename playlist",
+                    defaultText: plman.GetPlaylistName(playlistIndex)
+                }
+                notifyOthers("Popup.InputPopupPanel", options);
+
                 break;
 
             case id === 3:
-                if (plman.ActivePlaylist === playlistIndex) {
-                    if (isValidPlaylist(playlistIndex - 1)) {
-                        plman.ActivePlaylist = playlistIndex - 1;
-                    } else {
-                        plman.ActivePlaylist = 0;
-                    }
-                }
-                plman.RemovePlaylist(playlistIndex);
+                // Delete playlist;
+                // if (plman.ActivePlaylist === playlistIndex) {
+                //     if (isValidPlaylist(playlistIndex - 1)) {
+                //         plman.ActivePlaylist = playlistIndex - 1;
+                //     } else {
+                //         plman.ActivePlaylist = 0;
+                //     }
+                // }
+                // plman.UndoBackup(playlistIndex);
+                // plman.RemovePlaylist(playlistIndex);
+                let alertOptions: IAlertDialogOptions = {
+                    title: "Delete playlist?"
+                };
+                notifyOthers("Show.AlertDialog", alertOptions);
                 break;
             case id === 4:
-                fb.RunMainMenuCommand("New playlist");
-                fb.RunMainMenuCommand("Rename playlist");
+                // Create new playlist;
+                // fb.RunMainMenuCommand("New playlist");
+                // fb.RunMainMenuCommand("Rename playlist");
+                options = {
+                    title: "Create new playlist",
+                }
+                notifyOthers("Popup.InputPopupPanel", options);
                 break;
             case id === 5:
                 if (plman.IsAutoPlaylist(playlistIndex)) {

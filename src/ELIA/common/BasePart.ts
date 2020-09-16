@@ -184,6 +184,7 @@ export abstract class Component implements IBoxModel, ICallbacks {
 	setPosition(x: number, y: number) {
 		this.x = x;
 		this.y = y;
+		this.on_size && this.on_size();
 	}
 
 	setDimension(width: number, height: number) {
@@ -220,7 +221,8 @@ export abstract class Component implements IBoxModel, ICallbacks {
 	onNotifyData?(str: string, info: any) { }
 
 	repaint() {
-		window.RepaintRect(this.x, this.y, this.width, this.height);
+		// window.RepaintRect(this.x, this.y, this.width, this.height);
+		window.Repaint();
 	}
 }
 

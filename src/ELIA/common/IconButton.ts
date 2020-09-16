@@ -35,6 +35,9 @@ export abstract class Clickable extends Component {
 		this.state = ButtonStates.Normal;
 	}
 
+	on_init() {
+		this.changeState(ButtonStates.Normal);
+	}
 
 	on_mouse_move(x: number, y: number) {
 		if (this.state === ButtonStates.Normal) {
@@ -217,14 +220,14 @@ export class Button2 extends Clickable {
 
 		this.setColors(opts);
 		this.text = opts.text;;
-		this.textFont = (opts.textFont && defaultButtonFont);
+		this.textFont = defaultButtonFont//(opts.textFont && defaultButtonFont);
 		this.paddings = { top: 0, left: 0 };
 	}
 
 	setColors(colors: IButton2Colors) {
 		this._textColor.set(ButtonStates.Normal, colors.textColor)
-		this._textColor.set(ButtonStates.Hover, (colors.textHoverColor != null) ? colors.textHoverColor : setAlpha(colors.textColor, 200));
-		this._textColor.set(ButtonStates.Down, (colors.textDownColor != null) ? colors.textDownColor : setAlpha(colors.textColor, 127));
+		this._textColor.set(ButtonStates.Hover, (colors.textHoverColor != null) ? colors.textHoverColor : colors.textColor);
+		this._textColor.set(ButtonStates.Down, (colors.textDownColor != null) ? colors.textDownColor : colors.textColor);
 		this._textColor.set(ButtonStates.Disable, this._textColor.get(ButtonStates.Down));
 
 		this._backgroundColor.set(ButtonStates.Normal, colors.backgroundColor);
@@ -240,15 +243,15 @@ export class Button2 extends Clickable {
 	}
 
 	on_paint(gr: IGdiGraphics) {
-		let {text, textFont} = this;
+		let { text, textFont } = this;
 		let textColor = this._textColor.get(this.state);
 		let backgroundColor = this._backgroundColor.get(this.state);
-		let {left, top} = this.paddings;
+		let { left, top } = this.paddings;
 
 		if (backgroundColor != null) {
 			gr.FillSolidRect(this.x, this.y, this.width, this.height, backgroundColor);
 		}
-		gr.DrawString(text, textFont, textColor, this.x + left, this.y + top, this.width, this.height, StringFormat.LeftCenter);
+		gr.DrawString(text, textFont, textColor, this.x + left, this.y + top, this.width, this.height, StringFormat.LeftTop);
 	}
 }
 

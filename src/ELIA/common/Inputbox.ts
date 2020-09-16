@@ -122,6 +122,7 @@ export class InputBox extends Component implements IInputBoxOptions{
         super(opts);
 
         Object.assign(this, opts);
+        this.text = this.default_text;
 
         console.log("empty_text: ", this.empty_text);
 
@@ -197,7 +198,6 @@ export class InputBox extends Component implements IInputBoxOptions{
 
     drawcursor(gr: IGdiGraphics) {
         if (cInputbox.cursor_state) {
-            console.log(this.Cpos, this.offset);
             if (this.Cpos >= this.offset) {
                 this.Cx = this.GetCx(this.Cpos);
                 var x1 = this.x + this.Cx;
@@ -205,7 +205,6 @@ export class InputBox extends Component implements IInputBoxOptions{
                 var y1 = this.y + 1;
                 var y2 = this.y + this.height - 3;
                 var lt = 1;
-                console.log("drawing cursor");
                 gr.DrawLine(x1, y1, x2, y2, lt, this.foreColor);
             }
         }

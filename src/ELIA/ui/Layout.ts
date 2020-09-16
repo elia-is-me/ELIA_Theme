@@ -2,18 +2,11 @@ import { Component } from "../common/BasePart";
 import { TopBar } from "./TopbarView";
 import { PlaybackControlView } from "./PlaybackControlView";
 import { PlaylistManagerView, PLM_Properties } from "./PlaylistManagerView";
-import { PlaylistView } from "./PlaylistView";
+import { PlaylistView, isValidPlaylist } from "./PlaylistView";
 import { scale, ThrottledRepaint } from "../common/common";
-import { AddPlaylistPanel } from "./AddPlaylistPanel";
+import { InputPopupPanel, IInputPopupOptions } from "./InputPopupPanel";
+import { AlertDialog, IAlertDialogOptions } from "./AlertDialog";
 
-
-/**
- * foo_spider_monkey_panel.dll does not provide a globalThis var and the
- * `window` object is readonly that none new properties  & methods can be assign
- * to it.  
- * It's a commonly used way to create a `globalThis`.
- */
-const globalThis_ = Function("return this")();
 
 const CONTROL_BAR_HEIGHT = scale(76);
 const TOPBAR_HEIGHT = scale(48);
@@ -28,7 +21,8 @@ export class Layout extends Component {
 	playbackControlBar: PlaybackControlView;
 	playlistManager: PlaylistManagerView;
 	playlistView: PlaylistView
-	addPlaylistPanel: AddPlaylistPanel;
+	inputPopupPanel?: InputPopupPanel;
+	alertDialog?: AlertDialog;
 
 	viewState: ViewStates;
 
@@ -37,7 +31,7 @@ export class Layout extends Component {
 		playbackControlBar: PlaybackControlView;
 		playlsitManager: PlaylistManagerView;
 		playlistView: PlaylistView;
-		addPlaylistPanel: AddPlaylistPanel;
+		addPlaylistPanel?: InputPopupPanel;
 	}) {
 		super({})
 
@@ -48,13 +42,13 @@ export class Layout extends Component {
 		this.playbackControlBar = options.playbackControlBar;
 		this.playlistManager = options.playlsitManager;
 		this.playlistView = options.playlistView;
-		this.addPlaylistPanel = options.addPlaylistPanel;
+		// this.inputPopupPanel = options.addPlaylistPanel;
 
 		this.addChild(this.topbar);
 		this.addChild(this.playbackControlBar);
 		this.addChild(this.playlistManager);
 		this.addChild(this.playlistView);
-		this.addChild(this.addPlaylistPanel);
+		// this.addChild(this.addPlaylistPanel);
 
 		this.setPartsZIndex(this.viewState);
 		this.setPartsVisible(this.viewState);
@@ -66,7 +60,7 @@ export class Layout extends Component {
 
 	setPartsVisible(viewState: ViewStates) {
 		this.topbar.visible = true;
-		this.playbackControlBar.visible = true;
+		// this.playbackControlBar.visible = true;
 
 		if (viewState === ViewStates.Default) {
 			this.playlistManager.visible = true;
@@ -109,10 +103,17 @@ export class Layout extends Component {
 				break;
 		}
 
-		if (this.addPlaylistPanel.visible) {
-			this.addPlaylistPanel.setPosition(
-				this.x + (this.width - this.addPlaylistPanel.width) / 2,
-				this.y + (this.height - this.addPlaylistPanel.height) / 2);
+		if (this.inputPopupPanel && this.inputPopupPanel.visible) {
+			this.inputPopupPanel.setPosition(
+				this.x + (this.width - this.inputPopupPanel.width) / 2,
+				this.y + (this.height - this.inputPopupPanel.height) / 2);
+		}
+
+		if (this.alertDialog && this.alertDialog.visible) {
+			this.alertDialog.setPosition(
+				this.x + (this.width - this.alertDialog.width) / 2,
+				this.y + (this.height - this.alertDialog.height) / 2
+			);
 		}
 	}
 
@@ -124,7 +125,6 @@ export class Layout extends Component {
 		this.playbackControlBar.z = 10;
 		this.playlistView.z = 0;
 		this.playlistManager.z = 0;
-		this.addPlaylistPanel.z = 1000;
 	}
 
     /**
@@ -150,11 +150,58 @@ export class Layout extends Component {
 				layoutManager.updateParts();
 				this.repaint();
 				break;
-			case "Show.AddPlaylistPanel":
-				this.addPlaylistPanel.visible = true;
+			case "Popup.InputPopupPanel":
+				let options = (data as IInputPopupOptions);
+				if (options == null) break;
+				this.inputPopupPanel = new InputPopupPanel(options)
+				this.inputPopupPanel.visible = true;
+				this.addChild(this.inputPopupPanel);
 				this.on_size();
 				layoutManager.updateParts();
 				this.repaint();
+				break;
+			case "Hide.InputPopupPanel":
+				if (!this.inputPopupPanel) break;
+				this.inputPopupPanel.visible = false;
+				this.removeChild(this.inputPopupPanel);
+				this.inputPopupPanel = null;
+				this.on_size();
+				layoutManager.updateParts();
+				this.repaint();
+				break;
+			case "Show.AlertDialog":
+				let alertOptions = (data as IAlertDialogOptions);
+				if (alertOptions == null) break;
+				this.alertDialog = new AlertDialog(alertOptions);
+				this.alertDialog.visible = true;
+				this.addChild(this.alertDialog);
+				this.on_size();
+				layoutManager.updateParts();
+				this.repaint();
+				break;
+			case "Hide.AlertDialog":
+				if (!this.alertDialog) break;
+				this.removeChild(this.alertDialog);
+				this.alertDialog = null;
+				this.on_size();
+				layoutManager.updateParts();
+				this.repaint();
+				break;
+			case "Set.AddPlaylistPanel Visible":
+				// this.inputPopupPanel.visible = !!data;
+				// this.on_size();
+				// layoutManager.updateParts();
+				// this.repaint();
+				break;
+			case "Rename.Playlist":
+				// if (isValidPlaylist(data)) {
+				// 	let playlistIndex = data;
+				// 	this.inputPopupPanel.inputbox.text = plman.GetPlaylistName(playlistIndex);
+				// 	this.inputPopupPanel.visible = true;
+				// 	this.on_size();
+				// 	layoutManager.updateParts();
+				// 	this.repaint();
+				// }
 				break;
 		}
 	}

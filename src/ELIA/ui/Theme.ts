@@ -18,7 +18,7 @@ export const mainColors: IThemeColors = {
 	text: RGB(235, 235, 235),
 	secondaryText: RGB(170, 170, 170),
 	background: RGB(35, 35, 35),
-	highlight: RGB(247, 217, 76)
+	highlight: RGB(251, 114, 153)
 }
 
 /**
