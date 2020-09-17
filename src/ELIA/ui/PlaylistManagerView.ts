@@ -449,6 +449,7 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 
         if (this.dragSourceId === this.hoverId && isValidPlaylist(this.hoverId)) {
             plman.ActivePlaylist = this.hoverId;
+            notifyOthers("Show.Playlist");
         }
 
         if (this.dragSourceId > -1 && this.dragSourceId !== this.dragTargetId) {

@@ -61,7 +61,7 @@ export abstract class Component implements IBoxModel, ICallbacks {
 	readonly cid: number = get_cid();
 	private _visible: boolean = true;
 	private _shouldUpdateOnInit = true;
-	private _shouldSortChildren = false;
+	private _shouldSortChildren = true;
 	x: number = 0;
 	y: number = 0;
 	private _zIndex: number = 0;
@@ -80,6 +80,7 @@ export abstract class Component implements IBoxModel, ICallbacks {
 	children: Component[] = [];
 	manager: PartsManager;
 	constructor(attrs: object, callbacks?: IInjectableCallbacks) {
+		this.z = 0;
 		Object.assign(this, attrs);
 		if (isObject(callbacks)) {
 			Object.assign(this, callbacks)

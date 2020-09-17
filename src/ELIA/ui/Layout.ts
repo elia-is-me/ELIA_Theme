@@ -2,10 +2,11 @@ import { Component } from "../common/BasePart";
 import { TopBar } from "./TopbarView";
 import { PlaybackControlView } from "./PlaybackControlView";
 import { PlaylistManagerView, PLM_Properties } from "./PlaylistManagerView";
-import { PlaylistView, isValidPlaylist } from "./PlaylistView";
-import { scale, ThrottledRepaint } from "../common/common";
+import { PlaylistView } from "./PlaylistView";
+import { scale } from "../common/common";
 import { InputPopupPanel, IInputPopupOptions } from "./InputPopupPanel";
 import { AlertDialog, IAlertDialogOptions } from "./AlertDialog";
+import { SearchResultView } from "./SearchResultView";
 
 
 const CONTROL_BAR_HEIGHT = scale(76);
@@ -14,6 +15,7 @@ const PLMAN_MIN_WIDTH = PLM_Properties.minWidth;
 
 const enum ViewStates {
 	Default,
+	Search,
 }
 
 export class Layout extends Component {
@@ -21,6 +23,7 @@ export class Layout extends Component {
 	playbackControlBar: PlaybackControlView;
 	playlistManager: PlaylistManagerView;
 	playlistView: PlaylistView
+	searchResultView?: SearchResultView;
 	inputPopupPanel?: InputPopupPanel;
 	alertDialog?: AlertDialog;
 
@@ -42,13 +45,11 @@ export class Layout extends Component {
 		this.playbackControlBar = options.playbackControlBar;
 		this.playlistManager = options.playlsitManager;
 		this.playlistView = options.playlistView;
-		// this.inputPopupPanel = options.addPlaylistPanel;
 
 		this.addChild(this.topbar);
 		this.addChild(this.playbackControlBar);
 		this.addChild(this.playlistManager);
 		this.addChild(this.playlistView);
-		// this.addChild(this.addPlaylistPanel);
 
 		this.setPartsZIndex(this.viewState);
 		this.setPartsVisible(this.viewState);
@@ -60,27 +61,33 @@ export class Layout extends Component {
 
 	setPartsVisible(viewState: ViewStates) {
 		this.topbar.visible = true;
-		// this.playbackControlBar.visible = true;
+		this.playbackControlBar.visible = true;
 
 		if (viewState === ViewStates.Default) {
 			this.playlistManager.visible = true;
 			this.playlistView.visible = true;
-		} else { }
+			this.searchResultView && (this.searchResultView.visible = false);
+		} else if (viewState === ViewStates.Search) {
+			this.playlistManager.visible = true;
+			this.playlistView.visible = false;
+			this.searchResultView && (this.searchResultView.visible = true);
+		}
 	}
 
 	setPartsLayout(viewState: ViewStates) {
 		const { x, y, width, height } = this;
 
-        /**
-         * Set pinned parts;
-         */
+		/**
+		 * Set pinned parts;
+		 */
 		this.topbar.setBoundary(x, y, width, TOPBAR_HEIGHT);
 		this.playbackControlBar.setBoundary(x, x + height - CONTROL_BAR_HEIGHT, width, CONTROL_BAR_HEIGHT);
 
-        /**
-         * Set others;
-         */
+		/**
+		 * Set others;
+		 */
 		const { playlistView, playlistManager } = this;
+		const { searchResultView } = this;
 		const listY = this.topbar.y + this.topbar.height;
 		const listHeight = this.height - this.topbar.height - this.playbackControlBar.height;
 
@@ -99,7 +106,18 @@ export class Layout extends Component {
 					playlistView.setBoundary(x, listY, width, listHeight);
 				}
 				break;
-			default:
+			case ViewStates.Search:
+				playlistManager.visible && playlistManager.setBoundary(x, listY, PLMAN_MIN_WIDTH, listHeight);
+				if (playlistManager.visible) {
+					searchResultView.setBoundary(
+						playlistManager.x + playlistManager.width,
+						listY,
+						this.x + this.width - (playlistManager.x + playlistManager.width),
+						listHeight
+					);
+				} else {
+					searchResultView.setBoundary(x, listY, width, listHeight);
+				}
 				break;
 		}
 
@@ -117,9 +135,9 @@ export class Layout extends Component {
 		}
 	}
 
-    /**
-     * TODO
-     */
+	/**
+	 * TODO
+	 */
 	private setPartsZIndex(viewState: ViewStates) {
 		this.topbar.z = 100;
 		this.playbackControlBar.z = 10;
@@ -127,9 +145,9 @@ export class Layout extends Component {
 		this.playlistManager.z = 0;
 	}
 
-    /**
-     * TODO;
-     */
+	/**
+	 * TODO;
+	 */
 	setViewState(newState: any) { }
 
 	on_paint(gr: IGdiGraphics) {
@@ -202,6 +220,28 @@ export class Layout extends Component {
 				// 	layoutManager.updateParts();
 				// 	this.repaint();
 				// }
+				break;
+			case "Show.SearchResult":
+				this.searchResultView = new SearchResultView({
+					metadbs: data as IFbMetadbList
+				});
+				this.addChild(this.searchResultView);
+				this.viewState = ViewStates.Search;
+				this.setPartsVisible(this.viewState);
+				this.on_size();
+				layoutManager.updateParts();
+				this.repaint();
+				break;
+			case "Show.Playlist":
+				if (this.searchResultView) {
+					this.removeChild(this.searchResultView);
+					this.searchResultView = undefined;
+				}
+				this.viewState = ViewStates.Default;
+				this.setPartsVisible(this.viewState);
+				this.on_size();
+				layoutManager.updateParts();
+				this.repaint()
 				break;
 		}
 	}

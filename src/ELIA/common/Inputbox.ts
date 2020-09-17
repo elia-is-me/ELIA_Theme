@@ -124,9 +124,6 @@ export class InputBox extends Component implements IInputBoxOptions{
         Object.assign(this, opts);
         this.text = this.default_text;
 
-        console.log("empty_text: ", this.empty_text);
-
-        this.func.bind(this);
     }
 
 

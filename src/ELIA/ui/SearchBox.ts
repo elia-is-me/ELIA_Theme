@@ -9,6 +9,7 @@ import { scale, setAlpha, RGB, MeasureString } from "../common/common";
 import { SerializableIcon } from "../common/IconType";
 import { Material, MaterialFont } from "../common/iconCode";
 import { mainColors, globalFontName } from "./Theme";
+import { notifyOthers } from "./Layout";
 
 type TIconKeys = "loupe" | "delta" | "cross";
 const iconFontSize = scale(20);
@@ -125,13 +126,24 @@ export class SearchBox extends Component {
 			backgroundActiveColor: this.backgroundActiveColor,
 			backgroundSelectionColor: RGB(180, 180, 180),
 			empty_text: "Search Library",
-			func() { }
+			func: () => {
+				this.handleSearch();
+			}
 		});
+
 
 		this._inputboxHeight = MeasureString("ABCDgl汉字", this.inputbox.font).Height + scale(4);
 
 		[this.searchBtn, this.clearBtn, this.menuBtn, this.inputbox].forEach(btn => this.addChild(btn));
 
+	}
+
+	handleSearch() {
+		let searchText = this.inputbox.text;
+		let result = fb.GetQueryItems(fb.GetLibraryItems(), searchText);
+
+		console.log(result.Count);
+		notifyOthers("Show.SearchResult", result);
 	}
 
 	private _clearInput() {
@@ -193,9 +205,15 @@ export class SearchBox extends Component {
 
 }
 
+const handleSearch = () => {
+
+	notifyOthers("Show.SearchResult");
+
+}
+
 /**
  * TODO:
- * 
+ *
  * - Search 动作?
  * - Search 种类?
  */
