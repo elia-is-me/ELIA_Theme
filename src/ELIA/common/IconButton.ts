@@ -160,6 +160,8 @@ export class Button extends Clickable {
 
 	private getProperPaddings(p: IPaddings): IPaddings {
 		let paddings_: IPaddings = {
+			top: 0,
+			bottom: 0,
 			left: scale(4),
 			right: scale(4),
 		}
@@ -213,7 +215,6 @@ export class Button2 extends Clickable {
 	textFont: IGdiFont;
 	private _textColor: Map<ButtonStates, number> = new Map();
 	private _backgroundColor: Map<ButtonStates, number> = new Map();
-	private paddings: { top: number; left: number; }
 
 	constructor(opts: IButton2Options) {
 		super({})
@@ -221,7 +222,6 @@ export class Button2 extends Clickable {
 		this.setColors(opts);
 		this.text = opts.text;;
 		this.textFont = defaultButtonFont//(opts.textFont && defaultButtonFont);
-		this.paddings = { top: 0, left: 0 };
 	}
 
 	setColors(colors: IButton2Colors) {

@@ -2,3 +2,6 @@ node_modules/*
 .vscode/*
 *.code-workspace
 out/*
+.DS_Store
+.cache
+Thumbs.db

@@ -55,12 +55,6 @@ export class InputPopupPanel extends Component implements IInputPopupOptions, II
 	onSuccess?: () => void;
 	onFail?: () => void;
 
-
-	paddings: {
-		left: number;
-		top: number;
-	};
-
 	okBtn: Button2;
 	cancelBtn: Button2;
 	inputbox: InputBox;
@@ -75,10 +69,8 @@ export class InputPopupPanel extends Component implements IInputPopupOptions, II
 		console.log(this.defaultText);
 
 
-		this.paddings = {
-			top: scale(44),
-			left: scale(40)
-		}
+		this.paddings.top = scale(44);
+		this.paddings.left = scale(40);
 
 		// create buttons;
 		this.okBtn = new Button2({

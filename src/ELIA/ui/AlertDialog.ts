@@ -1,7 +1,14 @@
 import { Component } from "../common/BasePart";
 import { Button2 } from "../common/IconButton";
 import { globalFontName, mainColors } from "./Theme";
-import { scale, RGB, setAlpha, StringFormat, StringTrimming, StringFormatFlags } from "../common/common";
+import {
+	scale,
+	RGB,
+	setAlpha,
+	StringFormat,
+	StringTrimming,
+	StringFormatFlags,
+} from "../common/common";
 import { notifyOthers } from "./Layout";
 
 export interface IAlertDialogOptions {
@@ -24,11 +31,12 @@ const defaultOptions: IDefaultOptions = {
 	panelHeight: scale(225),
 	textColor: mainColors.text,
 	backgroundColor: RGB(15, 15, 15),
-	highlightColor: mainColors.highlight
-}
+	highlightColor: mainColors.highlight,
+};
 
-export class AlertDialog extends Component implements IAlertDialogOptions, IDefaultOptions {
-
+export class AlertDialog
+	extends Component
+	implements IAlertDialogOptions, IDefaultOptions {
 	readonly modal: boolean = true;
 
 	titleFont: IGdiFont;
@@ -43,46 +51,41 @@ export class AlertDialog extends Component implements IAlertDialogOptions, IDefa
 	okBtn: Button2;
 	cancelBtn: Button2;
 
-	paddings: { top: number; left: number };
-
 	constructor(options: IAlertDialogOptions) {
-		super({})
+		super({});
 
 		Object.assign(this, defaultOptions, options);
 
-		this.paddings = {
-			top: scale(44),
-			left: scale(40)
-		};
+		this.paddings.top = scale(44);
+		this.paddings.left = scale(40);
 
 		this.okBtn = new Button2({
 			text: "OK",
 			textColor: this.textColor,
 			textHoverColor: setAlpha(this.textColor, 200),
-			textDownColor: setAlpha(this.textColor, 127)
+			textDownColor: setAlpha(this.textColor, 127),
 		});
 		this.okBtn.setSize(scale(80), scale(32));
 		this.okBtn.on_click = () => {
 			notifyOthers("Hide.AlertDialog");
-		}
+		};
 
 		this.cancelBtn = new Button2({
 			text: "Cancel",
 			textColor: this.textColor,
 			textHoverColor: setAlpha(this.textColor, 200),
-			textDownColor: setAlpha(this.textColor, 127)
+			textDownColor: setAlpha(this.textColor, 127),
 		});
 		this.cancelBtn.setSize(scale(80), scale(32));
 		this.cancelBtn.on_click = () => {
-			notifyOthers("Hide.AlertDialog")
-		}
+			notifyOthers("Hide.AlertDialog");
+		};
 
 		[this.okBtn, this.cancelBtn].forEach(btn => {
 			this.addChild(btn);
 		});
 
 		this.setSize(this.panelWidth, this.panelHeight);
-
 	}
 
 	on_size() {
@@ -91,10 +94,9 @@ export class AlertDialog extends Component implements IAlertDialogOptions, IDefa
 
 		okBtn.setPosition(
 			this.x + this.width - okBtn.width - left,
-			this.y + this.height - top - okBtn.height);
-		cancelBtn.setPosition(
-			okBtn.x - cancelBtn.width - scale(24),
-			okBtn.y);
+			this.y + this.height - top - okBtn.height
+		);
+		cancelBtn.setPosition(okBtn.x - cancelBtn.width - scale(24), okBtn.y);
 	}
 
 	on_paint(gr: IGdiGraphics) {
@@ -103,7 +105,13 @@ export class AlertDialog extends Component implements IAlertDialogOptions, IDefa
 		const { top, left } = this.paddings;
 
 		// background;
-		gr.FillSolidRect(this.x, this.y, this.width, this.height, backgroundColor);
+		gr.FillSolidRect(
+			this.x,
+			this.y,
+			this.width,
+			this.height,
+			backgroundColor
+		);
 
 		// title;
 		gr.DrawString(

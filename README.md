@@ -7,28 +7,27 @@
 
 ##  Compile
 
-- Install `nodejs (v6.13.4)`
-- cd `ts_elia` folder and install `typescript`, `gulp`, etc:
+- Install `nodejs (v6.13.4+)`
+- cd source folder and install `typescript`, `gulp`, etc:
 ``` bash
-npm install --save-dev typescript gulp-cli gulp@4.0.0 gulp-typescript
-npm install --save-dev browserify vinyl-source-stream tsify
+npm install 
 ```
 - `npx gulp`
 
-Output files will be at `./out` folder
+Output files will be at `./out` folder.
 
 ## Use
 
-> NOTE: this theme is in dev status, functions incomplete.
+> NOTE: This theme is in dev status, and may not run normally.
 
-- Make sure foobar2000, foo_spider_monkey_panel.dll have been installed. For better experience, install foo_playcount.dll also;
+- Make sure foobar2000, foo_spider_monkey_panel.dll have been installed; For better experience, install foo_playcount.dll, foo_ui_hacks.dll too;
 - Create a scratchbox and place a foo_spider_monkey_panel in it;
 - Click on panel and then import `elia-theme-main.js` in `./out` folder;
-- Apply scratchbox to your foobar2000
+- Apply scratchbox to your foobar2000.
 
-## Take Care
+## Care
 
-I can't make it sure that this script would be stable and never crashed, so you don't know how to handle it or how to reset your fb2k's ui you'd better be much more careful.
+I can't make it sure that this script could be stable and would never crashed, so if you don't know how to handle it or how to reset your fb2k's ui you'd better be much more careful.
 
 ## Thanks
 

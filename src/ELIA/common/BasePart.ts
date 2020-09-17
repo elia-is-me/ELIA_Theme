@@ -40,6 +40,13 @@ export interface IBoxModel {
 	height: number;
 }
 
+export interface IPaddings {
+	top: number;
+	bottom: number;
+	left: number;
+	right: number;
+}
+
 export interface IInjectableCallbacks {
 	on_init?: () => void;
 	on_size?: () => void;
@@ -79,6 +86,12 @@ export abstract class Component implements IBoxModel, ICallbacks {
 	parent: Component;
 	children: Component[] = [];
 	manager: PartsManager;
+	paddings: IPaddings = {
+		top: 0,
+		bottom: 0,
+		left: 0,
+		right: 0
+	};
 	constructor(attrs: object, callbacks?: IInjectableCallbacks) {
 		this.z = 0;
 		Object.assign(this, attrs);
@@ -225,13 +238,6 @@ export abstract class Component implements IBoxModel, ICallbacks {
 		// window.RepaintRect(this.x, this.y, this.width, this.height);
 		window.Repaint();
 	}
-}
-
-export interface IPaddings {
-	top?: number;
-	bottom?: number;
-	left?: number;
-	right?: number;
 }
 
 const useClearType = window.GetProperty('_Global.Font Use ClearType', true);

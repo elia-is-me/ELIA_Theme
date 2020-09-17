@@ -223,7 +223,8 @@ export class Layout extends Component {
 				break;
 			case "Show.SearchResult":
 				this.searchResultView = new SearchResultView({
-					metadbs: data as IFbMetadbList
+					titleText: (data as any).titleText,
+					metadbs: (data as any).metadbs
 				});
 				this.addChild(this.searchResultView);
 				this.viewState = ViewStates.Search;
@@ -424,6 +425,8 @@ export class PartsManager {
 export const layoutManager = new PartsManager();
 
 export function notifyOthers(message: string, data?: any) {
+
+	console.log(message, data);
 
 	let parts = layoutManager.parts;
 

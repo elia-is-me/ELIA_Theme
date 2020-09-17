@@ -143,7 +143,10 @@ export class SearchBox extends Component {
 		let result = fb.GetQueryItems(fb.GetLibraryItems(), searchText);
 
 		console.log(result.Count);
-		notifyOthers("Show.SearchResult", result);
+		notifyOthers("Show.SearchResult", {
+			titleText: searchText,
+			metadbs: result
+		});
 	}
 
 	private _clearInput() {

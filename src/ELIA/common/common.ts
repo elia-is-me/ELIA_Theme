@@ -3,8 +3,8 @@
  *------------------------------------------------------------------------------------*/
 
 /*
- * 不知为何在 tsconfig.json 里 include foo_spider_monkey_panel.d.ts 时，使用 browserify +
- * tsify 编译始终报错，提示找不到变量 fb 什么的。
+ * 不知为何在 tsconfig.json 里 include foo_spider_monkey_panel.d.ts 时，使用
+ * browserify + tsify 编译始终报错，提示找不到变量什么的。
  */
 /// <reference path="../../typings/foo_spider_monkey_panel.d.ts" />
 
@@ -26,15 +26,16 @@ export function getAlpha(colour: number) {
 }
 
 /**
- *  Set a color's alpha value, alpha <= [0 - 255]. The origenal alpha info will
- *  be negelected.
+ *  Set a color's alpha value, alpha <= [0 - 255]. The origenal alpha info
+ *  will be negelected.
  */
 export function setAlpha(color: number, alpha: number) {
 	return (color & 0x00ffffff) | (alpha << 24);
 }
 
 /**
- *  When factor is 0, result is 100% color1, when factor is 1, result is 100% color2.
+ *  When factor is 0, result is 100% color1, when factor is 1, result is 100%
+ *  color2.
  */
 export function blendColors(c1: number, c2: number, factor: number) {
 	var c1_ = toRGB(c1);
@@ -386,7 +387,6 @@ export const enum StopReason {
 export const Repaint = () => window.Repaint();
 export const ThrottledRepaint = throttle(Repaint, 15);
 
-
 export const enum VKeyCode {
 	Shift = 0x10,
 	Control = 0x11,
@@ -444,3 +444,4 @@ export function GetKeyboardMask() {
 		ret = KMask.alt;
 	return ret;
 };
+
