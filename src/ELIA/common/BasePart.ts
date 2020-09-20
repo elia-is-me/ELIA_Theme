@@ -1,6 +1,5 @@
 import { isObject, TextRenderingHint } from "./common";
-import { PartsManager } from "../ui/Layout";
-import { sidebarColors } from "../ui/Theme";
+import { UserInterface } from "./UserInterface";
 
 /**
  * A too simple way to generate component id;
@@ -85,7 +84,7 @@ export abstract class Component implements IBoxModel, ICallbacks {
 	height: number = 0;
 	parent: Component;
 	children: Component[] = [];
-	manager: PartsManager;
+	manager: UserInterface;
 	paddings: IPaddings = {
 		top: 0,
 		bottom: 0,

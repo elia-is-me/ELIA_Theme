@@ -10,6 +10,7 @@ import {
 	VKeyCode,
 	MenuFlag,
 	clamp,
+	KMask,
 } from "../common/common";
 import { mainColors, globalFontName, scrollbarColor } from "./Theme";
 import { Scrollbar } from "../common/Scrollbar";
@@ -17,9 +18,8 @@ import { ScrollView } from "../common/ScrollView";
 import { IPaddings } from "../common/BasePart";
 import { SerializableIcon } from "../common/IconType";
 import { MaterialFont, Material } from "../common/iconCode";
-import { isValidPlaylist } from "./PlaylistView";
 import { toggleMood } from "./PlaybackControlView";
-import { notifyOthers } from "./Layout";
+import { notifyOthers } from "../common/UserInterface";
 
 interface IHeaderOptions {
 	titleText: string;
@@ -537,6 +537,7 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 		trackNumber.setPaddings({ left: scale(8) });
 		title.setPaddings({ right: scale(16) });
 		artist.setPaddings({ right: scale(16) });
+		album.setPaddings({ right: scale(16) });
 	}
 
 	on_size() {
@@ -579,6 +580,10 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 		let cMood = _columnsMap.get("mood");
 		let cTime = _columnsMap.get("time");
 
+		// headerView;
+		this.headerView.y = this.y - this.scroll;
+
+		// background;
 		gr.FillSolidRect(this.x, this.y, this.width, this.height, this.backgroundColor);
 
 		// Clear visibleItems;
@@ -651,7 +656,9 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 				cArtist.visible && cArtist.draw(gr, rowItem.artist, itemFont, this.secondaryColor, rowItem);
 
 				// album;
-				cAlbum.visible && cAlbum.draw(gr, rowItem.album, itemFont, this.secondaryColor, rowItem);
+				if (cAlbum.visible && cAlbum.width > 0) {
+					cAlbum.draw(gr, rowItem.album, itemFont, this.secondaryColor, rowItem);
+				}
 
 				// time;
 				cTime.draw(gr, rowItem.time, itemFont, this.secondaryColor, rowItem);
@@ -825,7 +832,7 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 		let topY = Math.max(this.y, this.headerView.y + this.headerView.height);
 		let bottomY = this.y + this.height - 1;
 		selecting.pageX2 = clamp(x, this.x, this.x + this.width - this.scrollbar.width);
-		selecting.pageY2 = clamp(y, topY, bottomY)-this.y + this.scroll;
+		selecting.pageY2 = clamp(y, topY, bottomY) - this.y + this.scroll;
 		let first = -1;
 		let last = -1;
 		let padLeft = this.paddings.left;
@@ -870,6 +877,8 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 		if (this.clickedMoodId > -1) {
 			if (this.getActiveMoodId(x, y) === this.clickedMoodId) {
 				toggleMood(this.items[this.clickedMoodId].metadb);
+				this.items[this.clickedMoodId].title = undefined;
+				this.repaint();
 			}
 			return;
 		}
@@ -881,7 +890,7 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 		} else if (selecting.isActive) {
 			// do nothing;
 		} else {
-			if (hoverItem == null) {
+			if (hoverItem != null) {
 				if (utils.IsKeyPressed(VKeyCode.Control)) {
 					// do nothing;
 				} else if (utils.IsKeyPressed(VKeyCode.Shift)) {
@@ -1005,6 +1014,34 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 		}
 	}
 
+	on_key_down(vkey: number, mask = KMask.none) {
+		if (selecting.isActive || dnd.isActive) {
+			return;
+		}
+
+		if (mask === KMask.none) {
+			switch (vkey) {
+				case VKeyCode.Escape:
+					this.setSel();
+					this.repaint();
+					break;
+			}
+		} else if (mask === KMask.ctrl) {
+			if (vkey === 65 /* A */) {
+				this.setSel(0, this.items.length - 1);
+				this.repaint();
+			}
+
+			if (vkey === 88 /* X */) {
+				// do nothing;
+			}
+
+			if (vkey === 67 /* C */) {
+				fb.CopyHandleListToClipboard(this.getSelMetadbs());
+			}
+		}
+	}
+
 	on_playback_new_track() {
 		let metadb = fb.GetNowPlaying();
 		if (metadb == null) return;
@@ -1019,4 +1056,5 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 			this.repaint();
 		}
 	}
+
 }

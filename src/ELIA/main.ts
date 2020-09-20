@@ -5,7 +5,8 @@ import { bottomColors, mainColors, globalFontName } from "./ui/Theme";
 import { TopBar } from "./ui/TopbarView";
 import { PlaylistView } from "./ui/PlaylistView";
 import { PlaylistManagerView } from "./ui/PlaylistManagerView";
-import { Layout, PartsManager, layoutManager } from "./ui/Layout";
+import { Layout } from "./ui/Layout";
+import { UserInterface, ui } from "./common/UserInterface";
 import { SerializableIcon } from "./common/IconType";
 import { Material, MaterialFont } from "./common/iconCode";
 import { InputPopupPanel } from "./ui/InputPopupPanel";
@@ -55,7 +56,7 @@ const playlistManager = new PlaylistManagerView();
 /**
  * Root part of this panel;
  */
-const layout = new Layout({
+const root = new Layout({
 	topbar: topbar,
 	playbackControlBar: playbackControlBar,
 	playlsitManager: playlistManager,
@@ -63,13 +64,13 @@ const layout = new Layout({
 	// addPlaylistPanel: addPlaylistPanel
 });
 
-layoutManager.setRoot(layout);
+ui.setRoot(root);
 
 /* =============== /
  *  Set layout
  * =============== */
 
-layout.onReady = function () {
+root.onReady = function () {
 
 	checkDefautPlaylist();
 
@@ -112,7 +113,7 @@ function on_paint(gr: IGdiGraphics) {
 
 	gr.SetTextRenderingHint(textRenderingHint);
 
-	const visibleParts = layoutManager.visibleParts;
+	const visibleParts = ui.visibleParts;
 	const len = visibleParts.length;
 
 
@@ -141,8 +142,8 @@ function on_size() {
 	let wh = window.Height;
 	if (!ww || !wh) return;
 
-	layout.setBoundary(0, 0, Math.max(ww, PANEL_MIN_WIDTH), wh);
-	layoutManager.updateParts();
+	root.setBoundary(0, 0, Math.max(ww, PANEL_MIN_WIDTH), wh);
+	ui.updateParts();
 
 }
 
@@ -159,46 +160,46 @@ function on_mouse_move(x: number, y: number) {
 	mouseCursor.y = y;
 
 	if (!mouseIsDragWindow) {
-		layoutManager.setActive(x, y);
+		ui.setActive(x, y);
 	}
 
-	layoutManager.invokeActivePart("on_mouse_move", x, y);
+	ui.invokeActivePart("on_mouse_move", x, y);
 }
 
 function on_mouse_lbtn_down(x: number, y: number) {
 	mouseIsDragWindow = true;
-	layoutManager.setActive(x, y);
-	layoutManager.invokeActivePart("on_mouse_lbtn_down", x, y);
-	layoutManager.setFocus(x, y);
+	ui.setActive(x, y);
+	ui.invokeActivePart("on_mouse_lbtn_down", x, y);
+	ui.setFocus(x, y);
 }
 
 function on_mouse_lbtn_dblclk(x: number, y: number) {
-	layoutManager.invokeActivePart("on_mouse_lbtn_dblclk", x, y);
+	ui.invokeActivePart("on_mouse_lbtn_dblclk", x, y);
 }
 
 function on_mouse_lbtn_up(x: number, y: number) {
 
-	layoutManager.invokeActivePart("on_mouse_lbtn_up", x, y);
+	ui.invokeActivePart("on_mouse_lbtn_up", x, y);
 
 	if (mouseIsDragWindow) {
 		mouseIsDragWindow = false;
-		layoutManager.setActive(x, y);
+		ui.setActive(x, y);
 	}
 }
 
 function on_mouse_leave() {
-	layoutManager.setActive(-1, -1);
+	ui.setActive(-1, -1);
 }
 
 function on_mouse_rbtn_down(x: number, y: number) {
-	layoutManager.setActive(x, y);
-	layoutManager.invokeActivePart("on_mouse_rbtn_down", x, y);
+	ui.setActive(x, y);
+	ui.invokeActivePart("on_mouse_rbtn_down", x, y);
 
-	layoutManager.setFocus(x, y);
+	ui.setFocus(x, y);
 }
 
 function on_mouse_rbtn_up(x: number, y: number) {
-	layoutManager.invokeActivePart("on_mouse_rbtn_up", x, y);
+	ui.invokeActivePart("on_mouse_rbtn_up", x, y);
 
 	/**
 	 * Return true to disable spider_monkey_panel's default right-click popup
@@ -209,7 +210,7 @@ function on_mouse_rbtn_up(x: number, y: number) {
 
 function on_mouse_wheel(step: number) {
 
-	const activePart = layoutManager.activePart;
+	const activePart = ui.activePart;
 
 	if (activePart == null) {
 		return;
@@ -234,7 +235,7 @@ function on_focus(isFocused: boolean) {
 		/**
 		 * Lost focus.
 		 */
-		layoutManager.setFocus(-1, -1);
+		ui.setFocus(-1, -1);
 	}
 }
 
@@ -250,69 +251,69 @@ function on_key_down(vkey: number) {
 	}
 
 	// if (layoutManager.)
-	layoutManager.invokeFocusedPart("on_key_down", vkey, mask);
+	ui.invokeFocusedPart("on_key_down", vkey, mask);
 
 	// layout.playlistView.isVisible() && layout.playlistView.on_key_down(vkey, mask);
 }
 
 function on_char(code: number) {
-	layoutManager.invokeFocusedPart("on_char", code);
+	ui.invokeFocusedPart("on_char", code);
 }
 
 function on_playback_order_changed(newOrder: number) {
-	layoutManager.invokeVisibleParts("on_playback_new_order_changed", newOrder);
+	ui.invokeVisibleParts("on_playback_new_order_changed", newOrder);
 }
 
 function on_playback_stop(reason: StopReason) {
-	layoutManager.invokeVisibleParts("on_playback_stop", reason);
+	ui.invokeVisibleParts("on_playback_stop", reason);
 }
 
 function on_playback_edited() {
-	layoutManager.invokeVisibleParts("on_playback_edited");
+	ui.invokeVisibleParts("on_playback_edited");
 }
 
 function on_playback_pause() {
-	layoutManager.invokeVisibleParts("on_playback_pause");
+	ui.invokeVisibleParts("on_playback_pause");
 }
 
 function on_playback_new_track(handle: IFbMetadb) {
-	layoutManager.invokeVisibleParts("on_playback_new_track", handle);
+	ui.invokeVisibleParts("on_playback_new_track", handle);
 }
 
 function on_selection_changed() {
-	layoutManager.invokeVisibleParts("on_selection_changed");
+	ui.invokeVisibleParts("on_selection_changed");
 }
 
 function on_playlist_selection_changed() {
-	layoutManager.invokeVisibleParts("on_selection_changed");
+	ui.invokeVisibleParts("on_selection_changed");
 }
 
 function on_playlist_items_added(playlistIndex?: number) {
-	layoutManager.invokeVisibleParts("on_playlist_items_added", playlistIndex);
+	ui.invokeVisibleParts("on_playlist_items_added", playlistIndex);
 }
 
 function on_playlist_items_removed(playlistIndex?: number, newCount?: number) {
-	layoutManager.invokeVisibleParts("on_playlist_items_removed", playlistIndex, newCount);
+	ui.invokeVisibleParts("on_playlist_items_removed", playlistIndex, newCount);
 }
 
 function on_playlist_items_reordered(playlistIndex?: number) {
-	layoutManager.invokeVisibleParts("on_playlist_items_reordered", playlistIndex);
+	ui.invokeVisibleParts("on_playlist_items_reordered", playlistIndex);
 }
 
 function on_playlists_changed() {
-	layoutManager.invokeVisibleParts("on_playlists_changed");
+	ui.invokeVisibleParts("on_playlists_changed");
 }
 
 function on_playlist_switch() {
-	layoutManager.invokeVisibleParts("on_playlist_switch");
+	ui.invokeVisibleParts("on_playlist_switch");
 }
 
 function on_item_focus_change(playlistIndex?: number, from?: number, to?: number) {
-	layoutManager.invokeVisibleParts("on_item_focus_change", playlistIndex, from, to);
+	ui.invokeVisibleParts("on_item_focus_change", playlistIndex, from, to);
 }
 
 function on_metadb_changed(metadbs: IFbMetadbList, fromhook: boolean) {
-	layoutManager.invokeVisibleParts("on_metadb_changed", metadbs, fromhook);
+	ui.invokeVisibleParts("on_metadb_changed", metadbs, fromhook);
 }
 
 /**
@@ -366,7 +367,7 @@ window.DlgCode = DLGC_WANTALLKEYS;
 
 /* When all ready; */
 window.SetTimeout(() => {
-	layout.onReady();
+	root.onReady();
 }, 5);
 
 
