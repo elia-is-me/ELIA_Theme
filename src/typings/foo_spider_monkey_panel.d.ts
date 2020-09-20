@@ -820,7 +820,7 @@ interface IFbPlaylistManager {
         base: number,
         handle_list: IFbMetadbList,
         select?: boolean
-    ): number;
+    ): void;
 
     /**
      * Same as {@link plman.InsertPlaylistItems} except any duplicates contained in handle_list are removed.
@@ -2015,7 +2015,7 @@ interface IFbMetadb {
  */
 interface IFbMetadbList extends Array<IFbMetadb> {
 
-    new(arg: IFbMetadbList | IFbMetadb | IFbMetadb[] | null | undefined): IFbMetadbList;
+    new(arg?: IFbMetadbList | IFbMetadb | IFbMetadb[] | null | undefined): IFbMetadbList;
 
 
 
@@ -2305,6 +2305,10 @@ interface IFbMetadbList extends Array<IFbMetadb> {
      */
     UpdateFileInfoFromJSON(str: string): void;
 }
+
+// interface FbMetadbHandleList extends IFbMetadbList {
+//     new(arg: IFbMetadbList | IFbMetadb | IFbMetadb[] | null | undefined): IFbMetadbList;
+// }
 
 /**
  * A Recycle Bin for playlists.
@@ -3265,3 +3269,4 @@ declare var gdi: IGdiUtils;
 // declare var window: Window; // (declared already;)
 declare var utils: IWSHUtils;
 declare var plman: IFbPlaylistManager;
+declare var FbMetadbHandleList: IFbMetadbList;

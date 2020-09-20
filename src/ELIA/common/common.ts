@@ -1,5 +1,5 @@
 /*------------------------------------------------------------------------------------
- *  Commonly used utilites, constants, etc. 
+ *  Commonly used utilites, constants, etc.
  *------------------------------------------------------------------------------------*/
 
 /*
@@ -9,20 +9,21 @@
 /// <reference path="../../typings/foo_spider_monkey_panel.d.ts" />
 
 export function RGB(r: number, g: number, b: number) {
-	return (0xff000000 | (r << 16) | (g << 8) | (b));
-};
+	return 0xff000000 | (r << 16) | (g << 8) | b;
+}
 
 export function RGBA(r: number, g: number, b: number, a: number) {
-	return ((a << 24) | (r << 16) | (g << 8) | (b));
-};
+	return (a << 24) | (r << 16) | (g << 8) | b;
+}
 
-export function toRGB(color: number) { // returns an array like [192, 0, 0]
-	var a = color - 0xFF000000;
-	return [a >> 16, a >> 8 & 0xFF, a & 0xFF];
+export function toRGB(color: number) {
+	// returns an array like [192, 0, 0]
+	var a = color - 0xff000000;
+	return [a >> 16, (a >> 8) & 0xff, a & 0xff];
 }
 
 export function getAlpha(colour: number) {
-	return ((colour >> 24) & 0xff);
+	return (colour >> 24) & 0xff;
 }
 
 /**
@@ -44,8 +45,8 @@ export function blendColors(c1: number, c2: number, factor: number) {
 	var g = Math.round(c1_[1] + factor * (c2_[1] - c1_[1]));
 	var b = Math.round(c1_[2] + factor * (c2_[2] - c1_[2]));
 	//fb.trace("R = " + r + " G = " + g + " B = " + b);
-	return (0xff000000 | (r << 16) | (g << 8) | (b));
-};
+	return 0xff000000 | (r << 16) | (g << 8) | b;
+}
 
 interface IRGBA_Color {
 	r: number; // [0, 255];
@@ -73,11 +74,17 @@ export function rgba2hsla(rgba: IRGBA_Color): IHSLA_Color {
 	const chroma = max - min;
 
 	if (chroma > 0) {
-		s = Math.min((l <= 0.5 ? chroma / (2 * l) : chroma / (2 - (2 * l))), 1);
+		s = Math.min(l <= 0.5 ? chroma / (2 * l) : chroma / (2 - 2 * l), 1);
 		switch (max) {
-			case r: h = (g - b) / chroma + (g < b ? 6 : 0); break;
-			case g: h = (b - r) / chroma + 2; break;
-			case b: h = (r - g) / chroma + 4; break;
+			case r:
+				h = (g - b) / chroma + (g < b ? 6 : 0);
+				break;
+			case g:
+				h = (b - r) / chroma + 2;
+				break;
+			case b:
+				h = (r - g) / chroma + 4;
+				break;
 		}
 		h *= 60;
 		h = Math.round(h);
@@ -91,7 +98,7 @@ export function hslToRgb(hue: number, sat: number, light: number) {
 	if (light <= 0.5) {
 		t2 = light * (sat + 1);
 	} else {
-		t2 = light + sat - (light * sat);
+		t2 = light + sat - light * sat;
 	}
 	t1 = light * 2 - t2;
 	r = hueToRgb(t1, t2, hue + 2) * 255;
@@ -133,40 +140,43 @@ export const scale = (function () {
 	if (factor === 0) {
 		try {
 			var ws = new ActiveXObject("WScript.Shell");
-			var dpiVal = ws.RegRead("HKEY_CURRENT_USER\\Control Panel\\Desktop\\WindowMetrics\\AppliedDPI");
+			var dpiVal = ws.RegRead(
+				"HKEY_CURRENT_USER\\Control Panel\\Desktop\\WindowMetrics\\AppliedDPI"
+			);
 			factor = Math.round((dpiVal / 96) * 100) / 100;
 		} catch (e) {
 			factor = 1;
 		}
-	} else { };
+	} else {
+	}
 	return function (value: number) {
 		return round(value * factor * 100) / 100;
-	}
+	};
 })();
 
 export function isFunction(obj: any) {
-	return Object.prototype.toString.call(obj) === "[object Function]"
+	return Object.prototype.toString.call(obj) === "[object Function]";
 }
 
 // Array
 export function isArray(item: any) {
-	return Object.prototype.toString.call(item) === '[object Array]';
+	return Object.prototype.toString.call(item) === "[object Array]";
 }
 
 // OBJECT
 export function isObject(item: any) {
-	return typeof item === 'object' && item !== null && !isArray(item);
+	return typeof item === "object" && item !== null && !isArray(item);
 }
 
 export function isString(x: any) {
-	return Object.prototype.toString.call(x) === "[object String]"
+	return Object.prototype.toString.call(x) === "[object String]";
 }
 
 export const BuildFullPath = function (path: string) {
-	var tmpFileLoc = '',
+	var tmpFileLoc = "",
 		pattern = /(.*?)\\/gm;
 	let result;
-	let fs = new ActiveXObject('Scripting.FileSystemObject');
+	let fs = new ActiveXObject("Scripting.FileSystemObject");
 	let create = function (fo: string) {
 		try {
 			if (!fs.FolderExists(fo)) fs.CreateFolder(fo);
@@ -178,7 +188,7 @@ export const BuildFullPath = function (path: string) {
 		tmpFileLoc = tmpFileLoc.concat(result[0]);
 		try {
 			create(tmpFileLoc);
-		} catch (e) { }
+		} catch (e) {}
 	}
 };
 
@@ -188,8 +198,8 @@ export const enum StringTrimming {
 	Word = 2,
 	EllipsisCharacter = 3,
 	EllipsisWord = 4,
-	EllipsisPath = 5
-};
+	EllipsisPath = 5,
+}
 
 // flags, can be combined of:
 // http://msdn.microsoft.com/en-us/library/ms534181(VS.85).aspx
@@ -202,8 +212,8 @@ export const enum StringFormatFlags {
 	MeasureTrailingSpaces = 0x00000800,
 	NoWrap = 0x00001000,
 	LineLimit = 0x00002000,
-	NoClip = 0x00004000
-};
+	NoClip = 0x00004000,
+}
 
 // Used in SetSmoothingMode()
 // For more information, see: http://msdn.microsoft.com/en-us/library/ms534173(VS.85).aspx
@@ -213,8 +223,8 @@ export const enum SmoothingMode {
 	HighSpeed = 1,
 	HighQuality = 2,
 	None = 3,
-	AntiAlias = 4
-};
+	AntiAlias = 4,
+}
 
 // Used in SetInterpolationMode()
 // For more information, see: http://msdn.microsoft.com/en-us/library/ms534141(VS.85).aspx
@@ -227,9 +237,8 @@ export const enum InterpolationMode {
 	Bicubic = 4,
 	NearestNeighbor = 5,
 	HighQualityBilinear = 6,
-	HighQualityBicubic = 7
-};
-
+	HighQualityBicubic = 7,
+}
 
 export const enum TextRenderingHint {
 	SystemDefault = 0,
@@ -237,8 +246,8 @@ export const enum TextRenderingHint {
 	SingleBitPerPixel = 2,
 	AntiAliasGridFit = 3,
 	AntiAlias = 4,
-	ClearTypeGridFit = 5
-};
+	ClearTypeGridFit = 5,
+}
 
 export const enum PlaybackOrder {
 	Normal = 0,
@@ -247,17 +256,27 @@ export const enum PlaybackOrder {
 	Random = 3,
 	ShuffleTracks = 4,
 	ShuffleAlbums = 5,
-	ShuffleFolders = 6
-};
+	ShuffleFolders = 6,
+}
 
 // Helper function for DrawString() and MeasureString()
 // args: h_align, v_align, trimming, flags
 export function StringFormat(h_align = 0, v_align = 0, trimming = 0, flags = 0) {
-	return ((h_align << 28) | (v_align << 24) | (trimming << 20) | flags);
+	return (h_align << 28) | (v_align << 24) | (trimming << 20) | flags;
 }
-StringFormat.LeftCenter = StringFormat(0, 1, StringTrimming.EllipsisCharacter, StringFormatFlags.NoWrap);
+StringFormat.LeftCenter = StringFormat(
+	0,
+	1,
+	StringTrimming.EllipsisCharacter,
+	StringFormatFlags.NoWrap
+);
 StringFormat.Center = StringFormat(1, 1, StringTrimming.Character, StringFormatFlags.NoWrap);
-StringFormat.LeftTop = StringFormat(0, 0, StringTrimming.EllipsisCharacter, StringFormatFlags.NoWrap);
+StringFormat.LeftTop = StringFormat(
+	0,
+	0,
+	StringTrimming.EllipsisCharacter,
+	StringFormatFlags.NoWrap
+);
 StringFormat.LeftTopNoTrim = StringFormat(0, 0, StringTrimming.None, StringFormatFlags.NoWrap);
 
 export function debounce(fn: Function, delay: number) {
@@ -275,8 +294,7 @@ export function debounce(fn: Function, delay: number) {
 
 export function throttle(fn: Function, threshhold: number, scope?: any) {
 	threshhold || (threshhold = 250);
-	var last: number,
-		deferTimer: number;
+	var last: number, deferTimer: number;
 	return function () {
 		var context = scope || this;
 
@@ -297,11 +315,11 @@ export function throttle(fn: Function, threshhold: number, scope?: any) {
 }
 
 /**
- * 
- * @param {IGdiBitmap} image 
- * @param {number} width 
- * @param {number} height 
- * @param {number?} itp 
+ *
+ * @param {IGdiBitmap} image
+ * @param {number} width
+ * @param {number} height
+ * @param {number?} itp
  */
 export function CropImage(image: IGdiBitmap, width: number, height?: number, itp: number = 0) {
 	if (height == null) {
@@ -316,8 +334,7 @@ export function CropImage(image: IGdiBitmap, width: number, height?: number, itp
 		tmp_w = src_h * sc;
 		crop = Math.round((src_w - tmp_w) / 2);
 		tmp_img = image.Clone(crop, 0, tmp_w, src_h);
-	}
-	else {
+	} else {
 		tmp_h = src_w / sc;
 		crop = Math.round((src_h - tmp_h) / 2);
 		tmp_img = image.Clone(0, crop, src_w, tmp_h);
@@ -325,7 +342,14 @@ export function CropImage(image: IGdiBitmap, width: number, height?: number, itp
 	return tmp_img.Resize(width, height, itp);
 }
 
-export function imageFromCode(code: string, font: IGdiFont, color: number, width: number, height: number, fmt = StringFormat(1, 1)): IGdiBitmap {
+export function imageFromCode(
+	code: string,
+	font: IGdiFont,
+	color: number,
+	width: number,
+	height: number,
+	fmt = StringFormat(1, 1)
+): IGdiBitmap {
 	var img = gdi.CreateImage(width, height);
 	var g = img.GetGraphics();
 	g.SetTextRenderingHint(TextRenderingHint.AntiAlias);
@@ -340,7 +364,8 @@ export function imageFromCode(code: string, font: IGdiFont, color: number, width
  */
 export const MeasureString = (() => {
 	let g = gdi.CreateImage(1, 1).GetGraphics();
-	return (str: string | number, font: IGdiFont) => g.MeasureString(str, font, 0, 0, 99999, 999, StringFormat.LeftCenter);
+	return (str: string | number, font: IGdiFont) =>
+		g.MeasureString(str, font, 0, 0, 99999, 999, StringFormat.LeftCenter);
 })();
 
 export const enum MenuFlag {
@@ -349,12 +374,12 @@ export const enum MenuFlag {
 }
 
 /**
- * 
+ *
  *  See https://github.com/microsoft/vscode/blob/f74e473238aca7b79c08be761d99a0232838ca4c/src/vs/base/common/objects.ts
  *  Copyright (c) Microsoft Corporation.
  */
 export function deepClone<T>(obj: T): T {
-	if (!obj || typeof obj !== 'object') {
+	if (!obj || typeof obj !== "object") {
 		return obj;
 	}
 	if (obj instanceof RegExp) {
@@ -363,7 +388,7 @@ export function deepClone<T>(obj: T): T {
 	}
 	const result: any = Array.isArray(obj) ? [] : {};
 	Object.keys(<any>obj).forEach((key: string) => {
-		if ((<any>obj)[key] && typeof (<any>obj)[key] === 'object') {
+		if ((<any>obj)[key] && typeof (<any>obj)[key] === "object") {
 			result[key] = deepClone((<any>obj)[key]);
 		} else {
 			result[key] = (<any>obj)[key];
@@ -371,7 +396,6 @@ export function deepClone<T>(obj: T): T {
 	});
 	return result;
 }
-
 
 export function isEmptyString(str: string) {
 	return !str || 0 === str.length;
@@ -381,7 +405,7 @@ export const enum StopReason {
 	InvokedByUser = 0,
 	EndOfFile = 1,
 	StartingAnotherTrack = 2,
-	IsShyttingDown = 3
+	IsShyttingDown = 3,
 }
 
 export const Repaint = () => window.Repaint();
@@ -392,16 +416,16 @@ export const enum VKeyCode {
 	Control = 0x11,
 	Alt = 0x12,
 	F1 = 0x70,
-	F2= 0x71,
+	F2 = 0x71,
 	F3 = 0x72,
 	F4 = 0x73,
-	F5 = 0x74 ,
+	F5 = 0x74,
 	F6 = 0x75,
-	F12 = 0x7B,
+	F12 = 0x7b,
 	Backspace = 0x08,
 	Tab = 0x09,
-	Return = 0x0D,
-	Escape = 0x1B,
+	Return = 0x0d,
+	Escape = 0x1b,
 	PageUp = 0x21,
 	PageDown = 0x22,
 	End = 0x23,
@@ -409,39 +433,37 @@ export const enum VKeyCode {
 	Left = 0x25,
 	Right = 0x27,
 	Down = 0x28,
-	Insert = 0x2D,
-	Delete = 0x2E,
-	SpaceBar = 0x20
+	Insert = 0x2d,
+	Delete = 0x2e,
+	SpaceBar = 0x20,
 }
 
-
-export const  enum KMask {
+export const enum KMask {
 	none = 0,
 	ctrl = 1,
 	shift = 2,
 	ctrlshift = 3,
 	ctrlalt = 4,
 	ctrlaltshift = 5,
-	alt = 6
-};
+	alt = 6,
+}
 
 export function GetKeyboardMask() {
 	const c = utils.IsKeyPressed(VKeyCode.Control) ? true : false;
 	const a = utils.IsKeyPressed(VKeyCode.Alt) ? true : false;
 	const s = utils.IsKeyPressed(VKeyCode.Shift) ? true : false;
 	let ret = KMask.none;
-	if (c && !a && !s)
-		ret = KMask.ctrl;
-	if (!c && !a && s)
-		ret = KMask.shift;
-	if (c && !a && s)
-		ret = KMask.ctrlshift;
-	if (c && a && !s)
-		ret = KMask.ctrlalt;
-	if (c && a && s)
-		ret = KMask.ctrlaltshift;
-	if (!c && a && !s)
-		ret = KMask.alt;
+	if (c && !a && !s) ret = KMask.ctrl;
+	if (!c && !a && s) ret = KMask.shift;
+	if (c && !a && s) ret = KMask.ctrlshift;
+	if (c && a && !s) ret = KMask.ctrlalt;
+	if (c && a && s) ret = KMask.ctrlaltshift;
+	if (!c && a && !s) ret = KMask.alt;
 	return ret;
-};
+}
 
+export const clamp = (num: number, min: number, max: number) => {
+	num = num <= max ? num : max;
+	num = num >= min ? num : min;
+	return num;
+};

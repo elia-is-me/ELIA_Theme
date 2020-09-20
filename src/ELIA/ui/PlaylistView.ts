@@ -1016,9 +1016,7 @@ export class PlaylistView extends ScrollView {
 			this._selectedIndexes.length = 0;
 			return;
 		} else if (to == null) {
-			if (to == null) {
 				to = from;
-			}
 		}
 
 		let indexes: number[] = [];
@@ -1207,18 +1205,14 @@ export class PlaylistView extends ScrollView {
 			// set mouse cursor;
 
 			if (y < listTopY) {
-				// if (!dnd.isActive) {
 				dnd.setInterval(() => {
 					this.scrollTo(this.scroll - rowHeight);
 					if (this.visibleItems[0] != null) {
 						dnd.dropTargetRowIndex = this.visibleItems[0].rowIndex;
 					}
 				}, 250, this);
-				// }
 			} else if (y > listBottomY) {
-				// if (!dnd.scrollTimerId) {
 				dnd.setInterval(() => {
-					// dnd.scrollTimerId = window.SetInterval(() => {
 					this.scrollTo(this.scroll + rowHeight);
 					if (this.visibleItems.length > 0) {
 						let lastItem = this.visibleItems[this.visibleItems.length - 1];
@@ -1228,7 +1222,6 @@ export class PlaylistView extends ScrollView {
 						}
 					}
 				}, 250, this);
-				// }
 			} else {
 
 				dnd.dropTargetRowIndex = -1;
