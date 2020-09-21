@@ -7,7 +7,7 @@ import { scale } from "../common/common";
 import { InputPopupPanel, IInputPopupOptions } from "./InputPopupPanel";
 import { AlertDialog, IAlertDialogOptions } from "./AlertDialog";
 import { SearchResultView } from "./SearchResultView";
-import { UserInterface } from "../common/UserInterface";
+import { ui, UserInterface } from "../common/UserInterface";
 
 
 const CONTROL_BAR_HEIGHT = scale(76);

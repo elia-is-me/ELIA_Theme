@@ -9,7 +9,7 @@ import {
 	StringTrimming,
 	StringFormatFlags,
 } from "../common/common";
-import { notifyOthers } from "./Layout";
+import { notifyOthers } from "../common/UserInterface";
 
 export interface IAlertDialogOptions {
 	title: string;

@@ -2,8 +2,8 @@ import { Component } from "../common/BasePart";
 import { MeasureString, RGB, scale, StringFormat, setAlpha, isEmptyString } from "../common/common";
 import { Button2, } from "../common/IconButton";
 import { InputBox } from "../common/Inputbox";
+import { notifyOthers } from "../common/UserInterface";
 import { mainColors, globalFontName } from "./Theme";
-import { notifyOthers } from "./Layout";
 
 
 export interface IInputPopupOptions {

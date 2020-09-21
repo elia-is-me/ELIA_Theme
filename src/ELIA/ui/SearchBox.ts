@@ -9,7 +9,7 @@ import { scale, setAlpha, RGB, MeasureString } from "../common/common";
 import { SerializableIcon } from "../common/IconType";
 import { Material, MaterialFont } from "../common/iconCode";
 import { mainColors, globalFontName } from "./Theme";
-import { notifyOthers } from "./Layout";
+import { notifyOthers } from "../common/UserInterface";
 
 type TIconKeys = "loupe" | "delta" | "cross";
 const iconFontSize = scale(20);

@@ -8,8 +8,6 @@ import {
 	RGB,
 	StringFormat,
 	ThrottledRepaint,
-	RGBA,
-	rgba2hsla,
 	MenuFlag,
 } from "../common/common";
 import { Scrollbar } from "../common/Scrollbar";
@@ -27,9 +25,9 @@ import {
 import { Icon, Button, IButtonColors } from "../common/IconButton";
 import { SerializableIcon } from "../common/IconType";
 import { isValidPlaylist } from "./PlaylistView";
-import { notifyOthers } from "./Layout";
 import { IInputPopupOptions } from "./InputPopupPanel";
 import { IAlertDialogOptions } from "./AlertDialog";
+import { notifyOthers } from "../common/UserInterface";
 
 const IDC_ARROW = 32512;
 
