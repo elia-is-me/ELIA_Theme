@@ -9,7 +9,7 @@ import { scale, setAlpha, RGB, MeasureString } from "../common/common";
 import { SerializableIcon } from "../common/IconType";
 import { Material, MaterialFont } from "../common/iconCode";
 import { mainColors, globalFontName } from "./Theme";
-import { notifyOthers } from "../common/UserInterface";
+import { notifyOthers, ui } from "../common/UserInterface";
 
 type TIconKeys = "loupe" | "delta" | "cross";
 const iconFontSize = scale(20);
@@ -64,7 +64,6 @@ interface ISearchBoxOptions {
 
 
 export class SearchBox extends Component {
-
 	inputbox: InputBox;
 	searchBtn: Icon2;
 	clearBtn: Icon2;
@@ -83,7 +82,6 @@ export class SearchBox extends Component {
 	_inputboxHeight: number;
 
 	constructor(opts: ISearchBoxOptions, callbacks?: IInjectableCallbacks) {
-
 		super(opts);
 
 		this.icons = icons;
@@ -94,7 +92,7 @@ export class SearchBox extends Component {
 			fontIcon: this.icons.loupe,
 			hoverColor: this._iconColors.hover,
 			downColor: this._iconColors.down,
-			normalColor: this._iconColors.normal
+			normalColor: this._iconColors.normal,
 		});
 
 		const handleClear = () => {
@@ -109,13 +107,13 @@ export class SearchBox extends Component {
 			normalColor: this._iconColors.normal,
 			onClick() {
 				handleClear();
-			}
+			},
 		});
 		this.menuBtn = new Icon2({
 			fontIcon: this.icons.delta,
 			hoverColor: this._iconColors.hover,
 			downColor: this._iconColors.down,
-			normalColor: this._iconColors.normal
+			normalColor: this._iconColors.normal,
 		});
 
 		this.inputbox = new InputBox({
@@ -128,24 +126,27 @@ export class SearchBox extends Component {
 			empty_text: "Search Library",
 			func: () => {
 				this.handleSearch();
-			}
+			},
 		});
 
+		this._inputboxHeight =
+			MeasureString("ABCDgl汉字", this.inputbox.font).Height + scale(4);
 
-		this._inputboxHeight = MeasureString("ABCDgl汉字", this.inputbox.font).Height + scale(4);
-
-		[this.searchBtn, this.clearBtn, this.menuBtn, this.inputbox].forEach(btn => this.addChild(btn));
-
+		[this.searchBtn, this.clearBtn, this.menuBtn, this.inputbox].forEach(btn =>
+			this.addChild(btn)
+		);
 	}
 
 	handleSearch() {
 		let searchText = this.inputbox.text;
+		if (searchText.length == 0) {
+			return;
+		}
 		let result = fb.GetQueryItems(fb.GetLibraryItems(), searchText);
 
-		console.log(result.Count);
 		notifyOthers("Show.SearchResult", {
 			titleText: searchText,
-			metadbs: result
+			metadbs: result,
 		});
 	}
 
@@ -156,31 +157,55 @@ export class SearchBox extends Component {
 		}
 	}
 
-	on_init() { }
+	on_init() {}
 
 	on_size() {
-
 		const { searchBtn, clearBtn, menuBtn, inputbox } = this;
 		const { iconHeight } = this;
 
-		let btnY = (this.y + this.height - iconHeight)
+		let btnY = this.y + this.height - iconHeight;
 		let marginLeft = scale(8);
 
 		searchBtn.setBoundary(this.x + marginLeft, btnY, iconHeight, iconHeight);
-		menuBtn.setBoundary(this.x + this.width - marginLeft - iconHeight, btnY, iconHeight, iconHeight);
-		clearBtn.setBoundary(menuBtn.x - iconHeight - scale(4), btnY, iconHeight, iconHeight);
+		menuBtn.setBoundary(
+			this.x + this.width - marginLeft - iconHeight,
+			btnY,
+			iconHeight,
+			iconHeight
+		);
+		clearBtn.setBoundary(
+			menuBtn.x - iconHeight - scale(4),
+			btnY,
+			iconHeight,
+			iconHeight
+		);
 
-		let inputboxY = this.y + ((this.height - this._inputboxHeight) / 2 | 0);
-		inputbox.setBoundary(searchBtn.x + searchBtn.width, inputboxY, clearBtn.x - searchBtn.x - searchBtn.width, this._inputboxHeight);
-
+		let inputboxY = this.y + (((this.height - this._inputboxHeight) / 2) | 0);
+		inputbox.setBoundary(
+			searchBtn.x + searchBtn.width,
+			inputboxY,
+			clearBtn.x - searchBtn.x - searchBtn.width,
+			this._inputboxHeight
+		);
 	}
 
 	on_paint(gr: IGdiGraphics) {
-
 		if (this.inputbox.edit) {
-			gr.FillSolidRect(this.x, this.y, this.width, this.height, this.backgroundActiveColor)
+			gr.FillSolidRect(
+				this.x,
+				this.y,
+				this.width,
+				this.height,
+				this.backgroundActiveColor
+			);
 		} else {
-			gr.FillSolidRect(this.x, this.y, this.width, this.height, this.backgroundColor)
+			gr.FillSolidRect(
+				this.x,
+				this.y,
+				this.width,
+				this.height,
+				this.backgroundColor
+			);
 		}
 
 		if (this.inputbox.text.length > 0) {
@@ -188,31 +213,9 @@ export class SearchBox extends Component {
 		} else {
 			this.clearBtn.visible = false;
 		}
-
 	}
-
-	on_mouse_lbtn_down(x: number, y: number) {
-	}
-
-	on_mouse_lbtn_up(x: number, y: number) {
-	}
-
-	on_mouse_lbtn_dblclk(x: number, y: number) {
-	}
-
-	on_mouse_rbtn_up(x: number, y: number) {
-	}
-
-	on_mouse_move(x: number, y: number) {
-	}
-
 }
 
-const handleSearch = () => {
-
-	notifyOthers("Show.SearchResult");
-
-}
 
 /**
  * TODO:

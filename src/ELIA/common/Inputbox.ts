@@ -898,9 +898,10 @@ export class InputBox extends Component implements IInputBoxOptions{
     }
 
     on_change_focus(is_focused: boolean) {
-        if (!is_focused) {
-            this.check("down", -1, -1);
-        }
-    }
+			// console.log("input change focus: ", is_focused);
+			if (!is_focused) {
+				this.check("down", -1, -1);
+			}
+		}
 
 }

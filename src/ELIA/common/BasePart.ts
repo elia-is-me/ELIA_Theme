@@ -89,27 +89,26 @@ export abstract class Component implements IBoxModel, ICallbacks {
 		top: 0,
 		bottom: 0,
 		left: 0,
-		right: 0
+		right: 0,
 	};
 	constructor(attrs: object, callbacks?: IInjectableCallbacks) {
 		this.z = 0;
 		Object.assign(this, attrs);
 		if (isObject(callbacks)) {
-			Object.assign(this, callbacks)
+			Object.assign(this, callbacks);
 		}
 	}
 	/**
 	 * 'on_init' 考虑的是当一个部件从隐藏切换到显示后，有一个默认的方法更新/初始化该部件。这么做是否合理现在值得怀疑。
 	 */
-	on_init() { }
-	on_paint(gr: IGdiGraphics) { }
-	on_size() { }
-	on_click(x: number, y: number) { }
+	on_init() {}
+	on_paint(gr: IGdiGraphics) {}
+	on_size() {}
+	on_click(x: number, y: number) {}
 	addChild(node: Component) {
 		if (!(node instanceof Component)) {
 			throw new Error("Component.addChild: Invalid param.");
 		}
-		;
 		if (node.parent != null && node.parent !== this) {
 			node.parent.removeChild(node);
 		}
@@ -120,9 +119,9 @@ export abstract class Component implements IBoxModel, ICallbacks {
 	}
 	removeChild(node: Component) {
 		if (!(node instanceof Component) || node.parent !== this) {
+			console.log("fail to remove child")
 			return;
-		}
-		else {
+		} else {
 			node.parent = null;
 			this.children = this.children.filter(child => child.parent === this);
 		}
@@ -141,9 +140,13 @@ export abstract class Component implements IBoxModel, ICallbacks {
 		}
 	}
 	trace(x: number, y: number) {
-		return this.isVisible()
-			&& x > this.x && x <= this.x + this.width
-			&& y > this.y && y <= this.y + this.height;
+		return (
+			this.isVisible() &&
+			x > this.x &&
+			x <= this.x + this.width &&
+			y > this.y &&
+			y <= this.y + this.height
+		);
 	}
 	setBoundary(x: number, y: number, width: number, height: number) {
 		let visibleBefore_ = this.isVisible();
@@ -168,7 +171,10 @@ export abstract class Component implements IBoxModel, ICallbacks {
 
 	setSize(size: { width?: number; height?: number }): void;
 	setSize(width: number, height: number): void;
-	setSize(arg_1: number | { width?: number; height?: number }, arg_2?: number): any {
+	setSize(
+		arg_1: number | { width?: number; height?: number },
+		arg_2?: number
+	): any {
 		if (typeof arg_1 == "number") {
 			let visibleBefore_ = this.isVisible();
 			this.width = arg_1;
@@ -188,8 +194,8 @@ export abstract class Component implements IBoxModel, ICallbacks {
 				this._shouldSortChildren = false;
 			}
 		} else if (typeof arg_1 == "object") {
-			let width = (arg_1.width || this.width);
-			let height = (arg_1.height || this.height);
+			let width = arg_1.width || this.width;
+			let height = arg_1.height || this.height;
 			this.setSize(width, height);
 		}
 	}
@@ -215,7 +221,7 @@ export abstract class Component implements IBoxModel, ICallbacks {
 		}
 
 		if (this._shouldSortChildren) {
-			this.children.sort(sortByZIndex)
+			this.children.sort(sortByZIndex);
 		}
 	}
 
@@ -231,12 +237,13 @@ export abstract class Component implements IBoxModel, ICallbacks {
 		return this._shouldUpdateOnInit;
 	}
 
-	onNotifyData?(str: string, info: any) { }
+	onNotifyData?(str: string, info: any) {}
 
 	repaint() {
 		// window.RepaintRect(this.x, this.y, this.width, this.height);
 		window.Repaint();
 	}
+
 }
 
 const useClearType = window.GetProperty('_Global.Font Use ClearType', true);

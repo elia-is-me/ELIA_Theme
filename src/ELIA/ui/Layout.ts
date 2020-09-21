@@ -206,22 +206,6 @@ export class Layout extends Component {
 				ui.updateParts();
 				this.repaint();
 				break;
-			case "Set.AddPlaylistPanel Visible":
-				// this.inputPopupPanel.visible = !!data;
-				// this.on_size();
-				// layoutManager.updateParts();
-				// this.repaint();
-				break;
-			case "Rename.Playlist":
-				// if (isValidPlaylist(data)) {
-				// 	let playlistIndex = data;
-				// 	this.inputPopupPanel.inputbox.text = plman.GetPlaylistName(playlistIndex);
-				// 	this.inputPopupPanel.visible = true;
-				// 	this.on_size();
-				// 	layoutManager.updateParts();
-				// 	this.repaint();
-				// }
-				break;
 			case "Show.SearchResult":
 				this.searchResultView = new SearchResultView({
 					titleText: (data as any).titleText,
@@ -232,13 +216,16 @@ export class Layout extends Component {
 				this.setPartsVisible(this.viewState);
 				this.on_size();
 				ui.updateParts();
+				console.log("playlsit visib	: ", this.playlistView.visible);
 				this.repaint();
 				break;
 			case "Show.Playlist":
+				console.log(this.children.length);
 				if (this.searchResultView) {
 					this.removeChild(this.searchResultView);
 					this.searchResultView = undefined;
 				}
+				console.log(this.children.length);
 				this.viewState = ViewStates.Default;
 				this.setPartsVisible(this.viewState);
 				this.on_size();

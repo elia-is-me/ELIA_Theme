@@ -1,12 +1,12 @@
 import { Component } from "./BasePart";
 
 export class UserInterface {
-	parts: Component[];
+	parts: Component[] = [];
 	visibleParts: Component[];
 	rootPart: Component;
 	activeId: number;
 	activePart: Component;
-	focusedPart: CompositionEvent;
+	focusedPart: Component;
 	focusedId: number;
 
 	constructor(rootPart?: Component) {
@@ -27,7 +27,7 @@ export class UserInterface {
 			results = results.concat(this.flatternParts(children[i]));
 		}
 		return results;
-  }
+	}
 
 	setRoot(rootPart: Component) {
 		this.rootPart = rootPart;
@@ -35,7 +35,7 @@ export class UserInterface {
 		this.visibleParts = [];
 		this.activeId = -1;
 		this.focusedId = -1;
-  }
+	}
 
 	private findVisibleParts(rootPart: Component): Component[] {
 		if (!rootPart.isVisible()) return [];
@@ -47,7 +47,7 @@ export class UserInterface {
 			}
 		}
 		return visibleParts;
-  }
+	}
 
 	private findActivePart(visibleParts: Component[], x: number, y: number) {
 		let len = visibleParts.length;
@@ -57,18 +57,29 @@ export class UserInterface {
 			}
 		}
 		return -1;
-  }
+	}
+
+	private getActive(visibleParts: Component[], x: number, y: number) {
+		for (let i = visibleParts.length - 1; i >= 0; i--) {
+			if (visibleParts[i].trace(x, y)) {
+				return visibleParts[i];
+			}
+		}
+		return undefined;
+	}
 
 	invokeActivePart(method: string, ...args: any[]) {
 		const activePart = this.visibleParts[this.activeId];
 		if (!activePart) return;
 		let func = (<any>activePart)[method];
 		return func == null ? null : func.apply(activePart, args);
-  }
+	}
 
 	invokeVisibleParts(method: string, ...args: any) {
-		this.visibleParts.forEach(p => this.invoke(p, method, args[0], args[1], args[2]));
-  }
+		this.visibleParts.forEach(p =>
+			this.invoke(p, method, args[0], args[1], args[2])
+		);
+	}
 
 	invokeFocusedPart(method: string, ...args: any[]) {
 		const focusedPart = this.visibleParts[this.focusedId];
@@ -78,7 +89,8 @@ export class UserInterface {
 		let func = (<any>focusedPart)[method];
 		return func == null ? null : func.apply(focusedPart, args);
 	}
-	private invoke(part: Component, method: string, ...args: any) {
+
+	invoke(part: Component, method: string, ...args: any) {
 		if (!part) return;
 		let func = (part as any)[method];
 		if (func == null) {
@@ -99,7 +111,7 @@ export class UserInterface {
 	}
 
 	invokeById(id: number, method: string, ...args: any) {
-		return this.invoke(this.visibleParts[id], method, args);
+		return this.invoke(this.visibleParts[id], method, ...args);
 	}
 
 	setActive(x: number, y: number) {
@@ -114,12 +126,24 @@ export class UserInterface {
 	}
 
 	setFocus(x: number, y: number) {
-		let defocusedId_ = this.focusedId;
+		// let defocusedId_ = this.focusedId;
+		let prev_focus_part = this.focusedPart;
+		this.focusedPart = this.getActive(this.visibleParts, x, y);
 		this.focusedId = this.findActivePart(this.visibleParts, x, y);
-		if (this.focusedId !== defocusedId_) {
-			this.invokeById(defocusedId_, "on_change_focus", false);
-			this.invokeById(this.focusedId, "on_change_focus", true);
+
+		if (this.focusedId > -1) {
+			// console.log(this.focusedPart.cid, this.visibleParts[this.focusedId].cid);
 		}
+
+		if (!compareParts(prev_focus_part, this.focusedPart)) {
+			this.invoke(prev_focus_part, "on_change_focus", false);
+			this.invoke(this.focusedPart, "on_change_focus", true);
+		}
+
+		// if (this.focusedId !== defocusedId_) {
+		// 	this.invokeById(defocusedId_, "on_change_focus", false);
+		// 	this.invokeById(this.focusedId, "on_change_focus", true);
+		// }
 	}
 
 	setFocusPart(part: Component) {
@@ -127,7 +151,7 @@ export class UserInterface {
 		let partId = this.visibleParts.indexOf(part);
 		if (partId > -1 && partId !== defocusedId_) {
 			this.invokeById(defocusedId_, "on_change_focus", false);
-			this.invokeById(partId, "on_change_focuse", true);
+			this.invokeById(partId, "on_change_focus", true);
 		}
 	}
 	updateParts() {
@@ -147,16 +171,26 @@ export class UserInterface {
 		this.parts = this.flatternParts(this.rootPart);
 	}
 
-	notify(message: string, data?: any) {
-		console.log(message, data);
-		if (this.parts == null || this.parts.length === 0) {
-			return;
-		}
-		this.parts.forEach(part => {
-			part.onNotifyData && part.onNotifyData(message, data);
-		});
+	_forceUpdate() {
+		this.visibleParts = this.findVisibleParts(this.rootPart);
+		this.parts = this.flatternParts(this.rootPart);
 	}
 }
 
 export const ui = new UserInterface();
-export const notifyOthers = ui.notify;
+
+export const notifyOthers = (message: string, data?: any) => {
+	console.log(message, data);
+	if (ui.parts == null || ui.parts.length === 0) {
+		return;
+	}
+	ui.parts.forEach(part => {
+		part.onNotifyData && part.onNotifyData(message, data);
+	});
+};
+
+const compareParts = (a: Component, b: Component) => {
+	if (a == null && b == null) return true;
+	if ((a == null && b != null) || (a != null && b == null)) return false;
+	return a.cid == b.cid;
+};
