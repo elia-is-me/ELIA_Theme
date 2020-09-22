@@ -1,4 +1,14 @@
-import { isObject, Repaint, scale, StringFormat, TextRenderingHint, isFunction, setAlpha, MeasureString } from "./common";
+import {
+	isObject,
+	Repaint,
+	scale,
+	StringFormat,
+	TextRenderingHint,
+	isFunction,
+	setAlpha,
+	MeasureString,
+	CursorName,
+} from "./common";
 import { Component, IPaddings, textRenderingHint, IInjectableCallbacks } from "./BasePart";
 import { SerializableIcon } from "./IconType";
 import { globalFontName } from "../ui/Theme";
@@ -43,6 +53,11 @@ export abstract class Clickable extends Component {
 		if (this.state === ButtonStates.Normal) {
 			this.changeState(ButtonStates.Hover);
 		}
+		if (this.trace(x, y)) {
+			window.SetCursor(CursorName.IDC_HAND);
+		} else {
+			window.SetCursor(CursorName.IDC_ARROW);
+		}
 	}
 
 	on_mouse_lbtn_down(x: number, y: number) {
@@ -60,6 +75,7 @@ export abstract class Clickable extends Component {
 
 	on_mouse_leave() {
 		this.changeState(ButtonStates.Normal);
+		window.SetCursor(CursorName.IDC_ARROW);
 	}
 }
 
