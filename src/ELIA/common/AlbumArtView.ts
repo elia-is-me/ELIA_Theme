@@ -1,81 +1,382 @@
-import { isObject, StringFormat, CropImage, TextRenderingHint } from "./common";
+import {
+	isObject,
+	StringFormat,
+	CropImage,
+	TextRenderingHint,
+	drawImage,
+	SmoothingMode,
+	RGB,
+	RGBA,
+	debounce,
+	InterpolationMode,
+	StopReason,
+} from "./common";
 import { Component } from "./BasePart";
 
-export const AlbumArtId = {
-    front: 0,
-    back: 1,
-    disc: 2,
-    icon: 3,
-    artist: 4
-};
+export const enum AlbumArtId {
+	Front = 0,
+	Back = 1,
+	Disc = 2,
+	Icon = 3,
+	Artist = 4,
+}
+
+export const enum ArtworkType {
+	Nowplaying,
+	Album,
+	Artist,
+	Playlist,
+}
+
+// Create stub images;
+let stubImages: IGdiBitmap[] = [];
+let font1 = gdi.Font("Segoe UI", 230, 1);
+let font2 = gdi.Font("Segoe UI", 120, 1);
+let font3 = gdi.Font("Segoe UI", 200, 1);
+let font4 = gdi.Font("Segoe UI", 90, 1);
+
+for (let i = 0; i < 3; i++) {
+	stubImages[i] = drawImage(500, 500, true, g => {
+		g.SetSmoothingMode(SmoothingMode.HighQuality);
+		g.FillRoundRect(0, 0, 500, 500, 8, 8, 0x0fffffff);
+		g.SetTextRenderingHint(TextRenderingHint.AntiAlias);
+		g.DrawString("NO", font1, 0x25ffffff, 0, 0, 500, 275, StringFormat.Center);
+		g.DrawString(
+			["COVER", "PHOTO", "ART"][i],
+			font2,
+			0x20ffffff,
+			2.5,
+			175,
+			500,
+			275,
+			StringFormat.Center
+		);
+		g.FillSolidRect(60, 400, 380, 20, 0x15fffffff);
+	});
+}
+
+let maskImage = drawImage(500, 500, true, (g: IGdiGraphics) => {
+	g.FillSolidRect(0, 0, 500, 500, RGB(255, 255, 255));
+	g.SetSmoothingMode(SmoothingMode.HighQuality);
+	g.FillEllipse(1, 1, 498, 498, RGBA(0, 0, 0, 255));
+});
+
+const tf_album = fb.TitleFormat("[%album artist%]^^%album%");
+// const tf_sortAlbum = fb.TitleFormat("%album artist%^^%album%");
+
 export class AlbumArtView extends Component {
-    albumArtId: number = AlbumArtId.front;
-    tf = fb.TitleFormat("%album artist%^^%album");
-    protected trackKey: string = "";
-    currentImg: IGdiBitmap;
-    defaultImg: IGdiBitmap = this._drawNocoverImg(0xafffffff, 0x0fffffff);
-    metadb: IFbMetadb;
-    private _rawDefaultImg: IGdiBitmap;
-    constructor(attrs: object) {
-        super(attrs);
-        if (isObject(attrs)) {
-            Object.assign(this, attrs);
-        }
-        this._rawDefaultImg = this.defaultImg;
-    }
-    _drawNocoverImg(textColor: number, backColor: number) {
-        let fontName = "Segoe UI";
-        let font1 = gdi.Font(fontName, 270, 1);
-        let font2 = gdi.Font(fontName, 120, 1);
-        let cc = StringFormat(1, 1);
-        let img = gdi.CreateImage(500, 500);
-        let g = img.GetGraphics();
-        g.SetTextRenderingHint(TextRenderingHint.AntiAlias);
-        g.FillSolidRect(0, 0, 500, 500, textColor & 0x20ffffff);
-        g.DrawString("NO", font1, textColor & 0x25ffffff, 0, 0, 500, 275, cc);
-        g.DrawString("COVER", font2, textColor & 0x25ffffff, 2.5, 175, 500, 275, cc);
-        g.FillSolidRect(60, 388, 380, 50, textColor & 0x65ffffff);
-        img.ReleaseGraphics(g);
-        return img;
-    }
-    processImage(image: IGdiBitmap) {
-        return (image == null) ? null : CropImage(image, this.width, this.height);
-    }
-    getArtwork(metadb?: IFbMetadb) {
-        let trackkey_ = "##@!~";
-        if (metadb != null) {
-            trackkey_ = this.tf.EvalWithMetadb(metadb);
-            this.metadb = metadb;
-            let img = utils.GetAlbumArtV2(metadb, this.albumArtId);
-            // for tracks download from neteaseCloudMusic which prefer store
-            // alum art image at 'disc' slot;
-            if (img == null && this.albumArtId === AlbumArtId.front) {
-                img = utils.GetAlbumArtV2(metadb, AlbumArtId.disc);
-            }
-            if (img != null) {
-                img = CropImage(img, this.width, this.height);
-            }
-            this.currentImg = img;
-        }
-        else {
-            this.currentImg = null;
-            ;
-        }
-        this.trackKey = trackkey_;
-    }
-    on_paint(gr: IGdiGraphics) {
-        let img = this.currentImg || this.defaultImg;
-        gr.DrawImage(img, this.x, this.y, this.width, this.height, 0, 0, img.Width, img.Height);
-    }
-    on_init() {
-        this.getArtwork(fb.GetNowPlaying());
-    }
-    // TODO: debounced function;
-    on_size() {
-        if (this._rawDefaultImg) {
-            if (this.defaultImg && this.defaultImg.Width !== this.width) {
-                this.defaultImg = CropImage(this._rawDefaultImg, this.width, this.height);
-            }
-        }
-    }
+	trackKey: string = "";
+	image: IGdiBitmap;
+	stubImage: IGdiBitmap = stubImages[0];
+	metadb: IFbMetadb;
+	metadbs: IFbMetadbList;
+	artId: number = AlbumArtId.Front;
+	type: number;
+	on_playback_new_track?: () => void;
+	on_playback_stop?: (reason: number) => void;
+	on_playback_edited?: () => void;
+	on_playlists_changed?: () => void;
+	on_playlist_switch?: () => void;
+
+	constructor(opts: {
+		type: number;
+		metadb?: IFbMetadb;
+		metadbs?: IFbMetadbList;
+	}) {
+		super({});
+
+		this.type = opts.type;
+
+		// Set AlbumArtId;
+		if (this.type === ArtworkType.Artist) {
+			this.artId = AlbumArtId.Artist;
+		} else {
+			this.artId = AlbumArtId.Front;
+		}
+
+		// Set callbacks;
+		if (this.type === ArtworkType.Nowplaying) {
+			this.on_init = () => {
+				this.getArtwork(fb.GetNowPlaying());
+			};
+
+			this.on_playback_new_track = () => {
+				this.getArtwork(fb.GetNowPlaying());
+			};
+
+			this.on_playback_stop = (reason: number) => {
+				if (reason !== StopReason.StartingAnotherTrack) {
+					this.getArtwork();
+				}
+			};
+
+			this.on_playback_edited = () => {
+				this.getArtwork(fb.GetNowPlaying());
+			};
+		} else if (this.type === ArtworkType.Playlist) {
+			this.on_init = () => {
+				this.getPlaylistArtworks(plman.GetPlaylistItems(plman.ActivePlaylist));
+			};
+			this.on_playlist_switch = () => {
+				this.on_init();
+			};
+			this.on_playlists_changed = () => {
+				this.on_init();
+			};
+		} else {
+			// Update Album&Artist artwork manually;
+		}
+	}
+
+	async getArtwork(metadb?: IFbMetadb) {
+		if (metadb) {
+			let trackKey = tf_album.EvalWithMetadb(metadb);
+			if (trackKey !== this.trackKey || !this.image) {
+				let result;
+				result = await utils.GetAlbumArtAsyncV2(window.ID, metadb, this.artId);
+				if (!result) {
+					result = await utils.GetAlbumArtAsyncV2(
+						window.ID,
+						metadb,
+						AlbumArtId.Disc
+					);
+				}
+				if (result && result.image) {
+					this.image = CropImage(result.image, this.width, this.height);
+				} else {
+					this.image = null;
+				}
+				this.trackKey = trackKey;
+			} //else {/** */}
+		} else {
+			this.trackKey = "3@!#@";
+			this.image = null;
+		}
+		this.repaint();
+	}
+
+	async getPlaylistArtworks(metadbs: IFbMetadbList) {
+		if (!metadbs || metadbs.Count === 0) {
+			this.image = CropImage(stubImages[0], this.width, this.height);
+			this.repaint();
+			return;
+		}
+
+		metadbs.OrderByFormat(tf_album, 0);
+
+		let albums: IFbMetadb[] = [];
+		let compare = "#@!";
+
+		for (let i = 0, len = metadbs.Count; i < len; i++) {
+			if (!metadbs[i]) {
+				break;
+			}
+			let albumKey = tf_album.EvalWithMetadb(metadbs[i]);
+			if (!albums[albums.length - 1] || albumKey !== compare) {
+				albums.push(metadbs[i]);
+				compare = albumKey;
+			}
+		}
+
+		let images: IGdiBitmap[] = [];
+
+		for (
+			let i = 0, len = albums.length;
+			i < len && i < 10 && images.length < 4;
+			i++
+		) {
+			let result = await utils.GetAlbumArtAsyncV2(
+				window.ID,
+				albums[i],
+				AlbumArtId.Front
+			);
+			if (!result || !result.image) {
+				result = await utils.GetAlbumArtAsyncV2(
+					window.ID,
+					albums[i],
+					AlbumArtId.Disc
+				);
+			}
+			if (result && result.image) {
+				images.push(result.image);
+			}
+		}
+
+		if (images.length === 0) {
+			this.image = null;
+		} else if (images.length === 1) {
+			this.image = CropImage(images[0], this.width, this.height);
+		} else {
+			images = images.map(img => CropImage(img, 250, 250));
+			if (images.length < 4) {
+				let stubimg = CropImage(stubImages[0], 250, 250);
+				for (let i = images.length; i < 4; i++) {
+					images.push(stubimg);
+				}
+			}
+			let i = gdi.CreateImage(500, 500);
+			let g = i.GetGraphics();
+			images[0] && g.DrawImage(images[0], 0, 0, 250, 250, 0, 0, 250, 250);
+			images[1] && g.DrawImage(images[1], 250, 0, 250, 250, 0, 0, 250, 250);
+			images[2] && g.DrawImage(images[2], 0, 250, 250, 250, 0, 0, 250, 250);
+			images[3] && g.DrawImage(images[3], 250, 250, 250, 250, 0, 0, 250, 250);
+			i.ReleaseGraphics(g);
+			this.image = i;
+		}
+
+		this.repaint();
+	}
+
+	on_paint(gr: IGdiGraphics) {
+		let img = this.image || this.stubImage;
+		if (!img) return;
+		gr.DrawImage(
+			img,
+			this.x,
+			this.y,
+			this.width,
+			this.height,
+			0,
+			0,
+			img.Width,
+			img.Height
+		);
+	}
+
+	on_size = debounce(() => {
+		if (stubImages[0]) {
+			if (!this.stubImage || this.stubImage.Width !== this.width) {
+				this.stubImage = CropImage(
+					stubImages[0],
+					this.width,
+					this.height,
+					InterpolationMode.HighQuality
+				);
+			}
+		}
+	}, 100);
+}
+
+export class PlaylistArtwork extends Component {
+	stubImage: IGdiBitmap = stubImages[2];
+	image: IGdiBitmap;
+
+	constructor() {
+		super({});
+	}
+
+	async getArtwork() {
+		let metadbs = plman.GetPlaylistItems(plman.ActivePlaylist);
+
+		if (!metadbs || metadbs.Count === 0) {
+			this.image = CropImage(stubImages[0], this.width, this.height);
+			this.repaint();
+			return;
+		}
+
+		metadbs.OrderByFormat(tf_album, 0);
+
+		let albums: IFbMetadb[] = [];
+		let compare = "#@!";
+
+		for (let i = 0, len = metadbs.Count; i < len; i++) {
+			if (!metadbs[i]) {
+				break;
+			}
+			let albumKey = tf_album.EvalWithMetadb(metadbs[i]);
+			if (!albums[albums.length - 1] || albumKey !== compare) {
+				albums.push(metadbs[i]);
+				compare = albumKey;
+			}
+		}
+
+		let images: IGdiBitmap[] = [];
+
+		for (
+			let i = 0, len = albums.length;
+			i < len && i < 10 && images.length < 4;
+			i++
+		) {
+			let result = await utils.GetAlbumArtAsyncV2(
+				window.ID,
+				albums[i],
+				AlbumArtId.Front
+			);
+			if (!result || !result.image) {
+				result = await utils.GetAlbumArtAsyncV2(
+					window.ID,
+					albums[i],
+					AlbumArtId.Disc
+				);
+			}
+			if (result && result.image) {
+				images.push(result.image);
+			}
+		}
+
+		if (images.length === 0) {
+			this.image = null;
+		} else if (images.length === 1) {
+			this.image = CropImage(images[0], this.width, this.height);
+		} else {
+			images = images.map(img => CropImage(img, 250, 250));
+			if (images.length < 4) {
+				let stubimg = CropImage(stubImages[0], 250, 250);
+				for (let i = images.length; i < 4; i++) {
+					images.push(stubimg);
+				}
+			}
+			let img = gdi.CreateImage(500, 500);
+			let g = img.GetGraphics();
+			images[0] && g.DrawImage(images[0], 0, 0, 250, 250, 0, 0, 250, 250);
+			images[1] && g.DrawImage(images[1], 250, 0, 250, 250, 0, 0, 250, 250);
+			images[2] && g.DrawImage(images[2], 0, 250, 250, 250, 0, 0, 250, 250);
+			images[3] && g.DrawImage(images[3], 250, 250, 250, 250, 0, 0, 250, 250);
+			img.ReleaseGraphics(g);
+			this.image = img;
+		}
+
+		this.repaint();
+	}
+
+	on_init() {
+		this.getArtwork();
+	}
+
+	on_playlists_changed() {
+		this.getArtwork();
+	}
+
+	on_playlist_switch() {
+		this.getArtwork();
+	}
+
+	on_paint(gr: IGdiGraphics) {
+		let img = this.image || this.stubImage;
+		if (!img) return;
+		gr.DrawImage(
+			img,
+			this.x,
+			this.y,
+			this.width,
+			this.height,
+			0,
+			0,
+			img.Width,
+			img.Height
+		);
+	}
+
+	on_size = debounce(() => {
+		if (stubImages[2]) {
+			if (!this.stubImage || this.stubImage.Width !== this.width) {
+				this.stubImage = CropImage(
+					stubImages[2],
+					this.width,
+					this.height,
+					InterpolationMode.HighQuality
+				);
+			}
+		}
+	}, 100);
 }

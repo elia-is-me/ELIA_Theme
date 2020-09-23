@@ -4,7 +4,7 @@
 
 import { Repaint, StopReason } from "../common/common";
 import { TextLink } from "../common/TextLink";
-import { AlbumArtView } from "../common/AlbumArtView";
+import { AlbumArtView, ArtworkType } from "../common/AlbumArtView";
 import { Slider, SliderThumbImage } from "../common/Slider";
 import { Icon } from "../common/IconButton";
 import { Component } from "../common/BasePart";
@@ -335,26 +335,27 @@ const artistText = new TextLink({
 });
 
 const albumArt = new AlbumArtView({
-	on_init() {
-		this.getArtwork(fb.GetNowPlaying());
-	},
+	type: ArtworkType.Nowplaying,
+	// on_init() {
+	// 	this.getArtwork(fb.GetNowPlaying());
+	// },
 
-	on_playback_new_track() {
-		this.on_init();
-		Repaint();
-	},
+	// on_playback_new_track() {
+	// 	this.on_init();
+	// 	Repaint();
+	// },
 
-	on_playback_stop(reason: number) {
-		if (reason != 2) {
-			this.on_init();
-			Repaint();
-		}
-	},
+	// on_playback_stop(reason: number) {
+	// 	if (reason != 2) {
+	// 		this.on_init();
+	// 		Repaint();
+	// 	}
+	// },
 
-	on_playback_edited() {
-		this.on_init();
-		Repaint();
-	}
+	// on_playback_edited() {
+	// 	this.on_init();
+	// 	Repaint();
+	// }
 });
 
 export class PlaybackControlView extends Component {
