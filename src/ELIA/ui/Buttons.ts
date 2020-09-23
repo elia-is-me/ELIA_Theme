@@ -1,15 +1,15 @@
-import { textRenderingHint } from "../common/BasePart";
 import {
 	MeasureString,
 	RGB,
 	scale,
 	setAlpha,
 	SmoothingMode,
+	StringFormat,
 } from "../common/common";
-import { Button, ButtonStates, Clickable } from "../common/IconButton";
+import { ButtonStates, Clickable } from "../common/IconButton";
 import { Material, MaterialFont } from "../common/iconCode";
 import { SerializableIcon } from "../common/IconType";
-import { globalFontName, mainColors } from "./Theme";
+import { mainColors } from "./Theme";
 
 export class ShuffleButton extends Clickable {
 	foreColorMap: Map<string, number> = new Map();
@@ -56,8 +56,9 @@ export class ShuffleButton extends Clickable {
 
 		this.on_paint = (gr: IGdiGraphics) => {
 			let foreColor = foreColorMap.get(this.state);
-			let background = backgroundColorMap.get(this.state);
+			let backgroundColor = backgroundColorMap.get(this.state);
 
+			// background;
 			gr.SetSmoothingMode(SmoothingMode.AntiAlias);
 			gr.FillRoundRect(
 				this.x,
@@ -66,9 +67,24 @@ export class ShuffleButton extends Clickable {
 				this.height,
 				2,
 				2,
-				background
+				backgroundColor
 			);
+			gr.SetSmoothingMode(SmoothingMode.Default);
+
+			// icon;
 			shuffleIcon.draw(gr, foreColor, 0, this.x + padLeft, this.y);
+
+			// text = 'SHUFFLE';
+			gr.DrawString(
+				"SHUFFLE",
+				textFont,
+				foreColor,
+				this.x + padLeft + gap + shuffleIcon.width,
+				this.y,
+				textWidth,
+				this.height,
+				StringFormat.LeftTop
+			);
 		};
 	}
 }
