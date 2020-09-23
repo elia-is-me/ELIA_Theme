@@ -17,9 +17,7 @@ export function RGBA(r: number, g: number, b: number, a: number) {
 }
 
 export function toRGB(color: number) {
-	// returns an array like [192, 0, 0]
-	var a = color - 0xff000000;
-	return [a >> 16, (a >> 8) & 0xff, a & 0xff];
+	return [(color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff];
 }
 
 export function getAlpha(colour: number) {
@@ -133,10 +131,10 @@ export function darken(color: number, factor: number): number {
 	let rgb__ = hslToRgb(hsla.h, hsla.s, hsla.l);
 	return RGBA(rgb__.r, rgb__.g, rgb__.b, alpha);
 }
+
 // dpi scale
-export const scale = (function () {
-	var factor = window.GetProperty("_Global.Zoom Factor(%, 0 = default)", 0) / 100;
-	var round = Math.round;
+const getDpi = () => {
+	let factor = 1;
 	if (factor === 0) {
 		try {
 			var ws = new ActiveXObject("WScript.Shell");
@@ -149,23 +147,18 @@ export const scale = (function () {
 		}
 	} else {
 	}
-	return function (value: number) {
-		return round(value * factor * 100) / 100;
-	};
-})();
+	return factor;
+};
+
+export const scale = (value: number) => Math.round(value * getDpi() * 100) / 100;
 
 export function isFunction(obj: any) {
 	return Object.prototype.toString.call(obj) === "[object Function]";
 }
 
-// Array
-export function isArray(item: any) {
-	return Object.prototype.toString.call(item) === "[object Array]";
-}
-
 // OBJECT
 export function isObject(item: any) {
-	return typeof item === "object" && item !== null && !isArray(item);
+	return typeof item === "object" && item !== null && !Array.isArray(item);
 }
 
 export function isString(x: any) {
@@ -398,7 +391,7 @@ export function deepClone<T>(obj: T): T {
 }
 
 export function isEmptyString(str: string) {
-	return !str || 0 === str.length;
+	return !str;
 }
 
 export const enum StopReason {
@@ -468,7 +461,6 @@ export const clamp = (num: number, min: number, max: number) => {
 	return num;
 };
 
-
 export const enum CursorName {
 	IDC_ARROW = 32512,
 	IDC_IBEAM = 32513,
@@ -487,4 +479,3 @@ export const enum CursorName {
 	IDC_HAND = 32649,
 	IDC_HELP = 32651,
 }
-

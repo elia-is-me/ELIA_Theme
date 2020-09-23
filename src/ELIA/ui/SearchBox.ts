@@ -16,30 +16,30 @@ const iconFontSize = scale(20);
 const iconHeight = scale(32);
 
 const icons: {
-	[keys in TIconKeys]: SerializableIcon
+	[keys in TIconKeys]: SerializableIcon;
 } = {
 	loupe: new SerializableIcon({
 		code: Material.search,
 		name: MaterialFont,
 		size: iconFontSize,
 		width: iconHeight,
-		height: iconHeight
+		height: iconHeight,
 	}),
 	delta: new SerializableIcon({
 		code: Material.arrow_drop_down,
 		name: MaterialFont,
 		size: iconFontSize,
 		width: iconHeight,
-		height: iconHeight
+		height: iconHeight,
 	}),
 	cross: new SerializableIcon({
 		code: Material.close,
 		name: MaterialFont,
 		size: iconFontSize,
 		width: iconHeight,
-		height: iconHeight
-	})
-}
+		height: iconHeight,
+	}),
+};
 
 interface IIconColors {
 	normal: number;
@@ -50,8 +50,14 @@ interface IIconColors {
 const iconColor: IIconColors = {
 	normal: mainColors.text,
 	hover: setAlpha(mainColors.text, 200),
-	down: setAlpha(mainColors.text, 128)
-}
+	down: setAlpha(mainColors.text, 128),
+};
+
+const searchBoxColors = {
+	backgroundColor: RGB(30, 30, 30),
+	backgroundActiveColor: RGB(77, 77, 77),
+	foreColor: mainColors.text,
+};
 
 interface ISearchBoxOptions {
 	backgroundColor: number;
@@ -62,14 +68,12 @@ interface ISearchBoxOptions {
 	iconColors: IIconColors;
 }
 
-
 export class SearchBox extends Component {
 	inputbox: InputBox;
 	searchBtn: Icon2;
 	clearBtn: Icon2;
 	menuBtn: Icon2;
 
-	_iconColors: IIconColors;
 	backgroundColor: number;
 	foreColor: number;
 	borderColor: number;
@@ -81,18 +85,18 @@ export class SearchBox extends Component {
 	iconHeight: number;
 	_inputboxHeight: number;
 
-	constructor(opts: ISearchBoxOptions, callbacks?: IInjectableCallbacks) {
-		super(opts);
+	constructor() {
+		super({});
 
 		this.icons = icons;
 		this.iconHeight = iconHeight;
-		this._iconColors = iconColor;
+		// iconColor = iconColor;
 
 		this.searchBtn = new Icon2({
 			fontIcon: this.icons.loupe,
-			hoverColor: this._iconColors.hover,
-			downColor: this._iconColors.down,
-			normalColor: this._iconColors.normal,
+			hoverColor: iconColor.hover,
+			downColor: iconColor.down,
+			normalColor: iconColor.normal,
 		});
 
 		const handleClear = () => {
@@ -102,18 +106,18 @@ export class SearchBox extends Component {
 
 		this.clearBtn = new Icon2({
 			fontIcon: this.icons.cross,
-			hoverColor: this._iconColors.hover,
-			downColor: this._iconColors.down,
-			normalColor: this._iconColors.normal,
+			hoverColor: iconColor.hover,
+			downColor: iconColor.down,
+			normalColor: iconColor.normal,
 			onClick() {
 				handleClear();
 			},
 		});
 		this.menuBtn = new Icon2({
 			fontIcon: this.icons.delta,
-			hoverColor: this._iconColors.hover,
-			downColor: this._iconColors.down,
-			normalColor: this._iconColors.normal,
+			hoverColor: iconColor.hover,
+			downColor: iconColor.down,
+			normalColor: iconColor.normal,
 		});
 
 		this.inputbox = new InputBox({
@@ -129,10 +133,9 @@ export class SearchBox extends Component {
 			},
 		});
 
-		this._inputboxHeight =
-			MeasureString("ABCDgl汉字", this.inputbox.font).Height + scale(4);
+		this._inputboxHeight = MeasureString("ABCDgl汉字", this.inputbox.font).Height + scale(4);
 
-		[this.searchBtn, this.clearBtn, this.menuBtn, this.inputbox].forEach(btn =>
+		[this.searchBtn, this.clearBtn, this.menuBtn, this.inputbox].forEach((btn) =>
 			this.addChild(btn)
 		);
 	}
@@ -173,12 +176,7 @@ export class SearchBox extends Component {
 			iconHeight,
 			iconHeight
 		);
-		clearBtn.setBoundary(
-			menuBtn.x - iconHeight - scale(4),
-			btnY,
-			iconHeight,
-			iconHeight
-		);
+		clearBtn.setBoundary(menuBtn.x - iconHeight - scale(4), btnY, iconHeight, iconHeight);
 
 		let inputboxY = this.y + (((this.height - this._inputboxHeight) / 2) | 0);
 		inputbox.setBoundary(
@@ -191,21 +189,9 @@ export class SearchBox extends Component {
 
 	on_paint(gr: IGdiGraphics) {
 		if (this.inputbox.edit) {
-			gr.FillSolidRect(
-				this.x,
-				this.y,
-				this.width,
-				this.height,
-				this.backgroundActiveColor
-			);
+			gr.FillSolidRect(this.x, this.y, this.width, this.height, this.backgroundActiveColor);
 		} else {
-			gr.FillSolidRect(
-				this.x,
-				this.y,
-				this.width,
-				this.height,
-				this.backgroundColor
-			);
+			gr.FillSolidRect(this.x, this.y, this.width, this.height, this.backgroundColor);
 		}
 
 		if (this.inputbox.text.length > 0) {
@@ -215,7 +201,6 @@ export class SearchBox extends Component {
 		}
 	}
 }
-
 
 /**
  * TODO:

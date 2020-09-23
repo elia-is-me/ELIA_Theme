@@ -304,6 +304,7 @@ export class Icon2 extends Clickable {
 		if (isFunction(opts.onClick)) {
 			this.on_click = opts.onClick.bind(this);
 		}
+		return this;
 	}
 
 	on_paint(gr: IGdiGraphics) {

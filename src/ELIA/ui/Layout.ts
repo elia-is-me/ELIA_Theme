@@ -7,7 +7,7 @@ import { scale } from "../common/common";
 import { InputPopupPanel, IInputPopupOptions } from "./InputPopupPanel";
 import { AlertDialog, IAlertDialogOptions } from "./AlertDialog";
 import { SearchResultView } from "./SearchResultView";
-import { ui, UserInterface } from "../common/UserInterface";
+import { ui } from "../common/UserInterface";
 
 
 const CONTROL_BAR_HEIGHT = scale(76);
@@ -52,7 +52,7 @@ export class Layout extends Component {
 		this.addChild(this.playlistManager);
 		this.addChild(this.playlistView);
 
-		this.setPartsZIndex(this.viewState);
+		this.setPartsZIndex();
 		this.setPartsVisible(this.viewState);
 	}
 
@@ -146,7 +146,7 @@ export class Layout extends Component {
 	/**
 	 * TODO
 	 */
-	private setPartsZIndex(viewState: ViewStates) {
+	private setPartsZIndex() {
 		this.topbar.z = 100;
 		this.playbackControlBar.z = 10;
 		this.playlistView.z = 0;
@@ -156,7 +156,7 @@ export class Layout extends Component {
 	/**
 	 * TODO;
 	 */
-	setViewState(newState: any) {}
+	setViewState() {}
 
 	on_paint(gr: IGdiGraphics) {}
 

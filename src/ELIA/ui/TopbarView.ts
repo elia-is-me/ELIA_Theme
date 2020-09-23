@@ -33,7 +33,6 @@ const topbarColors = {
 };
 
 
-/* TODO */
 export const Topbar_Properties = {
 	height: scale(56),
 };
@@ -81,16 +80,7 @@ export class TopBar extends Component {
 			downColor: setAlpha(this.foreColor, 128),
 		});
 
-		this.searchBox = new SearchBox({
-			backgroundColor: RGB(30, 30, 30),
-			backgroundActiveColor: RGB(77, 77, 77),
-			foreColor: mainColors.text,
-			iconColors: {
-				normal: mainColors.text,
-				hover: setAlpha(mainColors.text, 200),
-				down: setAlpha(mainColors.text, 127),
-			},
-		});
+		this.searchBox = new SearchBox();
 
 		[this.mainIco, this.switchIco, this.searchBox, this.settingsIco].forEach((child) =>
 			this.addChild(child)

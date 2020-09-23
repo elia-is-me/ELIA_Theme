@@ -119,11 +119,11 @@ export abstract class Component implements IBoxModel, ICallbacks {
 	}
 	removeChild(node: Component) {
 		if (!(node instanceof Component) || node.parent !== this) {
-			console.log("fail to remove child")
+			console.log("fail to remove child");
 			return;
 		} else {
 			node.parent = null;
-			this.children = this.children.filter(child => child.parent === this);
+			this.children = this.children.filter((child) => child.parent === this);
 		}
 		this.resetUpdateState();
 	}
@@ -171,10 +171,7 @@ export abstract class Component implements IBoxModel, ICallbacks {
 
 	setSize(size: { width?: number; height?: number }): void;
 	setSize(width: number, height: number): void;
-	setSize(
-		arg_1: number | { width?: number; height?: number },
-		arg_2?: number
-	): any {
+	setSize(arg_1: number | { width?: number; height?: number }, arg_2?: number) {
 		if (typeof arg_1 == "number") {
 			let visibleBefore_ = this.isVisible();
 			this.width = arg_1;
@@ -198,31 +195,13 @@ export abstract class Component implements IBoxModel, ICallbacks {
 			let height = arg_1.height || this.height;
 			this.setSize(width, height);
 		}
+		return this;
 	}
 
 	setPosition(x: number, y: number) {
 		this.x = x;
 		this.y = y;
 		this.on_size && this.on_size();
-	}
-
-	setDimension(width: number, height: number) {
-		let visibilityBefore_ = this.isVisible();
-		this.width = width;
-		this.height = height;
-		let visibilityNow_ = this.isVisible();
-
-		if (visibilityNow_) {
-			this.on_size();
-		}
-
-		if (visibilityNow_ !== visibilityBefore_) {
-			this._shouldUpdateOnInit = true;
-		}
-
-		if (this._shouldSortChildren) {
-			this.children.sort(sortByZIndex);
-		}
 	}
 
 	didUpdateOnInit() {
@@ -243,7 +222,6 @@ export abstract class Component implements IBoxModel, ICallbacks {
 		// window.RepaintRect(this.x, this.y, this.width, this.height);
 		window.Repaint();
 	}
-
 }
 
 const useClearType = window.GetProperty('_Global.Font Use ClearType', true);
