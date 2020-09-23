@@ -351,6 +351,21 @@ export function imageFromCode(
 	return img;
 }
 
+export function drawImage(
+	w: number,
+	h: number,
+	im: boolean,
+	func: (gr: IGdiGraphics) => void
+) {
+	let i = gdi.CreateImage(Math.max(w, 1) | 0, Math.max(h, 1) | 0);
+	let g = i.GetGraphics();
+	func(g);
+	i.ReleaseGraphics(g);
+	g = null;
+	if (im) return i;
+	else i = null;
+}
+
 /**
  * @param {string} str
  * @param {IGdiFont} str

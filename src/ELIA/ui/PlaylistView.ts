@@ -11,7 +11,7 @@ import { ScrollView } from "../common/ScrollView";
 import { Component, textRenderingHint, IBoxModel } from "../common/BasePart";
 import { Material, MaterialFont } from "../common/iconCode";
 import { SerializableIcon } from "../common/IconType";
-import { AlbumArtId } from "../common/AlbumArtView";
+import { AlbumArtId, AlbumArtView, ArtworkType, PlaylistArtwork } from "../common/AlbumArtView";
 import { toggleMood } from "./PlaybackControlView";
 
 const __DEV__ = window.GetProperty("__DEV__", true);
@@ -102,19 +102,18 @@ const PlaylistProperties = {
 	emptyFont: gdi.Font(globalFontName, scale(20))
 }
 
-const PlaylistColors: IThemeColors = {
+const playlistColors: IThemeColors = {
 	text: mainColors.text,
 	secondaryText: mainColors.secondaryText,
 	background: RGB(28, 28, 28),
 	highlight: mainColors.highlight,
-	HEART_RED: RGB(221, 0, 27)
-}
+	HEART_RED: RGB(221, 0, 27),
+};
 
 /**
  * Flow with list items;
  */
 class PlaylistHeaderView extends Component {
-
 	titleText: string = "";
 	parentOffsetY: number;
 	descriptionText: string = "";
@@ -138,9 +137,9 @@ class PlaylistHeaderView extends Component {
 		primaryColor: number;
 		secondaryColor: number;
 	}) {
-		super({})
-		this.titleText = (options.titleText || "");
-		this.descriptionText = (options.discriptionText || "");
+		super({});
+		this.titleText = options.titleText || "";
+		this.descriptionText = options.discriptionText || "";
 		this.primaryColor = options.primaryColor;
 		this.secondaryColor = options.secondaryColor;
 
@@ -156,15 +155,38 @@ class PlaylistHeaderView extends Component {
 		let stubImageWidth_ = 500;
 		this._stubImage = gdi.CreateImage(stubImageWidth_, stubImageWidth_);
 		let g_ = this._stubImage.GetGraphics();
-		g_.FillSolidRect(0, 0, stubImageWidth_, stubImageWidth_, 0x20FFFFFF & RGB(242, 242, 242));
+		g_.FillSolidRect(
+			0,
+			0,
+			stubImageWidth_,
+			stubImageWidth_,
+			0x20ffffff & RGB(242, 242, 242)
+		);
 		g_.SetTextRenderingHint(TextRenderingHint.AntiAlias);
-		g_.DrawString("No Art", gdi.Font("Segoe UI", 102, 1), RGB(97, 97, 97), 0, 0, stubImageWidth_, stubImageWidth_, StringFormat.Center);
+		g_.DrawString(
+			"No Art",
+			gdi.Font("Segoe UI", 102, 1),
+			RGB(97, 97, 97),
+			0,
+			0,
+			stubImageWidth_,
+			stubImageWidth_,
+			StringFormat.Center
+		);
 		g_.SetTextRenderingHint(TextRenderingHint.SystemDefault);
 		this._stubImage.ReleaseGraphics(g_);
 
 		// Minimum height;
 		this.minHeight = scale(240);
+
+		this.artwork   = new PlaylistArtwork();
+		// this.artwork.on_init = () => {
+		// 	this.artwork.getPlaylistArtworks(plman.GetPlaylistItems(plman.ActivePlaylist));
+		// }
+		this.addChild(this.artwork);
 	}
+
+	artwork: PlaylistArtwork;
 
 	private getArtworkHeight_(paneWidth: number): number {
 		let thin = scale(600);
@@ -216,7 +238,7 @@ class PlaylistHeaderView extends Component {
 		let minHeight_ = artworkHeight + paddings.top + paddings.bottom;
 		let gap = scale(24);
 		let textAreaWidth = paneWidth - 2 * paddingLeft - gap - artworkHeight;
-		let titleText = (isEmptyString(this.titleText) ? "NO TITLE" : this.titleText);
+		let titleText = isEmptyString(this.titleText) ? "NO TITLE" : this.titleText;
 		let titleTextFullWidth = MeasureString(titleText, this.titleFont).Width;
 
 		// Padding top;
@@ -227,9 +249,9 @@ class PlaylistHeaderView extends Component {
 
 		// Title;
 		if (titleTextFullWidth > textAreaWidth) {
-			totalHeight += (1.1 * 2 * titleFontHeight);
+			totalHeight += 1.1 * 2 * titleFontHeight;
 		} else {
-			totalHeight += (1.1 * titleFontHeight);
+			totalHeight += 1.1 * titleFontHeight;
 		}
 
 		// Description
@@ -244,11 +266,14 @@ class PlaylistHeaderView extends Component {
 	}
 
 	setTitles() {
-		this.titleText = plman.GetPlaylistName(this.playlistIndex)
-		this.descriptionText = plman.PlaylistItemCount(this.playlistIndex)
-			+ " tracks"
-			+ " \u2022 "
-			+ utils.FormatDuration(plman.GetPlaylistItems(this.playlistIndex).CalcTotalDuration());
+		this.titleText = plman.GetPlaylistName(this.playlistIndex);
+		this.descriptionText =
+			plman.PlaylistItemCount(this.playlistIndex) +
+			" tracks" +
+			" \u2022 " +
+			utils.FormatDuration(
+				plman.GetPlaylistItems(this.playlistIndex).CalcTotalDuration()
+			);
 	}
 
 	playlistIndex: number;
@@ -267,9 +292,17 @@ class PlaylistHeaderView extends Component {
 		let playlistIndex = this.playlistIndex;
 
 		while (index < trackCount && artsworks.length < 1) {
-			let result = await utils.GetAlbumArtAsyncV2(window.ID, playlistMetadbs[index], AlbumArtId.front);
+			let result = await utils.GetAlbumArtAsyncV2(
+				window.ID,
+				playlistMetadbs[index],
+				AlbumArtId.Front
+			);
 			if (result.image == null) {
-				result = await utils.GetAlbumArtAsyncV2(window.ID, playlistMetadbs[index], AlbumArtId.disc);
+				result = await utils.GetAlbumArtAsyncV2(
+					window.ID,
+					playlistMetadbs[index],
+					AlbumArtId.Disc
+				);
 			}
 			if (result.image != null) {
 				artsworks.push(result.image);
@@ -290,6 +323,8 @@ class PlaylistHeaderView extends Component {
 	on_size() {
 		this.paddings = this.getProperPaddings(this.width);
 		this.artworkHeight = this.getArtworkHeight_(this.width);
+		this.artwork.setBoundary(this.x + this.paddings.left,
+			this.y + this.paddings.top, this.artworkHeight, this.artworkHeight)
 	}
 
 	on_paint(gr: IGdiGraphics) {
@@ -300,46 +335,100 @@ class PlaylistHeaderView extends Component {
 		let paddingTop = paddings.top;
 		let { titleFont, descriptionFont } = this;
 
+		this.artwork.y = this.y + this.paddings.top;
+
 		/**
 		 * Draw artwork;
 		 */
 		const image_ = this.artworkImage || this._stubImage;
 		const artworkWidth = this.artworkHeight;
-		image_ && gr.DrawImage(image_, this.x + paddingLeft, this.y + paddingTop, artworkWidth, artworkWidth, 0, 0, image_.Width, image_.Height);
+		// image_ &&
+		// 	gr.DrawImage(
+		// 		image_,
+		// 		this.x + paddingLeft,
+		// 		this.y + paddingTop,
+		// 		artworkWidth,
+		// 		artworkWidth,
+		// 		0,
+		// 		0,
+		// 		image_.Width,
+		// 		image_.Height
+		// 	);
 
 		const textX = this.x + paddingLeft + artworkWidth + scale(24);
 		let textY_ = this.y + paddingTop;
-		const textAreaWidth = this.width - paddingLeft - artworkWidth - scale(24) - paddingLeft;
+		const textAreaWidth =
+			this.width - paddingLeft - artworkWidth - scale(24) - paddingLeft;
 
 		// Type,
-		gr.DrawString("PLAYLIST", descriptionFont, secondaryColor, textX, textY_, textAreaWidth, 1.5 * descriptionFont.Height, StringFormat.LeftTopNoTrim)
+		gr.DrawString(
+			"PLAYLIST",
+			descriptionFont,
+			secondaryColor,
+			textX,
+			textY_,
+			textAreaWidth,
+			1.5 * descriptionFont.Height,
+			StringFormat.LeftTopNoTrim
+		);
 		textY_ += 2 * descriptionFont.Height;
 
 		// Title;
 		gr.SetTextRenderingHint(TextRenderingHint.AntiAlias);
-		const titleText_ = (this.titleText || "NO TITLE");
+		const titleText_ = this.titleText || "NO TITLE";
 		const titleFullWidth_ = MeasureString(titleText_, titleFont).Width;
 		if (titleFullWidth_ > textAreaWidth) {
-			gr.DrawString(titleText_, titleFont, primaryColor, textX, textY_, textAreaWidth, 2.5 * titleFont.Height, StringFormat(0, 0, StringTrimming.EllipsisCharacter, StringFormatFlags.DisplayFormatControl));
+			gr.DrawString(
+				titleText_,
+				titleFont,
+				primaryColor,
+				textX,
+				textY_,
+				textAreaWidth,
+				2.5 * titleFont.Height,
+				StringFormat(
+					0,
+					0,
+					StringTrimming.EllipsisCharacter,
+					StringFormatFlags.DisplayFormatControl
+				)
+			);
 			textY_ += 1.1 * titleFont.Height * 2;
 		} else {
-			gr.DrawString(titleText_, titleFont, primaryColor, textX, textY_, textAreaWidth, 2 * titleFont.Height, StringFormat.LeftTop);
+			gr.DrawString(
+				titleText_,
+				titleFont,
+				primaryColor,
+				textX,
+				textY_,
+				textAreaWidth,
+				2 * titleFont.Height,
+				StringFormat.LeftTop
+			);
 			textY_ += 1.2 * titleFont.Height;
 		}
 		gr.SetTextRenderingHint(textRenderingHint);
 
 		// Description;
 		if (!isEmptyString(this.descriptionText)) {
-			gr.DrawString(this.descriptionText, descriptionFont, secondaryColor, textX, textY_, textAreaWidth, 2 * descriptionFont.Height, StringFormat.LeftTop);
+			gr.DrawString(
+				this.descriptionText,
+				descriptionFont,
+				secondaryColor,
+				textX,
+				textY_,
+				textAreaWidth,
+				2 * descriptionFont.Height,
+				StringFormat.LeftTop
+			);
 		}
 	}
 
 	on_mouse_rbtn_up(x: number, y: number) {
 		try {
 			showPlaylistHeaderMenu(this.playlistIndex, x, y);
-		} catch (e) { }
+		} catch (e) {}
 	}
-
 }
 
 class PlaylistColumn {
@@ -731,14 +820,14 @@ export class PlaylistView extends ScrollView {
 		let rowHeight = PlaylistProperties.rowHeight;
 		let headerHeight = this.headerView.height;
 		let items = this.items;
-		let colors = PlaylistColors;
+		let colors = playlistColors;
 		let paddings = this.paddings;
 		let padLeft = paddings.left;
 		let padRight = paddings.right;
 		let _columnsMap = this._columnsMap;
 		let itemFont = PlaylistProperties.itemFont;
-		let primaryColor = PlaylistColors.text;
-		let secondaryColor = PlaylistColors.secondaryText;
+		let primaryColor = playlistColors.text;
+		let secondaryColor = playlistColors.secondaryText;
 
 		let cTrackNumber = _columnsMap.get("trackNumber");
 		let cTitle = _columnsMap.get("title");
