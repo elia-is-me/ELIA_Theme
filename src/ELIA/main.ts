@@ -1,57 +1,19 @@
-﻿import { RGB, scale, StopReason, VKeyCode, GetKeyboardMask, KMask } from "./common/common"
+﻿import { scale, StopReason, VKeyCode, GetKeyboardMask, KMask } from "./common/common";
 import { textRenderingHint } from "./common/BasePart";
 import { PlaybackControlView } from "./ui/PlaybackControlView";
-import { bottomColors, mainColors, globalFontName } from "./ui/Theme";
 import { TopBar } from "./ui/TopbarView";
 import { PlaylistView } from "./ui/PlaylistView";
 import { PlaylistManagerView } from "./ui/PlaylistManagerView";
 import { Layout } from "./ui/Layout";
-import { UserInterface, ui } from "./common/UserInterface";
-import { SerializableIcon } from "./common/IconType";
-import { Material, MaterialFont } from "./common/iconCode";
-import { InputPopupPanel } from "./ui/InputPopupPanel";
+import { ui } from "./common/UserInterface";
 
+const playbackControlBar = new PlaybackControlView();
 
-const playbackControlBar = new PlaybackControlView({
-	colors: bottomColors,
-});
+const topbar = new TopBar();
 
-type IconKeysType = "menu" | "settings" | "apps";
-const iconSize = scale(20);
-const icons: {
-	[keys in IconKeysType]: SerializableIcon
-} = {
-	menu: new SerializableIcon({
-		code: Material.menu,
-		name: MaterialFont,
-		size: iconSize,
-	}),
-	settings: new SerializableIcon({
-		code: Material.gear,
-		name: MaterialFont,
-		size: iconSize,
-	}),
-	apps: new SerializableIcon({
-		code: Material.apps,
-		name: MaterialFont,
-		size: iconSize,
-	})
-}
-
-const topbar = new TopBar({
-	backgroundColor: RGB(37, 37, 37),
-	foreColor: mainColors.text,
-	hoverColor: mainColors.secondaryText,
-	icons: icons
-});
-
-const playlistView = new PlaylistView({})
+const playlistView = new PlaylistView();
 
 const playlistManager = new PlaylistManagerView();
-
-// const addPlaylistPanel = new InputPopupPanel({
-
-// })
 
 /**
  * Root part of this panel;
@@ -61,7 +23,6 @@ const root = new Layout({
 	playbackControlBar: playbackControlBar,
 	playlsitManager: playlistManager,
 	playlistView: playlistView,
-	// addPlaylistPanel: addPlaylistPanel
 });
 
 ui.setRoot(root);
@@ -70,11 +31,9 @@ ui.setRoot(root);
  *  Set layout
  * =============== */
 
-root.onReady = function () {
-
+ui.onReady = function () {
 	checkDefautPlaylist();
-
-}
+};
 
 
 function checkDefautPlaylist() {
@@ -103,8 +62,6 @@ const PANEL_MIN_WIDTH = scale(780);
 
 const __DEV__ = window.GetProperty("__DEV__", true);
 let profiler: IFbProfiler;
-let profilerCount = 0;
-let totalTime = 0;
 if (__DEV__) {
 	profiler = fb.CreateProfiler("MAIN");
 }
@@ -250,10 +207,7 @@ function on_key_down(vkey: number) {
 		}
 	}
 
-	// if (layoutManager.)
 	ui.invokeFocusedPart("on_key_down", vkey, mask);
-
-	// layout.playlistView.isVisible() && layout.playlistView.on_key_down(vkey, mask);
 }
 
 function on_char(code: number) {
@@ -284,9 +238,6 @@ function on_selection_changed() {
 	ui.invokeVisibleParts("on_selection_changed");
 }
 
-function on_playlist_selection_changed() {
-	ui.invokeVisibleParts("on_selection_changed");
-}
 
 function on_playlist_items_added(playlistIndex?: number) {
 	ui.invokeVisibleParts("on_playlist_items_added", playlistIndex);
@@ -367,7 +318,7 @@ window.DlgCode = DLGC_WANTALLKEYS;
 
 /* When all ready; */
 window.SetTimeout(() => {
-	root.onReady();
+	ui.onReady();
 }, 5);
 
 

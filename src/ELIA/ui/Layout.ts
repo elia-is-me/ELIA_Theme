@@ -23,7 +23,7 @@ export class Layout extends Component {
 	topbar: TopBar;
 	playbackControlBar: PlaybackControlView;
 	playlistManager: PlaylistManagerView;
-	playlistView: PlaylistView
+	playlistView: PlaylistView;
 	searchResultView?: SearchResultView;
 	inputPopupPanel?: InputPopupPanel;
 	alertDialog?: AlertDialog;
@@ -37,7 +37,7 @@ export class Layout extends Component {
 		playlistView: PlaylistView;
 		addPlaylistPanel?: InputPopupPanel;
 	}) {
-		super({})
+		super({});
 
 		this.viewState = ViewStates.Default;
 
@@ -82,7 +82,12 @@ export class Layout extends Component {
 		 * Set pinned parts;
 		 */
 		this.topbar.setBoundary(x, y, width, TOPBAR_HEIGHT);
-		this.playbackControlBar.setBoundary(x, x + height - CONTROL_BAR_HEIGHT, width, CONTROL_BAR_HEIGHT);
+		this.playbackControlBar.setBoundary(
+			x,
+			x + height - CONTROL_BAR_HEIGHT,
+			width,
+			CONTROL_BAR_HEIGHT
+		);
 
 		/**
 		 * Set others;
@@ -108,7 +113,8 @@ export class Layout extends Component {
 				}
 				break;
 			case ViewStates.Search:
-				playlistManager.visible && playlistManager.setBoundary(x, listY, PLMAN_MIN_WIDTH, listHeight);
+				playlistManager.visible &&
+					playlistManager.setBoundary(x, listY, PLMAN_MIN_WIDTH, listHeight);
 				if (playlistManager.visible) {
 					searchResultView.setBoundary(
 						playlistManager.x + playlistManager.width,
@@ -125,7 +131,8 @@ export class Layout extends Component {
 		if (this.inputPopupPanel && this.inputPopupPanel.visible) {
 			this.inputPopupPanel.setPosition(
 				this.x + (this.width - this.inputPopupPanel.width) / 2,
-				this.y + (this.height - this.inputPopupPanel.height) / 2);
+				this.y + (this.height - this.inputPopupPanel.height) / 2
+			);
 		}
 
 		if (this.alertDialog && this.alertDialog.visible) {
@@ -149,14 +156,9 @@ export class Layout extends Component {
 	/**
 	 * TODO;
 	 */
-	setViewState(newState: any) { }
+	setViewState(newState: any) {}
 
-	on_paint(gr: IGdiGraphics) {
-
-	}
-
-	ready?: () => void;
-	onReady?: () => void;
+	on_paint(gr: IGdiGraphics) {}
 
 	onNotifyData(message: string, data: any) {
 		switch (message) {
@@ -170,9 +172,9 @@ export class Layout extends Component {
 				this.repaint();
 				break;
 			case "Popup.InputPopupPanel":
-				let options = (data as IInputPopupOptions);
+				let options = data as IInputPopupOptions;
 				if (options == null) break;
-				this.inputPopupPanel = new InputPopupPanel(options)
+				this.inputPopupPanel = new InputPopupPanel(options);
 				this.inputPopupPanel.visible = true;
 				this.addChild(this.inputPopupPanel);
 				this.on_size();
@@ -189,7 +191,7 @@ export class Layout extends Component {
 				this.repaint();
 				break;
 			case "Show.AlertDialog":
-				let alertOptions = (data as IAlertDialogOptions);
+				let alertOptions = data as IAlertDialogOptions;
 				if (alertOptions == null) break;
 				this.alertDialog = new AlertDialog(alertOptions);
 				this.alertDialog.visible = true;
@@ -209,7 +211,7 @@ export class Layout extends Component {
 			case "Show.SearchResult":
 				this.searchResultView = new SearchResultView({
 					titleText: (data as any).titleText,
-					metadbs: (data as any).metadbs
+					metadbs: (data as any).metadbs,
 				});
 				this.addChild(this.searchResultView);
 				this.viewState = ViewStates.Search;
@@ -230,7 +232,7 @@ export class Layout extends Component {
 				this.setPartsVisible(this.viewState);
 				this.on_size();
 				ui.updateParts();
-				this.repaint()
+				this.repaint();
 				break;
 		}
 	}

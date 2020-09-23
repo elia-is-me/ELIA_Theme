@@ -76,9 +76,7 @@ export class UserInterface {
 	}
 
 	invokeVisibleParts(method: string, ...args: any) {
-		this.visibleParts.forEach(p =>
-			this.invoke(p, method, args[0], args[1], args[2])
-		);
+		this.visibleParts.forEach((p) => this.invoke(p, method, args[0], args[1], args[2]));
 	}
 
 	invokeFocusedPart(method: string, ...args: any[]) {
@@ -158,14 +156,14 @@ export class UserInterface {
 		let visiblePartsCached = this.visibleParts;
 		this.visibleParts = this.findVisibleParts(this.rootPart);
 		this.visibleParts
-			.filter(p => visiblePartsCached.indexOf(p) === -1)
-			.forEach(p => {
+			.filter((p) => visiblePartsCached.indexOf(p) === -1)
+			.forEach((p) => {
 				p.on_init();
 				p.didUpdateOnInit();
 			});
 		visiblePartsCached
-			.filter(p => this.visibleParts.indexOf(p) === -1)
-			.forEach(p => {
+			.filter((p) => this.visibleParts.indexOf(p) === -1)
+			.forEach((p) => {
 				p.resetUpdateState();
 			});
 		this.parts = this.flatternParts(this.rootPart);
@@ -175,6 +173,8 @@ export class UserInterface {
 		this.visibleParts = this.findVisibleParts(this.rootPart);
 		this.parts = this.flatternParts(this.rootPart);
 	}
+
+	onReady?: () => void;
 }
 
 export const ui = new UserInterface();

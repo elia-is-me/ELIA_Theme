@@ -427,7 +427,6 @@ interface IPaddings {
 }
 
 export class PlaylistView extends ScrollView {
-
 	items: PlaylistViewItem[] = [];
 	itemsTotalHeight: number;
 	visibleItems: PlaylistViewItem[] = [];
@@ -453,8 +452,8 @@ export class PlaylistView extends ScrollView {
 	multiSelectionStartId = -1;
 	clickedMoodId: number = -1;
 
-	constructor(attrs: object) {
-		super(attrs);
+	constructor() {
+		super({});
 
 		/**
 		 * Create children component;
@@ -471,7 +470,7 @@ export class PlaylistView extends ScrollView {
 		// headerView;
 		this.headerView = new PlaylistHeaderView({
 			primaryColor: mainColors.text,
-			secondaryColor: mainColors.secondaryText
+			secondaryColor: mainColors.secondaryText,
 		});
 		this.addChild(this.headerView);
 		this.headerView.setPlaylistIndex(plman.ActivePlaylist);
@@ -487,25 +486,25 @@ export class PlaylistView extends ScrollView {
 		this.playingIco = new SerializableIcon({
 			name: MaterialFont,
 			code: Material.volume,
-			size: scale(16)
+			size: scale(16),
 		});
 
 		this.pauseIco = new SerializableIcon({
 			name: MaterialFont,
 			code: Material.volume_mute,
-			size: scale(16)
+			size: scale(16),
 		});
 
 		this.heartOnIco = new SerializableIcon({
 			name: MaterialFont,
 			code: Material.heart,
-			size: scale(16)
+			size: scale(16),
 		});
 
 		this.heartOffIco = new SerializableIcon({
 			name: MaterialFont,
 			code: Material.heart_empty,
-			size: scale(16)
+			size: scale(16),
 		});
 
 		/**
@@ -529,7 +528,7 @@ export class PlaylistView extends ScrollView {
 			} else {
 				return -1;
 			}
-		}
+		};
 
 		/**
 		 *  Init columns;
@@ -544,7 +543,6 @@ export class PlaylistView extends ScrollView {
 
 		// Set columns' height, though may needless. May or should be removed.
 		// this._columnsMap.forEach(col => col.height = PlaylistProperties.rowHeight);
-
 	}
 
 	// Will be rewrite;
@@ -552,12 +550,11 @@ export class PlaylistView extends ScrollView {
 		return -1;
 	}
 
-	/** 
+	/**
 	 * Create playlist items and init it's items' state (selected, playing,
 	 * focused), etc;
 	 */
 	setList() {
-
 		const playlistMetadbs = plman.GetPlaylistItems(plman.ActivePlaylist);
 		const playlistItems: PlaylistViewItem[] = [];
 		const playlistItemCount = plman.PlaylistItemCount(plman.ActivePlaylist);
@@ -566,7 +563,6 @@ export class PlaylistView extends ScrollView {
 		this._selectedIndexes = [];
 
 		for (let playlistItemIndex = 0; playlistItemIndex < playlistItemCount; playlistItemIndex++) {
-
 			let rowItem = new PlaylistViewItem();
 			rowItem.rowIndex = playlistItemIndex;
 			rowItem.metadb = playlistMetadbs[playlistItemIndex];
@@ -586,7 +582,9 @@ export class PlaylistView extends ScrollView {
 		this.setPlayingItem();
 		plman.SetActivePlaylistContext();
 		let focusdPlaylistItemIndex = plman.GetPlaylistFocusItemIndex(plman.ActivePlaylist);
-		this.focusIndex = this.items.findIndex(item => item.playlistItemIndex === focusdPlaylistItemIndex);
+		this.focusIndex = this.items.findIndex(
+			(item) => item.playlistItemIndex === focusdPlaylistItemIndex
+		);
 	}
 
 	setPlayingItem() {
@@ -603,7 +601,6 @@ export class PlaylistView extends ScrollView {
 	}
 
 	setColumns() {
-
 		const paddings = this.paddings;
 		const padLeft = paddings.left;
 		const padRight = paddings.right;
@@ -639,9 +636,8 @@ export class PlaylistView extends ScrollView {
 		let artistWidth_ = scale(100);
 		let albumWidth_ = scale(100);
 
-		let artistVis = (artist.visible && whitespace > titleWidth_);
-		let albumVis = (album.visible
-			&& whitespace > titleWidth_ + artistWidth_ + albumWidth_ / 2);
+		let artistVis = artist.visible && whitespace > titleWidth_;
+		let albumVis = album.visible && whitespace > titleWidth_ + artistWidth_ + albumWidth_ / 2;
 		let widthToAdd_ = whitespace - titleWidth_;
 		let floor = Math.floor;
 
@@ -659,10 +655,10 @@ export class PlaylistView extends ScrollView {
 		title.width = titleWidth_ + widthToAdd_;
 
 		artist.x = title.x + title.width;
-		artist.width = (artistVis ? artistWidth_ + widthToAdd_ : 0);
+		artist.width = artistVis ? artistWidth_ + widthToAdd_ : 0;
 
 		album.x = artist.x + artist.width;
-		album.width = (albumVis ? albumWidth_ + widthToAdd_ : 0);
+		album.width = albumVis ? albumWidth_ + widthToAdd_ : 0;
 
 		mood.x = album.x + album.width;
 		time.x = mood.x + mood.width;
@@ -673,7 +669,6 @@ export class PlaylistView extends ScrollView {
 		trackNumber.setPaddings({ left: scale(8) });
 		title.setPaddings({ right: scale(16) });
 		artist.setPaddings({ right: scale(16) });
-
 	}
 
 	getPaddingOnWidth_(panelWidth: number): IPaddings {
@@ -723,7 +718,8 @@ export class PlaylistView extends ScrollView {
 			this.x + this.width - scrollbarWidth,
 			this.y,
 			scrollbarWidth,
-			this.height);
+			this.height
+		);
 
 		const headerViewHeight = this.headerView.getProperHeight(this.width);
 		this.headerView.setBoundary(this.x, this.y - this.scroll, this.width, headerViewHeight);
@@ -732,11 +728,10 @@ export class PlaylistView extends ScrollView {
 	}
 
 	on_paint(gr: IGdiGraphics) {
-
 		let rowHeight = PlaylistProperties.rowHeight;
 		let headerHeight = this.headerView.height;
 		let items = this.items;
-		let colors = PlaylistColors;;
+		let colors = PlaylistColors;
 		let paddings = this.paddings;
 		let padLeft = paddings.left;
 		let padRight = paddings.right;
@@ -770,7 +765,6 @@ export class PlaylistView extends ScrollView {
 
 			// Visible items;
 			if (rowItem.y + rowHeight >= this.y && rowItem.y < this.y + this.height) {
-
 				// Put visible item to visibleItems cache;
 				this.visibleItems.push(rowItem);
 
@@ -786,7 +780,14 @@ export class PlaylistView extends ScrollView {
 				}
 
 				if (this.focusIndex === itemIndex) {
-					gr.DrawRect(rowItem.x, rowItem.y, rowItem.width - 1, rowHeight - 1, scale(1), RGB(127, 127, 127));
+					gr.DrawRect(
+						rowItem.x,
+						rowItem.y,
+						rowItem.width - 1,
+						rowHeight - 1,
+						scale(1),
+						RGB(127, 127, 127)
+					);
 				}
 
 				/* -------------*
@@ -795,8 +796,16 @@ export class PlaylistView extends ScrollView {
 
 				// for debug;
 				if (__DEV__) {
-					gr.DrawString(rowItem.rowIndex, itemFont, secondaryColor,
-						this.x, rowItem.y, this.width, rowItem.height, StringFormat.LeftCenter);
+					gr.DrawString(
+						rowItem.rowIndex,
+						itemFont,
+						secondaryColor,
+						this.x,
+						rowItem.y,
+						this.width,
+						rowItem.height,
+						StringFormat.LeftCenter
+					);
 				}
 
 				/**
@@ -805,7 +814,14 @@ export class PlaylistView extends ScrollView {
 				if (this.playingItemIndex === itemIndex) {
 					(fb.IsPaused ? this.pauseIco : this.playingIco)
 						.setSize(cTrackNumber.width, rowHeight)
-						.draw(gr, colors.highlight, 0, cTrackNumber.x + scale(8), rowItem.y, StringFormat.LeftCenter);
+						.draw(
+							gr,
+							colors.highlight,
+							0,
+							cTrackNumber.x + scale(8),
+							rowItem.y,
+							StringFormat.LeftCenter
+						);
 				} else {
 					cTrackNumber.draw(gr, rowItem.trackNumber, itemFont, secondaryColor, rowItem);
 				}
@@ -842,20 +858,26 @@ export class PlaylistView extends ScrollView {
 						.setSize(cMood.width, rowHeight)
 						.draw(gr, secondaryColor, 0, cMood.x, rowItem.y);
 				}
-
 			}
-
 		}
 
 		// draw drag insert position indication line;
 		if (
-			this.trace(mouseCursor.x, mouseCursor.y)
-			&& mouseCursor.y >= this.y
-			&& mouseCursor.y <= this.y + this.height
+			this.trace(mouseCursor.x, mouseCursor.y) &&
+			mouseCursor.y >= this.y &&
+			mouseCursor.y <= this.y + this.height
 		) {
 			if (dnd.isActive && dnd.dropTargetRowIndex > -1) {
-				const lineY = this.y + this.headerView.height + dnd.dropTargetRowIndex * rowHeight - this.scroll;
-				gr.DrawLine(this.x + padLeft, lineY, this.x + this.width - padRight, lineY, scale(2), RGB(127, 127, 127));
+				const lineY =
+					this.y + this.headerView.height + dnd.dropTargetRowIndex * rowHeight - this.scroll;
+				gr.DrawLine(
+					this.x + padLeft,
+					lineY,
+					this.x + this.width - padRight,
+					lineY,
+					scale(2),
+					RGB(127, 127, 127)
+				);
 			}
 		}
 
@@ -870,12 +892,27 @@ export class PlaylistView extends ScrollView {
 			const textColor = colors.secondaryText;
 
 			if (plman.IsAutoPlaylist(plman.ActivePlaylist)) {
-				gr.DrawString("Autoplaylist is empty?", emptyFont, textColor,
-					textLeft, textY, this.width - 2 * padLeft, this.height, StringFormat.LeftTop);
+				gr.DrawString(
+					"Autoplaylist is empty?",
+					emptyFont,
+					textColor,
+					textLeft,
+					textY,
+					this.width - 2 * padLeft,
+					this.height,
+					StringFormat.LeftTop
+				);
 			} else {
-				gr.DrawString("Playlist is empty?", emptyFont, textColor,
-					textLeft, textY, this.width - 2 * padLeft, this.height, StringFormat.LeftTop);
-
+				gr.DrawString(
+					"Playlist is empty?",
+					emptyFont,
+					textColor,
+					textLeft,
+					textY,
+					this.width - 2 * padLeft,
+					this.height,
+					StringFormat.LeftTop
+				);
 			}
 		}
 	}
@@ -916,7 +953,8 @@ export class PlaylistView extends ScrollView {
 		for (let plIndex = 0; plIndex < plItemCount; plIndex++) {
 			this.items[plIndex].isSelect = plman.IsPlaylistItemSelected(
 				plman.ActivePlaylist,
-				this.items[plIndex].playlistItemIndex);
+				this.items[plIndex].playlistItemIndex
+			);
 		}
 		ThrottledRepaint();
 	}
@@ -958,10 +996,13 @@ export class PlaylistView extends ScrollView {
 		let listBottomY = this.y + this.height;
 		let playingItem = this.items[this.playingItemIndex];
 		let rowHeight = PlaylistProperties.rowHeight;
-		let playingItemVis = (playingItem.y >= listTopY && playingItem.y + rowHeight < listBottomY);
+		let playingItemVis = playingItem.y >= listTopY && playingItem.y + rowHeight < listBottomY;
 
 		if (!playingItemVis) {
-			let targetScroll = this.headerView.height + this.playingItemIndex * PlaylistProperties.rowHeight - (this.height - PlaylistProperties.rowHeight) / 2;
+			let targetScroll =
+				this.headerView.height +
+				this.playingItemIndex * PlaylistProperties.rowHeight -
+				(this.height - PlaylistProperties.rowHeight) / 2;
 			this.scrollTo(targetScroll);
 		}
 	}
@@ -978,24 +1019,24 @@ export class PlaylistView extends ScrollView {
 	}
 
 	private _findHoverIndex(x: number, y: number) {
-		if (!this.trace(x, y)) { return - 1; }
-		let hoverItem_ = this.visibleItems.find(item => item.trace(x, y));
-		return (hoverItem_ ? hoverItem_.rowIndex : -1);
+		if (!this.trace(x, y)) {
+			return -1;
+		}
+		let hoverItem_ = this.visibleItems.find((item) => item.trace(x, y));
+		return hoverItem_ ? hoverItem_.rowIndex : -1;
 	}
 
 	private _findHoverItem(x: number, y: number) {
 		if (!this.trace(x, y)) {
 			return null;
 		}
-		return this.visibleItems.find(item => item.trace(x, y));
+		return this.visibleItems.find((item) => item.trace(x, y));
 	}
 
 	private setFocusByIndex(index: number) {
 		if (this.items[index] == null) return;
 		this.focusIndex = index;
-		plman.SetPlaylistFocusItem(
-			plman.ActivePlaylist,
-			this.items[index].playlistItemIndex);
+		plman.SetPlaylistFocusItem(plman.ActivePlaylist, this.items[index].playlistItemIndex);
 	}
 
 	/**
@@ -1016,19 +1057,19 @@ export class PlaylistView extends ScrollView {
 			this._selectedIndexes.length = 0;
 			return;
 		} else if (to == null) {
-				to = from;
+			to = from;
 		}
 
 		let indexes: number[] = [];
 		let c = from;
 
 		if (from > to) {
-			from = to; to = c;
+			from = to;
+			to = c;
 		}
 
 		for (let index = from; index <= to; index++) {
-			this.items[index]
-				&& indexes.push(this.items[index].playlistItemIndex);
+			this.items[index] && indexes.push(this.items[index].playlistItemIndex);
 		}
 
 		if (indexes.toString() !== this._selectedIndexes.toString()) {
@@ -1036,9 +1077,7 @@ export class PlaylistView extends ScrollView {
 			plman.ClearPlaylistSelection(plman.ActivePlaylist);
 			plman.SetPlaylistSelection(plman.ActivePlaylist, indexes, true);
 		}
-
 	}
-
 
 	on_mouse_wheel(step: number) {
 		this.scrollTo(this.scroll - step * PlaylistProperties.rowHeight * 3);
@@ -1055,9 +1094,7 @@ export class PlaylistView extends ScrollView {
 		}
 	}
 
-
 	on_mouse_lbtn_down(x: number, y: number) {
-
 		let hoverItem = this._findHoverItem(x, y);
 		selecting.reset();
 		dnd.reset();
@@ -1099,10 +1136,12 @@ export class PlaylistView extends ScrollView {
 			} else if (utils.IsKeyPressed(VKeyCode.Control)) {
 				plman.SetPlaylistSelectionSingle(
 					plman.ActivePlaylist,
-					hoverItem.playlistItemIndex, !hoverItem.isSelect);
+					hoverItem.playlistItemIndex,
+					!hoverItem.isSelect
+				);
 				this._selectedIndexes = this.items
-					.filter(item => item.isSelect)
-					.map(item => item.playlistItemIndex);
+					.filter((item) => item.isSelect)
+					.map((item) => item.playlistItemIndex);
 			} else {
 				this.clickOnSelection = true;
 			}
@@ -1115,10 +1154,14 @@ export class PlaylistView extends ScrollView {
 			if (utils.IsKeyPressed(VKeyCode.Shift)) {
 				this.setSelection(this.multiSelectionStartId, hoverItem.playlistItemIndex);
 			} else if (utils.IsKeyPressed(VKeyCode.Control)) {
-				plman.SetPlaylistSelectionSingle(plman.ActivePlaylist, hoverItem.playlistItemIndex, !hoverItem.isSelect); // toggle;
+				plman.SetPlaylistSelectionSingle(
+					plman.ActivePlaylist,
+					hoverItem.playlistItemIndex,
+					!hoverItem.isSelect
+				); // toggle;
 				this._selectedIndexes = this.items
-					.filter(item => item.isSelect)
-					.map(item => item.playlistItemIndex);
+					.filter((item) => item.isSelect)
+					.map((item) => item.playlistItemIndex);
 			} else {
 				/** NO MASKKEY */
 				if (hoverItem.isSelect) {
@@ -1129,14 +1172,11 @@ export class PlaylistView extends ScrollView {
 					selecting.pageX1 = selecting.pageX2 = x - this.x;
 					selecting.pageY1 = selecting.pageY2 = y - this.y + this.scroll;
 				}
-
 			}
 		}
-
 	}
 
 	on_mouse_move(x: number, y: number) {
-
 		// if (x === mouseCursor.x && y === mouseCursor.y) {
 		// 	return;
 		// }
@@ -1152,30 +1192,39 @@ export class PlaylistView extends ScrollView {
 
 		//
 		if (selecting.isActive) {
-
 			const updateSelection = (x: number, y: number) => {
 				if (this.items.length === 0) {
 					return;
 				}
 				//?
 				// selecting.pageX2 = x;
-				selecting.pageX2 = (x < this.x ? this.x : x > this.x + this.width - this.scrollbar.width ? this.x + this.width - this.scrollbar.width : x) - this.x;
-				selecting.pageY2 = (y < listTopY ? listTopY : y > listBottomY - 1 ? listBottomY - 1 : y) - this.y + this.scroll;
+				selecting.pageX2 =
+					(x < this.x
+						? this.x
+						: x > this.x + this.width - this.scrollbar.width
+						? this.x + this.width - this.scrollbar.width
+						: x) - this.x;
+				selecting.pageY2 =
+					(y < listTopY ? listTopY : y > listBottomY - 1 ? listBottomY - 1 : y) -
+					this.y +
+					this.scroll;
 				let first = -1;
 				let last = -1;
 				const padLeft = this.paddings.left;
 				const padRight = this.paddings.right;
 				const rowHeigt = PlaylistProperties.rowHeight;
-				if (!(
-					(selecting.pageX1 < padLeft && selecting.pageX2 < padLeft)
-					|| (selecting.pageX1 > this.width - padRight && selecting.pageX2 > this.width - padRight))
+				if (
+					!(
+						(selecting.pageX1 < padLeft && selecting.pageX2 < padLeft) ||
+						(selecting.pageX1 > this.width - padRight && selecting.pageX2 > this.width - padRight)
+					)
 				) {
 					let topOffset = this.headerView.height;
 					first = Math.floor((selecting.pageY1 - topOffset) / rowHeigt);
 					last = Math.floor((selecting.pageY2 - topOffset) / rowHeigt);
 				}
 				this.setSelection(first, last);
-			}
+			};
 
 			updateSelection(x, y);
 
@@ -1189,41 +1238,54 @@ export class PlaylistView extends ScrollView {
 					() => {
 						this.scrollTo(this.scroll - scale(52));
 						updateSelection(mouseCursor.x, mouseCursor.y);
-					}, 250, this);
+					},
+					250,
+					this
+				);
 				// }
 			} else if (y > listBottomY) {
-				selecting.setInterval(() => {
-					this.scrollTo(this.scroll + scale(52));
-					updateSelection(mouseCursor.x, mouseCursor.y);
-				}, 250, this);
+				selecting.setInterval(
+					() => {
+						this.scrollTo(this.scroll + scale(52));
+						updateSelection(mouseCursor.x, mouseCursor.y);
+					},
+					250,
+					this
+				);
 				// }
 			} else {
 				selecting.clearInterval();
 			}
 		} else if (dnd.isActive) {
-
 			// set mouse cursor;
 
 			if (y < listTopY) {
-				dnd.setInterval(() => {
-					this.scrollTo(this.scroll - rowHeight);
-					if (this.visibleItems[0] != null) {
-						dnd.dropTargetRowIndex = this.visibleItems[0].rowIndex;
-					}
-				}, 250, this);
-			} else if (y > listBottomY) {
-				dnd.setInterval(() => {
-					this.scrollTo(this.scroll + rowHeight);
-					if (this.visibleItems.length > 0) {
-						let lastItem = this.visibleItems[this.visibleItems.length - 1];
-						dnd.dropTargetRowIndex = lastItem.rowIndex;
-						if (lastItem.y + lastItem.height < this.y + this.height) {
-							dnd.dropTargetRowIndex = lastItem.rowIndex + 1;
+				dnd.setInterval(
+					() => {
+						this.scrollTo(this.scroll - rowHeight);
+						if (this.visibleItems[0] != null) {
+							dnd.dropTargetRowIndex = this.visibleItems[0].rowIndex;
 						}
-					}
-				}, 250, this);
+					},
+					250,
+					this
+				);
+			} else if (y > listBottomY) {
+				dnd.setInterval(
+					() => {
+						this.scrollTo(this.scroll + rowHeight);
+						if (this.visibleItems.length > 0) {
+							let lastItem = this.visibleItems[this.visibleItems.length - 1];
+							dnd.dropTargetRowIndex = lastItem.rowIndex;
+							if (lastItem.y + lastItem.height < this.y + this.height) {
+								dnd.dropTargetRowIndex = lastItem.rowIndex + 1;
+							}
+						}
+					},
+					250,
+					this
+				);
 			} else {
-
 				dnd.dropTargetRowIndex = -1;
 
 				for (let i = 0; i < this.visibleItems.length; i++) {
@@ -1234,20 +1296,17 @@ export class PlaylistView extends ScrollView {
 					} else if (Math.abs(y - item.y - item.height) <= item.height / 2) {
 						dnd.dropTargetRowIndex = item.rowIndex + 1;
 						break;
-					} else { /** NO ELSE */ }
-
+					} else {
+						/** NO ELSE */
+					}
 				}
 
 				/**
 				 * When mouse curosr is on list but not on an item row;
 				 */
-				if (dnd.dropTargetRowIndex === -1
-					&& this.trace(x, y)
-					&& this.visibleItems.length > 0
-				) {
-
+				if (dnd.dropTargetRowIndex === -1 && this.trace(x, y) && this.visibleItems.length > 0) {
 					let firstItem = this.visibleItems[0];
-					let lastItem = this.visibleItems[this.visibleItems.length - 1]
+					let lastItem = this.visibleItems[this.visibleItems.length - 1];
 
 					if (y < firstItem.y) {
 						dnd.dropTargetRowIndex = firstItem.rowIndex;
@@ -1265,7 +1324,6 @@ export class PlaylistView extends ScrollView {
 			if (this.clickOnSelection) {
 				//
 				dnd.isActive = true;
-
 			}
 		}
 
@@ -1303,14 +1361,14 @@ export class PlaylistView extends ScrollView {
 		plman.UndoBackup(plman.ActivePlaylist);
 		plman.MovePlaylistSelection(
 			plman.ActivePlaylist,
-			-plman.PlaylistItemCount(plman.ActivePlaylist));
+			-plman.PlaylistItemCount(plman.ActivePlaylist)
+		);
 
 		// then move them to the proper position;
 		plman.MovePlaylistSelection(plman.ActivePlaylist, position);
 	}
 
 	on_mouse_lbtn_up(x: number, y: number) {
-
 		const hoverItem = this._findHoverItem(x, y);
 
 		// Handle mood click;
@@ -1327,8 +1385,7 @@ export class PlaylistView extends ScrollView {
 			if (this.trace(x, y) && y >= this.y && y <= this.y + this.height) {
 				this.dragInsert(this._getDragInsertPosition());
 			}
-		}
-		else if (selecting.isActive) {
+		} else if (selecting.isActive) {
 			// DO NOTHING;
 		} else {
 			if (hoverItem != null) {
@@ -1355,7 +1412,6 @@ export class PlaylistView extends ScrollView {
 		dnd.dropTargetRowIndex = -1;
 
 		this.repaint();
-
 	}
 
 	on_mouse_rbtn_down(x: number, y: number) {
@@ -1365,10 +1421,7 @@ export class PlaylistView extends ScrollView {
 		if (hoverItem_ == null) {
 			this.setSelection();
 		} else {
-			if (!plman.IsPlaylistItemSelected(
-				plman.ActivePlaylist,
-				hoverItem_.playlistItemIndex)
-			) {
+			if (!plman.IsPlaylistItemSelected(plman.ActivePlaylist, hoverItem_.playlistItemIndex)) {
 				this.setSelection(hoverIndex_);
 				this.setFocusByIndex(hoverIndex_);
 			}
@@ -1380,8 +1433,10 @@ export class PlaylistView extends ScrollView {
 			showTrackContextMenu(
 				plman.ActivePlaylist,
 				plman.GetPlaylistSelectedItems(plman.ActivePlaylist),
-				x, y);
-		} catch (e) { }
+				x,
+				y
+			);
+		} catch (e) {}
 	}
 
 	on_focus(isFocused: boolean) {
@@ -1392,7 +1447,6 @@ export class PlaylistView extends ScrollView {
 	}
 
 	on_key_down(vkey: number, mask = KMask.none) {
-
 		if (selecting.isActive || dnd.isActive) {
 			return;
 		}
@@ -1440,13 +1494,9 @@ export class PlaylistView extends ScrollView {
 				}
 			}
 		}
-
 	}
 
-	on_key_up(vkey?: number) {
-
-	}
-
+	on_key_up(vkey?: number) {}
 }
 
 export function showTrackContextMenu(playlistIndex: number, metadbs: IFbMetadbList, x: number, y: number) {

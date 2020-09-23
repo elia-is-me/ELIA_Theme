@@ -376,12 +376,9 @@ export class PlaybackControlView extends Component {
 	artist: TextLink;
 	buttons: TPlaybackButtons;
 
-	constructor(attrs: {
-		colors: IThemeColors;
-		z?: number;
-	}) {
-		super(attrs);
-		this.colors = attrs.colors;
+	constructor() {
+		super({});
+		this.colors = bottomColors;
 		this.setChildPanels();
 
 		this.timeWidth = MeasureString("+00:00+", this.timeFont).Width;
@@ -394,17 +391,16 @@ export class PlaybackControlView extends Component {
 				this.playbackTime = formatPlaybackTime(fb.PlaybackTime);
 				this.playbackLength = formatPlaybackTime(fb.PlaybackLength);
 				Repaint();
-			} else { }
+			} else {
+			}
 			window.ClearTimeout(this.timerId);
 			this.timerId = window.SetTimeout(onPlaybackTimer_, panelRefreshInterval);
-		}
+		};
 
 		onPlaybackTimer_();
 
 		let npMetadb = fb.GetNowPlaying();
-		this.trackTitle = (
-			npMetadb == null ? "NOT PLAYING" : TF_TRACK_TITLE.EvalWithMetadb(npMetadb)
-		);
+		this.trackTitle = npMetadb == null ? "NOT PLAYING" : TF_TRACK_TITLE.EvalWithMetadb(npMetadb);
 		if (fb.IsPlaying) {
 			this.playbackTime = formatPlaybackTime(fb.PlaybackTime);
 			this.playbackLength = formatPlaybackTime(fb.PlaybackLength);
@@ -422,7 +418,7 @@ export class PlaybackControlView extends Component {
 		this.addChild(this.volume);
 		this.addChild(this.artist);
 		this.addChild(this.artwork);
-		Object.values(this.buttons).forEach(btn => this.addChild(btn));
+		Object.values(this.buttons).forEach((btn) => this.addChild(btn));
 	}
 
 	on_size() {
@@ -459,7 +455,7 @@ export class PlaybackControlView extends Component {
 		buttons.shuffle.setPosition(bx_5, by_2);
 
 		// volume bar;
-		let vol_h = scale(18)
+		let vol_h = scale(18);
 		let vol_w = scale(80);
 		let vol_y = top + (height - vol_h) / 2;
 		let vol_x = left + width - vol_w - scale(24);
@@ -490,7 +486,7 @@ export class PlaybackControlView extends Component {
 		artwork.setBoundary(left + art_pad, top + art_pad, art_w, art_w);
 
 		// artist text;
-		let artist_y = this.y + (this.height / 2);
+		let artist_y = this.y + this.height / 2;
 		let pb_time_x = seekbar.x - this.timeWidth - scale(4);
 		let artist_x = albumArt.x + albumArt.width + scale(8);
 		let artist_max_w = pb_time_x - scale(16) - artist_x;
@@ -508,23 +504,49 @@ export class PlaybackControlView extends Component {
 		// playback time;
 		let pb_time_x = seekbar.x - this.timeWidth - scale(4);
 		let pb_time_y = seekbar.y;
-		gr.DrawString(this.playbackTime, this.timeFont, colors.text, pb_time_x, pb_time_y, this.timeWidth, seekbar.height, StringFormat.Center);
+		gr.DrawString(
+			this.playbackTime,
+			this.timeFont,
+			colors.text,
+			pb_time_x,
+			pb_time_y,
+			this.timeWidth,
+			seekbar.height,
+			StringFormat.Center
+		);
 
 		// playback length;
 		let pb_len_x = seekbar.x + seekbar.width + scale(4);
-		gr.DrawString(this.playbackLength, this.timeFont, colors.text, pb_len_x, pb_time_y, this.timeWidth, seekbar.height, StringFormat.Center);
+		gr.DrawString(
+			this.playbackLength,
+			this.timeFont,
+			colors.text,
+			pb_len_x,
+			pb_time_y,
+			this.timeWidth,
+			seekbar.height,
+			StringFormat.Center
+		);
 
 		// track title;
 		let title_x = albumArt.x + albumArt.width + scale(8);
 		let title_max_w = pb_time_x - scale(16) - title_x;
 		let title_y = this.y + this.height / 2 - scale(22) - scale(2);
-		gr.DrawString(this.trackTitle, this.titleFont, colors.text, title_x, title_y, title_max_w, scale(22), StringFormat.LeftCenter);
-
+		gr.DrawString(
+			this.trackTitle,
+			this.titleFont,
+			colors.text,
+			title_x,
+			title_y,
+			title_max_w,
+			scale(22),
+			StringFormat.LeftCenter
+		);
 	}
 
 	on_playback_new_track() {
 		this.playbackTime = "00:00";
-		this.playbackLength = "--:--"
+		this.playbackLength = "--:--";
 		this.trackTitle = TF_TRACK_TITLE.EvalWithMetadb(fb.GetNowPlaying());
 		Repaint();
 	}
@@ -532,12 +554,11 @@ export class PlaybackControlView extends Component {
 	on_playback_stop(reason: number) {
 		if (reason != 2) {
 			this.playbackTime = "00:00";
-			this.playbackLength = "--:--"
+			this.playbackLength = "--:--";
 			this.trackTitle = "NOT PLAYING";
 			Repaint();
 		}
 	}
-
 }
 
 /**

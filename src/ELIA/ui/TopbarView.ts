@@ -5,15 +5,33 @@ import { mainColors } from "./Theme";
 import { SerializableIcon } from "../common/IconType";
 import { SearchBox } from "./SearchBox";
 import { notifyOthers } from "../common/UserInterface";
+import { Material, MaterialFont } from "../common/iconCode";
 
-type IconKeysType = "menu" | "settings" | "apps";
+const iconSize = scale(20);
 
-interface ITopbarOptions {
-	backgroundColor: number;
-	foreColor: number;
-	hoverColor: number;
-	icons: { [keys in IconKeysType]: SerializableIcon };
-}
+const menuIcon = new SerializableIcon({
+	code: Material.menu,
+	name: MaterialFont,
+	size: iconSize,
+});
+
+const settingsIcon = new SerializableIcon({
+	code: Material.gear,
+	name: MaterialFont,
+	size: iconSize,
+});
+
+const appsIcon = new SerializableIcon({
+	code: Material.apps,
+	name: MaterialFont,
+	size: iconSize,
+});
+
+const topbarColors = {
+	backgroundColor: RGB(37, 37, 37),
+	foreColor: mainColors.text,
+};
+
 
 /* TODO */
 export const Topbar_Properties = {
@@ -23,7 +41,6 @@ export const Topbar_Properties = {
 export class TopBar extends Component {
 	foreColor: number;
 	backgroundColor: number;
-	icons: { [keys in IconKeysType]: SerializableIcon };
 	private _icoWidth: number = scale(40);
 	private _logoFont = gdi.Font("Impact", scale(18));
 	private _logoText = "foobar2000";
@@ -33,15 +50,14 @@ export class TopBar extends Component {
 	switchIco: Icon2;
 	searchBox: SearchBox;
 
-	constructor(opts: ITopbarOptions) {
+	constructor() {
 		super({});
 
-		this.foreColor = opts.foreColor;
-		this.backgroundColor = opts.backgroundColor;
-		this.icons = opts.icons;
+		this.foreColor = topbarColors.foreColor;
+		this.backgroundColor = topbarColors.backgroundColor;
 
 		this.mainIco = new Icon2({
-			fontIcon: this.icons.menu,
+			fontIcon: menuIcon,
 			normalColor: this.foreColor,
 			hoverColor: setAlpha(this.foreColor, 200),
 			downColor: setAlpha(this.foreColor, 128),
@@ -52,14 +68,14 @@ export class TopBar extends Component {
 		};
 
 		this.settingsIco = new Icon2({
-			fontIcon: this.icons.settings,
+			fontIcon: settingsIcon,
 			normalColor: this.foreColor,
 			hoverColor: setAlpha(this.foreColor, 200),
 			downColor: setAlpha(this.foreColor, 128),
 		});
 
 		this.switchIco = new Icon2({
-			fontIcon: this.icons.apps,
+			fontIcon: appsIcon,
 			normalColor: this.foreColor,
 			hoverColor: setAlpha(this.foreColor, 200),
 			downColor: setAlpha(this.foreColor, 128),
@@ -134,7 +150,4 @@ export class TopBar extends Component {
 /**
  * TODO:
  *
- * - switch btn?
- * - settings btn?
- * - add a now playing panel popup btn;
  */
