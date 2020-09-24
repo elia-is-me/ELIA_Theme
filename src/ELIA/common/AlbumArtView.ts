@@ -178,11 +178,21 @@ export class NowplayingArtwork extends Component {
 			let trackKey = tf_album.EvalWithMetadb(metadb);
 			if (trackKey !== this.trackKey || !this.image) {
 				let result = await utils.GetAlbumArtAsyncV2(window.ID, metadb, AlbumArtId.Front);
-				if (!result) {
-					result = await utils.GetAlbumArtAsyncV2(window.ID, metadb, AlbumArtId.Disc);
+				if (!result || !result.image) {
+					result = await utils.GetAlbumArtAsyncV2(
+						window.ID,
+						metadb,
+						AlbumArtId.Disc
+					);
 				}
 				if (result && result.image) {
-					this.image = CropImage(result.image, this.width, this.height);
+					this.image = CropImage(
+						result.image,
+						this.width,
+						this.height,
+						InterpolationMode.HighQualityBicubic
+					);
+					this.image = result.image;
 				} else {
 					this.image = null;
 				}

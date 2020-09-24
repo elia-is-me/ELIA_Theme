@@ -179,10 +179,7 @@ class PlaylistHeaderView extends Component {
 		// Minimum height;
 		this.minHeight = scale(240);
 
-		this.artwork   = new PlaylistArtwork();
-		// this.artwork.on_init = () => {
-		// 	this.artwork.getPlaylistArtworks(plman.GetPlaylistItems(plman.ActivePlaylist));
-		// }
+		this.artwork = new PlaylistArtwork();
 		this.addChild(this.artwork);
 	}
 
@@ -335,7 +332,7 @@ class PlaylistHeaderView extends Component {
 		let paddingTop = paddings.top;
 		let { titleFont, descriptionFont } = this;
 
-		this.artwork.y = this.y + this.paddings.top;
+		// this.artwork.y = this.y + this.paddings.top;
 
 		/**
 		 * Draw artwork;
@@ -840,7 +837,7 @@ export class PlaylistView extends ScrollView {
 		gr.FillSolidRect(this.x, this.y, this.width, this.height, colors.background);
 
 		// Set header's position;
-		this.headerView.y = this.y - this.scroll;
+		this.headerView.setPosition(this.x, this.y - this.scroll);
 
 		// Clear visibleItems cache;
 		this.visibleItems.length = 0;
