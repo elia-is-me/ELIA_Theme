@@ -1269,7 +1269,11 @@ interface IWSHUtils {
      * @example
      * // See samples\basic\GetAlbumArtAsyncV2.txt
      */
-    GetAlbumArtAsyncV2(window_id: number, handle: IFbMetadb, art_id?: number, need_stub?: boolean, only_embed?: boolean, no_load?: boolean): Promise<any>
+    GetAlbumArtAsyncV2(window_id: number, handle: IFbMetadb, art_id?: number, need_stub?: boolean, only_embed?: boolean, no_load?: boolean):
+        Promise<{
+            path: string | null;
+            image: IGdiBitmap | null;
+        }>
 
     /**
      * Load embedded art image for the track.<br>
