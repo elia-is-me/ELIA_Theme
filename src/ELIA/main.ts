@@ -7,6 +7,10 @@ import { PlaylistManagerView } from "./ui/PlaylistManagerView";
 import { Layout } from "./ui/Layout";
 import { ui } from "./common/UserInterface";
 
+window.DefinePanel("ELIA THEME", {
+	features: { drag_n_drop: true },
+});
+
 const playbackControlBar = new PlaybackControlView();
 
 const topbar = new TopBar();
