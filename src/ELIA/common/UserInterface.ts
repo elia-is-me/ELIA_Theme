@@ -1,4 +1,109 @@
+import { isValidPlaylist } from "../ui/PlaylistView";
 import { Component } from "./BasePart";
+
+let partlist: Component[] = [];
+let vis_parts: Component[] = [];
+let root_part: Component;
+let activeIdx: number = -1;
+let focus_index: number = -1;
+let active_part: Component;
+let focus_part: Component;
+
+const flatternParts = (part: Component): Component[] => {
+	if (part == null) {
+		return [];
+	}
+	let children = part.children;
+	let result = [part];
+	for (let i = 0, len = children.length; i < len; i++) {
+		result = result.concat(flatternParts(children[i]));
+	}
+	return result;
+};
+
+const setRoot = (root: Component) => {
+	root_part = root;
+	partlist = [];
+	vis_parts = [];
+	focus_index = -1;
+	activeIdx = -1;
+	focus_part = undefined;
+	active_part = undefined;
+};
+
+const flatternVisibleParts = (rootPart: Component): Component[] =>
+	flatternParts(rootPart).filter(part => part.isVisible());
+
+function getHoverPart(parts: Component[], x: number, y: number) {
+	for (let i = parts.length - 1; i >= 0; i--) {
+		if (parts[i].trace(x, y)) {
+			return parts[i];
+		}
+	}
+	return null;
+}
+
+function getHoverIdx(parts: Component[], x: number, y: number) {
+	for (let i = parts.length; i >= 0; i--) {
+		if (parts[i].trace(x, y)) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+function invoke(part: Component, method: string, ...args: any) {
+	if (!part) return;
+	let func = (part as any)[method];
+	if (func == null) {
+		return null;
+	}
+	switch (args.length) {
+		case 0:
+			return func.call(part);
+		case 1:
+			return func.call(part, args[0]);
+		case 2:
+			return func.call(part, args[0], args[1]);
+		case 3:
+			return func.call(part, args[0], args[1], args[2]);
+		default:
+			return func.apply(part, args);
+	}
+}
+
+function setActive(x: number, y: number) {
+	const prev = active_part;
+	active_part = getHoverPart(vis_parts, x, y);
+	if (!compareParts(prev, active_part)) {
+		invoke(prev, "on_mouse_leave");
+		invoke(active_part, "on_mouse_move", x, y);
+	}
+}
+
+function setFocus(x: number, y: number) {
+	let prev = focus_part;
+	focus_part = getHoverPart(vis_parts, x, y);
+	if (!compareParts(prev, focus_part)) {
+		invoke(prev, "on_change_focus", false);
+		invoke(focus_part, "on_change_focus", true);
+	}
+}
+
+const partIsVis = (part: Component) => part.isVisible();
+
+function updateParts() {
+	let cached = vis_parts;
+	partlist = flatternParts(root_part);
+	vis_parts = partlist.filter(partIsVis);
+	
+}
+
+export const __ui = {
+	"updateParts": updateParts,
+}
+
+// -----------------------------------------------------
 
 export class UserInterface {
 	parts: Component[] = [];
@@ -76,7 +181,9 @@ export class UserInterface {
 	}
 
 	invokeVisibleParts(method: string, ...args: any) {
-		this.visibleParts.forEach((p) => this.invoke(p, method, args[0], args[1], args[2]));
+		this.visibleParts.forEach(p =>
+			this.invoke(p, method, args[0], args[1], args[2])
+		);
 	}
 
 	invokeFocusedPart(method: string, ...args: any[]) {
@@ -156,14 +263,14 @@ export class UserInterface {
 		let visiblePartsCached = this.visibleParts;
 		this.visibleParts = this.findVisibleParts(this.rootPart);
 		this.visibleParts
-			.filter((p) => visiblePartsCached.indexOf(p) === -1)
-			.forEach((p) => {
+			.filter(p => visiblePartsCached.indexOf(p) === -1)
+			.forEach(p => {
 				p.on_init();
 				p.didUpdateOnInit();
 			});
 		visiblePartsCached
-			.filter((p) => this.visibleParts.indexOf(p) === -1)
-			.forEach((p) => {
+			.filter(p => this.visibleParts.indexOf(p) === -1)
+			.forEach(p => {
 				p.resetUpdateState();
 			});
 		this.parts = this.flatternParts(this.rootPart);
