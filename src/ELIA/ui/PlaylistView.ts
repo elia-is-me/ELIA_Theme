@@ -11,7 +11,7 @@ import { ScrollView } from "../common/ScrollView";
 import { Component, textRenderingHint, IBoxModel } from "../common/BasePart";
 import { Material, MaterialFont } from "../common/iconCode";
 import { SerializableIcon } from "../common/IconType";
-import { AlbumArtId, AlbumArtView, ArtworkType, PlaylistArtwork } from "../common/AlbumArtView";
+import { AlbumArtId, PlaylistArtwork } from "../common/AlbumArtView";
 import { toggleMood } from "./PlaybackControlView";
 
 const __DEV__ = window.GetProperty("__DEV__", true);

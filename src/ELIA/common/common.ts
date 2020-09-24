@@ -117,7 +117,12 @@ export function hueToRgb(t1: number, t2: number, hue: number) {
 export function lighten(color: number, factor: number): number {
 	let rgb_ = toRGB(color);
 	let alpha = getAlpha(color);
-	let hsla: IHSLA_Color = rgba2hsla({ r: rgb_[0], g: rgb_[1], b: rgb_[2], a: alpha });
+	let hsla: IHSLA_Color = rgba2hsla({
+		r: rgb_[0],
+		g: rgb_[1],
+		b: rgb_[2],
+		a: alpha,
+	});
 	hsla.l = hsla.l * (1 + factor);
 	let rgb__ = hslToRgb(hsla.h, hsla.s, hsla.l);
 	return RGBA(rgb__.r, rgb__.g, rgb__.b, alpha);
@@ -126,7 +131,12 @@ export function lighten(color: number, factor: number): number {
 export function darken(color: number, factor: number): number {
 	let rgb_ = toRGB(color);
 	let alpha = getAlpha(color);
-	let hsla: IHSLA_Color = rgba2hsla({ r: rgb_[0], g: rgb_[1], b: rgb_[2], a: alpha });
+	let hsla: IHSLA_Color = rgba2hsla({
+		r: rgb_[0],
+		g: rgb_[1],
+		b: rgb_[2],
+		a: alpha,
+	});
 	hsla.l = hsla.l * (1 - factor);
 	let rgb__ = hslToRgb(hsla.h, hsla.s, hsla.l);
 	return RGBA(rgb__.r, rgb__.g, rgb__.b, alpha);
@@ -135,22 +145,20 @@ export function darken(color: number, factor: number): number {
 // dpi scale
 const getDpi = () => {
 	let factor = 1;
-	if (factor === 0) {
-		try {
-			var ws = new ActiveXObject("WScript.Shell");
-			var dpiVal = ws.RegRead(
-				"HKEY_CURRENT_USER\\Control Panel\\Desktop\\WindowMetrics\\AppliedDPI"
-			);
-			factor = Math.round((dpiVal / 96) * 100) / 100;
-		} catch (e) {
-			factor = 1;
-		}
-	} else {
+	try {
+		var ws = new ActiveXObject("WScript.Shell");
+		var dpiVal = ws.RegRead(
+			"HKEY_CURRENT_USER\\Control Panel\\Desktop\\WindowMetrics\\AppliedDPI"
+		);
+		factor = Math.round((dpiVal / 96) * 100) / 100;
+	} catch (e) {
+		factor = 1;
 	}
 	return factor;
 };
 
-export const scale = (value: number) => Math.round(value * getDpi() * 100) / 100;
+export const scale = (value: number) =>
+	Math.round(value * getDpi() * 100) / 100;
 
 export function isFunction(obj: any) {
 	return Object.prototype.toString.call(obj) === "[object Function]";
@@ -254,7 +262,12 @@ export const enum PlaybackOrder {
 
 // Helper function for DrawString() and MeasureString()
 // args: h_align, v_align, trimming, flags
-export function StringFormat(h_align = 0, v_align = 0, trimming = 0, flags = 0) {
+export function StringFormat(
+	h_align = 0,
+	v_align = 0,
+	trimming = 0,
+	flags = 0
+) {
 	return (h_align << 28) | (v_align << 24) | (trimming << 20) | flags;
 }
 StringFormat.LeftCenter = StringFormat(
@@ -263,14 +276,24 @@ StringFormat.LeftCenter = StringFormat(
 	StringTrimming.EllipsisCharacter,
 	StringFormatFlags.NoWrap
 );
-StringFormat.Center = StringFormat(1, 1, StringTrimming.Character, StringFormatFlags.NoWrap);
+StringFormat.Center = StringFormat(
+	1,
+	1,
+	StringTrimming.Character,
+	StringFormatFlags.NoWrap
+);
 StringFormat.LeftTop = StringFormat(
 	0,
 	0,
 	StringTrimming.EllipsisCharacter,
 	StringFormatFlags.NoWrap
 );
-StringFormat.LeftTopNoTrim = StringFormat(0, 0, StringTrimming.None, StringFormatFlags.NoWrap);
+StringFormat.LeftTopNoTrim = StringFormat(
+	0,
+	0,
+	StringTrimming.None,
+	StringFormatFlags.NoWrap
+);
 
 export function debounce(fn: Function, delay: number) {
 	var timer: number = null;
@@ -314,7 +337,12 @@ export function throttle(fn: Function, threshhold: number, scope?: any) {
  * @param {number} height
  * @param {number?} itp
  */
-export function CropImage(image: IGdiBitmap, width: number, height?: number, itp: number = 0) {
+export function CropImage(
+	image: IGdiBitmap,
+	width: number,
+	height?: number,
+	itp: number = 0
+) {
 	if (height == null) {
 		height = width;
 	}
