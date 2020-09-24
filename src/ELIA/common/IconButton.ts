@@ -1,11 +1,9 @@
 import {
 	isObject,
-	Repaint,
 	scale,
 	StringFormat,
 	TextRenderingHint,
 	isFunction,
-	setAlpha,
 	MeasureString,
 	CursorName,
 } from "./common";

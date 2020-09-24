@@ -90,7 +90,6 @@ export class SearchBox extends Component {
 
 		this.icons = icons;
 		this.iconHeight = iconHeight;
-		// iconColor = iconColor;
 
 		this.searchBtn = new Icon2({
 			fontIcon: this.icons.loupe,
