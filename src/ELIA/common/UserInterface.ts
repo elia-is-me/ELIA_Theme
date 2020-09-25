@@ -1,13 +1,12 @@
 import { isValidPlaylist } from "../ui/PlaylistView";
 import { Component } from "./BasePart";
+import { GetKeyboardMask, isFunction, KMask, StopReason, TextRenderingHint, VKeyCode } from "./common";
 
 let partlist: Component[] = [];
 let vis_parts: Component[] = [];
-let root_part: Component;
-let activeIdx: number = -1;
-let focus_index: number = -1;
-let active_part: Component;
-let focus_part: Component;
+let rootPart: Component;
+let activePart: Component;
+let focusPart: Component;
 
 const flatternParts = (part: Component): Component[] => {
 	if (part == null) {
@@ -22,17 +21,15 @@ const flatternParts = (part: Component): Component[] => {
 };
 
 const setRoot = (root: Component) => {
-	root_part = root;
+	rootPart = root;
 	partlist = [];
 	vis_parts = [];
-	focus_index = -1;
-	activeIdx = -1;
-	focus_part = undefined;
-	active_part = undefined;
+	focusPart = undefined;
+	activePart = undefined;
 };
 
-const flatternVisibleParts = (rootPart: Component): Component[] =>
-	flatternParts(rootPart).filter(part => part.isVisible());
+// const flatternVisibleParts = (rootPart: Component): Component[] =>
+// 	flatternParts(rootPart).filter(part => part.isVisible());
 
 function getHoverPart(parts: Component[], x: number, y: number) {
 	for (let i = parts.length - 1; i >= 0; i--) {
@@ -43,14 +40,14 @@ function getHoverPart(parts: Component[], x: number, y: number) {
 	return null;
 }
 
-function getHoverIdx(parts: Component[], x: number, y: number) {
-	for (let i = parts.length; i >= 0; i--) {
-		if (parts[i].trace(x, y)) {
-			return i;
-		}
-	}
-	return -1;
-}
+// function getHoverIdx(parts: Component[], x: number, y: number) {
+// 	for (let i = parts.length; i >= 0; i--) {
+// 		if (parts[i].trace(x, y)) {
+// 			return i;
+// 		}
+// 	}
+// 	return -1;
+// }
 
 function invoke(part: Component, method: string, ...args: any) {
 	if (!part) return;
@@ -72,21 +69,27 @@ function invoke(part: Component, method: string, ...args: any) {
 	}
 }
 
+const compareParts = (a: Component, b: Component) => {
+	if (a == null && b == null) return true;
+	if ((a == null && b != null) || (a != null && b == null)) return false;
+	return a.cid == b.cid;
+};
+
 function setActive(x: number, y: number) {
-	const prev = active_part;
-	active_part = getHoverPart(vis_parts, x, y);
-	if (!compareParts(prev, active_part)) {
+	const prev = activePart;
+	activePart = getHoverPart(vis_parts, x, y);
+	if (!compareParts(prev, activePart)) {
 		invoke(prev, "on_mouse_leave");
-		invoke(active_part, "on_mouse_move", x, y);
+		invoke(activePart, "on_mouse_move", x, y);
 	}
 }
 
 function setFocus(x: number, y: number) {
-	let prev = focus_part;
-	focus_part = getHoverPart(vis_parts, x, y);
-	if (!compareParts(prev, focus_part)) {
+	let prev = focusPart;
+	focusPart = getHoverPart(vis_parts, x, y);
+	if (!compareParts(prev, focusPart)) {
 		invoke(prev, "on_change_focus", false);
-		invoke(focus_part, "on_change_focus", true);
+		invoke(focusPart, "on_change_focus", true);
 	}
 }
 
@@ -94,14 +97,224 @@ const partIsVis = (part: Component) => part.isVisible();
 
 function updateParts() {
 	let cached = vis_parts;
-	partlist = flatternParts(root_part);
+	partlist = flatternParts(rootPart);
 	vis_parts = partlist.filter(partIsVis);
-	
+
 }
+
+function notify(message: string, data: any) {
+	if (!partlist || partlist.length === 0) {
+		return;
+	}
+	partlist.forEach(part => {
+		invoke(part, "onNotifyData", message, data);
+	});
+}
+
+let shouldUpdateVisbles = true;
+let shouldSortChildren = true;
+
+const useClearType = window.GetProperty('Global.Font Use ClearType', true);
+const useAntiAlias = window.GetProperty('Global.Font Antialias(Only when useClearType = false', true);
+const textRenderingHint = useClearType ? TextRenderingHint.ClearTypeGridFit : useAntiAlias ? TextRenderingHint.AntiAlias : 0;
 
 export const __ui = {
 	"updateParts": updateParts,
 }
+
+function on_size(width: number, height: number) {
+	if (!width || !height) {
+		return;
+	}
+	rootPart.setBoundary(0, 0, width, height);
+}
+
+function on_paint(gr: IGdiGraphics) {
+	gr.SetTextRenderingHint(textRenderingHint);
+
+	for (let i = 0, len = vis_parts.length; i < len; i++) {
+		vis_parts[i].on_paint(gr);
+	}
+}
+
+let mouseCursor = {
+	x: -1,
+	y: -1
+}
+
+let lastPressedCoord = {
+	x: -1,
+	y: -1
+}
+
+let isDrag = false;
+
+function on_mouse_move(x: number, y: number) {
+	if (x === mouseCursor.x && y === mouseCursor.y) {
+		return;
+	}
+	mouseCursor.x = x;
+	mouseCursor.y = y;
+
+	if (!isDrag) {
+		setActive(x, y);
+	}
+	invoke(activePart, "on_mouse_move", x, y);
+}
+
+function on_mouse_lbtn_down(x: number, y: number) {
+	isDrag = true;
+	setActive(x, y);
+	setFocus(x, y);
+	invoke(activePart, "on_mouse_lbtn_down", x, y);
+}
+
+function on_mouse_lbtn_dblclk(x: number, y: number) {
+	invoke(activePart, "on_mouse_lbtn_dblclk", x, y);
+}
+
+function on_mouse_lbtn_up(x: number, y: number) {
+	invoke(activePart, "on_mouse_lbtn_up", x, y);
+	if (isDrag) {
+		isDrag = false;
+		setActive(x, y);
+	}
+}
+
+function on_mouse_leave() {
+	setActive(-1, -1);
+}
+
+function on_mouse_rbtn_down(x: number, y: number) {
+	setActive(x, y);
+	setFocus(x, y);
+	invoke(activePart, "on_mouse_rbtn_down", x, y);
+}
+
+function on_mouse_rbtn_up(x: number, y: number) {
+	invoke(activePart, "on_mouse_rbtn_up", x, y);
+
+	/**
+	 * diable smp_panel's rightClick popup menu;
+	 */
+	return true;
+}
+
+function on_mouse_wheel(step: number) {
+	if (!activePart) {
+		return;
+	}
+
+	if (isFunction((activePart as any)["on_mouse_wheel"])) {
+		(activePart as any).on_mouse_wheel(step);
+	} else {
+		let tmp = activePart;
+		while (tmp.parent) {
+			if (isFunction((tmp.parent as any)["on_mouse_wheel"])) {
+				(tmp.parent as any).on_mouse_wheel(step);
+				break;
+			}
+			tmp = tmp.parent;
+		}
+	}
+}
+
+function on_focus(isFocus: boolean) {
+	if (!isFocus) {
+		setFocus(-1, -1);
+	}
+}
+
+function on_key_down(vkey: number) {
+	let mask = GetKeyboardMask();
+	if (mask === KMask.none) {
+		switch (vkey) {
+			case VKeyCode.F12:
+				fb.ShowConsole();
+				return;
+		}
+	}
+
+	invoke(focusPart, "on_key_down", vkey, mask);
+}
+
+function on_key_up(vkey: number) {
+
+}
+
+function on_char(code: number) {
+	invoke(focusPart, "on_char", code);
+}
+
+/**
+ * foo_spider_monkey_panel.dll does not provide a globalThis var and the
+ * `window` object is readonly that none new properties  & methods can be assign
+ * to it.  
+ * It's commonly used way to create a `globalThis`.
+ */
+const globalThis_ = Function("return this")();
+
+;[
+	"on_playback_order_changed",
+	"on_playback_stop",
+	"on_playback_edited",
+	"on_playback_pause",
+	"on_playback_new_track",
+	"on_selection_changed",
+	"on_playlist_items_added",
+	"on_playlist_items_removed",
+	"on_playlist_items_reordered",
+	"on_playlist_switch",
+	"on_playlists_changed",
+	"on_item_focus_change",
+	"on_metadb_changed",
+].forEach(name => {
+	Object.assign(systemCallbacks, {
+		name: (...args: any) => {
+			vis_parts.forEach(part => {
+				invoke(part, name, ...args);
+			});
+		}
+	})
+});
+
+
+/**
+ * These callback functions will automatically triggered by fb on various
+ * events. since I do not know how to create global vars & functions, I decide
+ * to assign them to a globalThis variable.
+ */
+let systemCallbacks = {
+	// "on_paint": on_paint,
+	// "on_size": on_size,
+	// "on_mouse_move": on_mouse_move,
+	// "on_mouse_lbtn_down": on_mouse_lbtn_down,
+	// "on_mouse_lbtn_up": on_mouse_lbtn_up,
+	// "on_mouse_lbtn_dblclk": on_mouse_lbtn_dblclk,
+	// "on_mouse_leave": on_mouse_leave,
+	// "on_mouse_rbtn_down": on_mouse_rbtn_down,
+	// "on_mouse_rbtn_up": on_mouse_rbtn_up,
+	// "on_mouse_wheel": on_mouse_wheel,
+	// "on_focus": on_focus,
+	// "on_key_down": on_key_down,
+	// "on_char": on_char,
+	// "on_playback_order_changed": on_playback_order_changed,
+	// "on_playback_stop": on_playback_stop,
+	// "on_playback_edited": on_playback_edited,
+	// "on_playback_pause": on_playback_pause,
+	// "on_playback_new_track": on_playback_new_track,
+	// "on_selection_changed": on_selection_changed,
+	// // "on_playlist_selection_changed": on_playlist_selection_changed,
+	// "on_playlist_items_added": on_playlist_items_added,
+	// "on_playlist_items_removed": on_playlist_items_removed,
+	// "on_playlist_items_reordered": on_playlist_items_reordered,
+	// "on_playlists_changed": on_playlists_changed,
+	// "on_playlist_switch": on_playlist_switch,
+	// "on_item_focus_change": on_item_focus_change,
+	// "on_metadb_changed": on_metadb_changed,
+};
+
+// Object.assign(globalThis_, systemCallbacks);
 
 // -----------------------------------------------------
 
@@ -296,8 +509,3 @@ export const notifyOthers = (message: string, data?: any) => {
 	});
 };
 
-const compareParts = (a: Component, b: Component) => {
-	if (a == null && b == null) return true;
-	if ((a == null && b != null) || (a != null && b == null)) return false;
-	return a.cid == b.cid;
-};

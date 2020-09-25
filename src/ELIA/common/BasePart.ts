@@ -259,7 +259,3 @@ export abstract class Component implements IBoxModel, ICallbacks {
 		window.Repaint();
 	}
 }
-
-const useClearType = window.GetProperty('_Global.Font Use ClearType', true);
-const useAntiAlias = window.GetProperty('_Global.Font Antialias(Only when useClearType = false', true);
-export const textRenderingHint = useClearType ? TextRenderingHint.ClearTypeGridFit : useAntiAlias ? TextRenderingHint.AntiAlias : 0;
