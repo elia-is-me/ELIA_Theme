@@ -1,6 +1,4 @@
-﻿import { scale, StopReason, VKeyCode, GetKeyboardMask, KMask } from "./common/common";
-import { textRenderingHint } from "./common/BasePart";
-import { PlaybackControlView } from "./ui/PlaybackControlView";
+﻿import { PlaybackControlView } from "./ui/PlaybackControlView";
 import { TopBar } from "./ui/TopbarView";
 import { PlaylistView } from "./ui/PlaylistView";
 import { PlaylistManagerView } from "./ui/PlaylistManagerView";
@@ -11,13 +9,19 @@ window.DefinePanel("ELIA THEME", {
 	features: { drag_n_drop: true },
 });
 
+/* Control wants all keys           */
+window.DlgCode = 0x0004;
+
 const playbackControlBar = new PlaybackControlView();
+ui.monitor("Control", playbackControlBar);
 
 const topbar = new TopBar();
 
 const playlistView = new PlaylistView();
+ui.monitor("Playlist", playlistView);
 
 const playlistManager = new PlaylistManagerView();
+ui.monitor("Plman", playlistManager);
 
 /**
  * Root part of this panel;
@@ -31,17 +35,11 @@ const root = new Layout({
 
 ui.setRoot(root);
 
-/* =============== /
- *  Set layout
- * =============== */
-
-ui.onReady = function () {
+const onReady = () => {
 	checkDefautPlaylist();
 };
 
-
 function checkDefautPlaylist() {
-
 	const defaultPlaylistName = "Default";
 	const compareName = defaultPlaylistName.toLowerCase();
 	const playlistCount = plman.PlaylistCount;
@@ -57,273 +55,12 @@ function checkDefautPlaylist() {
 	const fail = plman.CreatePlaylist(plman.PlaylistCount, defaultPlaylistName);
 
 	if (fail == -1) {
-		console.log("ELIA THEME: fail to create default playlist.")
-	}
-
-}
-
-const PANEL_MIN_WIDTH = scale(780);
-
-const __DEV__ = window.GetProperty("__DEV__", true);
-let profiler: IFbProfiler;
-if (__DEV__) {
-	profiler = fb.CreateProfiler("MAIN");
-}
-
-function on_paint(gr: IGdiGraphics) {
-
-	gr.SetTextRenderingHint(textRenderingHint);
-
-	const visibleParts = ui.visibleParts;
-	const len = visibleParts.length;
-
-
-	if (__DEV__) {
-		profiler.Reset();
-	}
-
-	for (let i = 0; i < len; i++) {
-		/**
-		 * 有时希望 part 的 visible 属性更改后可以立刻生效（而不是等 on_size 之后再生效）
-		 * 但这就显得 visibleParts 存在似乎没有必要了。
-		 */
-		visibleParts[i].visible && visibleParts[i].on_paint(gr);
-	}
-
-	if (__DEV__) {
-		profiler.Print();
-	}
-
-
-}
-
-function on_size() {
-
-	let ww = window.Width;
-	let wh = window.Height;
-	if (!ww || !wh) return;
-
-	root.setBoundary(0, 0, Math.max(ww, PANEL_MIN_WIDTH), wh);
-	ui.updateParts();
-
-}
-
-const mouseCursor = { x: -1, y: -1 };
-let mouseIsDragWindow = false;
-
-function on_mouse_move(x: number, y: number) {
-
-	if (x === mouseCursor.x && y === mouseCursor.y) {
-		return;
-	}
-
-	mouseCursor.x = x;
-	mouseCursor.y = y;
-
-	if (!mouseIsDragWindow) {
-		ui.setActive(x, y);
-	}
-
-	ui.invokeActivePart("on_mouse_move", x, y);
-}
-
-function on_mouse_lbtn_down(x: number, y: number) {
-	mouseIsDragWindow = true;
-	ui.setActive(x, y);
-	ui.invokeActivePart("on_mouse_lbtn_down", x, y);
-	ui.setFocus(x, y);
-}
-
-function on_mouse_lbtn_dblclk(x: number, y: number) {
-	ui.invokeActivePart("on_mouse_lbtn_dblclk", x, y);
-}
-
-function on_mouse_lbtn_up(x: number, y: number) {
-
-	ui.invokeActivePart("on_mouse_lbtn_up", x, y);
-
-	if (mouseIsDragWindow) {
-		mouseIsDragWindow = false;
-		ui.setActive(x, y);
+		console.log("ELIA THEME: fail to create default playlist.");
 	}
 }
 
-function on_mouse_leave() {
-	ui.setActive(-1, -1);
-}
-
-function on_mouse_rbtn_down(x: number, y: number) {
-	ui.setActive(x, y);
-	ui.invokeActivePart("on_mouse_rbtn_down", x, y);
-
-	ui.setFocus(x, y);
-}
-
-function on_mouse_rbtn_up(x: number, y: number) {
-	ui.invokeActivePart("on_mouse_rbtn_up", x, y);
-
-	/**
-	 * Return true to disable spider_monkey_panel's default right-click popup
-	 * menu.
-	 */
-	return true;
-}
-
-function on_mouse_wheel(step: number) {
-
-	const activePart = ui.activePart;
-
-	if (activePart == null) {
-		return;
-	}
-
-	if ((<any>activePart)["on_mouse_wheel"]) {
-		(<any>activePart).on_mouse_wheel(step);
-	} else {
-		let tmp = activePart
-		while (tmp.parent != null) {
-			if ((<any>tmp.parent)["on_mouse_wheel"]) {
-				(<any>tmp.parent).on_mouse_wheel(step);
-				break;
-			}
-			tmp = tmp.parent;
-		}
-	}
-}
-
-function on_focus(isFocused: boolean) {
-	if (!isFocused) {
-		/**
-		 * Lost focus.
-		 */
-		ui.setFocus(-1, -1);
-	}
-}
-
-function on_key_down(vkey: number) {
-	const mask = GetKeyboardMask();
-
-	if (mask === KMask.none) {
-		switch (vkey) {
-			case VKeyCode.F12:
-				fb.ShowConsole();
-				break;
-		}
-	}
-
-	ui.invokeFocusedPart("on_key_down", vkey, mask);
-}
-
-function on_char(code: number) {
-	ui.invokeFocusedPart("on_char", code);
-}
-
-function on_playback_order_changed(newOrder: number) {
-	ui.invokeVisibleParts("on_playback_new_order_changed", newOrder);
-}
-
-function on_playback_stop(reason: StopReason) {
-	ui.invokeVisibleParts("on_playback_stop", reason);
-}
-
-function on_playback_edited() {
-	ui.invokeVisibleParts("on_playback_edited");
-}
-
-function on_playback_pause() {
-	ui.invokeVisibleParts("on_playback_pause");
-}
-
-function on_playback_new_track(handle: IFbMetadb) {
-	ui.invokeVisibleParts("on_playback_new_track", handle);
-}
-
-function on_selection_changed() {
-	ui.invokeVisibleParts("on_selection_changed");
-}
-
-
-function on_playlist_items_added(playlistIndex?: number) {
-	ui.invokeVisibleParts("on_playlist_items_added", playlistIndex);
-}
-
-function on_playlist_items_removed(playlistIndex?: number, newCount?: number) {
-	ui.invokeVisibleParts("on_playlist_items_removed", playlistIndex, newCount);
-}
-
-function on_playlist_items_reordered(playlistIndex?: number) {
-	ui.invokeVisibleParts("on_playlist_items_reordered", playlistIndex);
-}
-
-function on_playlists_changed() {
-	ui.invokeVisibleParts("on_playlists_changed");
-}
-
-function on_playlist_switch() {
-	ui.invokeVisibleParts("on_playlist_switch");
-}
-
-function on_item_focus_change(playlistIndex?: number, from?: number, to?: number) {
-	ui.invokeVisibleParts("on_item_focus_change", playlistIndex, from, to);
-}
-
-function on_metadb_changed(metadbs: IFbMetadbList, fromhook: boolean) {
-	ui.invokeVisibleParts("on_metadb_changed", metadbs, fromhook);
-}
-
-/**
- * foo_spider_monkey_panel.dll does not provide a globalThis var and the
- * `window` object is readonly that none new properties  & methods can be assign
- * to it.  
- * It's commonly used way to create a `globalThis`.
- */
-const globalThis_ = Function("return this")();
-
-/**
- * These callback functions will automatically triggered by fb on various
- * events. since I do not know how to create global vars & functions, I decide
- * to assign them to a globalThis variable.
- */
-let systemCallbacks = {
-	"on_paint": on_paint,
-	"on_size": on_size,
-	"on_mouse_move": on_mouse_move,
-	"on_mouse_lbtn_down": on_mouse_lbtn_down,
-	"on_mouse_lbtn_up": on_mouse_lbtn_up,
-	"on_mouse_lbtn_dblclk": on_mouse_lbtn_dblclk,
-	"on_mouse_leave": on_mouse_leave,
-	"on_mouse_rbtn_down": on_mouse_rbtn_down,
-	"on_mouse_rbtn_up": on_mouse_rbtn_up,
-	"on_mouse_wheel": on_mouse_wheel,
-	"on_focus": on_focus,
-	"on_key_down": on_key_down,
-	"on_char": on_char,
-	"on_playback_order_changed": on_playback_order_changed,
-	"on_playback_stop": on_playback_stop,
-	"on_playback_edited": on_playback_edited,
-	"on_playback_pause": on_playback_pause,
-	"on_playback_new_track": on_playback_new_track,
-	"on_selection_changed": on_selection_changed,
-	// "on_playlist_selection_changed": on_playlist_selection_changed,
-	"on_playlist_items_added": on_playlist_items_added,
-	"on_playlist_items_removed": on_playlist_items_removed,
-	"on_playlist_items_reordered": on_playlist_items_reordered,
-	"on_playlists_changed": on_playlists_changed,
-	"on_playlist_switch": on_playlist_switch,
-	"on_item_focus_change": on_item_focus_change,
-	"on_metadb_changed": on_metadb_changed,
-};
-
-Object.assign(globalThis_, systemCallbacks);
-
-/* Control wants all keys           */
-const DLGC_WANTALLKEYS = 0x0004;
-window.DlgCode = DLGC_WANTALLKEYS;
 
 /* When all ready; */
 window.SetTimeout(() => {
-	ui.onReady();
+	onReady();
 }, 5);
-
-
-

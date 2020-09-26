@@ -95,7 +95,8 @@ export class Layout extends Component {
 		const { playlistView, playlistManager } = this;
 		const { searchResultView } = this;
 		const listY = this.topbar.y + this.topbar.height;
-		const listHeight = this.height - this.topbar.height - this.playbackControlBar.height;
+		const listHeight =
+			this.height - this.topbar.height - this.playbackControlBar.height;
 
 		switch (viewState) {
 			case ViewStates.Default:
@@ -160,7 +161,7 @@ export class Layout extends Component {
 
 	on_paint(gr: IGdiGraphics) {}
 
-	onNotifyData(message: string, data: any) {
+	onNotifyData(message: string, data?: any) {
 		switch (message) {
 			case "Toggle.PlaylistManager":
 				this.playlistManager.visible = !this.playlistManager.visible;

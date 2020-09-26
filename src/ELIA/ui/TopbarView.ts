@@ -1,13 +1,14 @@
 import { scale, RGB, StringFormat, TextRenderingHint, setAlpha } from "../common/common";
 import { Icon2 } from "../common/IconButton";
-import { Component, textRenderingHint } from "../common/BasePart";
+import { Component } from "../common/BasePart";
 import { mainColors } from "./Theme";
 import { SerializableIcon } from "../common/IconType";
 import { SearchBox } from "./SearchBox";
-import { notifyOthers } from "../common/UserInterface";
+import { notifyOthers, ui } from "../common/UserInterface";
 import { Material, MaterialFont } from "../common/iconCode";
 
 const iconSize = scale(20);
+const textRenderingHint = ui.textRender;
 
 const menuIcon = new SerializableIcon({
 	code: Material.menu,

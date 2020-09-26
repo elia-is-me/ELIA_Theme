@@ -1,4 +1,4 @@
-import { Component, IBoxModel, textRenderingHint } from "../common/BasePart";
+import { Component, IBoxModel } from "../common/BasePart";
 import {
 	RGB,
 	scale,
@@ -19,7 +19,9 @@ import { IPaddings } from "../common/BasePart";
 import { SerializableIcon } from "../common/IconType";
 import { MaterialFont, Material } from "../common/iconCode";
 import { toggleMood } from "./PlaybackControlView";
-import { notifyOthers } from "../common/UserInterface";
+import { notifyOthers, ui } from "../common/UserInterface";
+
+const textRenderingHint = ui.textRender;
 
 interface IHeaderOptions {
 	titleText: string;

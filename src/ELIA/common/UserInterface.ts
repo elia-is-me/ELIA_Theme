@@ -1,6 +1,11 @@
-import { isValidPlaylist } from "../ui/PlaylistView";
 import { Component } from "./BasePart";
-import { GetKeyboardMask, isFunction, KMask, StopReason, TextRenderingHint, VKeyCode } from "./common";
+import {
+	GetKeyboardMask,
+	isFunction,
+	KMask,
+	TextRenderingHint,
+	VKeyCode,
+} from "./common";
 
 let partlist: Component[] = [];
 let vis_parts: Component[] = [];
@@ -28,9 +33,6 @@ const setRoot = (root: Component) => {
 	activePart = undefined;
 };
 
-// const flatternVisibleParts = (rootPart: Component): Component[] =>
-// 	flatternParts(rootPart).filter(part => part.isVisible());
-
 function getHoverPart(parts: Component[], x: number, y: number) {
 	for (let i = parts.length - 1; i >= 0; i--) {
 		if (parts[i].trace(x, y)) {
@@ -39,15 +41,6 @@ function getHoverPart(parts: Component[], x: number, y: number) {
 	}
 	return null;
 }
-
-// function getHoverIdx(parts: Component[], x: number, y: number) {
-// 	for (let i = parts.length; i >= 0; i--) {
-// 		if (parts[i].trace(x, y)) {
-// 			return i;
-// 		}
-// 	}
-// 	return -1;
-// }
 
 function invoke(part: Component, method: string, ...args: any) {
 	if (!part) return;
@@ -100,9 +93,20 @@ function updateParts() {
 	partlist = flatternParts(rootPart);
 	vis_parts = partlist.filter(partIsVis);
 
+	vis_parts
+		.filter(p => cached.indexOf(p) === -1)
+		.forEach(p => {
+			p.on_init();
+			p.didUpdateOnInit();
+		});
+	cached
+		.filter(p => vis_parts.indexOf(p) === -1)
+		.forEach(p => {
+			p.resetUpdateState();
+		});
 }
 
-function notify(message: string, data: any) {
+export function notifyOthers(message: string, data?: any) {
 	if (!partlist || partlist.length === 0) {
 		return;
 	}
@@ -114,19 +118,23 @@ function notify(message: string, data: any) {
 let shouldUpdateVisbles = true;
 let shouldSortChildren = true;
 
-const useClearType = window.GetProperty('Global.Font Use ClearType', true);
-const useAntiAlias = window.GetProperty('Global.Font Antialias(Only when useClearType = false', true);
-const textRenderingHint = useClearType ? TextRenderingHint.ClearTypeGridFit : useAntiAlias ? TextRenderingHint.AntiAlias : 0;
-
-export const __ui = {
-	"updateParts": updateParts,
-}
+const useClearType = window.GetProperty("Global.Font Use ClearType", true);
+const useAntiAlias = window.GetProperty(
+	"Global.Font Antialias(Only when useClearType = false",
+	true
+);
+const textRenderingHint = useClearType
+	? TextRenderingHint.ClearTypeGridFit
+	: useAntiAlias
+	? TextRenderingHint.AntiAlias
+	: 0;
 
 function on_size(width: number, height: number) {
 	if (!width || !height) {
 		return;
 	}
 	rootPart.setBoundary(0, 0, width, height);
+	updateParts();
 }
 
 function on_paint(gr: IGdiGraphics) {
@@ -137,15 +145,38 @@ function on_paint(gr: IGdiGraphics) {
 	}
 }
 
+function monitor(name: string, object: Component) {
+	let __dev__ = window.GetProperty("__DEV__", false);
+	if (!__dev__) return;
+
+	let profiler = fb.CreateProfiler("MONITOR");
+	let count = 0;
+	let time = 0;
+	let on_paint = object.on_paint;
+
+	object.on_paint = (gr: IGdiGraphics) => {
+		profiler.Reset();
+		on_paint.call(object, gr);
+		if (count < 20) {
+			count++;
+			time += profiler.Time;
+		} else {
+			console.log(name + " MONITOR: ", time / 20);
+			count = 0;
+			time = 0;
+		}
+	};
+}
+
 let mouseCursor = {
 	x: -1,
-	y: -1
-}
+	y: -1,
+};
 
 let lastPressedCoord = {
 	x: -1,
-	y: -1
-}
+	y: -1,
+};
 
 let isDrag = false;
 
@@ -234,278 +265,125 @@ function on_key_down(vkey: number) {
 				return;
 		}
 	}
-
 	invoke(focusPart, "on_key_down", vkey, mask);
 }
 
-function on_key_up(vkey: number) {
-
-}
+function on_key_up(vkey: number) {}
 
 function on_char(code: number) {
 	invoke(focusPart, "on_char", code);
 }
 
+function on_playback_order_changed(newOrder: number) {
+	vis_parts.forEach(p => invoke(p, "on_playback_order_changed", newOrder));
+}
+
+function on_playback_stop(reason: number) {
+	vis_parts.forEach(p => invoke(p, "on_playback_stop", reason));
+}
+
+function on_playback_pause(isPaused: boolean) {
+	vis_parts.forEach(p => invoke(p, "on_playback_pause", isPaused));
+}
+
+function on_playback_edited(metadb: IFbMetadb) {
+	vis_parts.forEach(p => invoke(p, "on_playback_edited", metadb));
+}
+
+function on_playback_new_track(metadb: IFbMetadb) {
+	vis_parts.forEach(p => invoke(p, "on_playback_new_track", metadb));
+}
+
+function on_selection_changed() {
+	vis_parts.forEach(p => invoke(p, "on_selection_changed"));
+}
+
+function on_playlist_items_added(playlistIndex: number) {
+	vis_parts.forEach(p => invoke(p, "on_playlist_items_added", playlistIndex));
+}
+
+function on_playlist_items_removed(playlistIndex: number) {
+	vis_parts.forEach(p => invoke(p, "on_playlist_items_removed", playlistIndex));
+}
+
+function on_playlist_items_reordered(playlistIndex: number) {
+	vis_parts.forEach(p =>
+		invoke(p, "on_playlist_items_reordered", playlistIndex)
+	);
+}
+
+function on_playlists_changed() {
+	vis_parts.forEach(p => invoke(p, "on_playlists_changed"));
+}
+
+function on_playlist_switch() {
+	vis_parts.forEach(p => invoke(p, "on_playlist_switch"));
+}
+
+function on_item_focus_change(playlistIndex: number, from: number, to: number) {
+	vis_parts.forEach(p =>
+		invoke(p, "on_item_focus_change", playlistIndex, from, to)
+	);
+}
+
+function on_metadb_changed(metadbs: IFbMetadbList, fromHook: boolean) {
+	vis_parts.forEach(p => invoke(p, "on_metadb_changed", metadbs, fromHook));
+}
+
 /**
  * foo_spider_monkey_panel.dll does not provide a globalThis var and the
  * `window` object is readonly that none new properties  & methods can be assign
- * to it.  
+ * to it.
  * It's commonly used way to create a `globalThis`.
  */
 const globalThis_ = Function("return this")();
-
-;[
-	"on_playback_order_changed",
-	"on_playback_stop",
-	"on_playback_edited",
-	"on_playback_pause",
-	"on_playback_new_track",
-	"on_selection_changed",
-	"on_playlist_items_added",
-	"on_playlist_items_removed",
-	"on_playlist_items_reordered",
-	"on_playlist_switch",
-	"on_playlists_changed",
-	"on_item_focus_change",
-	"on_metadb_changed",
-].forEach(name => {
-	Object.assign(systemCallbacks, {
-		name: (...args: any) => {
-			vis_parts.forEach(part => {
-				invoke(part, name, ...args);
-			});
-		}
-	})
-});
-
 
 /**
  * These callback functions will automatically triggered by fb on various
  * events. since I do not know how to create global vars & functions, I decide
  * to assign them to a globalThis variable.
  */
-let systemCallbacks = {
-	// "on_paint": on_paint,
-	// "on_size": on_size,
-	// "on_mouse_move": on_mouse_move,
-	// "on_mouse_lbtn_down": on_mouse_lbtn_down,
-	// "on_mouse_lbtn_up": on_mouse_lbtn_up,
-	// "on_mouse_lbtn_dblclk": on_mouse_lbtn_dblclk,
-	// "on_mouse_leave": on_mouse_leave,
-	// "on_mouse_rbtn_down": on_mouse_rbtn_down,
-	// "on_mouse_rbtn_up": on_mouse_rbtn_up,
-	// "on_mouse_wheel": on_mouse_wheel,
-	// "on_focus": on_focus,
-	// "on_key_down": on_key_down,
-	// "on_char": on_char,
-	// "on_playback_order_changed": on_playback_order_changed,
-	// "on_playback_stop": on_playback_stop,
-	// "on_playback_edited": on_playback_edited,
-	// "on_playback_pause": on_playback_pause,
-	// "on_playback_new_track": on_playback_new_track,
-	// "on_selection_changed": on_selection_changed,
-	// // "on_playlist_selection_changed": on_playlist_selection_changed,
-	// "on_playlist_items_added": on_playlist_items_added,
-	// "on_playlist_items_removed": on_playlist_items_removed,
-	// "on_playlist_items_reordered": on_playlist_items_reordered,
-	// "on_playlists_changed": on_playlists_changed,
-	// "on_playlist_switch": on_playlist_switch,
-	// "on_item_focus_change": on_item_focus_change,
-	// "on_metadb_changed": on_metadb_changed,
+let systemCallbacks = {};
+
+Object.assign(systemCallbacks, {
+	on_size: on_size,
+	on_paint: on_paint,
+	on_mouse_move: on_mouse_move,
+	on_mouse_lbtn_down: on_mouse_lbtn_down,
+	on_mouse_lbtn_dblclk: on_mouse_lbtn_dblclk,
+	on_mouse_lbtn_up: on_mouse_lbtn_up,
+	on_mouse_rbtn_down: on_mouse_rbtn_down,
+	on_mouse_rbtn_up: on_mouse_rbtn_up,
+	on_mouse_wheel: on_mouse_wheel,
+	on_mouse_leave: on_mouse_leave,
+	on_focus: on_focus,
+	on_key_down: on_key_down,
+	on_key_up: on_key_up,
+	on_char: on_char,
+	on_playback_order_changed: on_playback_order_changed,
+	on_playback_stop: on_playback_stop,
+	on_playback_edited: on_playback_edited,
+	on_playback_pause: on_playback_pause,
+	on_playback_new_track: on_playback_new_track,
+	on_selection_changed: on_selection_changed,
+	on_playlist_items_added: on_playlist_items_added,
+	on_playlist_items_removed: on_playlist_items_removed,
+	on_playlist_items_reordered: on_playlist_items_reordered,
+	on_playlist_switch: on_playlist_switch,
+	on_playlists_changed: on_playlists_changed,
+	on_item_focus_change: on_item_focus_change,
+	on_metadb_changed: on_metadb_changed,
+});
+
+/**
+ * Inject pre defined callback functions to global;
+ */
+Object.assign(globalThis_, systemCallbacks);
+
+export const ui = {
+	textRender: textRenderingHint,
+	setRoot: setRoot,
+	updateParts: updateParts,
+	compareParts: compareParts,
+	monitor: monitor,
 };
-
-// Object.assign(globalThis_, systemCallbacks);
-
-// -----------------------------------------------------
-
-export class UserInterface {
-	parts: Component[] = [];
-	visibleParts: Component[];
-	rootPart: Component;
-	activeId: number;
-	activePart: Component;
-	focusedPart: Component;
-	focusedId: number;
-
-	constructor(rootPart?: Component) {
-		this.rootPart = rootPart;
-		this.parts = [];
-		this.visibleParts = [];
-		this.activeId = -1;
-		this.focusedId = -1;
-		return this;
-	}
-	private flatternParts(rootPart: Component) {
-		if (rootPart == null) {
-			return [];
-		}
-		let children = rootPart.children;
-		let results = [rootPart];
-		for (let i = 0; i < children.length; i++) {
-			results = results.concat(this.flatternParts(children[i]));
-		}
-		return results;
-	}
-
-	setRoot(rootPart: Component) {
-		this.rootPart = rootPart;
-		this.parts = [];
-		this.visibleParts = [];
-		this.activeId = -1;
-		this.focusedId = -1;
-	}
-
-	private findVisibleParts(rootPart: Component): Component[] {
-		if (!rootPart.isVisible()) return [];
-		let children = rootPart.children;
-		let visibleParts = [rootPart];
-		for (let i = 0, len = children.length; i < len; i++) {
-			if (children[i].isVisible()) {
-				visibleParts = visibleParts.concat(this.findVisibleParts(children[i]));
-			}
-		}
-		return visibleParts;
-	}
-
-	private findActivePart(visibleParts: Component[], x: number, y: number) {
-		let len = visibleParts.length;
-		for (let i = len - 1; i >= 0; i--) {
-			if (visibleParts[i].trace(x, y)) {
-				return i;
-			}
-		}
-		return -1;
-	}
-
-	private getActive(visibleParts: Component[], x: number, y: number) {
-		for (let i = visibleParts.length - 1; i >= 0; i--) {
-			if (visibleParts[i].trace(x, y)) {
-				return visibleParts[i];
-			}
-		}
-		return undefined;
-	}
-
-	invokeActivePart(method: string, ...args: any[]) {
-		const activePart = this.visibleParts[this.activeId];
-		if (!activePart) return;
-		let func = (<any>activePart)[method];
-		return func == null ? null : func.apply(activePart, args);
-	}
-
-	invokeVisibleParts(method: string, ...args: any) {
-		this.visibleParts.forEach(p =>
-			this.invoke(p, method, args[0], args[1], args[2])
-		);
-	}
-
-	invokeFocusedPart(method: string, ...args: any[]) {
-		const focusedPart = this.visibleParts[this.focusedId];
-		if (!focusedPart) {
-			return;
-		}
-		let func = (<any>focusedPart)[method];
-		return func == null ? null : func.apply(focusedPart, args);
-	}
-
-	invoke(part: Component, method: string, ...args: any) {
-		if (!part) return;
-		let func = (part as any)[method];
-		if (func == null) {
-			return null;
-		}
-		switch (args.length) {
-			case 0:
-				return func.call(part);
-			case 1:
-				return func.call(part, args[0]);
-			case 2:
-				return func.call(part, args[0], args[1]);
-			case 3:
-				return func.call(part, args[0], args[1], args[2]);
-			default:
-				return func.apply(part, args);
-		}
-	}
-
-	invokeById(id: number, method: string, ...args: any) {
-		return this.invoke(this.visibleParts[id], method, ...args);
-	}
-
-	setActive(x: number, y: number) {
-		const deactiveId_ = this.activeId;
-		const visibleParts = this.visibleParts;
-		this.activeId = this.findActivePart(visibleParts, x, y);
-		this.activePart = this.visibleParts[this.activeId];
-		if (this.activeId !== deactiveId_) {
-			this.invokeById(deactiveId_, "on_mouse_leave");
-			this.invokeById(this.activeId, "on_mouse_move", x, y);
-		}
-	}
-
-	setFocus(x: number, y: number) {
-		// let defocusedId_ = this.focusedId;
-		let prev_focus_part = this.focusedPart;
-		this.focusedPart = this.getActive(this.visibleParts, x, y);
-		this.focusedId = this.findActivePart(this.visibleParts, x, y);
-
-		if (this.focusedId > -1) {
-			// console.log(this.focusedPart.cid, this.visibleParts[this.focusedId].cid);
-		}
-
-		if (!compareParts(prev_focus_part, this.focusedPart)) {
-			this.invoke(prev_focus_part, "on_change_focus", false);
-			this.invoke(this.focusedPart, "on_change_focus", true);
-		}
-
-		// if (this.focusedId !== defocusedId_) {
-		// 	this.invokeById(defocusedId_, "on_change_focus", false);
-		// 	this.invokeById(this.focusedId, "on_change_focus", true);
-		// }
-	}
-
-	setFocusPart(part: Component) {
-		let defocusedId_ = this.focusedId;
-		let partId = this.visibleParts.indexOf(part);
-		if (partId > -1 && partId !== defocusedId_) {
-			this.invokeById(defocusedId_, "on_change_focus", false);
-			this.invokeById(partId, "on_change_focus", true);
-		}
-	}
-	updateParts() {
-		let visiblePartsCached = this.visibleParts;
-		this.visibleParts = this.findVisibleParts(this.rootPart);
-		this.visibleParts
-			.filter(p => visiblePartsCached.indexOf(p) === -1)
-			.forEach(p => {
-				p.on_init();
-				p.didUpdateOnInit();
-			});
-		visiblePartsCached
-			.filter(p => this.visibleParts.indexOf(p) === -1)
-			.forEach(p => {
-				p.resetUpdateState();
-			});
-		this.parts = this.flatternParts(this.rootPart);
-	}
-
-	_forceUpdate() {
-		this.visibleParts = this.findVisibleParts(this.rootPart);
-		this.parts = this.flatternParts(this.rootPart);
-	}
-
-	onReady?: () => void;
-}
-
-export const ui = new UserInterface();
-
-export const notifyOthers = (message: string, data?: any) => {
-	console.log(message, data);
-	if (ui.parts == null || ui.parts.length === 0) {
-		return;
-	}
-	ui.parts.forEach(part => {
-		part.onNotifyData && part.onNotifyData(message, data);
-	});
-};
-

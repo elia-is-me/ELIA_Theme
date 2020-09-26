@@ -1,5 +1,7 @@
 import { StringFormat, TextRenderingHint } from "./common";
-import { textRenderingHint, Component } from "./BasePart";
+import { ui } from "./UserInterface";
+
+const textRenderingHint = ui.textRender;
 
 interface IIconInfo {
     name: string;

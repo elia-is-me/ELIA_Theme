@@ -2,17 +2,31 @@
 // Simple Playlist View
 //====================================
 
-import { TextRenderingHint, StringTrimming, StringFormatFlags, MenuFlag, VKeyCode, GetKeyboardMask, KMask } from "../common/common";
-import { scale, RGB, deepClone, MeasureString, isEmptyString, CropImage, StringFormat } from "../common/common";
+import {
+	TextRenderingHint,
+	StringTrimming,
+	StringFormatFlags,
+	MenuFlag,
+	VKeyCode,
+	KMask,
+	scale,
+	RGB,
+	deepClone,
+	MeasureString,
+	isEmptyString,
+	CropImage,
+	StringFormat,
+} from "../common/common";
 import { IThemeColors, mainColors, scrollbarColor, scrollbarWidth, globalFontName } from "./Theme";
 import { ThrottledRepaint } from "../common/common";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
-import { Component, textRenderingHint, IBoxModel } from "../common/BasePart";
+import { Component, IBoxModel } from "../common/BasePart";
 import { Material, MaterialFont } from "../common/iconCode";
 import { SerializableIcon } from "../common/IconType";
 import { AlbumArtId, PlaylistArtwork } from "../common/AlbumArtView";
 import { toggleMood } from "./PlaybackControlView";
+import { ui } from "../common/UserInterface";
 
 const __DEV__ = window.GetProperty("__DEV__", true);
 
@@ -20,6 +34,8 @@ const mouseCursor = {
 	x: -1,
 	y: -1
 }
+
+const textRenderingHint = ui.textRender;
 
 
 /**

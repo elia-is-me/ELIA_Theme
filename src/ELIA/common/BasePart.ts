@@ -1,5 +1,5 @@
-import { isObject, TextRenderingHint } from "./common";
-import { UserInterface } from "./UserInterface";
+import { isObject } from "./common";
+import { ui } from "./UserInterface";
 
 /**
  * A too simple way to generate component id;
@@ -49,15 +49,16 @@ export interface IPaddings {
 export interface IInjectableCallbacks {
 	on_init?: () => void;
 	on_size?: () => void;
-	on_click?: (x: number, y: number) => void;
+	on_click?: (x?: number, y?: number) => void;
 	on_playback_order_changed?: (newOrder?: number) => void;
 	on_playback_stop?: (reason?: number) => void;
 	on_playback_edited?: () => void;
 	on_playback_pause?: (isPaused?: boolean) => void;
-	on_playback_new_track?: (metadb?: IFbMetadb) => void;
+	on_playback_nrack?: (metadb?: IFbMetadb) => void;
 	on_playlists_changed?: () => void;
 	on_playlist_switch?: () => void;
 	on_metadb_changed?: (metadbs?: IFbMetadbList, fromhook?: boolean) => void;
+	[ke: string]: Function
 }
 
 export abstract class Component implements IBoxModel, ICallbacks {
@@ -114,7 +115,7 @@ export abstract class Component implements IBoxModel, ICallbacks {
 	on_init() { }
 	on_paint(gr: IGdiGraphics) { }
 	on_size() { }
-	on_click(x: number, y: number) { }
+	on_click(x?: number, y?: number) { }
 	addChild(node: Component) {
 		if (!(node instanceof Component)) {
 			throw new Error("Component.addChild: Invalid param.");
@@ -133,7 +134,9 @@ export abstract class Component implements IBoxModel, ICallbacks {
 			return;
 		} else {
 			node.parent = null;
-			this.children = this.children.filter((child) => child.parent === this);
+			this.children = this.children.filter(child =>
+				ui.compareParts(child.parent, this)
+			);
 		}
 		this.resetUpdateState();
 	}
@@ -253,7 +256,7 @@ export abstract class Component implements IBoxModel, ICallbacks {
 		return this._shouldUpdateOnInit;
 	}
 
-	onNotifyData?(str: string, info: any) { }
+	onNotifyData?(message: string, data?:any) { }
 
 	repaint() {
 		window.Repaint();

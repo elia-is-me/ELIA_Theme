@@ -1,6 +1,6 @@
-import { scale, Repaint, setAlpha } from "./common";
+import { scale, Repaint } from "./common";
 import { Component, ICallbacks } from "./BasePart";
-import { ButtonStates, Button } from "./IconButton";
+import { ButtonStates } from "./IconButton";
 import { ScrollView } from "./ScrollView";
 
 

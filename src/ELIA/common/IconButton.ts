@@ -7,9 +7,12 @@ import {
 	MeasureString,
 	CursorName,
 } from "./common";
-import { Component, IPaddings, textRenderingHint, IInjectableCallbacks } from "./BasePart";
+import { Component, IPaddings, IInjectableCallbacks } from "./BasePart";
 import { SerializableIcon } from "./IconType";
 import { globalFontName } from "../ui/Theme";
+import { ui } from "../common/UserInterface";
+
+const textRenderingHint = ui.textRender;
 
 export const enum ButtonStates {
 	Normal = 0,
