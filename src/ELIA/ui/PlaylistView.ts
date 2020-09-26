@@ -801,6 +801,10 @@ export class PlaylistView extends ScrollView {
 	on_init() {
 		this.setList();
 		this.headerView.setPlaylistIndex(plman.ActivePlaylist);
+
+		if (fb.IsPlaying && plman.ActivePlaylist === plman.PlayingPlaylist) {
+			window.SetTimeout(() => this.showNowPlaying(), 5);
+		}
 	}
 
 	on_size() {
@@ -1076,6 +1080,9 @@ export class PlaylistView extends ScrollView {
 		this.scroll = 0;
 		this.setList();
 		this.headerView.setPlaylistIndex(plman.ActivePlaylist);
+		if (fb.IsPlaying && plman.ActivePlaylist === plman.PlayingPlaylist) {
+			this.showNowPlaying();
+		}
 		ThrottledRepaint();
 	}
 
