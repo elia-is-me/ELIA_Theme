@@ -35,10 +35,10 @@ const defaultOptions: IInputPopupDefaultOptions = {
 }
 
 
-export class InputPopupPanel extends Component implements IInputPopupOptions, IInputPopupDefaultOptions {
-
+export class InputPopupPanel
+	extends Component
+	implements IInputPopupOptions, IInputPopupDefaultOptions {
 	readonly modal = true;
-	readonly z = 1000; // Topmost;
 
 	titleFont: IGdiFont;
 	textFont: IGdiFont;
@@ -63,11 +63,11 @@ export class InputPopupPanel extends Component implements IInputPopupOptions, II
 	constructor(opts: IInputPopupOptions) {
 		super(opts);
 
+		this.z = 1000;
 		Object.assign(this, defaultOptions, opts);
 
 		console.log("defaultText: ", opts.defaultText);
 		console.log(this.defaultText);
-
 
 		this.paddings.top = scale(44);
 		this.paddings.left = scale(40);
@@ -78,18 +78,18 @@ export class InputPopupPanel extends Component implements IInputPopupOptions, II
 			textColor: mainColors.text,
 			backgroundColor: mainColors.highlight,
 			backgroundHoverColor: setAlpha(mainColors.highlight, 200),
-			backgroundDownColor: setAlpha(mainColors.highlight, 127)
+			backgroundDownColor: setAlpha(mainColors.highlight, 127),
 		});
 		this.okBtn.setSize(scale(80), scale(32));
 		this.okBtn.on_click = () => {
 			notifyOthers("Hide.InputPopupPanel", this.cid);
-		}
+		};
 
 		this.cancelBtn = new Button2({
 			text: "Cancel",
 			textColor: this.textColor,
 			backgroundHoverColor: RGB(100, 100, 100),
-			backgroundDownColor: setAlpha(RGB(100, 100, 100), 127)
+			backgroundDownColor: setAlpha(RGB(100, 100, 100), 127),
 		});
 		this.cancelBtn.setSize(scale(80), scale(32));
 		this.cancelBtn.on_click = () => {
@@ -103,19 +103,21 @@ export class InputPopupPanel extends Component implements IInputPopupOptions, II
 			foreColor: mainColors.background,
 			backgroundActiveColor: RGB(255, 255, 255),
 			backgroundSelectionColor: RGB(33, 136, 255),
-			empty_text: (isEmptyString(this.emptyText) ? "" : this.emptyText),
-			default_text: (isEmptyString(this.defaultText) ? "" : this.defaultText),
-			func() { }
+			empty_text: isEmptyString(this.emptyText) ? "" : this.emptyText,
+			default_text: isEmptyString(this.defaultText) ? "" : this.defaultText,
+			func() {},
 		});
 
-		this.inputboxHeight = Math.round((MeasureString("ABCDgl汉字", this.inputbox.font).Height + scale(8)) / 4) * 4;
+		this.inputboxHeight =
+			Math.round(
+				(MeasureString("ABCDgl汉字", this.inputbox.font).Height + scale(8)) / 4
+			) * 4;
 
-		;[this.inputbox, this.okBtn, this.cancelBtn].forEach(btn => {
+		[this.inputbox, this.okBtn, this.cancelBtn].forEach(btn => {
 			this.addChild(btn);
 		});
 
 		this.setSize(this.panelWidth, this.panelHeight);
-
 	}
 
 	getInputText() {
@@ -135,10 +137,9 @@ export class InputPopupPanel extends Component implements IInputPopupOptions, II
 
 		saveBtn.setPosition(
 			this.x + this.width - saveBtn.width - left,
-			inputbox.y + inputbox.height + scale(36));
-		cancelBtn.setPosition(
-			saveBtn.x - cancelBtn.width - scale(24),
-			saveBtn.y);
+			inputbox.y + inputbox.height + scale(36)
+		);
+		cancelBtn.setPosition(saveBtn.x - cancelBtn.width - scale(24), saveBtn.y);
 	}
 
 	on_paint(gr: IGdiGraphics) {
@@ -158,15 +159,19 @@ export class InputPopupPanel extends Component implements IInputPopupOptions, II
 			this.y + top,
 			this.width - 2 * left,
 			scale(26),
-			StringFormat.LeftTop);
+			StringFormat.LeftTop
+		);
 
 		// draw inputbox background;
 		let offset = (scale(36) - this.inputbox.height) / 2;
 		gr.FillSolidRect(
 			this.x + left,
-			this.inputbox.y - offset, this.width - 2 * left,
+			this.inputbox.y - offset,
+			this.width - 2 * left,
 			scale(36),
-			this.inputbox.edit ? this.inputbox.backgroundActiveColor : RGB(100, 100, 100));
+			this.inputbox.edit
+				? this.inputbox.backgroundActiveColor
+				: RGB(100, 100, 100)
+		);
 	}
-
 }

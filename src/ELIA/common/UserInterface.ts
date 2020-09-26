@@ -25,6 +25,20 @@ const flatternParts = (part: Component): Component[] => {
 	return result;
 };
 
+const findVisibleParts = (part: Component): Component[] => {
+	if (part == null || !part.isVisible()) {
+		return [];
+	}
+	let children = part.children;
+	let result = [part];
+	for (let i = 0, len = children.length; i < len; i++) {
+		if (children[i].isVisible()) {
+			result = result.concat(findVisibleParts(children[i]));
+		}
+	}
+	return result;
+};
+
 const setRoot = (root: Component) => {
 	rootPart = root;
 	partlist = [];
@@ -91,7 +105,7 @@ const partIsVis = (part: Component) => part.isVisible();
 function updateParts() {
 	let cached = vis_parts;
 	partlist = flatternParts(rootPart);
-	vis_parts = partlist.filter(partIsVis);
+	vis_parts = findVisibleParts(rootPart);
 
 	vis_parts
 		.filter(p => cached.indexOf(p) === -1)
@@ -104,6 +118,8 @@ function updateParts() {
 		.forEach(p => {
 			p.resetUpdateState();
 		});
+	partlist.forEach(p => monitor(p));
+	console.log("Part COUNT: ", partlist.length, " | ", vis_parts.length);
 }
 
 export function notifyOthers(message: string, data?: any) {
@@ -137,17 +153,31 @@ function on_size(width: number, height: number) {
 	updateParts();
 }
 
+const profiler = fb.CreateProfiler("MAIN");
+let time = 0;
+let count = 0;
+
 function on_paint(gr: IGdiGraphics) {
+	profiler.Reset();
 	gr.SetTextRenderingHint(textRenderingHint);
 
 	for (let i = 0, len = vis_parts.length; i < len; i++) {
 		vis_parts[i].on_paint(gr);
 	}
+	if (count < 20) {
+		count++;
+		time += profiler.Time;
+	} else {
+		// if (time / 20 > 1) console.log("MAIN MONITOR: ", time / 20, count);
+		count = 0;
+		time = 0;
+	}
 }
 
-function monitor(name: string, object: Component) {
+function monitor(object: Component) {
 	let __dev__ = window.GetProperty("__DEV__", false);
 	if (!__dev__) return;
+	if (!object || object.isMonitor) return;
 
 	let profiler = fb.CreateProfiler("MONITOR");
 	let count = 0;
@@ -161,7 +191,11 @@ function monitor(name: string, object: Component) {
 			count++;
 			time += profiler.Time;
 		} else {
-			console.log(name + " MONITOR: ", time / 20);
+			if (object.className === "Layout") {
+				console.log("-----------------------------");
+			}
+			if (time / 20 > 1)
+				console.log(`${object.className}, ${object.cid}: `, time / 20);
 			count = 0;
 			time = 0;
 		}

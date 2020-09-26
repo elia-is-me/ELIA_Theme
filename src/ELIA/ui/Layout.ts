@@ -20,6 +20,7 @@ const enum ViewStates {
 }
 
 export class Layout extends Component {
+	className = "Layout";
 	topbar: TopBar;
 	playbackControlBar: PlaybackControlView;
 	playlistManager: PlaylistManagerView;

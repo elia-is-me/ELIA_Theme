@@ -35,7 +35,7 @@ let font3 = gdi.Font("Segoe UI", 200, 1);
 let font4 = gdi.Font("Segoe UI", 90, 1);
 
 for (let i = 0; i < 3; i++) {
-	stubImages[i] = drawImage(500, 500, true, (g) => {
+	stubImages[i] = drawImage(500, 500, true, g => {
 		g.SetSmoothingMode(SmoothingMode.HighQuality);
 		g.FillRoundRect(0, 0, 500, 500, 8, 8, 0x0fffffff);
 		g.SetTextRenderingHint(TextRenderingHint.AntiAlias);
@@ -65,6 +65,7 @@ const tf_album = fb.TitleFormat("[%album artist%]^^%album%");
 export class PlaylistArtwork extends Component {
 	stubImage: IGdiBitmap = stubImages[2];
 	image: IGdiBitmap;
+	className = "PlaylistArtwork";
 
 	constructor() {
 		super({});
@@ -97,10 +98,22 @@ export class PlaylistArtwork extends Component {
 
 		let images: IGdiBitmap[] = [];
 
-		for (let i = 0, len = albums.length; i < len && i < 10 && images.length < 4; i++) {
-			let result = await utils.GetAlbumArtAsyncV2(window.ID, albums[i], AlbumArtId.Front);
+		for (
+			let i = 0, len = albums.length;
+			i < len && i < 10 && images.length < 4;
+			i++
+		) {
+			let result = await utils.GetAlbumArtAsyncV2(
+				window.ID,
+				albums[i],
+				AlbumArtId.Front
+			);
 			if (!result || !result.image) {
-				result = await utils.GetAlbumArtAsyncV2(window.ID, albums[i], AlbumArtId.Disc);
+				result = await utils.GetAlbumArtAsyncV2(
+					window.ID,
+					albums[i],
+					AlbumArtId.Disc
+				);
 			}
 			if (result && result.image) {
 				images.push(result.image);
@@ -112,7 +125,7 @@ export class PlaylistArtwork extends Component {
 		} else if (images.length === 1) {
 			this.image = CropImage(images[0], this.width, this.height);
 		} else {
-			images = images.map((img) => CropImage(img, 250, 250));
+			images = images.map(img => CropImage(img, 250, 250));
 			if (images.length < 4) {
 				let stubimg = CropImage(stubImages[0], 250, 250);
 				for (let i = images.length; i < 4; i++) {
@@ -147,7 +160,17 @@ export class PlaylistArtwork extends Component {
 	on_paint(gr: IGdiGraphics) {
 		let img = this.image || this.stubImage;
 		if (!img) return;
-		gr.DrawImage(img, this.x, this.y, this.width, this.height, 0, 0, img.Width, img.Height);
+		gr.DrawImage(
+			img,
+			this.x,
+			this.y,
+			this.width,
+			this.height,
+			0,
+			0,
+			img.Width,
+			img.Height
+		);
 	}
 
 	on_size = debounce(() => {
@@ -168,6 +191,7 @@ export class NowplayingArtwork extends Component {
 	image: IGdiBitmap;
 	stubImage: IGdiBitmap = stubImages[0];
 	trackKey: string = "##@!";
+	className = "NowplayingArtwork";
 
 	constructor() {
 		super({});
@@ -177,7 +201,11 @@ export class NowplayingArtwork extends Component {
 		if (metadb) {
 			let trackKey = tf_album.EvalWithMetadb(metadb);
 			if (trackKey !== this.trackKey || !this.image) {
-				let result = await utils.GetAlbumArtAsyncV2(window.ID, metadb, AlbumArtId.Front);
+				let result = await utils.GetAlbumArtAsyncV2(
+					window.ID,
+					metadb,
+					AlbumArtId.Front
+				);
 				if (!result || !result.image) {
 					result = await utils.GetAlbumArtAsyncV2(
 						window.ID,
@@ -192,7 +220,6 @@ export class NowplayingArtwork extends Component {
 						this.height,
 						InterpolationMode.HighQualityBicubic
 					);
-					this.image = result.image;
 				} else {
 					this.image = null;
 				}
@@ -222,7 +249,18 @@ export class NowplayingArtwork extends Component {
 	on_paint(gr: IGdiGraphics) {
 		let img = this.image || this.stubImage;
 		if (!img) return;
-		gr.DrawImage(img, this.x, this.y, this.width, this.height, 0, 0, img.Width, img.Height);
+
+		gr.DrawImage(
+			img,
+			this.x,
+			this.y,
+			this.width,
+			this.height,
+			0,
+			0,
+			img.Width,
+			img.Height
+		);
 	}
 
 	on_size = debounce(() => {

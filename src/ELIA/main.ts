@@ -13,15 +13,12 @@ window.DefinePanel("ELIA THEME", {
 window.DlgCode = 0x0004;
 
 const playbackControlBar = new PlaybackControlView();
-ui.monitor("Control", playbackControlBar);
 
 const topbar = new TopBar();
 
 const playlistView = new PlaylistView();
-ui.monitor("Playlist", playlistView);
 
 const playlistManager = new PlaylistManagerView();
-ui.monitor("Plman", playlistManager);
 
 /**
  * Root part of this panel;
@@ -32,6 +29,7 @@ const root = new Layout({
 	playlsitManager: playlistManager,
 	playlistView: playlistView,
 });
+
 
 ui.setRoot(root);
 

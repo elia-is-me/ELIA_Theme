@@ -5,7 +5,11 @@ import { ScrollView } from "./ScrollView";
 
 
 export class Scrollbar extends Component implements ICallbacks {
+
 	static defaultCursorWidth = scale(12);
+
+	className = "ScrollBar";
+
 	private minCursorHeight = scale(100);
 	private cursorHeight: number;
 	private cursorY: number;

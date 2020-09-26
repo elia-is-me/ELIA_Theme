@@ -67,6 +67,9 @@ export abstract class Component implements IBoxModel, ICallbacks {
 	private _shouldUpdateOnInit = true;
 	private _shouldSortChildren = true;
 
+	isMonitor: boolean = false;
+	className: string = "Component";
+
 	// offset to smp_panel's left;
 	x: number = 0;
 
@@ -112,10 +115,10 @@ export abstract class Component implements IBoxModel, ICallbacks {
 	/**
 	 * 'on_init' 考虑的是当一个部件从隐藏切换到显示后，有一个默认的方法更新/初始化该部件。这么做是否合理现在值得怀疑。
 	 */
-	on_init() { }
-	on_paint(gr: IGdiGraphics) { }
-	on_size() { }
-	on_click(x?: number, y?: number) { }
+	on_init() {}
+	on_paint(gr: IGdiGraphics) {}
+	on_size() {}
+	on_click(x?: number, y?: number) {}
 	addChild(node: Component) {
 		if (!(node instanceof Component)) {
 			throw new Error("Component.addChild: Invalid param.");
@@ -163,11 +166,11 @@ export abstract class Component implements IBoxModel, ICallbacks {
 		);
 	}
 
-/**
- * generally children's position should be updated both when their parent's
- * position or size changed, so use `setBoundry' or `setPosition' in a parent's
- * `on_size' method.
- */
+	/**
+	 * generally children's position should be updated both when their parent's
+	 * position or size changed, so use `setBoundry' or `setPosition' in a parent's
+	 * `on_size' method.
+	 */
 	setBoundary(x: number, y: number, width: number, height: number) {
 		let visibleBefore_ = this.isVisible();
 		this.x = x;
@@ -227,7 +230,7 @@ export abstract class Component implements IBoxModel, ICallbacks {
 	 * parent will keep.
 	 */
 	setPosition(x: number, y: number): void;
-	setPosition(pos: { x?: number, y?: number }): void;
+	setPosition(pos: { x?: number; y?: number }): void;
 	setPosition(x: number | { x?: number; y?: number }, y?: number) {
 		if (typeof x == "number") {
 			this.x = x;
@@ -238,7 +241,7 @@ export abstract class Component implements IBoxModel, ICallbacks {
 			}
 			this.children.forEach(child => {
 				child.setPosition(this.x + child._clientX, this.y + child._clientY);
-			})
+			});
 		} else {
 			this.setPosition(isNaN(x.x) ? this.x : x.x, isNaN(x.y) ? this.y : x.y);
 		}
@@ -256,7 +259,7 @@ export abstract class Component implements IBoxModel, ICallbacks {
 		return this._shouldUpdateOnInit;
 	}
 
-	onNotifyData?(message: string, data?:any) { }
+	onNotifyData?(message: string, data?: any) {}
 
 	repaint() {
 		window.Repaint();

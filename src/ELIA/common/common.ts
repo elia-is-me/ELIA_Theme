@@ -305,7 +305,7 @@ export function debounce(fn: Function, delay: number) {
 		timer = window.SetTimeout(function () {
 			fn.apply(context, args);
 		}, delay);
-	};
+	} as any;
 }
 
 export function throttle(fn: Function, threshhold: number, scope?: any) {

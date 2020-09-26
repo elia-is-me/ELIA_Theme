@@ -22,14 +22,12 @@ import {
 	scrollbarColor,
 	globalFontName,
 } from "./Theme";
-import { Icon, Button, IButtonColors } from "../common/IconButton";
+import { Button, IButtonColors } from "../common/IconButton";
 import { SerializableIcon } from "../common/IconType";
 import { isValidPlaylist } from "./PlaylistView";
 import { IInputPopupOptions } from "./InputPopupPanel";
 import { IAlertDialogOptions } from "./AlertDialog";
 import { notifyOthers } from "../common/UserInterface";
-
-const IDC_ARROW = 32512;
 
 const mouseCursor = {
 	x: -1,
@@ -253,8 +251,7 @@ export class PlaylistManagerView
 			items.push(rowItem);
 			rowItem.index = playlistIndex;
 			rowItem.height = rowHeight;
-			rowItem.metadb =
-				playlistMetadbs.Count === 0 ? null : playlistMetadbs[0];
+			rowItem.metadb = playlistMetadbs.Count === 0 ? null : playlistMetadbs[0];
 			rowItem.listName = plman.GetPlaylistName(playlistIndex);
 			rowItem.isAuto = plman.IsAutoPlaylist(playlistIndex);
 			rowItem.yOffset = itemYOffset;
@@ -273,11 +270,7 @@ export class PlaylistManagerView
 		if (this.items.length > 0) {
 			let items_ = this.items;
 
-			for (
-				let playlistId = 0;
-				playlistId < plman.PlaylistCount;
-				playlistId++
-			) {
+			for (let playlistId = 0; playlistId < plman.PlaylistCount; playlistId++) {
 				let rowItem = items_[playlistId];
 				rowItem.x = this.x;
 				rowItem.width = this.width;
@@ -320,8 +313,8 @@ export class PlaylistManagerView
 		);
 
 		// draw items;
-		for (let itemIndex = 0; itemIndex < items_.length; itemIndex++) {
-			let rowItem = items_[itemIndex];
+		for (let i = 0, len = items_.length; i < len; i++) {
+			let rowItem = items_[i];
 			rowItem.x = this.x;
 			rowItem.width = this.width;
 			rowItem.y = this.y + headerHeight + rowItem.yOffset - this.scroll;
@@ -332,8 +325,9 @@ export class PlaylistManagerView
 				rowItem.y < this.y + this.height
 			) {
 				let isActive = rowItem.index === plman.ActivePlaylist;
+				// let isActive = false;
 				let textColor = isActive ? colors.textActive : colors.text;
-				if (itemIndex === this.hoverId) {
+				if (i === this.hoverId) {
 					textColor = colors.textActive;
 				}
 
@@ -370,9 +364,7 @@ export class PlaylistManagerView
 					rowItem.width - paddingL - paddingR - icon_.width - scale(4);
 				if (fb.IsPlaying && rowItem.index === plman.PlayingPlaylist) {
 					textWidth =
-						iconX -
-						(rowItem.x + paddingL + icon_.width + scale(4)) -
-						scale(4);
+						iconX - (rowItem.x + paddingL + icon_.width + scale(4)) - scale(4);
 				}
 
 				// draw list name;

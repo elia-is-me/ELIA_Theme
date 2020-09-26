@@ -11,7 +11,7 @@ export interface ITextLinkProps {
 }
 
 export class TextLink extends Clickable {
-
+	className = "TextLink";
 	text: string = "";
 	textWidth: number = 0;
 	maxWidth: number = 0;
@@ -19,24 +19,23 @@ export class TextLink extends Clickable {
 	_colorMap: Map<ButtonStates, number> = new Map();
 
 	constructor(opts: ITextLinkProps, callbacks?: IInjectableCallbacks) {
-
 		super(opts, callbacks);
 
 		// set font;
-		const font_ = (opts.font || gdi.Font("tahoma", scale(12)));
+		const font_ = opts.font || gdi.Font("tahoma", scale(12));
 		const underlinedFont = gdi.Font(font_.Name, font_.Size, 4);
 		this._fontMap.set(ButtonStates.Normal, font_);
 		this._fontMap.set(ButtonStates.Hover, underlinedFont);
 		this._fontMap.set(ButtonStates.Down, underlinedFont);
 
 		// set colors;
-		const textHoverColor_ = (opts.textHoverColor && opts.textColor);
+		const textHoverColor_ = opts.textHoverColor && opts.textColor;
 		this._colorMap.set(ButtonStates.Normal, opts.textColor);
 		this._colorMap.set(ButtonStates.Hover, textHoverColor_);
 		this._colorMap.set(ButtonStates.Down, textHoverColor_);
 
 		// set text max width;
-		this.maxWidth = (opts.maxWidth || 0);
+		this.maxWidth = opts.maxWidth || 0;
 
 		// init text link;
 		this.setText(opts.text);
@@ -49,15 +48,18 @@ export class TextLink extends Clickable {
 			return;
 		}
 		this.text = text;
-		this.textWidth = MeasureString(this.text, this._fontMap.get(ButtonStates.Normal)).Width;
+		this.textWidth = MeasureString(
+			this.text,
+			this._fontMap.get(ButtonStates.Normal)
+		).Width;
 		if (this.maxWidth > 0) {
 			this.setSize({
-				width: (this.textWidth > this.maxWidth ? this.maxWidth : this.textWidth)
+				width: this.textWidth > this.maxWidth ? this.maxWidth : this.textWidth,
 			});
 		} else {
 			this.setSize({
-				width: this.textWidth
-			})
+				width: this.textWidth,
+			});
 		}
 	}
 
@@ -72,7 +74,15 @@ export class TextLink extends Clickable {
 		}
 		let font_: IGdiFont = this._fontMap.get(this.state);
 		let textColor_: number = this._colorMap.get(this.state);
-		gr.DrawString(this.text, font_, textColor_, this.x, this.y, this.width, this.height, StringFormat.LeftCenter);
+		gr.DrawString(
+			this.text,
+			font_,
+			textColor_,
+			this.x,
+			this.y,
+			this.width,
+			this.height,
+			StringFormat.LeftCenter
+		);
 	}
-
 }

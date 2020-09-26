@@ -39,6 +39,8 @@ export class AlertDialog
 	implements IAlertDialogOptions, IDefaultOptions {
 	readonly modal: boolean = true;
 
+	className = "AlertDialog";
+
 	titleFont: IGdiFont;
 	panelWidth: number;
 	panelHeight: number;
@@ -105,13 +107,7 @@ export class AlertDialog
 		const { top, left } = this.paddings;
 
 		// background;
-		gr.FillSolidRect(
-			this.x,
-			this.y,
-			this.width,
-			this.height,
-			backgroundColor
-		);
+		gr.FillSolidRect(this.x, this.y, this.width, this.height, backgroundColor);
 
 		// title;
 		gr.DrawString(
