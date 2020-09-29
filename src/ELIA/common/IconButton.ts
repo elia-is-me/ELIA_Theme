@@ -21,8 +21,7 @@ export const enum ButtonStates {
 	Disable = 4,
 };
 
-export abstract class Clickable extends Component {
-
+export class Clickable extends Component {
 	state: ButtonStates = ButtonStates.Normal;
 
 	/**

@@ -2,37 +2,36 @@
 // Playlist Manager
 // -------------------------
 
-import {
-	scale,
-	blendColors,
-	RGB,
-	StringFormat,
-	ThrottledRepaint,
-	MenuFlag,
-} from "../common/common";
+import { scale, blendColors, RGB, StringFormat, ThrottledRepaint, MenuFlag } from "../common/common";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
 import { Component } from "../common/BasePart";
 import { Material, MaterialFont } from "../common/iconCode";
-import {
-	scrollbarWidth,
-	IThemeColors,
-	mainColors,
-	sidebarColors,
-	scrollbarColor,
-	globalFontName,
-} from "./Theme";
+import { scrollbarWidth, IThemeColors, mainColors, sidebarColors, scrollbarColor, globalFontName } from "./Theme";
 import { Button, IButtonColors } from "../common/IconButton";
 import { SerializableIcon } from "../common/IconType";
 import { isValidPlaylist } from "./PlaylistView";
 import { IInputPopupOptions } from "./InputPopupPanel";
 import { IAlertDialogOptions } from "./AlertDialog";
-import { notifyOthers } from "../common/UserInterface";
+import { dndMask, notifyOthers } from "../common/UserInterface";
+
+const enum DropEffect {
+	None = 0,
+	Copy = 1,
+	Move = 2,
+	Link = 4,
+	Scroll = 0x80000000,
+}
 
 const mouseCursor = {
 	x: -1,
 	y: -1,
 };
+
+let lastPressedCoord = { x: -1, y: -1 };
+let isDrag = false;
+let isInternalDndActive = false;
+let mouseDown = false;
 
 type IconSets = "volume" | "gear" | "queue_music";
 
@@ -136,25 +135,14 @@ class PLM_Header extends Component {
 	}
 
 	on_size() {
-		this.addPlaylistBtn.setBoundary(
-			this.x,
-			this.y + scale(20),
-			this.width,
-			scale(40)
-		);
+		this.addPlaylistBtn.setBoundary(this.x, this.y + scale(20), this.width, scale(40));
 	}
 
 	on_paint(gr: IGdiGraphics) {
 		const { colors } = this;
 
 		// draw background;
-		gr.FillSolidRect(
-			this.x,
-			this.y,
-			this.width,
-			this.height,
-			colors.background
-		);
+		gr.FillSolidRect(this.x, this.y, this.width, this.height, colors.background);
 
 		// split line;
 		let lineY = this.y + scale(40 + 10 + 20);
@@ -179,18 +167,11 @@ class PLM_Item {
 	isAuto: boolean = false;
 
 	trace(x: number, y: number) {
-		return (
-			x > this.x &&
-			x <= this.x + this.width &&
-			y > this.y &&
-			y <= this.y + this.height
-		);
+		return x > this.x && x <= this.x + this.width && y > this.y && y <= this.y + this.height;
 	}
 }
 
-export class PlaylistManagerView
-	extends ScrollView
-	implements IPlaylistManagerProps {
+export class PlaylistManagerView extends ScrollView implements IPlaylistManagerProps {
 	items: PLM_Item[] = [];
 	scrollbar: Scrollbar;
 	header: PLM_Header;
@@ -277,20 +258,12 @@ export class PlaylistManagerView
 			}
 		}
 
-		this.scrollbar.setBoundary(
-			this.x + this.width - scale(14),
-			this.y + PLM_Properties.headerHeight,
-			scrollbarWidth,
-			this.height - PLM_Properties.headerHeight
-		);
+		this.scrollbar.setBoundary(this.x + this.width - scrollbarWidth, this.y + PLM_Properties.headerHeight, scrollbarWidth, this.height - PLM_Properties.headerHeight);
 
-		this.header.setBoundary(
-			this.x,
-			this.y,
-			this.width,
-			PLM_Properties.headerHeight
-		);
+		this.header.setBoundary(this.x, this.y, this.width, PLM_Properties.headerHeight);
 	}
+
+	isDnd = false;
 
 	on_paint(gr: IGdiGraphics) {
 		let rowHeight = this.rowHeight;
@@ -304,13 +277,7 @@ export class PlaylistManagerView
 		let iconOffsetRowY = ((this.rowHeight - icons.gear.height) / 2) | 0;
 
 		// draw background
-		gr.FillSolidRect(
-			this.x,
-			this.y,
-			this.width,
-			this.height,
-			colors.background
-		);
+		gr.FillSolidRect(this.x, this.y, this.width, this.height, colors.background);
 
 		// draw items;
 		for (let i = 0, len = items_.length; i < len; i++) {
@@ -320,64 +287,34 @@ export class PlaylistManagerView
 			rowItem.y = this.y + headerHeight + rowItem.yOffset - this.scroll;
 
 			// items in visible area;
-			if (
-				rowItem.y + rowHeight >= this.y + headerHeight &&
-				rowItem.y < this.y + this.height
-			) {
+			if (rowItem.y + rowHeight >= this.y + headerHeight && rowItem.y < this.y + this.height) {
 				let isActive = rowItem.index === plman.ActivePlaylist;
-				// let isActive = false;
 				let textColor = isActive ? colors.textActive : colors.text;
 				if (i === this.hoverId) {
 					textColor = colors.textActive;
 				}
 
 				if (isActive) {
-					gr.FillSolidRect(
-						rowItem.x,
-						rowItem.y,
-						rowItem.width,
-						rowItem.height,
-						colors.text & 0x1fffffff
-					);
+					gr.FillSolidRect(rowItem.x, rowItem.y, rowItem.width, rowItem.height, colors.text & 0x1fffffff);
 				}
 
 				// draw icon;
 				let icon_ = rowItem.isAuto ? icons.gear : icons.queue_music;
-				icon_.draw(
-					gr,
-					textColor,
-					0x000000,
-					rowItem.x + paddingL,
-					rowItem.y + iconOffsetRowY
-				);
+				icon_.draw(gr, textColor, 0x000000, rowItem.x + paddingL, rowItem.y + iconOffsetRowY);
 
 				//
-				let iconX =
-					this.x + this.width - scale(40) - this.scrollbar.width - scale(8);
+				let iconX = this.x + this.width - scale(40) - this.scrollbar.width - scale(8);
 				if (fb.IsPlaying && rowItem.index === plman.PlayingPlaylist) {
-					(fb.IsPaused ? this.pauseIco : this.playingIco)
-						.setSize(scale(40), this.rowHeight)
-						.draw(gr, colors.highlight, 0, iconX, rowItem.y);
+					(fb.IsPaused ? this.pauseIco : this.playingIco).setSize(scale(40), this.rowHeight).draw(gr, colors.highlight, 0, iconX, rowItem.y);
 				}
 
-				let textWidth =
-					rowItem.width - paddingL - paddingR - icon_.width - scale(4);
+				let textWidth = rowItem.width - paddingL - paddingR - icon_.width - scale(4);
 				if (fb.IsPlaying && rowItem.index === plman.PlayingPlaylist) {
-					textWidth =
-						iconX - (rowItem.x + paddingL + icon_.width + scale(4)) - scale(4);
+					textWidth = iconX - (rowItem.x + paddingL + icon_.width + scale(4)) - scale(4);
 				}
 
 				// draw list name;
-				gr.DrawString(
-					rowItem.listName,
-					itemFont,
-					textColor,
-					rowItem.x + paddingL + icon_.width + scale(4),
-					rowItem.y,
-					textWidth,
-					rowHeight,
-					StringFormat.LeftCenter
-				);
+				gr.DrawString(rowItem.listName, itemFont, textColor, rowItem.x + paddingL + icon_.width + scale(4), rowItem.y, textWidth, rowHeight, StringFormat.LeftCenter);
 			}
 		}
 
@@ -394,11 +331,7 @@ export class PlaylistManagerView
 		let { dragSourceId, dragTargetId } = this;
 		if (dragTargetId > -1 && dragTargetId !== dragSourceId) {
 			let lineWidth = scale(2);
-			let lineY =
-				this.y +
-				this.header.height +
-				this.items[dragTargetId].yOffset -
-				this.scroll;
+			let lineY = this.y + this.header.height + this.items[dragTargetId].yOffset - this.scroll;
 			if (dragTargetId > dragSourceId) {
 				lineY += this.rowHeight;
 			}
@@ -408,14 +341,7 @@ export class PlaylistManagerView
 			if (lineY < this.y) {
 				lineY += this.rowHeight;
 			}
-			gr.DrawLine(
-				this.x,
-				lineY,
-				this.x + this.width,
-				lineY,
-				lineWidth,
-				colors.text
-			);
+			gr.DrawLine(this.x, lineY, this.x + this.width, lineY, lineWidth, colors.text);
 		}
 	}
 
@@ -425,13 +351,7 @@ export class PlaylistManagerView
 
 	private _isHoverList(x: number, y: number) {
 		let listTop = this.y + this.header.height;
-		return (
-			this.isVisible() &&
-			x > this.x &&
-			x <= this.x + this.width &&
-			y > listTop &&
-			y < this.y + this.height
-		);
+		return this.isVisible() && x > this.x && x <= this.x + this.width && y > listTop && y < this.y + this.height;
 	}
 
 	private getHoverId(x: number, y: number) {
@@ -451,40 +371,54 @@ export class PlaylistManagerView
 	private dragTimer: number = -1;
 
 	on_mouse_move(x: number, y: number) {
-		mouseCursor.x = x;
-		mouseCursor.y = y;
+		// mouseCursor.x = x;
+		// mouseCursor.y = y;
 
 		let hoverId_ = this.getHoverId(x, y);
 		if (hoverId_ !== this.hoverId) {
 			this.hoverId = hoverId_;
 		}
 
-		this.updateDrag(x, y);
+		// this.updateDrag(x, y);
 
-		this.repaint();
+		// this.repaint();
 
-		if (this.dragSourceId > -1 && this.totalHeight > this.height) {
-			if (this.hoverId > -1) {
-				if (this.dragTimer > -1) {
-					window.ClearInterval(this.dragTimer);
-					this.dragTimer = -1;
-				}
-			} else {
-				if (y < this.y + this.header.height) {
-					if (this.dragTimer === -1) {
-						this.dragTimer = window.SetInterval(() => {
-							this.scrollTo(this.scroll - this.rowHeight);
-							this.updateDrag(x, y);
-						}, 100);
-					}
-				} else if (y > this.y + this.height) {
-					if (this.dragTimer === -1) {
-						this.dragTimer = window.SetInterval(() => {
-							this.scrollTo(this.scroll + this.rowHeight);
-							this.updateDrag(x, y);
-						}, 100);
-					}
-				}
+		// if (this.dragSourceId > -1 && this.totalHeight > this.height) {
+		// 	if (this.hoverId > -1) {
+		// 		if (this.dragTimer > -1) {
+		// 			window.ClearInterval(this.dragTimer);
+		// 			this.dragTimer = -1;
+		// 		}
+		// 	} else {
+		// 		if (y < this.y + this.header.height) {
+		// 			if (this.dragTimer === -1) {
+		// 				this.dragTimer = window.SetInterval(() => {
+		// 					this.scrollTo(this.scroll - this.rowHeight);
+		// 					this.updateDrag(x, y);
+		// 				}, 100);
+		// 			}
+		// 		} else if (y > this.y + this.height) {
+		// 			if (this.dragTimer === -1) {
+		// 				this.dragTimer = window.SetInterval(() => {
+		// 					this.scrollTo(this.scroll + this.rowHeight);
+		// 					this.updateDrag(x, y);
+		// 				}, 100);
+		// 			}
+		// 		}
+		// 	}
+		// }
+		if (!mouseDown) {
+			return;
+		}
+
+		if (!isDrag && hoverId_ > -1) {
+			let distance = Math.pow(lastPressedCoord.x - x, 2) + Math.pow(lastPressedCoord.y - y, 2);
+			if (distance > 49) {
+				lastPressedCoord = {
+					x: -1,
+					y: -1,
+				};
+				this.performInternalDnd();
 			}
 		}
 	}
@@ -523,6 +457,7 @@ export class PlaylistManagerView
 	}
 
 	on_mouse_lbtn_down(x: number, y: number) {
+		mouseDown = true;
 		let hoverId_ = this.getHoverId(x, y);
 		if (hoverId_ !== this.hoverId) {
 			this.hoverId = hoverId_;
@@ -554,12 +489,20 @@ export class PlaylistManagerView
 	}
 
 	private handleDrop() {
-		let success_ = plman.MovePlaylist(this.dragSourceId, this.dragTargetId);
-		// if (success_) {
-		//     let scroll = this.scroll;
-		//     this.initList();
-		//     this.scroll = scroll;
-		// }
+		plman.MovePlaylist(this.dragSourceId, this.dragTargetId);
+	}
+
+	performInternalDnd() {
+		isDrag = true;
+		isInternalDndActive = true;
+		let effect = fb.DoDragDrop(window.ID, plman.GetPlaylistItems(plman.ActivePlaylist), DropEffect.Move | DropEffect.Link);
+
+		if (effect === DropEffect.None) {
+		} else if (effect === DropEffect.Move) {
+		} else {
+		}
+
+		isInternalDndActive = false;
 	}
 
 	on_mouse_lbtn_dblclk(x: number, y: number) {
@@ -609,11 +552,7 @@ export class PlaylistManagerView
 		const hasContents = metadbs.Count > 0;
 		const rootMenu = window.CreatePopupMenu();
 
-		rootMenu.AppendMenuItem(
-			!hasContents ? MenuFlag.GRAYED : MenuFlag.STRING,
-			1,
-			"Play"
-		);
+		rootMenu.AppendMenuItem(!hasContents ? MenuFlag.GRAYED : MenuFlag.STRING, 1, "Play");
 		rootMenu.AppendMenuItem(MenuFlag.STRING, 2, "Rename");
 		rootMenu.AppendMenuItem(MenuFlag.STRING, 3, "Delete");
 		rootMenu.AppendMenuItem(MenuFlag.STRING, 4, "Create new playlist");
@@ -632,11 +571,7 @@ export class PlaylistManagerView
 			Context.BuildMenu(contents, idOffset, -1);
 			// ---
 			rootMenu.AppendMenuSeparator();
-			contents.AppendTo(
-				rootMenu,
-				hasContents ? MenuFlag.STRING : MenuFlag.GRAYED,
-				metadbs.Count + (metadbs.Count > 1 ? " tracks" : " track")
-			);
+			contents.AppendTo(rootMenu, hasContents ? MenuFlag.STRING : MenuFlag.GRAYED, metadbs.Count + (metadbs.Count > 1 ? " tracks" : " track"));
 		}
 
 		const id = rootMenu.TrackPopupMenu(x, y);
@@ -701,6 +636,25 @@ export class PlaylistManagerView
 		this._contextMenuOpen = false;
 		this.on_mouse_leave();
 	}
+
+	on_drag_enter(action: IDropTargetAction, x: number, y: number) {
+		// action.Effect = DropEffect.None;
+		dndMask.visible = true;
+		dndMask.setBoundary(this.x, this.y, this.width, this.height);
+		window.Repaint();
+	}
+
+	on_drag_over(action: IDropTargetAction, x: number, y: number) {
+		// action.Effect = DropEffect.;
+		action.Text = "TEST ING";
+	}
+
+	on_drag_leave() {
+		dndMask.visible = false;
+		window.Repaint();
+	}
+
+	on_drag_drop (action: IDropTargetAction, x: number, y: number) {}
 
 	on_playlists_changed() {
 		this.initList();

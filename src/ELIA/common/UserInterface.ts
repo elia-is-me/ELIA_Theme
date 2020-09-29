@@ -1,11 +1,6 @@
-import { Component } from "./BasePart";
-import {
-	GetKeyboardMask,
-	isFunction,
-	KMask,
-	TextRenderingHint,
-	VKeyCode,
-} from "./common";
+import { toggleMood } from "../ui/PlaybackControlView";
+import { Component, IBoxModel } from "./BasePart";
+import { darken, GetKeyboardMask, isFunction, KMask, RGBA, scale, TextRenderingHint, VKeyCode } from "./common";
 
 let partlist: Component[] = [];
 let vis_parts: Component[] = [];
@@ -145,6 +140,30 @@ const textRenderingHint = useClearType
 	? TextRenderingHint.AntiAlias
 	: 0;
 
+class DndMask implements IBoxModel {
+	visible = false;
+	x = 0;
+	y = 0;
+	width = 0;
+	height = 0;
+
+	private _lineWidth = scale(2);
+
+	setBoundary(x: number, y: number, width: number, height: number) {
+		this.x = x;
+		this.y = y;
+		this.width = width;
+		this.height = height;
+	}
+
+	draw(gr: IGdiGraphics) {
+		if (!this.visible) return;
+		gr.DrawRect(this.x, this.y, this.width - this._lineWidth, this.height - this._lineWidth, this._lineWidth, RGBA(0, 132, 255, 200));
+	}
+}
+
+export const dndMask = new DndMask();
+
 function on_size(width: number, height: number) {
 	if (!width || !height) {
 		return;
@@ -161,9 +180,16 @@ function on_paint(gr: IGdiGraphics) {
 	profiler.Reset();
 	gr.SetTextRenderingHint(textRenderingHint);
 
+	// Draw visible parts;
 	for (let i = 0, len = vis_parts.length; i < len; i++) {
 		vis_parts[i].on_paint(gr);
 	}
+
+	// draw dnd mask;
+	if (dropTargetPart && dndMask.visible) {
+		dndMask.draw(gr);
+	}
+
 	if (count < 20) {
 		count++;
 		time += profiler.Time;
@@ -308,6 +334,64 @@ function on_char(code: number) {
 	invoke(focusPart, "on_char", code);
 }
 
+function findDropTargetPart(x: number, y: number) {
+	let active_part = getHoverPart(vis_parts, x, y);
+	if (!active_part) {
+		return null;
+	}
+
+	if (isFunction((active_part as any)["on_drag_enter"])) {
+		return active_part;
+	} else {
+		let temp_part = active_part;
+		while (temp_part.parent) {
+			if (isFunction((temp_part.parent as any)["on_drag_enter"])) {
+				return temp_part.parent;
+			}
+			temp_part = temp_part.parent;
+		}
+		return null;
+	}
+}
+
+let dropTargetPart: Component = null;
+
+function on_drag_enter(action: IDropTargetAction, x: number, y: number) {
+	console.log("on_drag_enter, ", new Date());
+	dropTargetPart = findDropTargetPart(x, y);
+	if (dropTargetPart) {
+		invoke(dropTargetPart, "on_drag_enter", action, x, y);
+	}
+}
+
+function on_drag_leave() {
+	console.log("on_drag_leave", new Date());
+	if (dropTargetPart) {
+		invoke(dropTargetPart, "on_drag_leave");
+	}
+	dropTargetPart = undefined;
+}
+
+function on_drag_over(action: IDropTargetAction, x: number, y: number) {
+	// console.log("on_drag_over", x, y);
+	let prevDropTargetPart = dropTargetPart;
+	dropTargetPart = findDropTargetPart(x, y);
+	if (!compareParts(prevDropTargetPart, dropTargetPart)) {
+		invoke(prevDropTargetPart, "on_drag_leave");
+		invoke(dropTargetPart, "on_drag_enter", action, x, y);
+	}
+	invoke(dropTargetPart, "on_drag_over", action, x, y);
+}
+
+function on_drag_drop(action: IDropTargetAction, x: number, y: number) {
+	console.log("on_drag_drop", x, y);
+	dropTargetPart = findDropTargetPart(x, y);
+	if (dropTargetPart) {
+		invoke(dropTargetPart, "on_drag_drop", action, x, y);
+		dropTargetPart = undefined;
+	}
+}
+
 function on_playback_order_changed(newOrder: number) {
 	vis_parts.forEach(p => invoke(p, "on_playback_order_changed", newOrder));
 }
@@ -394,6 +478,10 @@ Object.assign(systemCallbacks, {
 	on_key_down: on_key_down,
 	on_key_up: on_key_up,
 	on_char: on_char,
+	on_drag_enter: on_drag_enter,
+	on_drag_leave: on_drag_leave,
+	on_drag_over: on_drag_over,
+	on_drag_drop: on_drag_drop,
 	on_playback_order_changed: on_playback_order_changed,
 	on_playback_stop: on_playback_stop,
 	on_playback_edited: on_playback_edited,
