@@ -1,5 +1,5 @@
 import { Component } from "../common/BasePart";
-import { MeasureString, RGB, scale, StringFormat, setAlpha, isEmptyString } from "../common/common";
+import { MeasureString, RGB, scale, StringFormat, setAlpha, isEmptyString, isFunction } from "../common/common";
 import { Button2, } from "../common/IconButton";
 import { InputBox } from "../common/Inputbox";
 import { notifyOthers } from "../common/UserInterface";
@@ -10,7 +10,7 @@ export interface IInputPopupOptions {
 	title: string;
 	defaultText?: string;
 	emptyText?: string;
-	onSuccess?(): void;
+	onSuccess?(str: string): void;
 	onFail?(): void;
 }
 
@@ -66,9 +66,6 @@ export class InputPopupPanel
 		this.z = 1000;
 		Object.assign(this, defaultOptions, opts);
 
-		console.log("defaultText: ", opts.defaultText);
-		console.log(this.defaultText);
-
 		this.paddings.top = scale(44);
 		this.paddings.left = scale(40);
 
@@ -82,7 +79,14 @@ export class InputPopupPanel
 		});
 		this.okBtn.setSize(scale(80), scale(32));
 		this.okBtn.on_click = () => {
+			if (this.inputbox.text) {
+				if (isFunction(opts.onSuccess)) {
+					console.log(this.inputbox.text)
+					opts.onSuccess(this.inputbox.text);
+				}
+			}
 			notifyOthers("Hide.InputPopupPanel", this.cid);
+
 		};
 
 		this.cancelBtn = new Button2({
@@ -105,7 +109,12 @@ export class InputPopupPanel
 			backgroundSelectionColor: RGB(33, 136, 255),
 			empty_text: isEmptyString(this.emptyText) ? "" : this.emptyText,
 			default_text: isEmptyString(this.defaultText) ? "" : this.defaultText,
-			func() {},
+			func: () => {
+				if (isFunction(opts.onSuccess)) {
+					opts.onSuccess(this.inputbox.text);
+				}
+				notifyOthers("Hide.InputPopupPanel", this.cid);
+			},
 		});
 
 		this.inputboxHeight =

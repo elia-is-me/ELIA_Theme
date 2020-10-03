@@ -127,6 +127,12 @@ class PLM_Header extends Component {
 			onClick: () => {
 				notifyOthers("Popup.InputPopupPanel", {
 					title: "Create new playlist",
+					onSuccess(text: string) {
+						let playlistIndex = plman.CreatePlaylist(plman.PlaylistCount, text);
+						if (isValidPlaylist(playlistIndex)) {
+							plman.ActivePlaylist = playlistIndex;
+						}
+					}
 				});
 			},
 		});
@@ -251,8 +257,8 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 		if (this.items.length > 0) {
 			let items_ = this.items;
 
-			for (let playlistId = 0; playlistId < plman.PlaylistCount; playlistId++) {
-				let rowItem = items_[playlistId];
+			for (let playlistIndex = 0, len = this.items.length; playlistIndex < len; playlistIndex++) {
+				let rowItem = items_[playlistIndex];
 				rowItem.x = this.x;
 				rowItem.width = this.width;
 			}
@@ -582,16 +588,14 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 				break;
 			case id === 2:
 				// Rename;
-				const index_ = playlistIndex;
-				// plman.ActivePlaylist = playlistIndex;
-				// fb.RunMainMenuCommand("Rename playlist");
-				// plman.ActivePlaylist = index_;
 				options = {
 					title: "Rename playlist",
 					defaultText: plman.GetPlaylistName(playlistIndex),
+					onSuccess(text: string) {
+						plman.RenamePlaylist(playlistIndex, text);
+					}
 				};
 				notifyOthers("Popup.InputPopupPanel", options);
-
 				break;
 
 			case id === 3:
@@ -607,6 +611,17 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 				// plman.RemovePlaylist(playlistIndex);
 				let alertOptions: IAlertDialogOptions = {
 					title: "Delete playlist?",
+					onSuccess: () => {
+						if (plman.ActivePlaylist === playlistIndex) {
+							if (isValidPlaylist(playlistIndex - 1)) {
+								plman.ActivePlaylist = playlistIndex - 1;
+							} else {
+								plman.ActivePlaylist = 0;
+							}
+						}
+						plman.UndoBackup(playlistIndex);
+						plman.RemovePlaylist(playlistIndex);
+					}
 				};
 				notifyOthers("Show.AlertDialog", alertOptions);
 				break;
@@ -654,7 +669,7 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 		window.Repaint();
 	}
 
-	on_drag_drop (action: IDropTargetAction, x: number, y: number) {}
+	on_drag_drop(action: IDropTargetAction, x: number, y: number) { }
 
 	on_playlists_changed() {
 		this.initList();
