@@ -13,7 +13,7 @@ import { SerializableIcon } from "../common/IconType";
 import { isValidPlaylist } from "./PlaylistView";
 import { IInputPopupOptions } from "./InputPopupPanel";
 import { IAlertDialogOptions } from "./AlertDialog";
-import { dndMask, notifyOthers } from "../common/UserInterface";
+import { dndMask, notifyOthers, ui } from "../common/UserInterface";
 
 const enum DropEffect {
 	None = 0,
@@ -74,7 +74,7 @@ interface IPlaylistManagerColors extends IThemeColors {
 const PLM_Colors: IPlaylistManagerColors = {
 	text: blendColors(mainColors.text, mainColors.background, 0.3),
 	textActive: mainColors.text,
-	background: sidebarColors.background,
+	background: RGB(18, 18, 18),
 	highlight: mainColors.highlight,
 	background_sel: RGB(20, 20, 20),
 	background_hover: RGB(10, 10, 10),
@@ -85,7 +85,6 @@ export const PLM_Properties = {
 	rowHeight: scale(40),
 	itemFont: gdi.Font(globalFontName, scale(14)),
 	headerHeight: scale(80),
-	headerFont: gdi.Font("Segoe UI Semibold", scale(12)),
 	icons: icons,
 	colors: PLM_Colors,
 };

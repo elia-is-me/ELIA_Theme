@@ -158,9 +158,9 @@ export class Layout extends Component {
 	/**
 	 * TODO;
 	 */
-	setViewState() {}
+	setViewState() { }
 
-	on_paint(gr: IGdiGraphics) {}
+	on_paint(gr: IGdiGraphics) { }
 
 	onNotifyData(message: string, data?: any) {
 		switch (message) {
@@ -216,6 +216,7 @@ export class Layout extends Component {
 					metadbs: (data as any).metadbs,
 				});
 				this.addChild(this.searchResultView);
+				this.children.sort((a, b) => a.z - b.z)
 				this.viewState = ViewStates.Search;
 				this.setPartsVisible(this.viewState);
 				this.on_size();

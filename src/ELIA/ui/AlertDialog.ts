@@ -63,9 +63,9 @@ export class AlertDialog
 
 		this.okBtn = new Button2({
 			text: "OK",
-			textColor: this.highlightColor,
-			textHoverColor: setAlpha(this.highlightColor, 200),
-			textDownColor: setAlpha(this.highlightColor, 127),
+			// textColor: this.highlightColor,
+			// textHoverColor: setAlpha(this.highlightColor, 200),
+			// textDownColor: setAlpha(this.highlightColor, 127),
 		});
 		this.okBtn.setSize(scale(80), scale(32));
 		this.okBtn.on_click = () => {
@@ -77,9 +77,9 @@ export class AlertDialog
 
 		this.cancelBtn = new Button2({
 			text: "Cancel",
-			textColor: this.textColor,
-			textHoverColor: setAlpha(this.textColor, 200),
-			textDownColor: setAlpha(this.textColor, 127),
+			// textColor: this.textColor,
+			// textHoverColor: setAlpha(this.textColor, 200),
+			// textDownColor: setAlpha(this.textColor, 127),
 		});
 		this.cancelBtn.setSize(scale(80), scale(32));
 		this.cancelBtn.on_click = () => {

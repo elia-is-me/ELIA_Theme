@@ -72,10 +72,11 @@ export class InputPopupPanel
 		// create buttons;
 		this.okBtn = new Button2({
 			text: "OK",
-			textColor: mainColors.text,
-			backgroundColor: mainColors.highlight,
-			backgroundHoverColor: setAlpha(mainColors.highlight, 200),
-			backgroundDownColor: setAlpha(mainColors.highlight, 127),
+			style: 1,
+			// textColor: mainColors.text,
+			// backgroundColor: mainColors.highlight,
+			// backgroundHoverColor: setAlpha(mainColors.highlight, 200),
+			// backgroundDownColor: setAlpha(mainColors.highlight, 127),
 		});
 		this.okBtn.setSize(scale(80), scale(32));
 		this.okBtn.on_click = () => {
@@ -91,9 +92,9 @@ export class InputPopupPanel
 
 		this.cancelBtn = new Button2({
 			text: "Cancel",
-			textColor: this.textColor,
-			backgroundHoverColor: RGB(100, 100, 100),
-			backgroundDownColor: setAlpha(RGB(100, 100, 100), 127),
+			// textColor: this.textColor,
+			// backgroundHoverColor: RGB(100, 100, 100),
+			// backgroundDownColor: setAlpha(RGB(100, 100, 100), 127),
 		});
 		this.cancelBtn.setSize(scale(80), scale(32));
 		this.cancelBtn.on_click = () => {

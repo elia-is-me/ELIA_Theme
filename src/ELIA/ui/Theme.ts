@@ -26,7 +26,7 @@ export const mainColors: IThemeColors = {
  */
 export const bottomColors: IThemeColors = {
 	text: mainColors.text,
-	background: RGB(17, 17, 17),
+	background: RGB(40, 40, 40),
 	highlight: RGB(251, 114, 153),
 	text_sel: RGB(255, 255, 255),
 	heart: RGB(195, 45, 46)
@@ -56,3 +56,5 @@ export const scrollbarWidth = scale(14);
 // export const globalFontName = "Microsoft YaHei";
 export const globalFontName = "Segoe UI";
 
+
+export const sliderHeight = scale(20);

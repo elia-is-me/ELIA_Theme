@@ -1,19 +1,19 @@
 import { Component } from "./BasePart";
-import { Repaint } from "./common";
+import { Repaint, SmoothingMode } from "./common";
 
 export interface ISliderOptions {
-    progressHeight: number;
-    thumbImage: IGdiBitmap;
-    pressedThumbImage?: IGdiBitmap;
-    progressColor: number;
-    secondaryColor: number;
-    accentColor: number;
-    getProgress(): number;
-    setProgress(val: number): void;
+	progressHeight: number;
+	thumbImage: IGdiBitmap;
+	pressedThumbImage?: IGdiBitmap;
+	progressColor: number;
+	secondaryColor: number;
+	accentColor: number;
+	getProgress(): number;
+	setProgress(val: number): void;
 }
 export interface SliderThumbImage {
-    normal: IGdiBitmap;
-    down: IGdiBitmap;
+	normal: IGdiBitmap;
+	down: IGdiBitmap;
 }
 export class Slider extends Component implements ISliderOptions {
 	className = "Slider";
@@ -43,7 +43,7 @@ export class Slider extends Component implements ISliderOptions {
 	getProgress(): number {
 		return 0;
 	}
-	setProgress(val: number): void {}
+	setProgress(val: number): void { }
 	on_size() {
 		let minHeight_ = Math.max(
 			this.progressHeight,
@@ -69,24 +69,14 @@ export class Slider extends Component implements ISliderOptions {
 		if (!isFinite(this.progress)) {
 			this.progress = 0;
 		}
-		let p_y = this.y + (this.height - this.progress) / 2;
+		let p_y = this.y + (this.height - this.progressHeight) / 2;
+		let radius = (this.progressHeight / 2) >> 0;
 		//
-		gr.FillSolidRect(
-			this.x,
-			p_y,
-			this.width,
-			this.progressHeight,
-			this.secondaryColor
-		);
+		gr.SetSmoothingMode(SmoothingMode.AntiAlias);
+		gr.FillRoundRect(this.x, p_y, this.width, this.progressHeight, radius, radius, this.secondaryColor);
 		//
-		if (this.progress * this.width > 1) {
-			gr.FillSolidRect(
-				this.x,
-				p_y,
-				this.width * this.progress,
-				this.progressHeight,
-				this.progressColor
-			);
+		if (this.progress * this.width > this.progressHeight) {
+			gr.FillRoundRect(this.x, p_y, this.width * this.progress, this.progressHeight, radius, radius, this.progressColor);
 		}
 		if (this.thumbImage) {
 			let img = this.thumbImage;
@@ -95,19 +85,11 @@ export class Slider extends Component implements ISliderOptions {
 			}
 			let img_x = this.x + this.width * this.progress - img.Width / 2;
 			let img_y = this.y + (this.height - img.Height) / 2;
-			gr.DrawImage(
-				img,
-				img_x,
-				img_y,
-				img.Width,
-				img.Height,
-				0,
-				0,
-				img.Width,
-				img.Height
-			);
+			gr.DrawImage(img, img_x, img_y, img.Width, img.Height, 0, 0, img.Width, img.Height);
 		}
+		gr.SetSmoothingMode(SmoothingMode.Default);
 	}
+
 	on_mouse_move(x: number, y: number) {
 		if (this.isDrag) {
 			x -= this.x;

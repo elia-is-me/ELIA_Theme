@@ -14,19 +14,19 @@ import {
 	deepClone,
 	MeasureString,
 	isEmptyString,
-	CropImage,
 	StringFormat,
 } from "../common/common";
 import { IThemeColors, mainColors, scrollbarColor, scrollbarWidth, globalFontName } from "./Theme";
 import { ThrottledRepaint } from "../common/common";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
-import { Component, IBoxModel } from "../common/BasePart";
+import { Component, IBoxModel, IPaddings } from "../common/BasePart";
 import { Material, MaterialFont } from "../common/iconCode";
 import { SerializableIcon } from "../common/IconType";
-import { AlbumArtId, PlaylistArtwork } from "../common/AlbumArtView";
+import { PlaylistArtwork } from "../common/AlbumArtView";
 import { toggleMood } from "./PlaybackControlView";
-import { ui } from "../common/UserInterface";
+import { notifyOthers, ui } from "../common/UserInterface";
+import { Button, Button2 } from "../common/IconButton";
 
 const __DEV__ = window.GetProperty("__DEV__", true);
 
@@ -114,14 +114,15 @@ const tfTrackInfo = fb.TitleFormat("%tracknumber%^^[%artist%]^^%title%^^%length%
 
 const PlaylistProperties = {
 	rowHeight: scale(40),
-	itemFont: gdi.Font("Microsoft YaHei", scale(14), 0),
+	itemFont: gdi.Font(globalFontName, scale(14), 0),
 	emptyFont: gdi.Font(globalFontName, scale(20))
 }
 
 const playlistColors: IThemeColors = {
 	text: mainColors.text,
 	secondaryText: mainColors.secondaryText,
-	background: RGB(28, 28, 28),
+	background: RGB(24, 24, 24),
+	backgroundSelection: RGB(51, 51, 51),
 	highlight: mainColors.highlight,
 	HEART_RED: RGB(221, 0, 27),
 };
@@ -131,8 +132,8 @@ const playlistColors: IThemeColors = {
  */
 class PlaylistHeaderView extends Component {
 	titleText: string = "";
-	parentOffsetY: number;
 	descriptionText: string = "";
+	parentOffsetY: number;
 	primaryColor: number;
 	secondaryColor: number;
 	artworkImage: IGdiBitmap;
@@ -144,7 +145,10 @@ class PlaylistHeaderView extends Component {
 	descriptionFont: IGdiFont;
 	minHeight: number;
 
-	paddings: IPaddings;
+	artwork: PlaylistArtwork;
+	shuffleBtn: Button2;
+	editBtn: Button2;
+	contextBtn: Button2;
 
 	constructor(options: {
 		titleText?: string;
@@ -159,13 +163,10 @@ class PlaylistHeaderView extends Component {
 		this.primaryColor = options.primaryColor;
 		this.secondaryColor = options.secondaryColor;
 
-		this.paddings = { top: 0, bottom: 0, left: 0, right: 0 };
-
 		// Set fonts;
-		let fontName_ = "Segoe UI";
-		this.titleFont = gdi.Font("Segoe UI", scale(28), 1);
-		this.subtitleFont = gdi.Font(fontName_, scale(24));
-		this.descriptionFont = gdi.Font(fontName_, scale(14));
+		this.titleFont = gdi.Font("Segoe UI", scale(32), 1);
+		this.subtitleFont = gdi.Font(globalFontName, scale(24));
+		this.descriptionFont = gdi.Font(globalFontName, scale(14));
 
 		// Set stub image;
 		let stubImageWidth_ = 500;
@@ -195,18 +196,41 @@ class PlaylistHeaderView extends Component {
 		// Minimum height;
 		this.minHeight = scale(240);
 
+		// Playlist artwork view;
 		this.artwork = new PlaylistArtwork();
 		this.addChild(this.artwork);
+
+		this.shuffleBtn = new Button2({ text: "Shuffle All", icon: Material.shuffle, style: 1 });
+		this.shuffleBtn.setSize(scale(136), scale(36));
+		this.shuffleBtn.on_click = () => {
+			if (plman.PlaylistItemCount(plman.ActivePlaylist) > 0) {
+				plman.ExecutePlaylistDefaultAction(plman.ActivePlaylist, Math.floor(Math.random() * plman.PlaylistItemCount(plman.ActivePlaylist)));
+			}
+		}
+		this.addChild(this.shuffleBtn);
+
+		// Playlist edit btn;
+		this.editBtn = new Button2({ icon: Material.edit });
+		this.editBtn.setSize(scale(36), scale(36));
+		this.editBtn.on_click = () => {
+			// notifyOthers()
+		}
+		this.addChild(this.editBtn);
+
+		// Playlist context btn;
+		this.contextBtn = new Button2({ icon: Material.h_dots })
+		this.contextBtn.setSize(scale(36), scale(36));
+		this.contextBtn.on_click = () => { }
+		this.addChild(this.contextBtn);
 	}
 
-	artwork: PlaylistArtwork;
 
 	private getArtworkHeight_(paneWidth: number): number {
 		let thin = scale(600);
 		let wide = scale(920);
-		if (paneWidth < thin) return scale(160);
+		if (paneWidth < thin) return scale(140);
 		if (paneWidth < wide) return scale(200);
-		return scale(240);
+		return scale(220);
 	}
 
 	/**
@@ -294,80 +318,22 @@ class PlaylistHeaderView extends Component {
 	setPlaylistIndex(value: number): void {
 		this.playlistIndex = value;
 		this.setTitles();
-		this.setArtwork();
-	}
-
-	async setArtwork() {
-		let playlistMetadbs = plman.GetPlaylistItems(this.playlistIndex);
-		let artsworks: IGdiBitmap[] = [];
-		let index = 0;
-		let trackCount = Math.min(playlistMetadbs.Count, 50);
-		let playlistIndex = this.playlistIndex;
-
-		while (index < trackCount && artsworks.length < 1) {
-			let result = await utils.GetAlbumArtAsyncV2(
-				window.ID,
-				playlistMetadbs[index],
-				AlbumArtId.Front
-			);
-			if (result.image == null) {
-				result = await utils.GetAlbumArtAsyncV2(
-					window.ID,
-					playlistMetadbs[index],
-					AlbumArtId.Disc
-				);
-			}
-			if (result.image != null) {
-				artsworks.push(result.image);
-			}
-			index++;
-		}
-
-		if (playlistIndex === this.playlistIndex && artsworks.length > 0) {
-			let artworkWidth = this.artworkHeight;
-			let img = CropImage(artsworks[0], artworkWidth, artworkWidth);
-			this.artworkImage = img;
-		} else {
-			this.artworkImage = this._stubImage;
-		}
-		this.repaint();
 	}
 
 	on_size() {
 		this.paddings = this.getProperPaddings(this.width);
 		this.artworkHeight = this.getArtworkHeight_(this.width);
-		this.artwork.setBoundary(this.x + this.paddings.left,
-			this.y + this.paddings.top, this.artworkHeight, this.artworkHeight)
+		this.artwork.setBoundary(this.x + this.paddings.left, this.y + this.paddings.top, this.artworkHeight, this.artworkHeight)
+		this.shuffleBtn.setPosition(this.x + this.paddings.left + this.artworkHeight + scale(24), this.y + this.height - this.paddings.bottom - this.shuffleBtn.height)
+		this.editBtn.setPosition(this.shuffleBtn.x + this.shuffleBtn.width + scale(16), this.shuffleBtn.y);
+		this.contextBtn.setPosition(this.editBtn.x + this.editBtn.width + scale(16), this.shuffleBtn.y);
 	}
 
 	on_paint(gr: IGdiGraphics) {
-		let primaryColor = this.primaryColor;
-		let secondaryColor = this.secondaryColor;
-		let paddings = this.paddings;
-		let paddingLeft = paddings.left;
-		let paddingTop = paddings.top;
-		let { titleFont, descriptionFont } = this;
-
-		// this.artwork.y = this.y + this.paddings.top;
-
-		/**
-		 * Draw artwork;
-		 */
-		const image_ = this.artworkImage || this._stubImage;
+		let paddingLeft = this.paddings.left;
+		let paddingTop = this.paddings.top;
+		let { titleFont, descriptionFont, primaryColor, secondaryColor } = this;
 		const artworkWidth = this.artworkHeight;
-		// image_ &&
-		// 	gr.DrawImage(
-		// 		image_,
-		// 		this.x + paddingLeft,
-		// 		this.y + paddingTop,
-		// 		artworkWidth,
-		// 		artworkWidth,
-		// 		0,
-		// 		0,
-		// 		image_.Width,
-		// 		image_.Height
-		// 	);
-
 		const textX = this.x + paddingLeft + artworkWidth + scale(24);
 		let textY_ = this.y + paddingTop;
 		const textAreaWidth =
@@ -384,63 +350,32 @@ class PlaylistHeaderView extends Component {
 			1.5 * descriptionFont.Height,
 			StringFormat.LeftTopNoTrim
 		);
-		textY_ += 2 * descriptionFont.Height;
+		textY_ += 1.5 * descriptionFont.Height;
 
 		// Title;
 		gr.SetTextRenderingHint(TextRenderingHint.AntiAlias);
 		const titleText_ = this.titleText || "NO TITLE";
 		const titleFullWidth_ = MeasureString(titleText_, titleFont).Width;
 		if (titleFullWidth_ > textAreaWidth) {
-			gr.DrawString(
-				titleText_,
-				titleFont,
-				primaryColor,
-				textX,
-				textY_,
-				textAreaWidth,
-				2.5 * titleFont.Height,
-				StringFormat(
-					0,
-					0,
-					StringTrimming.EllipsisCharacter,
-					StringFormatFlags.DisplayFormatControl
-				)
-			);
+			let sf = StringFormat(0, 0, StringTrimming.EllipsisCharacter, StringFormatFlags.LineLimit)
+			gr.DrawString(titleText_, titleFont, primaryColor, textX, textY_, textAreaWidth, 2.5 * titleFont.Height, sf);
 			textY_ += 1.1 * titleFont.Height * 2;
 		} else {
-			gr.DrawString(
-				titleText_,
-				titleFont,
-				primaryColor,
-				textX,
-				textY_,
-				textAreaWidth,
-				2 * titleFont.Height,
-				StringFormat.LeftTop
-			);
+			gr.DrawString(titleText_, titleFont, primaryColor, textX, textY_, textAreaWidth, 2 * titleFont.Height, StringFormat.LeftTop);
 			textY_ += 1.2 * titleFont.Height;
 		}
 		gr.SetTextRenderingHint(textRenderingHint);
 
 		// Description;
 		if (!isEmptyString(this.descriptionText)) {
-			gr.DrawString(
-				this.descriptionText,
-				descriptionFont,
-				secondaryColor,
-				textX,
-				textY_,
-				textAreaWidth,
-				2 * descriptionFont.Height,
-				StringFormat.LeftTop
-			);
+			gr.DrawString(this.descriptionText, descriptionFont, secondaryColor, textX, textY_, textAreaWidth, 2 * descriptionFont.Height, StringFormat.LeftTop);
 		}
 	}
 
 	on_mouse_rbtn_up(x: number, y: number) {
 		try {
 			showPlaylistHeaderMenu(this.playlistIndex, x, y);
-		} catch (e) {}
+		} catch (e) { }
 	}
 }
 
@@ -521,25 +456,16 @@ export function isValidPlaylist(playlistIndex: number) {
 	return (playlistIndex >= 0 && playlistIndex < plman.PlaylistCount);
 }
 
-interface IPaddings {
-	top: number;
-	bottom: number;
-	left: number;
-	right: number;
-}
-
 export class PlaylistView extends ScrollView {
 	items: PlaylistViewItem[] = [];
-	itemsTotalHeight: number;
+	private _itemsTotalHeight: number;
 	visibleItems: PlaylistViewItem[] = [];
-	_selectedIndexes: number[] = [];
+	private _selectedIndexes: number[] = [];
 
 	playlistIndex: number;
 	playingItemIndex: number = -1;
 	hoverIndex: number = -1;
 	focusIndex: number = -1;
-
-	paddings: IPaddings;
 
 	scrollbar: Scrollbar;
 	headerView: PlaylistHeaderView;
@@ -576,10 +502,6 @@ export class PlaylistView extends ScrollView {
 		});
 		this.addChild(this.headerView);
 		this.headerView.setPlaylistIndex(plman.ActivePlaylist);
-
-		// Init paddings, by default, all properties are 0;
-		// and will be changed in 'on_size';
-		this.paddings = { top: 0, bottom: 0, left: 0, right: 0 };
 
 		/**
 		 * Create icons;
@@ -642,9 +564,6 @@ export class PlaylistView extends ScrollView {
 		this._columnsMap.set("album", new PlaylistColumn());
 		this._columnsMap.set("mood", new PlaylistColumn());
 		this._columnsMap.set("time", new PlaylistColumn());
-
-		// Set columns' height, though may needless. May or should be removed.
-		// this._columnsMap.forEach(col => col.height = PlaylistProperties.rowHeight);
 	}
 
 	// Will be rewrite;
@@ -664,25 +583,29 @@ export class PlaylistView extends ScrollView {
 		let itemYOffset = 0;
 		this._selectedIndexes = [];
 
-		for (let playlistItemIndex = 0; playlistItemIndex < playlistItemCount; playlistItemIndex++) {
+		for (let rowIndex = 0; rowIndex < playlistItemCount; rowIndex++) {
 			let rowItem = new PlaylistViewItem();
-			rowItem.rowIndex = playlistItemIndex;
-			rowItem.metadb = playlistMetadbs[playlistItemIndex];
-			rowItem.playlistItemIndex = playlistItemIndex;
+			rowItem.rowIndex = rowIndex;
+			rowItem.metadb = playlistMetadbs[rowIndex];
+			rowItem.playlistItemIndex = rowIndex;
 			rowItem.yOffset = itemYOffset;
 			rowItem.height = rowHeight;
-			rowItem.isSelect = plman.IsPlaylistItemSelected(plman.ActivePlaylist, playlistItemIndex);
-			this._selectedIndexes.push(playlistItemIndex);
+			rowItem.isSelect = plman.IsPlaylistItemSelected(plman.ActivePlaylist, rowIndex);
+			this._selectedIndexes.push(rowIndex);
 
 			playlistItems.push(rowItem);
 			itemYOffset += rowHeight;
 		}
 		this.items = playlistItems;
-		this.itemsTotalHeight = rowHeight * playlistItems.length + scale(32);
-		this.totalHeight = this.itemsTotalHeight + this.headerView.height;
+		this._itemsTotalHeight = rowHeight * playlistItems.length + scale(32);
+		this.totalHeight = this._itemsTotalHeight + this.headerView.height;
 
 		this.setPlayingItem();
+		this.setFocusItem();
 		plman.SetActivePlaylistContext();
+	}
+
+	setFocusItem() {
 		let focusdPlaylistItemIndex = plman.GetPlaylistFocusItemIndex(plman.ActivePlaylist);
 		this.focusIndex = this.items.findIndex(
 			(item) => item.playlistItemIndex === focusdPlaylistItemIndex
@@ -720,16 +643,18 @@ export class PlaylistView extends ScrollView {
 		// --------------
 		// Set visible
 		// -------------
-		album.setVisible(false); // hide by default
+		album.setVisible(true);
 
 		// ------------------
 		// Set columns' size;
 		// ------------------
-		trackNumber.width = scale(60);
+		trackNumber.width = scale(40);
 		time.width = scale(16) + MeasureString("00:00", PlaylistProperties.itemFont).Width;
-		mood.width = scale(80);
+		mood.width = scale(60);
 
 		let whitespace = this.width - padLeft - padRight;
+		let reservedWidth = scale(80);
+		whitespace -= reservedWidth;
 		mood.visible && (whitespace -= mood.width);
 		whitespace -= time.width;
 		whitespace -= trackNumber.width;
@@ -752,8 +677,9 @@ export class PlaylistView extends ScrollView {
 		}
 
 		trackNumber.x = this.x + padLeft;
+		mood.x = trackNumber.x + trackNumber.width;
 
-		title.x = trackNumber.x + trackNumber.width;
+		title.x = mood.x + mood.width;
 		title.width = titleWidth_ + widthToAdd_;
 
 		artist.x = title.x + title.width;
@@ -762,8 +688,7 @@ export class PlaylistView extends ScrollView {
 		album.x = artist.x + artist.width;
 		album.width = albumVis ? albumWidth_ + widthToAdd_ : 0;
 
-		mood.x = album.x + album.width;
-		time.x = mood.x + mood.width;
+		time.x = album.x + album.width + reservedWidth;
 
 		// ----------------------
 		// Set columns' paddings
@@ -830,7 +755,7 @@ export class PlaylistView extends ScrollView {
 		const headerViewHeight = this.headerView.getProperHeight(this.width);
 		this.headerView.setBoundary(this.x, this.y - this.scroll, this.width, headerViewHeight);
 
-		this.totalHeight = this.itemsTotalHeight + headerViewHeight;
+		this.totalHeight = this._itemsTotalHeight + headerViewHeight;
 	}
 
 	on_paint(gr: IGdiGraphics) {
@@ -882,19 +807,14 @@ export class PlaylistView extends ScrollView {
 				 * -----------------------------*/
 
 				if (rowItem.isSelect) {
-					gr.FillSolidRect(rowItem.x, rowItem.y, rowItem.width, rowHeight, RGB(42, 42, 42));
+					gr.FillSolidRect(rowItem.x, rowItem.y, rowItem.width, rowHeight, colors.backgroundSelection);
 				}
 
 				if (this.focusIndex === itemIndex) {
-					gr.DrawRect(
-						rowItem.x,
-						rowItem.y,
-						rowItem.width - 1,
-						rowHeight - 1,
-						scale(1),
-						RGB(127, 127, 127)
-					);
+					gr.DrawRect(rowItem.x, rowItem.y, rowItem.width - 1, rowHeight - 1, scale(1), RGB(127, 127, 127));
 				}
+
+				gr.DrawLine(rowItem.x, rowItem.y + rowHeight - 1, rowItem.x + rowItem.width, rowItem.y + rowHeight - 1, 1, 0x15ffffff);
 
 				/* -------------*
 				 * Draw columns;
@@ -920,16 +840,9 @@ export class PlaylistView extends ScrollView {
 				if (this.playingItemIndex === itemIndex) {
 					(fb.IsPaused ? this.pauseIco : this.playingIco)
 						.setSize(cTrackNumber.width, rowHeight)
-						.draw(
-							gr,
-							colors.highlight,
-							0,
-							cTrackNumber.x + scale(8),
-							rowItem.y,
-							StringFormat.LeftCenter
-						);
+						.draw(gr, colors.highlight, 0, cTrackNumber.x, rowItem.y, StringFormat.Center);
 				} else {
-					cTrackNumber.draw(gr, rowItem.trackNumber, itemFont, secondaryColor, rowItem);
+					// cTrackNumber.draw(gr, rowItem.trackNumber, itemFont, secondaryColor, rowItem);
 				}
 
 				/**
@@ -1286,14 +1199,10 @@ export class PlaylistView extends ScrollView {
 	}
 
 	on_mouse_move(x: number, y: number) {
-		// if (x === mouseCursor.x && y === mouseCursor.y) {
-		// 	return;
-		// }
 
 		let listTopY = this.y;
 		let listBottomY = this.y + this.height;
 		let rowHeight = PlaylistProperties.rowHeight;
-		// const hoverItem = this._findHoverItem(x, y);
 
 		if (this.clickedMoodId > -1) {
 			return;
@@ -1305,14 +1214,12 @@ export class PlaylistView extends ScrollView {
 				if (this.items.length === 0) {
 					return;
 				}
-				//?
-				// selecting.pageX2 = x;
 				selecting.pageX2 =
 					(x < this.x
 						? this.x
 						: x > this.x + this.width - this.scrollbar.width
-						? this.x + this.width - this.scrollbar.width
-						: x) - this.x;
+							? this.x + this.width - this.scrollbar.width
+							: x) - this.x;
 				selecting.pageY2 =
 					(y < listTopY ? listTopY : y > listBottomY - 1 ? listBottomY - 1 : y) -
 					this.y +
@@ -1341,27 +1248,15 @@ export class PlaylistView extends ScrollView {
 			 * TODO: interval 设置太短的话滚动有问题。
 			 */
 			if (y < listTopY) {
-				selecting.setInterval(
-					// if (selecting.timerId == -1) {
-					// selecting.timerId = window.SetInterval(
-					() => {
-						this.scrollTo(this.scroll - scale(52));
-						updateSelection(mouseCursor.x, mouseCursor.y);
-					},
-					250,
-					this
-				);
-				// }
+				selecting.setInterval(() => {
+					this.scrollTo(this.scroll - scale(52));
+					updateSelection(mouseCursor.x, mouseCursor.y);
+				}, 250, this);
 			} else if (y > listBottomY) {
-				selecting.setInterval(
-					() => {
-						this.scrollTo(this.scroll + scale(52));
-						updateSelection(mouseCursor.x, mouseCursor.y);
-					},
-					250,
-					this
-				);
-				// }
+				selecting.setInterval(() => {
+					this.scrollTo(this.scroll + scale(52));
+					updateSelection(mouseCursor.x, mouseCursor.y);
+				}, 250, this);
 			} else {
 				selecting.clearInterval();
 			}
@@ -1545,7 +1440,7 @@ export class PlaylistView extends ScrollView {
 				x,
 				y
 			);
-		} catch (e) {}
+		} catch (e) { }
 	}
 
 	on_focus(isFocused: boolean) {
@@ -1605,7 +1500,7 @@ export class PlaylistView extends ScrollView {
 		}
 	}
 
-	on_key_up(vkey?: number) {}
+	on_key_up(vkey?: number) { }
 }
 
 export function showTrackContextMenu(playlistIndex: number, metadbs: IFbMetadbList, x: number, y: number) {
