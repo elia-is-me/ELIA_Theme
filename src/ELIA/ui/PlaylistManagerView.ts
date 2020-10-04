@@ -654,7 +654,17 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 		window.Repaint();
 	}
 
-	on_drag_drop (action: IDropTargetAction, x: number, y: number) {}
+	on_drag_drop(action: IDropTargetAction, x: number, y: number) {
+		let currentPlaylist = plman.ActivePlaylist;
+
+		let playlistIndex = plman.CreatePlaylist(plman.PlaylistCount, "");
+		plman.ActivePlaylist = playlistIndex;
+
+		action.Playlist = playlistIndex;
+		action.Base = 0;
+		action.ToSelect = false;
+		window.Repaint();
+	}
 
 	on_playlists_changed() {
 		this.initList();
