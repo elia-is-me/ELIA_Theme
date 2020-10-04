@@ -182,7 +182,7 @@ function on_paint(gr: IGdiGraphics) {
 
 	// Draw visible parts;
 	for (let i = 0, len = vis_parts.length; i < len; i++) {
-		vis_parts[i].on_paint(gr);
+		vis_parts[i].visible && vis_parts[i].on_paint(gr);
 	}
 
 	// draw dnd mask;

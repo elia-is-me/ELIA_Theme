@@ -260,7 +260,7 @@ function createThumbImg(colors: IThemeColors): SliderThumbImage {
 }
 
 const thumbImages = createThumbImg(bottomColors);
-const progressHeight = scale(3);
+const progressHeight = scale(4);
 const slider_secondaryColor = blendColors(bottomColors.text, bottomColors.background, 0.7);
 const seekbar = new Slider({
 	progressHeight: progressHeight,
@@ -438,7 +438,7 @@ export class PlaybackControlView extends Component {
 		let vol_w = scale(80);
 		let vol_y = top + (height - vol_h) / 2;
 		let vol_x = left + width - vol_w - scale(24);
-		volume.setBoundary(vol_x, vol_y, vol_w, vol_h);
+		volume.setBoundary(vol_x, vol_y>>0, vol_w, vol_h);
 
 		// volume mute button;
 		let bx_6 = vol_x - bw_2 - scale(4);
@@ -457,7 +457,7 @@ export class PlaybackControlView extends Component {
 		else if (seek_w > seek_max_w) seek_w = seek_max_w;
 		let seek_x = left + (width - seek_w) / 2;
 		let seek_y = by_1 + bw_1 + scale(8);
-		seekbar.setBoundary(seek_x, seek_y, seek_w, scale(16));
+		seekbar.setBoundary(seek_x, seek_y>>0, seek_w, scale(16));
 
 		// art;
 		let art_w = scale(48);

@@ -1,16 +1,9 @@
-import {
-	isObject,
-	scale,
-	StringFormat,
-	TextRenderingHint,
-	isFunction,
-	MeasureString,
-	CursorName,
-} from "./common";
+import { isObject, scale, StringFormat, TextRenderingHint, isFunction, MeasureString, CursorName, RGB, setAlpha, SmoothingMode } from "./common";
 import { Component, IPaddings, IInjectableCallbacks } from "./BasePart";
 import { SerializableIcon } from "./IconType";
-import { globalFontName } from "../ui/Theme";
+import { globalFontName, mainColors } from "../ui/Theme";
 import { ui } from "../common/UserInterface";
+import { Material, MaterialFont } from "./iconCode";
 
 const textRenderingHint = ui.textRender;
 
@@ -218,26 +211,57 @@ export interface IButton2Colors {
 	backgroundDownColor?: number;
 }
 
-export const defaultButtonFont = gdi.Font(globalFontName, scale(14));
+const highlightColor: IButton2Colors = {
+	textColor: RGB(15, 15, 15),
+	textHoverColor: RGB(30, 30, 30),
+	textDownColor: RGB(60, 60, 60),
+	backgroundColor: RGB(255, 255, 255),
+	backgroundHoverColor: RGB(255, 255, 255),
+	backgroundDownColor: RGB(255, 255, 255)
+}
 
-export interface IButton2Options extends IButton2Colors {
-	text: string;
-	textFont?: IGdiFont;
+const normalColor: IButton2Colors = {
+	textColor: RGB(255, 255, 255),
+	textHoverColor: RGB(200, 200, 200),
+	textDownColor: RGB(128, 128, 128),
+	backgroundHoverColor: setAlpha(0xffffffff, 25),
+	backgroundDownColor: setAlpha(0xffffffff, 25)
+}
+
+export const defaultButtonFont = gdi.Font("segoe ui semibold", scale(14));
+const defaultIconFont = gdi.Font(MaterialFont, scale(22));
+
+export interface IButton2Options {
+	text?: string;
+	icon?: string;
+	style?: number;
 }
 
 export class Button2 extends Clickable {
-	icon?: SerializableIcon;
+	style: number = 0;
 	text: string;
-	textFont: IGdiFont;
+	icon?: string;
+	private _textFont: IGdiFont;
 	private _textColor: Map<ButtonStates, number> = new Map();
 	private _backgroundColor: Map<ButtonStates, number> = new Map();
 
 	constructor(opts: IButton2Options) {
 		super({})
-
-		this.setColors(opts);
+		this.style = (opts.style || 0);
 		this.text = opts.text;;
-		this.textFont = defaultButtonFont//(opts.textFont && defaultButtonFont);
+		this.icon = opts.icon;
+		this._textFont = defaultButtonFont;
+		switch (this.style) {
+			case 0:
+				this.setColors(normalColor);
+				break;
+			case 1:
+				this.setColors(highlightColor);
+				break;
+			default:
+				// this.setColors(opts);
+				break;
+		}
 	}
 
 	setColors(colors: IButton2Colors) {
@@ -253,21 +277,42 @@ export class Button2 extends Clickable {
 	}
 
 	on_size() {
-		let textSize = MeasureString(this.text, this.textFont);
-		this.paddings.top = (this.height - textSize.Height) / 2;
-		this.paddings.left = (this.width - textSize.Width) / 2;
+		let textWidth: number = 0;
+		let totalWidth: number = 0;
+		let iconWidth = 0;
+		if (this.text) {
+			textWidth = MeasureString(this.text, this._textFont).Width;
+		}
+		if (this.icon) {
+			iconWidth = scale(32);
+		}
+		totalWidth = textWidth + iconWidth;
+		this.paddings.left = (this.width - totalWidth) / 2;
 	}
 
 	on_paint(gr: IGdiGraphics) {
-		let { text, textFont } = this;
+		let { text, _textFont } = this;
 		let textColor = this._textColor.get(this.state);
 		let backgroundColor = this._backgroundColor.get(this.state);
 		let { left, top } = this.paddings;
 
 		if (backgroundColor != null) {
-			gr.FillSolidRect(this.x, this.y, this.width, this.height, backgroundColor);
+			gr.SetSmoothingMode(SmoothingMode.AntiAlias);
+			if (this.text) {
+				gr.FillRoundRect(this.x, this.y, this.width, this.height, scale(2), scale(2), backgroundColor);
+			} else {
+				gr.FillEllipse(this.x, this.y, this.width - 1, this.height - 1, backgroundColor);
+			}
+			gr.SetSmoothingMode(SmoothingMode.Default);
 		}
-		gr.DrawString(text, textFont, textColor, this.x + left, this.y + top, this.width, this.height, StringFormat.LeftTop);
+
+		if (this.icon) {
+			gr.DrawString(this.icon, defaultIconFont, textColor, this.x + left, this.y, scale(32), this.height, StringFormat.Center);
+		}
+		if (this.text) {
+			let textX = (this.icon ? this.x + left + scale(32) : this.x + left);
+			gr.DrawString(text, _textFont, textColor, textX, this.y, this.width, this.height, StringFormat.LeftCenter);
+		}
 	}
 }
 
@@ -316,5 +361,4 @@ export class Icon2 extends Clickable {
 		gr.DrawString(code, iconFont, iconColor, this.x, this.y, this.width, this.height, StringFormat.Center);
 		gr.SetTextRenderingHint(textRenderingHint);
 	}
-
 }

@@ -7,13 +7,14 @@ import {
 	setAlpha,
 	StringFormat,
 	StringTrimming,
-	StringFormatFlags,
+	StringFormatFlags, isFunction
 } from "../common/common";
 import { notifyOthers } from "../common/UserInterface";
 
 export interface IAlertDialogOptions {
 	title: string;
 	description?: string;
+	onSuccess?: () => void;
 }
 
 interface IDefaultOptions {
@@ -26,20 +27,19 @@ interface IDefaultOptions {
 }
 
 const defaultOptions: IDefaultOptions = {
-	titleFont: gdi.Font(globalFontName, scale(20)),
+	titleFont: gdi.Font(globalFontName, scale(16)),
 	panelWidth: scale(400),
 	panelHeight: scale(225),
 	textColor: mainColors.text,
-	backgroundColor: RGB(15, 15, 15),
+	backgroundColor: RGB(33, 33, 33),
 	highlightColor: mainColors.highlight,
 };
 
 export class AlertDialog
 	extends Component
 	implements IAlertDialogOptions, IDefaultOptions {
-	readonly modal: boolean = true;
-
 	className = "AlertDialog";
+	readonly modal: boolean = true;
 
 	titleFont: IGdiFont;
 	panelWidth: number;
@@ -63,20 +63,23 @@ export class AlertDialog
 
 		this.okBtn = new Button2({
 			text: "OK",
-			textColor: this.textColor,
-			textHoverColor: setAlpha(this.textColor, 200),
-			textDownColor: setAlpha(this.textColor, 127),
+			// textColor: this.highlightColor,
+			// textHoverColor: setAlpha(this.highlightColor, 200),
+			// textDownColor: setAlpha(this.highlightColor, 127),
 		});
 		this.okBtn.setSize(scale(80), scale(32));
 		this.okBtn.on_click = () => {
+			if (isFunction(options.onSuccess)) {
+				options.onSuccess();
+			}
 			notifyOthers("Hide.AlertDialog");
 		};
 
 		this.cancelBtn = new Button2({
 			text: "Cancel",
-			textColor: this.textColor,
-			textHoverColor: setAlpha(this.textColor, 200),
-			textDownColor: setAlpha(this.textColor, 127),
+			// textColor: this.textColor,
+			// textHoverColor: setAlpha(this.textColor, 200),
+			// textDownColor: setAlpha(this.textColor, 127),
 		});
 		this.cancelBtn.setSize(scale(80), scale(32));
 		this.cancelBtn.on_click = () => {

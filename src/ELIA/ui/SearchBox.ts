@@ -54,19 +54,10 @@ const iconColor: IIconColors = {
 };
 
 const searchBoxColors = {
-	backgroundColor: RGB(30, 30, 30),
+	backgroundColor: RGB(60, 60, 60),
 	backgroundActiveColor: RGB(77, 77, 77),
 	foreColor: mainColors.text,
 };
-
-interface ISearchBoxOptions {
-	backgroundColor: number;
-	foreColor: number;
-	borderColor?: number;
-	borderActiveColor?: number;
-	backgroundActiveColor?: number;
-	iconColors: IIconColors;
-}
 
 export class SearchBox extends Component {
 	inputbox: InputBox;
@@ -90,6 +81,7 @@ export class SearchBox extends Component {
 
 		this.icons = icons;
 		this.iconHeight = iconHeight;
+		Object.assign(this, searchBoxColors);
 
 		this.searchBtn = new Icon2({
 			fontIcon: this.icons.loupe,
@@ -112,6 +104,9 @@ export class SearchBox extends Component {
 				handleClear();
 			},
 		});
+
+
+
 		this.menuBtn = new Icon2({
 			fontIcon: this.icons.delta,
 			hoverColor: iconColor.hover,
@@ -137,6 +132,8 @@ export class SearchBox extends Component {
 		[this.searchBtn, this.clearBtn, this.menuBtn, this.inputbox].forEach((btn) =>
 			this.addChild(btn)
 		);
+
+		this.clearBtn.visible = this.inputbox.text.length > 0;
 	}
 
 	handleSearch() {
@@ -159,7 +156,7 @@ export class SearchBox extends Component {
 		}
 	}
 
-	on_init() {}
+	on_init() { }
 
 	on_size() {
 		const { searchBtn, clearBtn, menuBtn, inputbox } = this;
@@ -193,11 +190,7 @@ export class SearchBox extends Component {
 			gr.FillSolidRect(this.x, this.y, this.width, this.height, this.backgroundColor);
 		}
 
-		if (this.inputbox.text.length > 0) {
-			this.clearBtn.visible = true;
-		} else {
-			this.clearBtn.visible = false;
-		}
+		this.clearBtn.visible = (this.inputbox.edit && this.inputbox.text.length > 0);
 	}
 }
 

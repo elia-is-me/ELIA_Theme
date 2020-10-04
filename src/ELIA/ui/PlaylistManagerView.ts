@@ -13,7 +13,7 @@ import { SerializableIcon } from "../common/IconType";
 import { isValidPlaylist } from "./PlaylistView";
 import { IInputPopupOptions } from "./InputPopupPanel";
 import { IAlertDialogOptions } from "./AlertDialog";
-import { dndMask, notifyOthers } from "../common/UserInterface";
+import { dndMask, notifyOthers, ui } from "../common/UserInterface";
 
 const enum DropEffect {
 	None = 0,
@@ -74,7 +74,7 @@ interface IPlaylistManagerColors extends IThemeColors {
 const PLM_Colors: IPlaylistManagerColors = {
 	text: blendColors(mainColors.text, mainColors.background, 0.3),
 	textActive: mainColors.text,
-	background: sidebarColors.background,
+	background: RGB(18, 18, 18),
 	highlight: mainColors.highlight,
 	background_sel: RGB(20, 20, 20),
 	background_hover: RGB(10, 10, 10),
@@ -85,7 +85,6 @@ export const PLM_Properties = {
 	rowHeight: scale(40),
 	itemFont: gdi.Font(globalFontName, scale(14)),
 	headerHeight: scale(80),
-	headerFont: gdi.Font("Segoe UI Semibold", scale(12)),
 	icons: icons,
 	colors: PLM_Colors,
 };
@@ -127,6 +126,12 @@ class PLM_Header extends Component {
 			onClick: () => {
 				notifyOthers("Popup.InputPopupPanel", {
 					title: "Create new playlist",
+					onSuccess(text: string) {
+						let playlistIndex = plman.CreatePlaylist(plman.PlaylistCount, text);
+						if (isValidPlaylist(playlistIndex)) {
+							plman.ActivePlaylist = playlistIndex;
+						}
+					}
 				});
 			},
 		});
@@ -251,8 +256,8 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 		if (this.items.length > 0) {
 			let items_ = this.items;
 
-			for (let playlistId = 0; playlistId < plman.PlaylistCount; playlistId++) {
-				let rowItem = items_[playlistId];
+			for (let playlistIndex = 0, len = this.items.length; playlistIndex < len; playlistIndex++) {
+				let rowItem = items_[playlistIndex];
 				rowItem.x = this.x;
 				rowItem.width = this.width;
 			}
@@ -582,16 +587,14 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 				break;
 			case id === 2:
 				// Rename;
-				const index_ = playlistIndex;
-				// plman.ActivePlaylist = playlistIndex;
-				// fb.RunMainMenuCommand("Rename playlist");
-				// plman.ActivePlaylist = index_;
 				options = {
 					title: "Rename playlist",
 					defaultText: plman.GetPlaylistName(playlistIndex),
+					onSuccess(text: string) {
+						plman.RenamePlaylist(playlistIndex, text);
+					}
 				};
 				notifyOthers("Popup.InputPopupPanel", options);
-
 				break;
 
 			case id === 3:
@@ -607,6 +610,17 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 				// plman.RemovePlaylist(playlistIndex);
 				let alertOptions: IAlertDialogOptions = {
 					title: "Delete playlist?",
+					onSuccess: () => {
+						if (plman.ActivePlaylist === playlistIndex) {
+							if (isValidPlaylist(playlistIndex - 1)) {
+								plman.ActivePlaylist = playlistIndex - 1;
+							} else {
+								plman.ActivePlaylist = 0;
+							}
+						}
+						plman.UndoBackup(playlistIndex);
+						plman.RemovePlaylist(playlistIndex);
+					}
 				};
 				notifyOthers("Show.AlertDialog", alertOptions);
 				break;
@@ -654,6 +668,7 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 		window.Repaint();
 	}
 
+<<<<<<< HEAD
 	on_drag_drop(action: IDropTargetAction, x: number, y: number) {
 		let currentPlaylist = plman.ActivePlaylist;
 
@@ -665,6 +680,9 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 		action.ToSelect = false;
 		window.Repaint();
 	}
+=======
+	on_drag_drop(action: IDropTargetAction, x: number, y: number) { }
+>>>>>>> bd6e2fb4efb2fc163205d2842643fd9da6ba582c
 
 	on_playlists_changed() {
 		this.initList();

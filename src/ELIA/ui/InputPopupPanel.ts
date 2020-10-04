@@ -1,5 +1,5 @@
 import { Component } from "../common/BasePart";
-import { MeasureString, RGB, scale, StringFormat, setAlpha, isEmptyString } from "../common/common";
+import { MeasureString, RGB, scale, StringFormat, setAlpha, isEmptyString, isFunction } from "../common/common";
 import { Button2, } from "../common/IconButton";
 import { InputBox } from "../common/Inputbox";
 import { notifyOthers } from "../common/UserInterface";
@@ -10,7 +10,7 @@ export interface IInputPopupOptions {
 	title: string;
 	defaultText?: string;
 	emptyText?: string;
-	onSuccess?(): void;
+	onSuccess?(str: string): void;
 	onFail?(): void;
 }
 
@@ -66,30 +66,35 @@ export class InputPopupPanel
 		this.z = 1000;
 		Object.assign(this, defaultOptions, opts);
 
-		console.log("defaultText: ", opts.defaultText);
-		console.log(this.defaultText);
-
 		this.paddings.top = scale(44);
 		this.paddings.left = scale(40);
 
 		// create buttons;
 		this.okBtn = new Button2({
 			text: "OK",
-			textColor: mainColors.text,
-			backgroundColor: mainColors.highlight,
-			backgroundHoverColor: setAlpha(mainColors.highlight, 200),
-			backgroundDownColor: setAlpha(mainColors.highlight, 127),
+			style: 1,
+			// textColor: mainColors.text,
+			// backgroundColor: mainColors.highlight,
+			// backgroundHoverColor: setAlpha(mainColors.highlight, 200),
+			// backgroundDownColor: setAlpha(mainColors.highlight, 127),
 		});
 		this.okBtn.setSize(scale(80), scale(32));
 		this.okBtn.on_click = () => {
+			if (this.inputbox.text) {
+				if (isFunction(opts.onSuccess)) {
+					console.log(this.inputbox.text)
+					opts.onSuccess(this.inputbox.text);
+				}
+			}
 			notifyOthers("Hide.InputPopupPanel", this.cid);
+
 		};
 
 		this.cancelBtn = new Button2({
 			text: "Cancel",
-			textColor: this.textColor,
-			backgroundHoverColor: RGB(100, 100, 100),
-			backgroundDownColor: setAlpha(RGB(100, 100, 100), 127),
+			// textColor: this.textColor,
+			// backgroundHoverColor: RGB(100, 100, 100),
+			// backgroundDownColor: setAlpha(RGB(100, 100, 100), 127),
 		});
 		this.cancelBtn.setSize(scale(80), scale(32));
 		this.cancelBtn.on_click = () => {
@@ -105,7 +110,12 @@ export class InputPopupPanel
 			backgroundSelectionColor: RGB(33, 136, 255),
 			empty_text: isEmptyString(this.emptyText) ? "" : this.emptyText,
 			default_text: isEmptyString(this.defaultText) ? "" : this.defaultText,
-			func() {},
+			func: () => {
+				if (isFunction(opts.onSuccess)) {
+					opts.onSuccess(this.inputbox.text);
+				}
+				notifyOthers("Hide.InputPopupPanel", this.cid);
+			},
 		});
 
 		this.inputboxHeight =
