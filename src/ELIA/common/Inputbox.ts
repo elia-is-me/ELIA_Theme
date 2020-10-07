@@ -119,11 +119,10 @@ export class InputBox extends Component implements IInputBoxOptions{
     Spos: number = 0;
 
     constructor(opts: IInputBoxOptions) {
-        super(opts);
+        super({});
 
         Object.assign(this, opts);
         this.text = this.default_text;
-
     }
 
 
@@ -264,6 +263,17 @@ export class InputBox extends Component implements IInputBoxOptions{
             cInputbox.cursor_state = !cInputbox.cursor_state;
             this.repaint();
         }, 500);
+    }
+
+    activeInput() {
+        if (this.text) {
+            this.check("down", this.x + this.width / 2, this.y + 1);
+            this.check("dblclk", this.x + 1, this.y + 1);
+            this.check("up", this.x + this.width / 2, this.y + 1);
+        } else {
+            this.check("down", this.x + this.width / 2, this.y + 1);
+            this.check("up", this.x + this.width / 2, this.y + 1);
+        }
     }
 
     check(callback: string, x: number, y: number) {

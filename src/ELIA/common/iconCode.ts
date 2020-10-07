@@ -11,7 +11,7 @@ export const Material = {
     circle_play: '\ue039',
     volume: '\ue050',
     volume_mute: '\ue04e',
-    h_dots: '\ue5d3',
+    more_horiz: '\ue5d3',
     music_note: '\ue3a1',
     star_border: '\ue83a',
     queue_music: '\ue03d',
@@ -30,7 +30,8 @@ export const Material = {
     skip_next: '\ue044',
     skip_prev: '\ue045',
     arrow_drop_down: '\ue5c5',
-    apps: '\ue5c3'
+    apps: '\ue5c3',
+    "more_vert": '\ue5d4'
 };
 
 export const MaterialFont = "Material Icons";

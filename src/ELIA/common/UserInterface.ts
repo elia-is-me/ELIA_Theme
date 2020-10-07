@@ -1,6 +1,5 @@
-import { toggleMood } from "../ui/PlaybackControlView";
 import { Component, IBoxModel } from "./BasePart";
-import { darken, GetKeyboardMask, isFunction, KMask, RGBA, scale, TextRenderingHint, VKeyCode } from "./common";
+import { GetKeyboardMask, isFunction, KMask, RGBA, scale, TextRenderingHint, VKeyCode } from "./common";
 
 let partlist: Component[] = [];
 let vis_parts: Component[] = [];
@@ -95,7 +94,17 @@ function setFocus(x: number, y: number) {
 	}
 }
 
-const partIsVis = (part: Component) => part.isVisible();
+function setFocusPart(part: Component) {
+	if (!part || !part.isVisible()) {
+		return;
+	}
+	let prev = focusPart;
+	focusPart = part;
+	if (!compareParts(part, prev)) {
+		invoke(prev, "on_change_focus", false);
+		invoke(focusPart, "on_change_focus", true);
+	}
+}
 
 function updateParts() {
 	let cached = vis_parts;
@@ -137,8 +146,8 @@ const useAntiAlias = window.GetProperty(
 const textRenderingHint = useClearType
 	? TextRenderingHint.ClearTypeGridFit
 	: useAntiAlias
-	? TextRenderingHint.AntiAlias
-	: 0;
+		? TextRenderingHint.AntiAlias
+		: 0;
 
 class DndMask implements IBoxModel {
 	visible = false;
@@ -182,6 +191,9 @@ function on_paint(gr: IGdiGraphics) {
 
 	// Draw visible parts;
 	for (let i = 0, len = vis_parts.length; i < len; i++) {
+		if ((vis_parts[i] as any).modal) {
+			gr.FillSolidRect(0, 0, window.Width, window.Height, 0xb5000000);
+		}
 		vis_parts[i].visible && vis_parts[i].on_paint(gr);
 	}
 
@@ -328,7 +340,7 @@ function on_key_down(vkey: number) {
 	invoke(focusPart, "on_key_down", vkey, mask);
 }
 
-function on_key_up(vkey: number) {}
+function on_key_up(vkey: number) { }
 
 function on_char(code: number) {
 	invoke(focusPart, "on_char", code);
@@ -373,7 +385,6 @@ function on_drag_leave() {
 }
 
 function on_drag_over(action: IDropTargetAction, x: number, y: number) {
-	// console.log("on_drag_over", x, y);
 	let prevDropTargetPart = dropTargetPart;
 	dropTargetPart = findDropTargetPart(x, y);
 	if (!compareParts(prevDropTargetPart, dropTargetPart)) {
@@ -508,4 +519,5 @@ export const ui = {
 	updateParts: updateParts,
 	compareParts: compareParts,
 	monitor: monitor,
+	setFocusPart: setFocusPart,
 };

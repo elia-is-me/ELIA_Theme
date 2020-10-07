@@ -85,8 +85,8 @@ export class SearchBox extends Component {
 
 		this.searchBtn = new Icon2({
 			fontIcon: this.icons.loupe,
-			hoverColor: iconColor.hover,
-			downColor: iconColor.down,
+			hoverColor: iconColor.normal,
+			downColor: iconColor.normal,
 			normalColor: iconColor.normal,
 		});
 
@@ -190,13 +190,9 @@ export class SearchBox extends Component {
 			gr.FillSolidRect(this.x, this.y, this.width, this.height, this.backgroundColor);
 		}
 
+		let prevState = this.clearBtn.visible;
 		this.clearBtn.visible = (this.inputbox.edit && this.inputbox.text.length > 0);
+		if (prevState !== this.clearBtn.visible) {
+		}
 	}
 }
-
-/**
- * TODO:
- *
- * - Search 动作?
- * - Search 种类?
- */

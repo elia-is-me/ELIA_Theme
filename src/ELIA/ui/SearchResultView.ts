@@ -100,9 +100,6 @@ class HeaderView extends Component implements IHeaderOptions, IDefaultHeaderOpti
 		let textFont = this.textFont;
 		let titleFont = this.titleFont;
 
-		// background;
-		gr.FillSolidRect(this.x, this.y, this.width, this.height, this.backgroundColor);
-
 		// type;
 		gr.DrawString(
 			"SEARCH RESULTS",

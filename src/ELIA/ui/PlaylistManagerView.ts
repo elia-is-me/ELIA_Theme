@@ -131,7 +131,7 @@ class PLM_Header extends Component {
 						if (isValidPlaylist(playlistIndex)) {
 							plman.ActivePlaylist = playlistIndex;
 						}
-					}
+					},
 				});
 			},
 		});
@@ -592,42 +592,27 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 					defaultText: plman.GetPlaylistName(playlistIndex),
 					onSuccess(text: string) {
 						plman.RenamePlaylist(playlistIndex, text);
-					}
+					},
 				};
 				notifyOthers("Popup.InputPopupPanel", options);
 				break;
 
 			case id === 3:
 				// Delete playlist;
-				// if (plman.ActivePlaylist === playlistIndex) {
-				//     if (isValidPlaylist(playlistIndex - 1)) {
-				//         plman.ActivePlaylist = playlistIndex - 1;
-				//     } else {
-				//         plman.ActivePlaylist = 0;
-				//     }
-				// }
-				// plman.UndoBackup(playlistIndex);
-				// plman.RemovePlaylist(playlistIndex);
 				let alertOptions: IAlertDialogOptions = {
 					title: "Delete playlist?",
 					onSuccess: () => {
-						if (plman.ActivePlaylist === playlistIndex) {
-							if (isValidPlaylist(playlistIndex - 1)) {
-								plman.ActivePlaylist = playlistIndex - 1;
-							} else {
-								plman.ActivePlaylist = 0;
-							}
-						}
-						plman.UndoBackup(playlistIndex);
+						let deleteActivePlaylist = (playlistIndex === plman.ActivePlaylist);
 						plman.RemovePlaylist(playlistIndex);
-					}
+						if (deleteActivePlaylist && isValidPlaylist(playlistIndex)) {
+							plman.ActivePlaylist = playlistIndex;
+						} 
+					},
 				};
 				notifyOthers("Show.AlertDialog", alertOptions);
 				break;
 			case id === 4:
 				// Create new playlist;
-				// fb.RunMainMenuCommand("New playlist");
-				// fb.RunMainMenuCommand("Rename playlist");
 				options = {
 					title: "Create new playlist",
 				};
@@ -654,13 +639,36 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 	on_drag_enter(action: IDropTargetAction, x: number, y: number) {
 		// action.Effect = DropEffect.None;
 		dndMask.visible = true;
-		dndMask.setBoundary(this.x, this.y, this.width, this.height);
+
+		let hoverIndex = this.getHoverId(x, y);
+		let hoverItem = this.items[hoverIndex];
+		let addBtn = this.header.addPlaylistBtn;
+
+		if (hoverIndex > -1) {
+			dndMask.setBoundary(hoverItem.x, hoverItem.y, hoverItem.width, hoverItem.height);
+		} else if (addBtn.trace(x, y)) {
+			dndMask.setBoundary(addBtn.x, addBtn.y, addBtn.width, addBtn.height);
+		} else {
+			dndMask.setBoundary(this.x, this.y, this.width, this.height);
+		}
 		window.Repaint();
 	}
 
 	on_drag_over(action: IDropTargetAction, x: number, y: number) {
 		// action.Effect = DropEffect.;
 		action.Text = "TEST ING";
+		let hoverIndex = this.getHoverId(x, y);
+		let hoverItem = this.items[hoverIndex];
+		let addBtn = this.header.addPlaylistBtn;
+
+		if (hoverIndex > -1) {
+			dndMask.setBoundary(hoverItem.x, hoverItem.y, hoverItem.width, hoverItem.height);
+		} else if (addBtn.trace(x, y)) {
+			dndMask.setBoundary(addBtn.x, addBtn.y, addBtn.width, addBtn.height);
+		} else {
+			dndMask.setBoundary(this.x, this.y, this.width, this.height);
+		}
+		window.Repaint();
 	}
 
 	on_drag_leave() {
@@ -668,7 +676,6 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 		window.Repaint();
 	}
 
-<<<<<<< HEAD
 	on_drag_drop(action: IDropTargetAction, x: number, y: number) {
 		let currentPlaylist = plman.ActivePlaylist;
 
@@ -680,9 +687,6 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 		action.ToSelect = false;
 		window.Repaint();
 	}
-=======
-	on_drag_drop(action: IDropTargetAction, x: number, y: number) { }
->>>>>>> bd6e2fb4efb2fc163205d2842643fd9da6ba582c
 
 	on_playlists_changed() {
 		this.initList();

@@ -131,6 +131,11 @@ export class Layout extends Component {
 		}
 
 		if (this.inputPopupPanel && this.inputPopupPanel.visible) {
+			if (this.width >= scale(600 + 16 * 2)) {
+				this.inputPopupPanel.setSize(scale(600), scale(220));
+			} else {
+				this.inputPopupPanel.setSize(Math.max(scale(280), this.width - scale(32)), scale(220));
+			}
 			this.inputPopupPanel.setPosition(
 				this.x + (this.width - this.inputPopupPanel.width) / 2,
 				this.y + (this.height - this.inputPopupPanel.height) / 2
@@ -177,10 +182,11 @@ export class Layout extends Component {
 				let options = data as IInputPopupOptions;
 				if (options == null) break;
 				this.inputPopupPanel = new InputPopupPanel(options);
-				this.inputPopupPanel.visible = true;
 				this.addChild(this.inputPopupPanel);
 				this.on_size();
 				ui.updateParts();
+				ui.setFocusPart(this.inputPopupPanel.inputbox);
+				this.inputPopupPanel.inputbox.activeInput();
 				this.repaint();
 				break;
 			case "Hide.InputPopupPanel":
@@ -227,6 +233,7 @@ export class Layout extends Component {
 			case "Show.Playlist":
 				console.log(this.children.length);
 				if (this.searchResultView) {
+					this.searchResultView.visible = false; 
 					this.removeChild(this.searchResultView);
 					this.searchResultView = undefined;
 				}

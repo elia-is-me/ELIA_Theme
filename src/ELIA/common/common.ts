@@ -164,6 +164,13 @@ export function isFunction(obj: any) {
 	return Object.prototype.toString.call(obj) === "[object Function]";
 }
 
+export function shuffleArray(array: any[]) {
+	for (let i = array.length - 1; i > 0; i--) {
+		let j = Math.floor(Math.random() * (i + 1));
+		[array[i], array[j]] = [array[j], array[i]];
+	}
+}
+
 // OBJECT
 export function isObject(item: any) {
 	return typeof item === "object" && item !== null && !Array.isArray(item);

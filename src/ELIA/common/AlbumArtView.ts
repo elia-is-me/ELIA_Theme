@@ -1,15 +1,4 @@
-import {
-	StringFormat,
-	CropImage,
-	TextRenderingHint,
-	drawImage,
-	SmoothingMode,
-	RGB,
-	RGBA,
-	debounce,
-	InterpolationMode,
-	StopReason,
-} from "./common";
+import { StringFormat, CropImage, TextRenderingHint, drawImage, SmoothingMode, RGB, RGBA, debounce, InterpolationMode, StopReason, shuffleArray } from "./common";
 import { Component } from "./BasePart";
 
 export const enum AlbumArtId {
@@ -95,6 +84,7 @@ export class PlaylistArtwork extends Component {
 				compare = albumKey;
 			}
 		}
+		shuffleArray(albums);
 
 		let images: IGdiBitmap[] = [];
 
@@ -134,10 +124,10 @@ export class PlaylistArtwork extends Component {
 			}
 			let img = gdi.CreateImage(500, 500);
 			let g = img.GetGraphics();
-			images[0] && g.DrawImage(images[0], 0, 0, 250, 250, 0, 0, 250, 250);
-			images[1] && g.DrawImage(images[1], 250, 0, 250, 250, 0, 0, 250, 250);
-			images[2] && g.DrawImage(images[2], 0, 250, 250, 250, 0, 0, 250, 250);
-			images[3] && g.DrawImage(images[3], 250, 250, 250, 250, 0, 0, 250, 250);
+			g.DrawImage(images[0], 0, 0, 250, 250, 0, 0, 250, 250);
+			g.DrawImage(images[1], 250, 0, 250, 250, 0, 0, 250, 250);
+			g.DrawImage(images[2], 0, 250, 250, 250, 0, 0, 250, 250);
+			g.DrawImage(images[3], 250, 250, 250, 250, 0, 0, 250, 250);
 			img.ReleaseGraphics(g);
 			this.image = img;
 		}
@@ -160,17 +150,7 @@ export class PlaylistArtwork extends Component {
 	on_paint(gr: IGdiGraphics) {
 		let img = this.image || this.stubImage;
 		if (!img) return;
-		gr.DrawImage(
-			img,
-			this.x,
-			this.y,
-			this.width,
-			this.height,
-			0,
-			0,
-			img.Width,
-			img.Height
-		);
+		gr.DrawImage(img, this.x, this.y, this.width, this.height, 0, 0, img.Width, img.Height);
 	}
 
 	on_size = debounce(() => {
@@ -250,17 +230,7 @@ export class NowplayingArtwork extends Component {
 		let img = this.image || this.stubImage;
 		if (!img) return;
 
-		gr.DrawImage(
-			img,
-			this.x,
-			this.y,
-			this.width,
-			this.height,
-			0,
-			0,
-			img.Width,
-			img.Height
-		);
+		gr.DrawImage(img, this.x, this.y, this.width, this.height, 0, 0, img.Width, img.Height);
 	}
 
 	on_size = debounce(() => {

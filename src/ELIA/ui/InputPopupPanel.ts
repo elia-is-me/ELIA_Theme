@@ -70,14 +70,7 @@ export class InputPopupPanel
 		this.paddings.left = scale(40);
 
 		// create buttons;
-		this.okBtn = new Button2({
-			text: "OK",
-			style: 1,
-			// textColor: mainColors.text,
-			// backgroundColor: mainColors.highlight,
-			// backgroundHoverColor: setAlpha(mainColors.highlight, 200),
-			// backgroundDownColor: setAlpha(mainColors.highlight, 127),
-		});
+		this.okBtn = new Button2({ text: "OK", style: 1, });
 		this.okBtn.setSize(scale(80), scale(32));
 		this.okBtn.on_click = () => {
 			if (this.inputbox.text) {
@@ -87,15 +80,9 @@ export class InputPopupPanel
 				}
 			}
 			notifyOthers("Hide.InputPopupPanel", this.cid);
-
 		};
 
-		this.cancelBtn = new Button2({
-			text: "Cancel",
-			// textColor: this.textColor,
-			// backgroundHoverColor: RGB(100, 100, 100),
-			// backgroundDownColor: setAlpha(RGB(100, 100, 100), 127),
-		});
+		this.cancelBtn = new Button2({ text: "Cancel", });
 		this.cancelBtn.setSize(scale(80), scale(32));
 		this.cancelBtn.on_click = () => {
 			notifyOthers("Hide.InputPopupPanel", this.cid);

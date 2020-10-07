@@ -1,4 +1,4 @@
-import { isObject, scale, StringFormat, TextRenderingHint, isFunction, MeasureString, CursorName, RGB, setAlpha, SmoothingMode } from "./common";
+import { isObject, scale, StringFormat, TextRenderingHint, isFunction, MeasureString, CursorName, RGB, setAlpha, SmoothingMode, RGBA } from "./common";
 import { Component, IPaddings, IInjectableCallbacks } from "./BasePart";
 import { SerializableIcon } from "./IconType";
 import { globalFontName, mainColors } from "../ui/Theme";
@@ -213,11 +213,11 @@ export interface IButton2Colors {
 
 const highlightColor: IButton2Colors = {
 	textColor: RGB(15, 15, 15),
-	textHoverColor: RGB(30, 30, 30),
-	textDownColor: RGB(60, 60, 60),
+	textHoverColor: RGB(15, 15, 15),
+	textDownColor: RGB(15, 15, 15),
 	backgroundColor: RGB(255, 255, 255),
-	backgroundHoverColor: RGB(255, 255, 255),
-	backgroundDownColor: RGB(255, 255, 255)
+	backgroundHoverColor: RGBA(255, 255, 255, 220),
+	backgroundDownColor: RGBA(255, 255, 255, 180)
 }
 
 const normalColor: IButton2Colors = {
@@ -228,8 +228,9 @@ const normalColor: IButton2Colors = {
 	backgroundDownColor: setAlpha(0xffffffff, 25)
 }
 
-export const defaultButtonFont = gdi.Font("segoe ui semibold", scale(14));
+const defaultButtonFont = gdi.Font("segoe ui semibold", scale(14));
 const defaultIconFont = gdi.Font(MaterialFont, scale(22));
+const iconWidth = defaultButtonFont.Height;
 
 export interface IButton2Options {
 	text?: string;
@@ -259,7 +260,6 @@ export class Button2 extends Clickable {
 				this.setColors(highlightColor);
 				break;
 			default:
-				// this.setColors(opts);
 				break;
 		}
 	}
@@ -277,17 +277,21 @@ export class Button2 extends Clickable {
 	}
 
 	on_size() {
-		let textWidth: number = 0;
-		let totalWidth: number = 0;
-		let iconWidth = 0;
+		let _textWidth: number = 0;
+		let _totalWidth: number = 0;
+		let _iconWidth = 0;
+		let gap = scale(8);
 		if (this.text) {
-			textWidth = MeasureString(this.text, this._textFont).Width;
+			_textWidth = MeasureString(this.text, this._textFont).Width;
 		}
 		if (this.icon) {
-			iconWidth = scale(32);
+			_iconWidth = iconWidth;
 		}
-		totalWidth = textWidth + iconWidth;
-		this.paddings.left = (this.width - totalWidth) / 2;
+		_totalWidth = _textWidth + _iconWidth;
+		if (this.text && this.icon) {
+			_totalWidth += gap;
+		}
+		this.paddings.left = (this.width - _totalWidth) / 2;
 	}
 
 	on_paint(gr: IGdiGraphics) {
@@ -307,10 +311,10 @@ export class Button2 extends Clickable {
 		}
 
 		if (this.icon) {
-			gr.DrawString(this.icon, defaultIconFont, textColor, this.x + left, this.y, scale(32), this.height, StringFormat.Center);
+			gr.DrawString(this.icon, defaultIconFont, textColor, this.x + left, this.y, iconWidth, this.height, StringFormat.Center);
 		}
 		if (this.text) {
-			let textX = (this.icon ? this.x + left + scale(32) : this.x + left);
+			let textX = (this.icon ? this.x + left + iconWidth + scale(8) : this.x + left);
 			gr.DrawString(text, _textFont, textColor, textX, this.y, this.width, this.height, StringFormat.LeftCenter);
 		}
 	}
