@@ -63,7 +63,7 @@ export class SearchBox extends Component {
 	inputbox: InputBox;
 	searchBtn: Icon2;
 	clearBtn: Icon2;
-	menuBtn: Icon2;
+	// menuBtn: Icon2;
 
 	backgroundColor: number;
 	foreColor: number;
@@ -116,14 +116,14 @@ export class SearchBox extends Component {
 		});
 		this.clearBtn.grabFocus = false;
 
-		this.menuBtn = new Icon2({
-			fontIcon: this.icons.delta,
-			hoverColor: iconColor.hover,
-			downColor: iconColor.down,
-			normalColor: iconColor.normal,
-		});
-		this.menuBtn.grabFocus = false;
-		
+		// this.menuBtn = new Icon2({
+		// 	fontIcon: this.icons.delta,
+		// 	hoverColor: iconColor.hover,
+		// 	downColor: iconColor.down,
+		// 	normalColor: iconColor.normal,
+		// });
+		// this.menuBtn.grabFocus = false;
+
 
 		this.inputbox = new InputBox({
 			font: gdi.Font(globalFontName, scale(14)),
@@ -140,7 +140,7 @@ export class SearchBox extends Component {
 
 		this._inputboxHeight = MeasureString("ABCDgl汉字", this.inputbox.font).Height + scale(4);
 
-		[this.searchBtn, this.clearBtn, this.menuBtn, this.inputbox].forEach((btn) =>
+		[this.searchBtn, this.clearBtn, /*this.menuBtn,*/ this.inputbox].forEach((btn) =>
 			this.addChild(btn)
 		);
 
@@ -170,20 +170,25 @@ export class SearchBox extends Component {
 	on_init() { }
 
 	on_size() {
-		const { searchBtn, clearBtn, menuBtn, inputbox } = this;
+		const { searchBtn, clearBtn, /* menuBtn,*/ inputbox } = this;
 		const { iconHeight } = this;
 
 		let btnY = this.y + this.height - iconHeight;
 		let marginLeft = scale(8);
 
 		searchBtn.setBoundary(this.x + marginLeft, btnY, iconHeight, iconHeight);
-		menuBtn.setBoundary(
+		// menuBtn.setBoundary(
+		// 	this.x + this.width - marginLeft - iconHeight,
+		// 	btnY,
+		// 	iconHeight,
+		// 	iconHeight
+		// );
+		clearBtn.setBoundary(
 			this.x + this.width - marginLeft - iconHeight,
 			btnY,
 			iconHeight,
 			iconHeight
 		);
-		clearBtn.setBoundary(menuBtn.x - iconHeight - scale(4), btnY, iconHeight, iconHeight);
 
 		let inputboxY = this.y + (((this.height - this._inputboxHeight) / 2) | 0);
 		inputbox.setBoundary(

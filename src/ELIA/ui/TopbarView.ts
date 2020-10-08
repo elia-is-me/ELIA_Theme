@@ -73,6 +73,7 @@ export class TopBar extends Component {
 			hoverColor: setAlpha(this.foreColor, 200),
 			downColor: setAlpha(this.foreColor, 128),
 		});
+		this.settingsIco.disable();
 
 		this.switchIco = new Icon2({
 			fontIcon: appsIcon,
@@ -80,6 +81,7 @@ export class TopBar extends Component {
 			hoverColor: setAlpha(this.foreColor, 200),
 			downColor: setAlpha(this.foreColor, 128),
 		});
+		this.switchIco.disable();
 
 		this.searchBox = new SearchBox();
 
