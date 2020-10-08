@@ -1,17 +1,5 @@
 import { Component, IBoxModel } from "../common/BasePart";
-import {
-	RGB,
-	scale,
-	isEmptyString,
-	StringFormat,
-	MeasureString,
-	TextRenderingHint,
-	StopReason,
-	VKeyCode,
-	MenuFlag,
-	clamp,
-	KMask,
-} from "../common/common";
+import { RGB, scale, isEmptyString, StringFormat, MeasureString, TextRenderingHint, StopReason, VKeyCode, MenuFlag, clamp, KMask } from "../common/common";
 import { mainColors, globalFontName, scrollbarColor } from "./Theme";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
@@ -20,6 +8,7 @@ import { SerializableIcon } from "../common/IconType";
 import { MaterialFont, Material } from "../common/iconCode";
 import { toggleMood } from "./PlaybackControlView";
 import { notifyOthers, ui } from "../common/UserInterface";
+import { Button, Button2 } from "../common/IconButton";
 
 const textRenderingHint = ui.textRender;
 
@@ -54,17 +43,10 @@ class HeaderView extends Component implements IHeaderOptions, IDefaultHeaderOpti
 	backgroundColor: number;
 	titleFont: IGdiFont;
 	textFont: IGdiFont;
-	paddings: IPaddings;
 
 	constructor(options: IHeaderOptions) {
 		super({});
 
-		this.paddings = {
-			top: 0,
-			left: 0,
-			bottom: 0,
-			right: 0,
-		};
 		Object.assign(this, defaultHeaderOptions, options);
 
 		if (this.metadbs != null) {
@@ -101,47 +83,20 @@ class HeaderView extends Component implements IHeaderOptions, IDefaultHeaderOpti
 		let titleFont = this.titleFont;
 
 		// type;
-		gr.DrawString(
-			"SEARCH RESULTS",
-			textFont,
-			this.secondaryColor,
-			textX,
-			textY,
-			textW,
-			1.5 * textFont.Height,
-			StringFormat.LeftTop
-		);
+		gr.DrawString("SEARCH RESULTS", textFont, this.secondaryColor, textX, textY, textW, 2 * textFont.Height, StringFormat.LeftTop);
 
 		textX += scale(16);
 		textY += 2 * textFont.Height;
 
 		// title;
 		gr.SetTextRenderingHint(TextRenderingHint.AntiAlias);
-		gr.DrawString(
-			`"${this.titleText}"`,
-			titleFont,
-			this.textColor,
-			textX,
-			textY,
-			textW,
-			2 * titleFont.Height,
-			StringFormat.LeftTop
-		);
+		gr.DrawString(`"${this.titleText}"`, titleFont, this.textColor, textX, textY, textW, 2 * titleFont.Height, StringFormat.LeftTop);
 		gr.SetTextRenderingHint(textRenderingHint);
 
 		textY += 1.2 * titleFont.Height;
 
 		// description text;
-		gr.DrawString(
-			this.desciptionText,
-			textFont,
-			this.secondaryColor,
-			textX,
-			textY,
-			textW,
-			2 * textFont.Height,
-			StringFormat.LeftTop
-		);
+		gr.DrawString(this.desciptionText, textFont, this.secondaryColor, textX, textY, textW, 2 * textFont.Height, StringFormat.LeftTop);
 	}
 }
 
@@ -310,7 +265,6 @@ const defaultOptions: IDefaultOptions = {
 	highlightColor: mainColors.highlight,
 	moodColor: RGB(221, 0, 27),
 	selectionColor: RGB(42, 42, 42),
-
 	itemFont: gdi.Font(globalFontName, scale(14)),
 	rowHeight: scale(40),
 };
@@ -345,6 +299,7 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 	heartOffIco: SerializableIcon;
 	playingIco: SerializableIcon;
 	pauseIco: SerializableIcon;
+	closeBtn: Button2;
 
 	_columnsMap: Map<string, PlaylistColumn> = new Map();
 
@@ -357,13 +312,26 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 			cursorColor: scrollbarColor.cursor,
 			backgroundColor: 0,
 		});
+		this.scrollbar.z = 10;
 
 		this.headerView = new HeaderView({
 			titleText: this.titleText,
 			metadbs: this.metadbs,
 		});
 
-		[this.scrollbar, this.headerView].forEach(child => this.addChild(child));
+		this.closeBtn = new Button2({ icon: Material.close, iconSize: scale(28) });
+		this.closeBtn.setSize(scale(48), scale(48));
+		this.closeBtn.z = 10;
+		this.closeBtn.on_click = () => {
+			// Close search result view;
+			if (this.parent) {
+				this.parent.removeChild(this);
+				notifyOthers("Show.Playlist")
+			}
+		};
+
+		;[this.scrollbar, this.headerView, this.closeBtn]
+			.forEach(child => this.addChild(child));
 
 		this.heartOnIco = new SerializableIcon({
 			name: MaterialFont,
@@ -485,13 +453,13 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 		// --------------
 		// Set visible
 		// -------------
-		album.setVisible(true); // hide by default
+		album.setVisible(true);
 
 		// ------------------
 		// Set columns' size;
 		// ------------------
 		trackNumber.width = scale(60);
-		time.width = scale(16) + MeasureString("00:00", this.itemFont).Width;
+		time.width = scale(16) + MeasureString("0:00:00", this.itemFont).Width;
 		mood.width = scale(48);
 
 		let whitespace = this.width - padLeft - padRight;
@@ -517,8 +485,9 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 		}
 
 		trackNumber.x = this.x + padLeft;
+		mood.x = trackNumber.x + trackNumber.width;
 
-		title.x = trackNumber.x + trackNumber.width;
+		title.x = mood.x + mood.width;
 		title.width = titleWidth_ + widthToAdd_;
 
 		artist.x = title.x + title.width;
@@ -527,13 +496,11 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 		album.x = artist.x + artist.width;
 		album.width = albumVis ? albumWidth_ + widthToAdd_ : 0;
 
-		mood.x = album.x + album.width;
-		time.x = mood.x + mood.width;
+		time.x = album.x + album.width;
 
 		// ----------------------
 		// Set columns' paddings
 		// ----------------------
-		trackNumber.setPaddings({ left: scale(8) });
 		title.setPaddings({ right: scale(16) });
 		artist.setPaddings({ right: scale(16) });
 		album.setPaddings({ right: scale(16) });
@@ -543,7 +510,7 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 		this.paddings = this.getPaddingOnWidth_(this.width);
 
 		// update row x & width;
-		for (let i = 0, items = this.items, len = this.items.length; i < len; i++) {
+		for (let i = 0, len = this.items.length; i < len; i++) {
 			let item = this.items[i];
 			item.x = this.x;
 			item.width = this.width;
@@ -561,6 +528,7 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 			this.headerView.paddings.top +
 			this.headerView.paddings.bottom;
 		this.headerView.setBoundary(this.x, this.y, this.width, headerHeight);
+		this.closeBtn.setPosition(this.x + this.width - scale(64), this.y + scale(16) - this.scroll);
 
 		// Re-calc totalHeight;
 		this.itemsTotalHeight = this.rowHeight * this.items.length + this.rowHeight;
@@ -580,7 +548,10 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 		let cTime = _columnsMap.get("time");
 
 		// headerView;
-		this.headerView.y = this.y - this.scroll;
+		this.headerView.setPosition({ y: this.y - this.scroll });
+
+		// closeBtn;
+		this.closeBtn.setPosition({ y: this.y + scale(16) - this.scroll });
 
 		// background;
 		gr.FillSolidRect(this.x, this.y, this.width, this.height, this.backgroundColor);
@@ -608,24 +579,11 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 				// ----------------------
 
 				if (rowItem.isSelect) {
-					gr.FillSolidRect(
-						rowItem.x,
-						rowItem.y,
-						rowItem.width,
-						rowItem.height,
-						this.selectionColor
-					);
+					gr.FillSolidRect( rowItem.x, rowItem.y, rowItem.width, rowItem.height, this.selectionColor);
 				}
 
 				if (this.focusIndex === i) {
-					gr.DrawRect(
-						rowItem.x,
-						rowItem.y,
-						rowItem.width - 1,
-						rowItem.height - 1,
-						scale(1),
-						RGB(127, 127, 127)
-					);
+					gr.DrawRect( rowItem.x, rowItem.y, rowItem.width - 1, rowItem.height - 1, scale(1), RGB(127, 127, 127));
 				}
 
 				// -------------
@@ -636,16 +594,9 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 				if (this.playingIndex === i) {
 					(fb.IsPaused ? this.pauseIco : this.playingIco)
 						.setSize(cTrackNumber.width, this.rowHeight)
-						.draw(
-							gr,
-							this.highlightColor,
-							0,
-							cTrackNumber.x + scale(8),
-							rowItem.y,
-							StringFormat.LeftCenter
-						);
+						.draw(gr, this.highlightColor, 0, cTrackNumber.x + scale(8), rowItem.y, StringFormat.Center);
 				} else {
-					cTrackNumber.draw(gr, i + 1, itemFont, this.secondaryColor, rowItem);
+					cTrackNumber.draw(gr, i + 1, itemFont, this.secondaryColor, rowItem, StringFormat.Center);
 				}
 
 				// title;
@@ -660,7 +611,7 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 				}
 
 				// time;
-				cTime.draw(gr, rowItem.time, itemFont, this.secondaryColor, rowItem);
+				cTime.draw(gr, rowItem.time, itemFont, this.secondaryColor, rowItem, StringFormat.Center);
 
 				// mood;
 

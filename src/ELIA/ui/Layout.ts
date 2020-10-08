@@ -234,7 +234,7 @@ export class Layout extends Component {
 				console.log(this.children.length);
 				if (this.searchResultView) {
 					this.searchResultView.visible = false; 
-					this.removeChild(this.searchResultView);
+					this.searchResultView.parent?.removeChild(this.searchResultView);
 					this.searchResultView = undefined;
 				}
 				console.log(this.children.length);

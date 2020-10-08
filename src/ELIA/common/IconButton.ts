@@ -221,9 +221,9 @@ const highlightColor: IButton2Colors = {
 }
 
 const normalColor: IButton2Colors = {
-	textColor: RGB(255, 255, 255),
-	textHoverColor: RGB(200, 200, 200),
-	textDownColor: RGB(128, 128, 128),
+	textColor: mainColors.text,
+	textHoverColor: setAlpha(mainColors.text, 200),
+	textDownColor: setAlpha(mainColors.text, 170),
 	backgroundHoverColor: setAlpha(0xffffffff, 25),
 	backgroundDownColor: setAlpha(0xffffffff, 25)
 }
@@ -234,15 +234,21 @@ const iconWidth = defaultButtonFont.Height;
 
 export interface IButton2Options {
 	text?: string;
+	textSize?: number;
 	icon?: string;
+	iconSize?: number;
 	style?: number;
+	ghost?: boolean;
 }
 
 export class Button2 extends Clickable {
 	style: number = 0;
 	text: string;
 	icon?: string;
-	private _textFont: IGdiFont;
+	iconSize: number = scale(22);
+	ghost: boolean = false;
+	private _textFont: IGdiFont = defaultButtonFont;
+	private _iconFont: IGdiFont = defaultIconFont	;
 	private _textColor: Map<ButtonStates, number> = new Map();
 	private _backgroundColor: Map<ButtonStates, number> = new Map();
 
@@ -252,6 +258,13 @@ export class Button2 extends Clickable {
 		this.text = opts.text;;
 		this.icon = opts.icon;
 		this._textFont = defaultButtonFont;
+		this.ghost = (opts.ghost || false);
+		if (opts.iconSize) {
+			this._iconFont = gdi.Font(MaterialFont, opts.iconSize);
+		}
+		if (opts.textSize) {
+			this._textFont = gdi.Font("Segoe UI Semibold", opts.textSize);
+		}
 		switch (this.style) {
 			case 0:
 				this.setColors(normalColor);
@@ -285,7 +298,7 @@ export class Button2 extends Clickable {
 			_textWidth = MeasureString(this.text, this._textFont).Width;
 		}
 		if (this.icon) {
-			_iconWidth = iconWidth;
+			_iconWidth = this._iconFont.Height;
 		}
 		_totalWidth = _textWidth + _iconWidth;
 		if (this.text && this.icon) {
@@ -295,27 +308,29 @@ export class Button2 extends Clickable {
 	}
 
 	on_paint(gr: IGdiGraphics) {
-		let { text, _textFont } = this;
+		let { text, _textFont, icon, _iconFont, x, y, width, height } = this;
 		let textColor = this._textColor.get(this.state);
 		let backgroundColor = this._backgroundColor.get(this.state);
 		let { left, top } = this.paddings;
+		let iconWidth = _iconFont.Height;
 
-		if (backgroundColor != null) {
+		if (backgroundColor != null && !this.ghost) {
 			gr.SetSmoothingMode(SmoothingMode.AntiAlias);
-			if (this.text) {
-				gr.FillRoundRect(this.x, this.y, this.width, this.height, scale(2), scale(2), backgroundColor);
+			if (text) {
+				gr.FillRoundRect(x, y, width, height, scale(2), scale(2), backgroundColor);
 			} else {
-				gr.FillEllipse(this.x, this.y, this.width - 1, this.height - 1, backgroundColor);
+				gr.FillEllipse(x, y, width - 1, height - 1, backgroundColor);
 			}
 			gr.SetSmoothingMode(SmoothingMode.Default);
 		}
 
-		if (this.icon) {
-			gr.DrawString(this.icon, defaultIconFont, textColor, this.x + left, this.y, iconWidth, this.height, StringFormat.Center);
+		if (icon) {
+			gr.DrawString(icon, _iconFont, textColor, x + left, y, iconWidth, height, StringFormat.Center);
 		}
-		if (this.text) {
-			let textX = (this.icon ? this.x + left + iconWidth + scale(8) : this.x + left);
-			gr.DrawString(text, _textFont, textColor, textX, this.y, this.width, this.height, StringFormat.LeftCenter);
+
+		if (text) {
+			let textX = (icon ? x + left + iconWidth + scale(8) : x + left);
+			gr.DrawString(text, _textFont, textColor, textX, y, width, height, StringFormat.LeftCenter);
 		}
 	}
 }

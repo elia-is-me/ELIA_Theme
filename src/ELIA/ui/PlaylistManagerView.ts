@@ -606,7 +606,7 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 						plman.RemovePlaylist(playlistIndex);
 						if (deleteActivePlaylist && isValidPlaylist(playlistIndex)) {
 							plman.ActivePlaylist = playlistIndex;
-						} 
+						}
 					},
 				};
 				notifyOthers("Show.AlertDialog", alertOptions);
