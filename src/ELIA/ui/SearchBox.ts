@@ -83,12 +83,22 @@ export class SearchBox extends Component {
 		this.iconHeight = iconHeight;
 		Object.assign(this, searchBoxColors);
 
+		this.grabFocus = false;
+
 		this.searchBtn = new Icon2({
 			fontIcon: this.icons.loupe,
 			hoverColor: iconColor.normal,
 			downColor: iconColor.normal,
 			normalColor: iconColor.normal,
 		});
+
+		this.searchBtn.on_click = () => {
+			if (this.inputbox.text) {
+				this.inputbox.func();
+			}
+		}
+
+		this.searchBtn.grabFocus = false;
 
 		const handleClear = () => {
 			this._clearInput();
@@ -104,8 +114,7 @@ export class SearchBox extends Component {
 				handleClear();
 			},
 		});
-
-
+		this.clearBtn.grabFocus = false;
 
 		this.menuBtn = new Icon2({
 			fontIcon: this.icons.delta,
@@ -113,6 +122,8 @@ export class SearchBox extends Component {
 			downColor: iconColor.down,
 			normalColor: iconColor.normal,
 		});
+		this.menuBtn.grabFocus = false;
+		
 
 		this.inputbox = new InputBox({
 			font: gdi.Font(globalFontName, scale(14)),

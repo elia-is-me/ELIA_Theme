@@ -440,6 +440,23 @@ export function deepClone<T>(obj: T): T {
 	return result;
 }
 
+/**
+ *
+ *  See https://github.com/microsoft/vscode/blob/f74e473238aca7b79c08be761d99a0232838ca4c/src/vs/base/common/arrays.ts
+ *  Copyright (c) Microsoft Corporation.
+ */
+export function lastIndex<T>(array: ReadonlyArray<T>, fn: (item: T) => boolean): number {
+	for (let i = array.length - 1; i >= 0; i--) {
+		const element = array[i];
+
+		if (fn(element)) {
+			return i;
+		}
+	}
+
+	return -1;
+}
+
 export function isEmptyString(str: string) {
 	return !str;
 }

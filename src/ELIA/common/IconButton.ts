@@ -351,7 +351,7 @@ export class Icon2 extends Clickable {
 		}
 
 		if (isFunction(opts.onClick)) {
-			this.on_click = opts.onClick.bind(this);
+			this.on_click = opts.onClick;
 		}
 		return this;
 	}

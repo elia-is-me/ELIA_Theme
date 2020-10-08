@@ -1,5 +1,5 @@
 import { Component, IBoxModel } from "./BasePart";
-import { GetKeyboardMask, isFunction, KMask, RGBA, scale, TextRenderingHint, VKeyCode } from "./common";
+import { GetKeyboardMask, isFunction, KMask, lastIndex, RGBA, scale, TextRenderingHint, VKeyCode } from "./common";
 
 let partlist: Component[] = [];
 let vis_parts: Component[] = [];
@@ -41,13 +41,18 @@ const setRoot = (root: Component) => {
 	activePart = undefined;
 };
 
-function getHoverPart(parts: Component[], x: number, y: number) {
-	for (let i = parts.length - 1; i >= 0; i--) {
-		if (parts[i].trace(x, y)) {
-			return parts[i];
-		}
+
+function _getHoverPart(root: Component, x: number, y: number): Component {
+	if (!root || !root.trace(x, y)) {
+		return ;
 	}
-	return null;
+	const children = root.children;
+	const resultIndex = lastIndex(children, n=> n.trace(x, y));
+	if (resultIndex > -1) {
+		return _getHoverPart(children[resultIndex], x, y);
+	} else {
+		return root;
+	}
 }
 
 function invoke(part: Component, method: string, ...args: any) {
@@ -78,7 +83,7 @@ const compareParts = (a: Component, b: Component) => {
 
 function setActive(x: number, y: number) {
 	const prev = activePart;
-	activePart = getHoverPart(vis_parts, x, y);
+	activePart = _getHoverPart(rootPart, x, y);
 	if (!compareParts(prev, activePart)) {
 		invoke(prev, "on_mouse_leave");
 		invoke(activePart, "on_mouse_move", x, y);
@@ -87,7 +92,11 @@ function setActive(x: number, y: number) {
 
 function setFocus(x: number, y: number) {
 	let prev = focusPart;
-	focusPart = getHoverPart(vis_parts, x, y);
+	let _hoverPart = _getHoverPart(rootPart, x, y);
+	if (_hoverPart && !_hoverPart.grabFocus) {
+		return;
+	}
+	focusPart = _hoverPart;
 	if (!compareParts(prev, focusPart)) {
 		invoke(prev, "on_change_focus", false);
 		invoke(focusPart, "on_change_focus", true);
@@ -95,7 +104,7 @@ function setFocus(x: number, y: number) {
 }
 
 function setFocusPart(part: Component) {
-	if (!part || !part.isVisible()) {
+	if (!part || !part.isVisible() || !part.grabFocus) {
 		return;
 	}
 	let prev = focusPart;
@@ -185,17 +194,24 @@ const profiler = fb.CreateProfiler("MAIN");
 let time = 0;
 let count = 0;
 
+function drawNode(node: Component, gr: IGdiGraphics) {
+	if (!node.visible) {
+		return;
+	}
+
+	node.on_paint(gr);
+
+	for (let i = 0, len = node.children.length; i < len; i++) {
+		drawNode(node.children[i], gr);
+	}
+}
+
 function on_paint(gr: IGdiGraphics) {
 	profiler.Reset();
 	gr.SetTextRenderingHint(textRenderingHint);
 
 	// Draw visible parts;
-	for (let i = 0, len = vis_parts.length; i < len; i++) {
-		if ((vis_parts[i] as any).modal) {
-			gr.FillSolidRect(0, 0, window.Width, window.Height, 0xb5000000);
-		}
-		vis_parts[i].visible && vis_parts[i].on_paint(gr);
-	}
+	drawNode(rootPart, gr);
 
 	// draw dnd mask;
 	if (dropTargetPart && dndMask.visible) {
@@ -347,7 +363,7 @@ function on_char(code: number) {
 }
 
 function findDropTargetPart(x: number, y: number) {
-	let active_part = getHoverPart(vis_parts, x, y);
+	let active_part = _getHoverPart(rootPart, x, y);
 	if (!active_part) {
 		return null;
 	}

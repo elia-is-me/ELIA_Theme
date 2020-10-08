@@ -68,7 +68,7 @@ const cInputbox = {
 
 export interface IInputBoxOptions {
     font: IGdiFont;
-    font_italic: IGdiFont;
+    font_italic?: IGdiFont;
     foreColor: number;
     backgroundColor?: number;
     backgroundActiveColor?: number;
@@ -78,7 +78,7 @@ export interface IInputBoxOptions {
     func: () => void;
 }
 
-export class InputBox extends Component implements IInputBoxOptions{
+export class InputBox extends Component implements IInputBoxOptions {
 
     font: IGdiFont;
     font_italic: IGdiFont;
@@ -122,6 +122,9 @@ export class InputBox extends Component implements IInputBoxOptions{
         super({});
 
         Object.assign(this, opts);
+        if (!this.font_italic) {
+            this.font_italic = this.font;
+        }
         this.text = this.default_text;
     }
 
@@ -908,10 +911,10 @@ export class InputBox extends Component implements IInputBoxOptions{
     }
 
     on_change_focus(is_focused: boolean) {
-			// console.log("input change focus: ", is_focused);
-			if (!is_focused) {
-				this.check("down", -1, -1);
-			}
-		}
+        // console.log("input change focus: ", is_focused);
+        if (!is_focused) {
+            this.check("down", -1, -1);
+        }
+    }
 
 }

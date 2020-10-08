@@ -63,12 +63,14 @@ export interface IInjectableCallbacks {
 
 export abstract class Component implements IBoxModel, ICallbacks {
 	readonly cid: number = get_cid();
+	readonly __is_component__ = "__is_component__";
 	private _visible: boolean = true;
 	private _shouldUpdateOnInit = true;
 	private _shouldSortChildren = true;
 
 	isMonitor: boolean = false;
 	className: string = "Component";
+	grabFocus: boolean = true;
 
 	// offset to smp_panel's left;
 	x: number = 0;
@@ -137,9 +139,10 @@ export abstract class Component implements IBoxModel, ICallbacks {
 			return;
 		} else {
 			node.parent = null;
-			this.children = this.children.filter(child =>
-				ui.compareParts(child.parent, this)
-			);
+			// this.children = this.children.filter(child =>
+			// 	ui.compareParts(child.parent, this)
+			// );
+			this.children.splice(this.children.indexOf(node), 1);
 		}
 		this.resetUpdateState();
 	}
