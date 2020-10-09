@@ -4,7 +4,7 @@
 
 import { Repaint, StopReason } from "../common/common";
 import { TextLink } from "../common/TextLink";
-import { NowplayingArtwork } from "../common/AlbumArtView";
+import { NowplayingArtwork } from "../common/AlbumArt";
 import { Slider, SliderThumbImage } from "../common/Slider";
 import { Icon } from "../common/IconButton";
 import { Component } from "../common/BasePart";

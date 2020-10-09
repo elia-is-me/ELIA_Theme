@@ -1,5 +1,30 @@
-import { StringFormat, CropImage, TextRenderingHint, drawImage, SmoothingMode, RGB, RGBA, debounce, InterpolationMode, StopReason, shuffleArray } from "./common";
+import { StringFormat, CropImage, TextRenderingHint, drawImage, SmoothingMode, RGB, RGBA, debounce, InterpolationMode, StopReason } from "./common";
 import { Component } from "./BasePart";
+
+export class ImageCache {
+	private _cacheList: Map<string, { image?: IGdiBitmap; key: string }> = new Map();
+
+	hit(key: string) {
+		return this._cacheList.get(key);
+	}
+
+	save(key: string, image: IGdiBitmap, force = false) {
+		if (!this._cacheList.get(key)?.image || force) {
+			this._cacheList.set(key, {
+				key: image ? key : "<NO IMAGE>",
+				image: image
+			});
+		}
+	}
+
+	clear() {
+		this._cacheList.clear();
+	}
+
+	reset(key: string) {
+		this._cacheList.delete(key);
+	}
+}
 
 export const enum AlbumArtId {
 	Front = 0,
@@ -52,9 +77,10 @@ let maskImage = drawImage(500, 500, true, (g: IGdiGraphics) => {
 const tf_album = fb.TitleFormat("[%album artist%]^^%album%");
 
 export class PlaylistArtwork extends Component {
+	className = "PlaylistArtwork";
 	stubImage: IGdiBitmap = stubImages[2];
 	image: IGdiBitmap;
-	className = "PlaylistArtwork";
+	imageCache = new ImageCache();
 
 	constructor() {
 		super({});
@@ -63,28 +89,38 @@ export class PlaylistArtwork extends Component {
 	async getArtwork() {
 		let metadbs = plman.GetPlaylistItems(plman.ActivePlaylist);
 
+		if (!this.imageCache.hit("-1")?.image) {
+			this.imageCache.save("-1", this.processImage(stubImages[0]));
+		}
+
 		if (!metadbs || metadbs.Count === 0) {
-			this.image = CropImage(stubImages[0], this.width, this.height);
+			this.image = this.imageCache.hit("-1").image;
 			this.repaint();
 			return;
 		}
 
-		metadbs.OrderByFormat(tf_album, 0);
+		let _image = this.imageCache.hit(plman.ActivePlaylist + "")?.image;
+		if (_image) {
+			this.image = _image;
+			this.repaint();
+			return
+		}
 
 		let albums: IFbMetadb[] = [];
+		let albumKeys: string[] = [];
 		let compare = "#@!";
 
-		for (let i = 0, len = metadbs.Count; i < len; i++) {
+		for (let i = 0, len = metadbs.Count; i < len && i < 200; i++) {
 			if (!metadbs[i]) {
 				break;
 			}
 			let albumKey = tf_album.EvalWithMetadb(metadbs[i]);
-			if (!albums[albums.length - 1] || albumKey !== compare) {
+			if (!albums[albums.length - 1] || albumKey !== compare && albumKeys.indexOf(albumKey) === -1) {
 				albums.push(metadbs[i]);
+				albumKeys.push(albumKey)
 				compare = albumKey;
 			}
 		}
-		shuffleArray(albums);
 
 		let images: IGdiBitmap[] = [];
 
@@ -113,7 +149,7 @@ export class PlaylistArtwork extends Component {
 		if (images.length === 0) {
 			this.image = null;
 		} else if (images.length === 1) {
-			this.image = CropImage(images[0], this.width, this.height);
+			this.image = this.processImage(images[0]);
 		} else {
 			images = images.map(img => CropImage(img, 250, 250));
 			if (images.length < 4) {
@@ -129,10 +165,15 @@ export class PlaylistArtwork extends Component {
 			g.DrawImage(images[2], 0, 250, 250, 250, 0, 0, 250, 250);
 			g.DrawImage(images[3], 250, 250, 250, 250, 0, 0, 250, 250);
 			img.ReleaseGraphics(g);
-			this.image = img;
+			this.image = this.processImage(img);
+			this.imageCache.save("" + plman.ActivePlaylist, this.image);
 		}
 
 		this.repaint();
+	}
+
+	processImage(image: IGdiBitmap) {
+		return CropImage(image, this.width, this.height);
 	}
 
 	on_init() {
@@ -154,16 +195,8 @@ export class PlaylistArtwork extends Component {
 	}
 
 	on_size = debounce(() => {
-		if (stubImages[2]) {
-			if (!this.stubImage || this.stubImage.Width !== this.width) {
-				this.stubImage = CropImage(
-					stubImages[2],
-					this.width,
-					this.height,
-					InterpolationMode.HighQuality
-				);
-			}
-		}
+		this.imageCache.clear();
+		this.getArtwork();
 	}, 100);
 }
 
@@ -194,12 +227,7 @@ export class NowplayingArtwork extends Component {
 					);
 				}
 				if (result && result.image) {
-					this.image = CropImage(
-						result.image,
-						this.width,
-						this.height,
-						InterpolationMode.HighQualityBicubic
-					);
+					this.image = this.processImage(result.image);
 				} else {
 					this.image = null;
 				}
@@ -210,6 +238,10 @@ export class NowplayingArtwork extends Component {
 			this.image = null;
 		}
 		this.repaint();
+	}
+
+	processImage(image: IGdiBitmap) {
+		return CropImage(image, this.width, this.height);
 	}
 
 	on_init() {
@@ -234,15 +266,7 @@ export class NowplayingArtwork extends Component {
 	}
 
 	on_size = debounce(() => {
-		if (stubImages[0]) {
-			if (!this.stubImage || this.stubImage.Width !== this.width) {
-				this.stubImage = CropImage(
-					stubImages[0],
-					this.width,
-					this.height,
-					InterpolationMode.HighQuality
-				);
-			}
-		}
+		this.stubImage = this.processImage(stubImages[0]);
+		this.getArtwork(fb.GetNowPlaying());
 	}, 100);
 }
