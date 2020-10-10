@@ -1,30 +1,6 @@
 import { StringFormat, CropImage, TextRenderingHint, drawImage, SmoothingMode, RGB, RGBA, debounce, InterpolationMode, StopReason } from "./common";
 import { Component } from "./BasePart";
-
-export class ImageCache {
-	private _cacheList: Map<string, { image?: IGdiBitmap; key: string }> = new Map();
-
-	hit(key: string) {
-		return this._cacheList.get(key);
-	}
-
-	save(key: string, image: IGdiBitmap, force = false) {
-		if (!this._cacheList.get(key)?.image || force) {
-			this._cacheList.set(key, {
-				key: image ? key : "<NO IMAGE>",
-				image: image
-			});
-		}
-	}
-
-	clear() {
-		this._cacheList.clear();
-	}
-
-	reset(key: string) {
-		this._cacheList.delete(key);
-	}
-}
+import { mainColors } from "../ui/Theme";
 
 export const enum AlbumArtId {
 	Front = 0,
@@ -42,6 +18,8 @@ export const enum ArtworkType {
 }
 
 // Create stub images;
+
+/** 0: Cover, 1: Photo, 2: Art */
 let stubImages: IGdiBitmap[] = [];
 let font1 = gdi.Font("Segoe UI", 230, 1);
 let font2 = gdi.Font("Segoe UI", 120, 1);
@@ -80,32 +58,38 @@ export class PlaylistArtwork extends Component {
 	className = "PlaylistArtwork";
 	stubImage: IGdiBitmap = stubImages[2];
 	image: IGdiBitmap;
-	imageCache = new ImageCache();
+
+	_cache:Map<string|number, IGdiBitmap> = new Map();
 
 	constructor() {
 		super({});
 	}
 
 	async getArtwork() {
-		let metadbs = plman.GetPlaylistItems(plman.ActivePlaylist);
 
-		if (!this.imageCache.hit("-1")?.image) {
-			this.imageCache.save("-1", this.processImage(stubImages[0]));
+		// Check stub_image;
+		let stub = this._cache.get(-1);
+		if (!stub) {
+			stub = CropImage(stubImages[2], this.width, this.height);
+			this._cache.set(-1, stub);
 		}
 
+		// No tracks in active playlist;
+		let metadbs = plman.GetPlaylistItems(plman.ActivePlaylist);
 		if (!metadbs || metadbs.Count === 0) {
-			this.image = this.imageCache.hit("-1").image;
+			this.image = stub;
 			this.repaint();
 			return;
 		}
 
-		let _image = this.imageCache.hit(plman.ActivePlaylist + "")?.image;
-		if (_image) {
-			this.image = _image;
+		let img = this._cache.get(plman.ActivePlaylist);
+		if (img) {
+			this.image = img;
 			this.repaint();
-			return
+			return;
 		}
 
+		// Create image if not in cache;
 		let albums: IFbMetadb[] = [];
 		let albumKeys: string[] = [];
 		let compare = "#@!";
@@ -147,9 +131,11 @@ export class PlaylistArtwork extends Component {
 		}
 
 		if (images.length === 0) {
-			this.image = null;
+			this.image = stub;
+			this._cache.set(plman.ActivePlaylist, stub);
 		} else if (images.length === 1) {
 			this.image = this.processImage(images[0]);
+			this._cache.set(plman.ActivePlaylist, this.image)
 		} else {
 			images = images.map(img => CropImage(img, 250, 250));
 			if (images.length < 4) {
@@ -166,7 +152,7 @@ export class PlaylistArtwork extends Component {
 			g.DrawImage(images[3], 250, 250, 250, 250, 0, 0, 250, 250);
 			img.ReleaseGraphics(g);
 			this.image = this.processImage(img);
-			this.imageCache.save("" + plman.ActivePlaylist, this.image);
+			this._cache.set(plman.ActivePlaylist, this.image);
 		}
 
 		this.repaint();
@@ -177,10 +163,12 @@ export class PlaylistArtwork extends Component {
 	}
 
 	on_init() {
+		this._cache.clear();
 		this.getArtwork();
 	}
 
 	on_playlists_changed() {
+		this._cache.clear();
 		this.getArtwork();
 	}
 
@@ -195,7 +183,6 @@ export class PlaylistArtwork extends Component {
 	}
 
 	on_size = debounce(() => {
-		this.imageCache.clear();
 		this.getArtwork();
 	}, 100);
 }

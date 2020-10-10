@@ -13,7 +13,9 @@ import { SerializableIcon } from "../common/IconType";
 import { PlaylistArtwork } from "../common/AlbumArt";
 import { toggleMood } from "./PlaybackControlView";
 import { notifyOthers, ui } from "../common/UserInterface";
-import { Button, Button2 } from "../common/IconButton";
+import { Button2 } from "../common/IconButton";
+import { IInputPopupOptions } from "./InputPopupPanel";
+import { IAlertDialogOptions } from "./AlertDialog";
 
 const __DEV__ = window.GetProperty("__DEV__", true);
 
@@ -188,13 +190,17 @@ class PlaylistHeaderView extends Component {
 		// Playlist context btn;
 		this.contextBtn = new Button2({ icon: Material.more_vert });
 		this.contextBtn.setSize(scale(36), scale(36));
-		this.contextBtn.on_click = () => { };
+		this.contextBtn.on_click = (x, y) => {
+			showHeaderContextMenu(plman.ActivePlaylist, x, y);
+		};
 		this.addChild(this.contextBtn);
 
 		// Playlist Sort btn;
 		this.sortBtn = new Button2({ text: "Sort", icon: Material.sort });
 		this.sortBtn.setSize(scale(80), scale(36));
-		this.sortBtn.on_click = () => { }
+		this.sortBtn.on_click = (x, y) => {
+			showSortPlaylistMenu(plman.ActivePlaylist, x, y);
+		}
 		this.addChild(this.sortBtn);
 	}
 
@@ -371,7 +377,7 @@ class PlaylistHeaderView extends Component {
 
 	on_mouse_rbtn_up(x: number, y: number) {
 		try {
-			showPlaylistHeaderMenu(this.playlistIndex, x, y);
+			showHeaderContextMenu(this.playlistIndex, x, y);
 		} catch (e) { }
 	}
 }
@@ -1533,4 +1539,140 @@ export function showTrackContextMenu(playlistIndex: number, metadbs: IFbMetadbLi
 	}
 }
 
-function showPlaylistHeaderMenu(playlistIndex: number, x: number, y: number) { }
+
+function showHeaderContextMenu(playlistIndex: number, x: number, y: number) {
+
+	const isValid = isValidPlaylist(playlistIndex);
+	const hasTracks = plman.PlaylistItemCount(playlistIndex) > 0;
+	const menu = window.CreatePopupMenu();
+
+	menu.AppendMenuItem(MenuFlag.STRING, 10, "Edit playlist...");
+	if (plman.IsAutoPlaylist(playlistIndex)) {
+		menu.AppendMenuItem(MenuFlag.STRING, 11, "Edit autoplaylist property...");
+	}
+	menu.AppendMenuSeparator();
+
+	menu.AppendMenuItem(hasTracks ? MenuFlag.STRING : MenuFlag.GRAYED, 20, "Play");
+	menu.AppendMenuItem(hasTracks ? MenuFlag.STRING : MenuFlag.GRAYED, 21, "Play next");
+	menu.AppendMenuItem(hasTracks ? MenuFlag.STRING : MenuFlag.GRAYED, 22, "Add to queue");
+
+	menu.AppendMenuSeparator();
+
+	menu.AppendMenuItem(MenuFlag.STRING, 30, "Delete");
+
+	let ret = menu.TrackPopupMenu(x, y);
+
+	switch (true) {
+		case ret === 10:
+			let opt_1: IInputPopupOptions = {
+				title: "Rename playlist",
+				defaultText: plman.GetPlaylistName(playlistIndex),
+				onSuccess(text: string) {
+					if (text !== plman.GetPlaylistName(playlistIndex)) {
+						plman.RenamePlaylist(playlistIndex, text);
+					}
+				}
+			};
+			notifyOthers("Popup.InputPopupPanel", opt_1);
+			break;
+		case ret === 11:
+			if (plman.IsAutoPlaylist(playlistIndex)) {
+				plman.ShowAutoPlaylistUI(playlistIndex);
+			}
+			break;
+		case ret === 20:
+			if (plman.PlaylistItemCount(plman.ActivePlaylist) > 0) {
+				plman.ExecutePlaylistDefaultAction(plman.ActivePlaylist, Math.floor(Math.random() * plman.PlaylistItemCount(plman.ActivePlaylist)));
+			}
+			break;
+		case ret === 21:
+			// 
+			break;
+		case ret === 22:
+			let queuePlaylist = plman.FindOrCreatePlaylist("Queue", true);
+			plman.InsertPlaylistItems(queuePlaylist, plman.PlaylistItemCount(queuePlaylist), plman.GetPlaylistItems(playlistIndex));
+			break;
+
+		case ret === 30:
+			let options_30: IAlertDialogOptions = {
+				title: "Delete playlist",
+				onSuccess: () => {
+					plman.RemovePlaylist(playlistIndex);
+					if (isValidPlaylist(playlistIndex)) {
+						plman.ActivePlaylist, playlistIndex;
+					}
+				}
+			};
+			notifyOthers("Show.AlertDialog", options_30);
+			break;
+	}
+
+}
+
+function showSortPlaylistMenu(playlistIndex: number, x: number, y: number, selection = false) {
+	let hasMultiSelection = plman.GetPlaylistSelectedItems(plman.ActivePlaylist).Count > 1;
+	let menu = window.CreatePopupMenu();
+	let sel = window.CreatePopupMenu();
+
+	// ---------------
+	// Sort selection;
+	// ---------------
+
+	sel.AppendTo(menu, hasMultiSelection ? MenuFlag.STRING : MenuFlag.GRAYED, "Selection");
+	sel.AppendMenuItem(MenuFlag.STRING, 20, "Sort by...");
+	sel.AppendMenuItem(MenuFlag.STRING, 21, "Randomize");
+	sel.AppendMenuItem(MenuFlag.STRING, 22, "Reverse");
+	sel.AppendMenuSeparator();
+	//
+	sel.AppendMenuItem(MenuFlag.STRING, 200, "Album");
+	sel.AppendMenuItem(MenuFlag.STRING, 201, "Artist");
+	sel.AppendMenuItem(MenuFlag.STRING, 202, "File path");
+	sel.AppendMenuItem(MenuFlag.STRING, 203, "Title");
+	sel.AppendMenuItem(MenuFlag.STRING, 204, "Track number");
+	menu.AppendMenuSeparator();
+
+	// --------------
+	// Sort playlist
+	// --------------
+
+	menu.AppendMenuItem(MenuFlag.STRING, 10, "Sort by...");
+	menu.AppendMenuItem(MenuFlag.STRING, 11, "Randomize");
+	menu.AppendMenuItem(MenuFlag.STRING, 12, "Reverse");
+	menu.AppendMenuSeparator();
+	//
+	menu.AppendMenuItem(MenuFlag.STRING, 100, "Album");
+	menu.AppendMenuItem(MenuFlag.STRING, 101, "Artist");
+	menu.AppendMenuItem(MenuFlag.STRING, 102, "File path");
+	menu.AppendMenuItem(MenuFlag.STRING, 103, "Title");
+	menu.AppendMenuItem(MenuFlag.STRING, 104, "Track number");
+
+	const ret = menu.TrackPopupMenu(x, y);
+
+	switch (true) {
+		case ret === 10:
+			fb.RunMainMenuCommand("Edit/Sort/Sort by...");
+			break;
+		case ret === 11:
+			plman.SortByFormat(plman.ActivePlaylist, "");
+			break;
+		case ret === 12:
+			fb.RunMainMenuCommand("Edit/Sort/Reverse");
+			break;
+		case ret === 100:
+			plman.SortByFormat(plman.ActivePlaylist, "%album%^^[%discnumber%^^]%tracknumber%", false);
+			break;
+		case ret === 101:
+			plman.SortByFormat(plman.ActivePlaylist, "%artist%^^%album%^^[%discnumber%^^]%tracknumber%", false);
+			break;
+		case ret === 102:
+			// plman.SortByFormat(plman.ActivePlaylist,)
+			break;
+		case ret === 103:
+			break;
+		case ret === 104:
+			break;
+		case ret === 20:
+			break;
+	}
+
+}
