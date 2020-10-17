@@ -148,16 +148,20 @@ export class SearchBox extends Component {
 	}
 
 	handleSearch() {
-		let searchText = this.inputbox.text;
-		if (searchText.length == 0) {
-			return;
-		}
-		let result = fb.GetQueryItems(fb.GetLibraryItems(), searchText);
+		try {
+			let searchText = this.inputbox.text;
+			if (searchText.length == 0) {
+				return;
+			}
+			let result = fb.GetQueryItems(fb.GetLibraryItems(), searchText);
 
-		notifyOthers("Show.SearchResult", {
-			titleText: searchText,
-			metadbs: result,
-		});
+			notifyOthers("Show.SearchResult", {
+				titleText: searchText,
+				metadbs: result,
+			});
+		} catch (e) {
+			fb.ShowPopupMessage("Fail to GetQueryItems", "Search Error");
+		}
 	}
 
 	private _clearInput() {
