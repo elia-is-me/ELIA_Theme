@@ -168,7 +168,7 @@ interface IFbUtils {
      * @example
      * // See samples\basic\MainMenuManager All-In-One, samples\basic\Menu Sample.txt
      */
-    CreateMainMenuManager(): void; // (MainMenuManager)
+    CreateMainMenuManager(): IMainMenuManager; // (MainMenuManager)
 
     /**
      * @param {string=} [name=''] Will be shown in console when used with {@link FbProfiler#Print} method.
