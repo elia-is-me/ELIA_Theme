@@ -248,7 +248,7 @@ export class Button2 extends Clickable {
 	iconSize: number = scale(22);
 	ghost: boolean = false;
 	private _textFont: IGdiFont = defaultButtonFont;
-	private _iconFont: IGdiFont = defaultIconFont	;
+	private _iconFont: IGdiFont = defaultIconFont;
 	private _textColor: Map<ButtonStates, number> = new Map();
 	private _backgroundColor: Map<ButtonStates, number> = new Map();
 

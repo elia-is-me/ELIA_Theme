@@ -2,7 +2,7 @@
 // Playback control bar;
 // ---------------------
 
-import { Repaint, StopReason } from "../common/common";
+import { MenuFlag, Repaint, StopReason } from "../common/common";
 import { TextLink } from "../common/TextLink";
 import { NowplayingArtwork } from "../common/AlbumArt";
 import { Slider, SliderThumbImage } from "../common/Slider";
@@ -11,6 +11,9 @@ import { Component } from "../common/BasePart";
 import { Material, MaterialFont } from "../common/iconCode"
 import { scale, imageFromCode, PlaybackOrder, SmoothingMode, blendColors, MeasureString, StringFormat } from "../common/common";
 import { IThemeColors, bottomColors, globalFontName } from "./Theme";
+import { IInputPopupOptions } from "./InputPopupPanel";
+import { notifyOthers } from "../common/UserInterface";
+import { isValidPlaylist } from "./PlaylistView";
 
 function pos2vol(pos: number) {
 	return (50 * Math.log(0.99 * pos + 0.01)) / Math.LN10;
@@ -53,8 +56,8 @@ type TPlaybackButtons = { [K in ButtonKeys]: Icon };
 const createBottomButtons = (themeColors?: IThemeColors) => {
 	const colors = bottomColors;
 	let iconName = MaterialFont;
-	let iconFont = gdi.Font(iconName, scale(22));
-	let iconFont2 = gdi.Font(iconName, scale(18));
+	let iconFont = gdi.Font(iconName, scale(24));
+	let iconFont2 = gdi.Font(iconName, scale(22));
 	let bw_1 = scale(32);
 	let bw_2 = scale(32);
 	let images: { [K in ImageKeys]: IGdiBitmap } = {
@@ -198,24 +201,24 @@ const createBottomButtons = (themeColors?: IThemeColors) => {
 	buttons.shuffle = new Icon({
 		image: images.shuffle_off,
 		on_init() {
-			if (plman.PlaybackOrder === 4) {
+			if (plman.PlaybackOrder === getShuffleOrder()) {
 				this.setImage(images.shuffle_on);
 			} else {
 				this.setImage(images.shuffle_off);
 			}
 		},
 		on_click() {
-			if (plman.PlaybackOrder === 4) {
+			if (plman.PlaybackOrder === getShuffleOrder()) {
 				plman.PlaybackOrder = 0; // reset to default
 			} else {
-				plman.PlaybackOrder = 4;
+				plman.PlaybackOrder = getShuffleOrder();
 			}
 			this.on_init();
 		},
 		on_playback_order_changed() {
 			this.on_init();
 			Repaint();
-		}
+		},
 	});
 
 	buttons.volume = new Icon({
@@ -384,6 +387,8 @@ export class PlaybackControlView extends Component {
 			this.playbackTime = formatPlaybackTime(fb.PlaybackTime);
 			this.playbackLength = formatPlaybackTime(fb.PlaybackLength);
 		}
+
+		this._rightDown = false;
 	}
 
 	setChildPanels() {
@@ -438,7 +443,7 @@ export class PlaybackControlView extends Component {
 		let vol_w = scale(80);
 		let vol_y = top + (height - vol_h) / 2;
 		let vol_x = left + width - vol_w - scale(24);
-		volume.setBoundary(vol_x, vol_y>>0, vol_w, vol_h);
+		volume.setBoundary(vol_x, vol_y >> 0, vol_w, vol_h);
 
 		// volume mute button;
 		let bx_6 = vol_x - bw_2 - scale(4);
@@ -457,7 +462,7 @@ export class PlaybackControlView extends Component {
 		else if (seek_w > seek_max_w) seek_w = seek_max_w;
 		let seek_x = left + (width - seek_w) / 2;
 		let seek_y = by_1 + bw_1 + scale(8);
-		seekbar.setBoundary(seek_x, seek_y>>0, seek_w, scale(16));
+		seekbar.setBoundary(seek_x, seek_y >> 0, seek_w, scale(16));
 
 		// art;
 		let art_w = scale(48);
@@ -483,44 +488,17 @@ export class PlaybackControlView extends Component {
 		// playback time;
 		let pb_time_x = seekbar.x - this.timeWidth - scale(4);
 		let pb_time_y = seekbar.y;
-		gr.DrawString(
-			this.playbackTime,
-			this.timeFont,
-			colors.text,
-			pb_time_x,
-			pb_time_y,
-			this.timeWidth,
-			seekbar.height,
-			StringFormat.Center
-		);
+		gr.DrawString(this.playbackTime, this.timeFont, colors.text, pb_time_x, pb_time_y, this.timeWidth, seekbar.height, StringFormat.Center);
 
 		// playback length;
 		let pb_len_x = seekbar.x + seekbar.width + scale(4);
-		gr.DrawString(
-			this.playbackLength,
-			this.timeFont,
-			colors.text,
-			pb_len_x,
-			pb_time_y,
-			this.timeWidth,
-			seekbar.height,
-			StringFormat.Center
-		);
+		gr.DrawString(this.playbackLength, this.timeFont, colors.text, pb_len_x, pb_time_y, this.timeWidth, seekbar.height, StringFormat.Center);
 
 		// track title;
 		let title_x = albumArt.x + albumArt.width + scale(8);
 		let title_max_w = pb_time_x - scale(16) - title_x;
 		let title_y = this.y + this.height / 2 - scale(22) - scale(2);
-		gr.DrawString(
-			this.trackTitle,
-			this.titleFont,
-			colors.text,
-			title_x,
-			title_y,
-			title_max_w,
-			scale(22),
-			StringFormat.LeftCenter
-		);
+		gr.DrawString(this.trackTitle, this.titleFont, colors.text, title_x, title_y, title_max_w, scale(22), StringFormat.LeftCenter);
 	}
 
 	on_playback_new_track() {
@@ -538,14 +516,166 @@ export class PlaybackControlView extends Component {
 			Repaint();
 		}
 	}
+
+	on_mouse_rbtn_down(x: number, y: number) {
+		this._rightDown = true;
+	}
+
+	private _rightDown = false;
+
+	on_mouse_rbtn_up(x: number, y: number) {
+		if (this._rightDown) {
+			// try {
+			showPanelContextMenu(fb.GetNowPlaying(), x, y);
+			// } catch (e) { }
+			this._rightDown = false;
+		}
+	}
+
+	on_mouse_leave() {
+		this._rightDown = false;
+	}
+
+	// Sync default order property to foobar's shuffle order (when sometimes
+	// playback order is changed thru menu command or sth else);
+	on_playback_order_changed() {
+		let orderSetting = getShuffleOrder();
+		if (plman.PlaybackOrder !== orderSetting && plman.PlaybackOrder >= PlaybackOrder.Random) {
+			setShuffleOrder(plman.PlaybackOrder);
+		}
+	}
+
 }
+
+const tf_title = fb.TitleFormat("%title%");
+
+function showPanelContextMenu(metadb: IFbMetadb, x: number, y: number) {
+	const objMenu = window.CreatePopupMenu();
+	let Context: IContextMenuManager;
+	let BaseID = 1000;
+	const metadbs = plman.GetPlaylistItems(-1);
+	metadb && metadbs.Add(metadb);
+
+	if (!metadb) {
+		objMenu.AppendMenuItem(MenuFlag.GRAYED, 1, "Not playing");
+	} else {
+		objMenu.AppendMenuItem(MenuFlag.STRING, 10, "Now playing: " + tf_title.EvalWithMetadb(metadb));
+		objMenu.AppendMenuSeparator();
+
+		objMenu.AppendMenuItem(MenuFlag.GRAYED, 11, "Go to album");
+		objMenu.AppendMenuItem(MenuFlag.GRAYED, 12, "Go to artist");
+		objMenu.AppendMenuSeparator();
+
+		// Add to playlist ... menu;
+		const objAddTo = window.CreatePopupMenu();
+		objAddTo.AppendTo(objMenu, MenuFlag.STRING, "Add to playlist");
+		objAddTo.AppendMenuItem(MenuFlag.STRING, 5000, "New playlist...");
+
+		if (plman.PlaylistCount > 0) {
+			objAddTo.AppendMenuSeparator();
+		}
+
+		for (let i = 0; i < plman.PlaylistCount; i++) {
+			objAddTo.AppendMenuItem(plman.IsPlaylistLocked(i) ? MenuFlag.GRAYED : MenuFlag.STRING, 5001 + i, plman.GetPlaylistName(i));
+		}
+
+		// fb's context menu;
+		Context = fb.CreateContextMenuManager();
+		Context.InitContext(metadbs);
+		Context.BuildMenu(objMenu, BaseID, -1);
+	}
+
+	objMenu.AppendMenuSeparator();
+
+	const playbackMenu = window.CreatePopupMenu();
+	const menuMan = fb.CreateMainMenuManager();
+	playbackMenu.AppendTo(objMenu, MenuFlag.STRING, "Playback");
+	menuMan.Init("playback");
+	menuMan.BuildMenu(playbackMenu, 9000, 300);
+
+	const ret = objMenu.TrackPopupMenu(x, y);
+	let inputOptions: IInputPopupOptions;
+
+	switch (true) {
+		case ret === 1:
+			// "Not playing" grey;
+			break;
+		case ret === 10:
+			// TODO: show now playing;
+			break;
+		case ret >= BaseID && ret < 5000:
+			Context.ExecuteByID(ret - BaseID);
+			break;
+		case ret === 5000:
+			inputOptions = {
+				title: "Add to playlist...",
+				defaultText: "New playlist",
+				onSuccess(playlistName: string) {
+					let playlistIndex = plman.CreatePlaylist(plman.PlaylistCount, playlistName);
+					if (isValidPlaylist(playlistIndex)) {
+						plman.ActivePlaylist = playlistIndex;
+						plman.InsertPlaylistItems(playlistIndex, plman.PlaylistItemCount(playlistIndex), metadbs, false);
+					}
+				}
+			}
+			notifyOthers("Popup.InputPopupPanel", inputOptions);
+			break;
+		case ret >= 5001 && ret < 9000:
+			let playlistIndex = ret - 5001;
+			if (plman.IsPlaylistLocked(playlistIndex)) {
+				// DO Nothing;
+			} else {
+				plman.ActivePlaylist = playlistIndex;
+				plman.InsertPlaylistItems(playlistIndex, plman.PlaylistItemCount(playlistIndex), metadbs, false);
+				// TODO: scroll to bottom to show items added;
+			}
+			break;
+		case ret >= 9000 && ret < 10000:
+			menuMan.ExecuteByID(ret - 9000);
+			break;
+	}
+
+}
+
+function showShuffleBtnMenu(x: number, y: number) {
+	const objMenu = window.CreatePopupMenu();
+
+	objMenu.AppendMenuItem(MenuFlag.STRING, PlaybackOrder.Random, "Random");
+	objMenu.AppendMenuItem(MenuFlag.STRING, PlaybackOrder.ShuffleTracks, "Shuffle(tracks)");
+	objMenu.AppendMenuItem(MenuFlag.STRING, PlaybackOrder.ShuffleAlbums, "Shuffle(albums)");
+	objMenu.AppendMenuItem(MenuFlag.STRING, PlaybackOrder.ShuffleFolders, "Shuffle(Folders)");
+
+	let orderSetting = getShuffleOrder();
+	objMenu.CheckMenuRadioItem(PlaybackOrder.Random, PlaybackOrder.ShuffleFolders, orderSetting);
+
+	let ret = objMenu.TrackPopupMenu(x, y);
+
+	setShuffleOrder(ret);
+	plman.PlaybackOrder = ret;
+
+}
+
+function getShuffleOrder() {
+	let orderSetting = +window.GetProperty("Global.DefaultShuffle", 4);
+	if (!Number.isInteger(orderSetting) || orderSetting < PlaybackOrder.Random || orderSetting > PlaybackOrder.ShuffleFolders) {
+		window.SetProperty("Global.DefaultShuffle", "")
+	}
+	orderSetting = +window.GetProperty("Global.DefaultShuffle", 4);
+	return orderSetting;
+}
+
+function setShuffleOrder(order: number) {
+	if (isNaN(order) || order < PlaybackOrder.Random || order > PlaybackOrder.ShuffleFolders) {
+		return -1;
+	}
+	window.SetProperty("Global.DefaultShuffle", order);
+	return order;
+}
+
 
 /**
  * TODO:
  *
- * - 进度条圈圈长得不正
- * - 'shuffle' btn context menu;
- * - info area context menu;
  * - info area onClick action;
  * - artist onClick action; // 等等
  */
