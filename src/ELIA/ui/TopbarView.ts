@@ -1,4 +1,4 @@
-import { scale, RGB, StringFormat, TextRenderingHint, setAlpha } from "../common/common";
+import { scale, RGB, StringFormat, TextRenderingHint, setAlpha, MenuFlag } from "../common/common";
 import { Icon2 } from "../common/IconButton";
 import { Component } from "../common/BasePart";
 import { mainColors } from "./Theme";
@@ -90,7 +90,7 @@ export class TopBar extends Component {
 		);
 	}
 
-	on_init() {}
+	on_init() { }
 
 	on_size() {
 		let icoOffsetTop = ((this.height - this._icoWidth) / 2) | 0;
@@ -126,21 +126,77 @@ export class TopBar extends Component {
 		const logoX = this.mainIco.x + this.mainIco.width + scale(16);
 
 		gr.SetTextRenderingHint(TextRenderingHint.AntiAlias);
-		gr.DrawString(
-			_logoText,
-			_logoFont,
-			foreColor,
-			logoX,
-			this.y,
-			1000,
-			this.height,
-			StringFormat.LeftCenter
-		);
+		gr.DrawString( _logoText, _logoFont, foreColor, logoX, this.y, 1000, this.height, StringFormat.LeftCenter);
 		gr.SetTextRenderingHint(textRenderingHint);
+	}
+
+	on_mouse_rbtn_up (x: number, y: number) {
+		showMainMenu(x, y);
 	}
 }
 
 /**
- * TODO:
- *
+ * reference: "MainMenuManager All-In-One.js"
  */
+function showMainMenu(x: number, y: number) {
+	// Create menu;
+	const objMenu = window.CreatePopupMenu();
+	const fileMenu = window.CreatePopupMenu()
+	const editMenu = window.CreatePopupMenu();
+	const viewMenu = window.CreatePopupMenu();
+	const playbackMenu = window.CreatePopupMenu();
+	const libraryMenu = window.CreatePopupMenu();
+	const helpMenu = window.CreatePopupMenu();
+
+	fileMenu.AppendTo(objMenu, MenuFlag.STRING, "File");
+	editMenu.AppendTo(objMenu, MenuFlag.STRING, "Edit");
+	viewMenu.AppendTo(objMenu, MenuFlag.STRING, "View");
+	playbackMenu.AppendTo(objMenu, MenuFlag.STRING, "Playback");
+	libraryMenu.AppendTo(objMenu, MenuFlag.STRING, "Library");
+	helpMenu.AppendTo(objMenu, MenuFlag.STRING, "Help");
+
+	// Menu managers;
+	const fileMan = fb.CreateMainMenuManager();
+	const editMan = fb.CreateMainMenuManager();
+	const viewMan = fb.CreateMainMenuManager();
+	const playbackMan = fb.CreateMainMenuManager();
+	const libraryMan = fb.CreateMainMenuManager();
+	const helpMan = fb.CreateMainMenuManager();
+
+	fileMan.Init("file");
+	fileMan.BuildMenu(fileMenu, 1, 200);
+	editMan.Init("edit");
+	editMan.BuildMenu(editMenu, 201, 200);
+	viewMan.Init("view");
+	viewMan.BuildMenu(viewMenu, 401, 200);
+	playbackMan.Init("playback");
+	playbackMan.BuildMenu(playbackMenu, 601, 300);
+	libraryMan.Init("library");
+	libraryMan.BuildMenu(libraryMenu, 901, 300);
+	helpMan.Init("help");
+	helpMan.BuildMenu(helpMenu, 1201, 100);
+
+	const ret = objMenu.TrackPopupMenu(x, y);
+
+	switch (true) {
+		case ret >= 1 && ret < 201:
+			fileMan.ExecuteByID(ret - 1);
+			break;
+		case ret >= 201 && ret < 401:
+			editMan.ExecuteByID(ret - 201);
+			break;
+		case ret >= 401 && ret < 601:
+			viewMan.ExecuteByID(ret - 401);
+			break;
+		case ret >= 601 && ret < 901:
+			playbackMan.ExecuteByID(ret - 601);
+			break;
+		case ret >= 901 && ret < 1201:
+			libraryMan.ExecuteByID(ret - 901);
+			break;
+		case ret >= 1201 && ret < 1301:
+			helpMan.ExecuteByID(ret - 1201);
+			break;
+	}
+
+}
