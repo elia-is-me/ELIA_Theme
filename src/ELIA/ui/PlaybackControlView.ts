@@ -8,7 +8,7 @@ import { NowplayingArtwork } from "../common/AlbumArt";
 import { Slider, SliderThumbImage } from "../common/Slider";
 import { Icon } from "../common/IconButton";
 import { Component } from "../common/BasePart";
-import { Material, MaterialFont } from "../common/iconCode"
+import { Material, MaterialFont } from "../common/Icon"
 import { scale, imageFromCode, PlaybackOrder, SmoothingMode, blendColors, MeasureString, StringFormat } from "../common/common";
 import { IThemeColors, bottomColors, globalFontName } from "./Theme";
 import { IInputPopupOptions } from "./InputPopupPanel";

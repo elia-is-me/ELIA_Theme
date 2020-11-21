@@ -6,10 +6,9 @@ import { scale, blendColors, RGB, StringFormat, ThrottledRepaint, MenuFlag } fro
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
 import { Component } from "../common/BasePart";
-import { Material, MaterialFont } from "../common/iconCode";
+import { Material, MaterialFont, SerializableIcon } from "../common/Icon";
 import { scrollbarWidth, IThemeColors, mainColors, sidebarColors, scrollbarColor, globalFontName } from "./Theme";
 import { Button, IButtonColors } from "../common/IconButton";
-import { SerializableIcon } from "../common/IconType";
 import { isValidPlaylist } from "./PlaylistView";
 import { IInputPopupOptions } from "./InputPopupPanel";
 import { IAlertDialogOptions } from "./AlertDialog";

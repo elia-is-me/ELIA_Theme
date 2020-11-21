@@ -4,7 +4,6 @@ import { globalFontName, mainColors } from "./Theme";
 import {
 	scale,
 	RGB,
-	setAlpha,
 	StringFormat,
 	StringTrimming,
 	StringFormatFlags, isFunction

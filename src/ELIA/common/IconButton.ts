@@ -1,9 +1,9 @@
 import { isObject, scale, StringFormat, TextRenderingHint, isFunction, MeasureString, CursorName, RGB, setAlpha, SmoothingMode, RGBA } from "./common";
 import { Component, IPaddings, IInjectableCallbacks } from "./BasePart";
-import { SerializableIcon } from "./IconType";
+import { SerializableIcon } from "./Icon";
 import { globalFontName, mainColors } from "../ui/Theme";
 import { ui } from "../common/UserInterface";
-import { Material, MaterialFont } from "./iconCode";
+import { Material, MaterialFont } from "./Icon";
 
 const textRenderingHint = ui.textRender;
 

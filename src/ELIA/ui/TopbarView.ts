@@ -2,10 +2,9 @@ import { scale, RGB, StringFormat, TextRenderingHint, setAlpha, MenuFlag } from 
 import { Icon2 } from "../common/IconButton";
 import { Component } from "../common/BasePart";
 import { mainColors } from "./Theme";
-import { SerializableIcon } from "../common/IconType";
 import { SearchBox } from "./SearchBox";
 import { notifyOthers, ui } from "../common/UserInterface";
-import { Material, MaterialFont } from "../common/iconCode";
+import { Material, MaterialFont, SerializableIcon } from "../common/Icon";
 
 const iconSize = scale(20);
 const textRenderingHint = ui.textRender;
