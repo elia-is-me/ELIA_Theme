@@ -333,32 +333,15 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 		;[this.scrollbar, this.headerView, this.closeBtn]
 			.forEach(child => this.addChild(child));
 
-		this.heartOnIco = new SerializableIcon({
-			name: MaterialFont,
-			code: Material.heart,
-			size: scale(16),
-		});
+		this.heartOnIco = new SerializableIcon(Material.heart, MaterialFont, scale(16));
 
-		this.heartOffIco = new SerializableIcon({
-			name: MaterialFont,
-			code: Material.heart_empty,
-			size: scale(16),
-		});
+		this.heartOffIco = new SerializableIcon(Material.heart_empty, MaterialFont, scale(16));
 
-		this.playingIco = new SerializableIcon({
-			name: MaterialFont,
-			code: Material.volume,
-			size: scale(16),
-		});
+		this.playingIco = new SerializableIcon(Material.volume, MaterialFont, scale(16));
 
-		this.pauseIco = new SerializableIcon({
-			name: MaterialFont,
-			code: Material.volume_mute,
-			size: scale(16),
-		});
+		this.pauseIco = new SerializableIcon(Material.volume_mute, MaterialFont, scale(16));
 
-		let moodHeight = MeasureString(this.heartOnIco.code, this.heartOnIco.iconFont).Height;
-		let moodWidth = moodHeight + scale(4);
+		let moodWidth = this.rowHeight;//+ scale(4);
 
 		this.getActiveMoodId = (x: number, y: number): number => {
 			let moodColumn = this._columnsMap.get("mood");
@@ -548,10 +531,10 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 		let cTime = _columnsMap.get("time");
 
 		// headerView;
-		this.headerView.setPosition(null, this.y - this.scroll );
+		this.headerView.setPosition(null, this.y - this.scroll);
 
 		// closeBtn;
-		this.closeBtn.setPosition(null,  this.y + scale(16) - this.scroll );
+		this.closeBtn.setPosition(null, this.y + scale(16) - this.scroll);
 
 		// background;
 		gr.FillSolidRect(this.x, this.y, this.width, this.height, this.backgroundColor);
@@ -579,11 +562,11 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 				// ----------------------
 
 				if (rowItem.isSelect) {
-					gr.FillSolidRect( rowItem.x, rowItem.y, rowItem.width, rowItem.height, this.selectionColor);
+					gr.FillSolidRect(rowItem.x, rowItem.y, rowItem.width, rowItem.height, this.selectionColor);
 				}
 
 				if (this.focusIndex === i) {
-					gr.DrawRect( rowItem.x, rowItem.y, rowItem.width - 1, rowItem.height - 1, scale(1), RGB(127, 127, 127));
+					gr.DrawRect(rowItem.x, rowItem.y, rowItem.width - 1, rowItem.height - 1, scale(1), RGB(127, 127, 127));
 				}
 
 				// -------------
@@ -593,8 +576,7 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 				// index;
 				if (this.playingIndex === i) {
 					(fb.IsPaused ? this.pauseIco : this.playingIco)
-						.setSize(cTrackNumber.width, this.rowHeight)
-						.draw(gr, this.highlightColor, 0, cTrackNumber.x + scale(8), rowItem.y, StringFormat.Center);
+						.draw(gr, this.highlightColor, cTrackNumber.x+scale(8), rowItem.y, cTrackNumber.width, this.rowHeight);
 				} else {
 					cTrackNumber.draw(gr, i + 1, itemFont, this.secondaryColor, rowItem, StringFormat.Center);
 				}
@@ -617,12 +599,10 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 
 				if (rowItem.rating === 5) {
 					this.heartOnIco
-						.setSize(cMood.width, this.rowHeight)
-						.draw(gr, this.moodColor, 0, cMood.x, rowItem.y);
+						.draw(gr, this.moodColor, cMood.x, rowItem.y, cMood.width, this.rowHeight);
 				} else {
 					this.heartOffIco
-						.setSize(cMood.width, this.rowHeight)
-						.draw(gr, this.secondaryColor, 0, cMood.x, rowItem.y);
+						.draw(gr, this.secondaryColor, cMood.x, rowItem.y, cMood.width, this.rowHeight);
 				}
 			}
 		}

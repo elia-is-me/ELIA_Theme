@@ -43,27 +43,9 @@ interface IPlaylistManagerProps {
 }
 
 const icons: { [keys in IconSets]: SerializableIcon } = {
-	volume: new SerializableIcon({
-		name: MaterialFont,
-		code: Material.volume,
-		size: scale(20),
-		width: scale(40),
-		height: scale(40),
-	}),
-	gear: new SerializableIcon({
-		name: MaterialFont,
-		code: Material.gear,
-		size: scale(20),
-		width: scale(40),
-		height: scale(40),
-	}),
-	queue_music: new SerializableIcon({
-		name: MaterialFont,
-		code: Material.queue_music,
-		size: scale(20),
-		width: scale(40),
-		height: scale(40),
-	}),
+	volume: new SerializableIcon(Material.volume, MaterialFont, scale(20)),
+	gear: new SerializableIcon(Material.gear, MaterialFont, scale(20)),
+	queue_music: new SerializableIcon(Material.queue_music, MaterialFont, scale(20)),
 };
 
 interface IPlaylistManagerColors extends IThemeColors {
@@ -102,13 +84,7 @@ class PLM_Header extends Component {
 	}
 
 	private setAddPlaylistBtn() {
-		let addIcon = new SerializableIcon({
-			name: MaterialFont,
-			code: Material.circle_add,
-			size: scale(20),
-			width: scale(40),
-			height: scale(40),
-		});
+		let addIcon = new SerializableIcon(Material.circle_add, MaterialFont, scale(20));
 		let font = gdi.Font(globalFontName, scale(14));
 		let colors: IButtonColors = {
 			textColor: PLM_Properties.colors.text,
@@ -212,17 +188,9 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 		this.addChild(this.scrollbar);
 		this.addChild(this.header);
 
-		this.playingIco = new SerializableIcon({
-			name: MaterialFont,
-			code: Material.volume,
-			size: scale(16),
-		});
+		this.playingIco = new SerializableIcon(Material.volume, MaterialFont, scale(16));
 
-		this.pauseIco = new SerializableIcon({
-			name: MaterialFont,
-			code: Material.volume_mute,
-			size: scale(16),
-		});
+		this.pauseIco = new SerializableIcon(Material.volume_mute, MaterialFont, scale(16));
 	}
 
 	initList() {
@@ -279,7 +247,7 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 		let paddingL = scale(16);
 		let paddingR = scale(4);
 		let icons = this.icons;
-		let iconOffsetRowY = ((this.rowHeight - icons.gear.height) / 2) | 0;
+		let iconWidth = scale(40);
 
 		// draw background
 		gr.FillSolidRect(this.x, this.y, this.width, this.height, colors.background);
@@ -304,22 +272,23 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 				}
 
 				// draw icon;
-				let icon_ = rowItem.isAuto ? icons.gear : icons.queue_music;
-				icon_.draw(gr, textColor, 0x000000, rowItem.x + paddingL, rowItem.y + iconOffsetRowY);
+				let _listItemIcon = rowItem.isAuto ? icons.gear : icons.queue_music;
+				_listItemIcon.draw(gr, textColor, rowItem.x + paddingL, rowItem.y, scale(40), scale(40));
 
 				//
 				let iconX = this.x + this.width - scale(40) - this.scrollbar.width - scale(8);
 				if (fb.IsPlaying && rowItem.index === plman.PlayingPlaylist) {
-					(fb.IsPaused ? this.pauseIco : this.playingIco).setSize(scale(40), this.rowHeight).draw(gr, colors.highlight, 0, iconX, rowItem.y);
+					let _volumeIcon = (fb.IsPaused ? this.pauseIco : this.playingIco);
+					_volumeIcon.draw(gr, colors.highlight, iconX, rowItem.y, scale(40), scale(40));
 				}
 
-				let textWidth = rowItem.width - paddingL - paddingR - icon_.width - scale(4);
+				let textWidth = rowItem.width - paddingL - paddingR - scale(40) - scale(4);
 				if (fb.IsPlaying && rowItem.index === plman.PlayingPlaylist) {
-					textWidth = iconX - (rowItem.x + paddingL + icon_.width + scale(4)) - scale(4);
+					textWidth = iconX - (rowItem.x + paddingL + scale(40) + scale(4)) - scale(4);
 				}
 
 				// draw list name;
-				gr.DrawString(rowItem.listName, itemFont, textColor, rowItem.x + paddingL + icon_.width + scale(4), rowItem.y, textWidth, rowHeight, StringFormat.LeftCenter);
+				gr.DrawString(rowItem.listName, itemFont, textColor, rowItem.x + paddingL + scale(40) + scale(4), rowItem.y, textWidth, rowHeight, StringFormat.LeftCenter);
 			}
 		}
 

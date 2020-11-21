@@ -10,23 +10,11 @@ import { Material, MaterialFont } from "../common/iconCode";
 const iconSize = scale(20);
 const textRenderingHint = ui.textRender;
 
-const menuIcon = new SerializableIcon({
-	code: Material.menu,
-	name: MaterialFont,
-	size: iconSize,
-});
+const menuIcon = new SerializableIcon(Material.menu, MaterialFont, iconSize);
 
-const settingsIcon = new SerializableIcon({
-	code: Material.gear,
-	name: MaterialFont,
-	size: iconSize,
-});
+const settingsIcon = new SerializableIcon(Material.gear, MaterialFont, iconSize);
 
-const appsIcon = new SerializableIcon({
-	code: Material.apps,
-	name: MaterialFont,
-	size: iconSize,
-});
+const appsIcon = new SerializableIcon(Material.apps, MaterialFont, iconSize);	
 
 const topbarColors = {
 	backgroundColor: RGB(37, 37, 37),

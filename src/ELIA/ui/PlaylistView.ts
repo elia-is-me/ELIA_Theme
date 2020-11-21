@@ -463,8 +463,8 @@ export class PlaylistView extends ScrollView {
 	playingItemIndex: number = -1;
 	hoverIndex: number = -1;
 	focusIndex: number = -1;
-
 	scrollbar: Scrollbar;
+
 	headerView: PlaylistHeaderView;
 
 	playingIco: SerializableIcon;
@@ -504,36 +504,19 @@ export class PlaylistView extends ScrollView {
 		 * Create icons;
 		 */
 
-		this.playingIco = new SerializableIcon({
-			name: MaterialFont,
-			code: Material.volume,
-			size: scale(16),
-		});
+		this.playingIco = new SerializableIcon(Material.volume, MaterialFont, scale(16));
 
-		this.pauseIco = new SerializableIcon({
-			name: MaterialFont,
-			code: Material.volume_mute,
-			size: scale(16),
-		});
+		this.pauseIco = new SerializableIcon(Material.volume_mute, MaterialFont, scale(16));
 
-		this.heartOnIco = new SerializableIcon({
-			name: MaterialFont,
-			code: Material.heart,
-			size: scale(16),
-		});
+		this.heartOnIco = new SerializableIcon(Material.heart, MaterialFont, scale(16));
 
-		this.heartOffIco = new SerializableIcon({
-			name: MaterialFont,
-			code: Material.heart_empty,
-			size: scale(16),
-		});
+		this.heartOffIco = new SerializableIcon(Material.heart_empty, MaterialFont, scale(16));
 
 		/**
 		 * Set getMoodId method;
 		 */
 
-		let heartIconHeight = MeasureString(this.heartOnIco.code, this.heartOnIco.iconFont).Height;
-		let moodHotWidth = heartIconHeight + scale(4);
+		let moodHotWidth = PlaylistProperties.rowHeight//heartIconHeight + scale(4);
 
 		this.getActiveMoodId = (x: number, y: number): number => {
 			let moodColumn = this._columnsMap.get("mood");
@@ -820,8 +803,7 @@ export class PlaylistView extends ScrollView {
 				 */
 				if (this.playingItemIndex === itemIndex) {
 					(fb.IsPaused ? this.pauseIco : this.playingIco)
-						.setSize(cTrackNumber.width, rowHeight)
-						.draw(gr, colors.highlight, 0, cTrackNumber.x, rowItem.y, StringFormat.Center);
+						.draw(gr, colors.highlight, cTrackNumber.x, rowItem.y, cTrackNumber.width, rowHeight);
 				} else {
 					cTrackNumber.draw(gr, rowItem.trackNumber, itemFont, secondaryColor, rowItem, StringFormat.Center);
 				}
@@ -854,9 +836,9 @@ export class PlaylistView extends ScrollView {
 				 * Mood(if Rating == 5)
 				 */
 				if (rowItem.rating === 5) {
-					this.heartOnIco.setSize(cMood.width, rowHeight).draw(gr, colors.HEART_RED, 0, cMood.x, rowItem.y);
+					this.heartOnIco.draw(gr, colors.HEART_RED, cMood.x, rowItem.y, cMood.width, rowHeight);
 				} else {
-					this.heartOffIco.setSize(cMood.width, rowHeight).draw(gr, secondaryColor, 0, cMood.x, rowItem.y);
+					this.heartOffIco.draw(gr, secondaryColor, cMood.x, rowItem.y, cMood.width, rowHeight);
 				}
 			}
 		}

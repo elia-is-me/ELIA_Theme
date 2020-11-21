@@ -134,6 +134,9 @@ export class Button extends Clickable {
 	paddings: IPaddings;
 	gap: number;
 
+	// TODO...
+	private _iconWidth = scale(16);
+
 	constructor(opts: {
 		icon?: SerializableIcon;
 		text: string;
@@ -182,21 +185,22 @@ export class Button extends Clickable {
 
 		const { icon, text, font, paddings } = this;
 		let btnColor: number = this._colorMap.get(this.state);
+		let _iconWidth = this._iconWidth;
 
 		/**
 		 * draw icon;
 		 */
 		if (icon != null) {
 			let iconX = this.x + paddings.left;
-			let iconY = this.y + ((this.height - icon.height) / 2) | 0;
-			icon.draw(gr, btnColor, 0, iconX, iconY);
+			let iconY = this.y + ((this.height - _iconWidth) / 2) | 0;
+			icon.draw(gr, btnColor, iconX, iconY, _iconWidth, _iconWidth);
 		}
 
 		/**
 		 * draw text;
 		 */
-		let textX = this.x + paddings.left + (icon ? icon.width + this.gap : 0);
-		let textW = this.width - paddings.left - paddings.right - (icon ? icon.width + this.gap : 0);
+		let textX = this.x + paddings.left + (icon ? _iconWidth + this.gap : 0);
+		let textW = this.width - paddings.left - paddings.right - (icon ? _iconWidth + this.gap : 0);
 		gr.DrawString(text, font, btnColor, textX, this.y, textW, this.height, StringFormat.LeftCenter);
 	}
 
@@ -373,11 +377,10 @@ export class Icon2 extends Clickable {
 
 	on_paint(gr: IGdiGraphics) {
 		const { fontIcon, _colorMap } = this;
-		const { code, iconFont } = fontIcon;
 		const iconColor = _colorMap.get(this.state);
 
 		gr.SetTextRenderingHint(TextRenderingHint.AntiAlias);
-		gr.DrawString(code, iconFont, iconColor, this.x, this.y, this.width, this.height, StringFormat.Center);
+		fontIcon.draw(gr, iconColor, this.x, this.y, this.width, this.height);
 		gr.SetTextRenderingHint(textRenderingHint);
 	}
 }

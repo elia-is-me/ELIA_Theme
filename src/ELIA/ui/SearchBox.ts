@@ -18,27 +18,9 @@ const iconHeight = scale(32);
 const icons: {
 	[keys in TIconKeys]: SerializableIcon;
 } = {
-	loupe: new SerializableIcon({
-		code: Material.search,
-		name: MaterialFont,
-		size: iconFontSize,
-		width: iconHeight,
-		height: iconHeight,
-	}),
-	delta: new SerializableIcon({
-		code: Material.arrow_drop_down,
-		name: MaterialFont,
-		size: iconFontSize,
-		width: iconHeight,
-		height: iconHeight,
-	}),
-	cross: new SerializableIcon({
-		code: Material.close,
-		name: MaterialFont,
-		size: iconFontSize,
-		width: iconHeight,
-		height: iconHeight,
-	}),
+	loupe: new SerializableIcon(Material.search, MaterialFont, iconFontSize),
+	delta: new SerializableIcon(Material.arrow_drop_down, MaterialFont, iconFontSize),
+	cross: new SerializableIcon(Material.close, MaterialFont, iconFontSize)
 };
 
 interface IIconColors {
