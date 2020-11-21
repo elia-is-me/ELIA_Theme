@@ -548,10 +548,10 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 		let cTime = _columnsMap.get("time");
 
 		// headerView;
-		this.headerView.setPosition({ y: this.y - this.scroll });
+		this.headerView.setPosition(null, this.y - this.scroll );
 
 		// closeBtn;
-		this.closeBtn.setPosition({ y: this.y + scale(16) - this.scroll });
+		this.closeBtn.setPosition(null,  this.y + scale(16) - this.scroll );
 
 		// background;
 		gr.FillSolidRect(this.x, this.y, this.width, this.height, this.backgroundColor);

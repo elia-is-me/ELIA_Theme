@@ -475,7 +475,7 @@ export class PlaybackControlView extends Component {
 		let artist_x = albumArt.x + albumArt.width + scale(8);
 		let artist_max_w = pb_time_x - scale(16) - artist_x;
 		artist.setMaxWidth(artist_max_w);
-		artist.setSize({ height: scale(20) });
+		artist.setSize(null, scale(20));
 		artist.setPosition(artist_x, artist_y);
 	}
 

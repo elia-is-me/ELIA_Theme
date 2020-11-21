@@ -53,13 +53,9 @@ export class TextLink extends Clickable {
 			this._fontMap.get(ButtonStates.Normal)
 		).Width;
 		if (this.maxWidth > 0) {
-			this.setSize({
-				width: this.textWidth > this.maxWidth ? this.maxWidth : this.textWidth,
-			});
+			this.setSize(this.textWidth > this.maxWidth ? this.maxWidth : this.textWidth, null);
 		} else {
-			this.setSize({
-				width: this.textWidth,
-			});
+			this.setSize(this.textWidth, null);
 		}
 	}
 
