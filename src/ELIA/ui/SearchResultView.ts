@@ -7,7 +7,7 @@ import { IPaddings } from "../common/BasePart";
 import { MaterialFont, Material, SerializableIcon } from "../common/Icon";
 import { toggleMood } from "./PlaybackControlView";
 import { notifyOthers, ui } from "../common/UserInterface";
-import { Button, Button2 } from "../common/IconButton";
+import { Button, Button2 } from "../common/Button";
 
 const textRenderingHint = ui.textRender;
 

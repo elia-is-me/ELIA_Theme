@@ -2,7 +2,7 @@ import { isObject, scale, StringFormat, TextRenderingHint, isFunction, MeasureSt
 import { Component, IPaddings, IInjectableCallbacks } from "./BasePart";
 import { SerializableIcon } from "./Icon";
 import { globalFontName, mainColors } from "../ui/Theme";
-import { ui } from "../common/UserInterface";
+import { ui } from "./UserInterface";
 import { Material, MaterialFont } from "./Icon";
 
 const textRenderingHint = ui.textRender;

@@ -4,7 +4,7 @@
 
 import { Component, IInjectableCallbacks } from "../common/BasePart";
 import { InputBox } from "../common/Inputbox";
-import { Icon2 } from "../common/IconButton";
+import { Icon2 } from "../common/Button";
 import { scale, setAlpha, RGB, MeasureString } from "../common/common";
 import { Material, MaterialFont, SerializableIcon } from "../common/Icon";
 import { mainColors, globalFontName } from "./Theme";

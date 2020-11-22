@@ -8,7 +8,7 @@ import { ScrollView } from "../common/ScrollView";
 import { Component } from "../common/BasePart";
 import { Material, MaterialFont, SerializableIcon } from "../common/Icon";
 import { scrollbarWidth, IThemeColors, mainColors, sidebarColors, scrollbarColor, globalFontName } from "./Theme";
-import { Button, IButtonColors } from "../common/IconButton";
+import { Button, IButtonColors } from "../common/Button";
 import { isValidPlaylist } from "./PlaylistView";
 import { IInputPopupOptions } from "./InputPopupPanel";
 import { IAlertDialogOptions } from "./AlertDialog";

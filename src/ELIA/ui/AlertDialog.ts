@@ -1,5 +1,5 @@
 import { Component } from "../common/BasePart";
-import { Button2 } from "../common/IconButton";
+import { Button2 } from "../common/Button";
 import { globalFontName, mainColors } from "./Theme";
 import {
 	scale,

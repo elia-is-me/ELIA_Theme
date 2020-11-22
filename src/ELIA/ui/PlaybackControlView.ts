@@ -6,7 +6,7 @@ import { MenuFlag, Repaint, StopReason } from "../common/common";
 import { TextLink } from "../common/TextLink";
 import { NowplayingArtwork } from "../common/AlbumArt";
 import { Slider, SliderThumbImage } from "../common/Slider";
-import { Icon } from "../common/IconButton";
+import { Icon } from "../common/Button";
 import { Component } from "../common/BasePart";
 import { Material, MaterialFont } from "../common/Icon"
 import { scale, imageFromCode, PlaybackOrder, SmoothingMode, blendColors, MeasureString, StringFormat } from "../common/common";

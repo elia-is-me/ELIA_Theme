@@ -1,5 +1,5 @@
 import { scale, RGB, StringFormat, TextRenderingHint, setAlpha, MenuFlag } from "../common/common";
-import { Icon2 } from "../common/IconButton";
+import { Icon2 } from "../common/Button";
 import { Component } from "../common/BasePart";
 import { mainColors } from "./Theme";
 import { SearchBox } from "./SearchBox";

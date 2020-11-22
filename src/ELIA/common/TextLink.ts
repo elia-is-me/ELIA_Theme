@@ -1,5 +1,5 @@
 import { StringFormat, scale, MeasureString, isEmptyString } from "./common";
-import { ButtonStates, Clickable } from "./IconButton";
+import { ButtonStates, Clickable } from "./Button";
 import { IInjectableCallbacks } from "./BasePart";
 
 export interface ITextLinkProps {

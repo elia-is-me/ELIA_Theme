@@ -1,6 +1,6 @@
 import { Component } from "../common/BasePart";
 import { MeasureString, RGB, scale, StringFormat, setAlpha, isEmptyString, isFunction } from "../common/common";
-import { Button2, } from "../common/IconButton";
+import { Button2, } from "../common/Button";
 import { InputBox } from "../common/Inputbox";
 import { notifyOthers } from "../common/UserInterface";
 import { mainColors, globalFontName } from "./Theme";

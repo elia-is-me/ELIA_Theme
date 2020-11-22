@@ -12,7 +12,7 @@ import { Material, MaterialFont, SerializableIcon } from "../common/Icon";
 import { PlaylistArtwork } from "../common/AlbumArt";
 import { toggleMood } from "./PlaybackControlView";
 import { notifyOthers, ui } from "../common/UserInterface";
-import { Button2 } from "../common/IconButton";
+import { Button2 } from "../common/Button";
 import { IInputPopupOptions } from "./InputPopupPanel";
 import { IAlertDialogOptions } from "./AlertDialog";
 
