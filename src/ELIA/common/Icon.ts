@@ -60,6 +60,10 @@ export class SerializableIcon {
         }
     }
 
+    get iconFont() {
+        return this._iconFont;
+    }
+
     draw(gr: IGdiGraphics, foreColor: number, x: number, y: number, width: number, height: number, sf = StringFormat.Center) {
         gr.SetTextRenderingHint(TextRenderingHint.AntiAlias);
         gr.DrawString(this.code, this._iconFont, foreColor, x, y, width, height, sf);

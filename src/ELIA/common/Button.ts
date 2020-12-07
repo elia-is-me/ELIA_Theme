@@ -21,6 +21,7 @@ export class Clickable extends Component {
 	 * changeState(state) will not change a disabled button's state;
 	 */
 	changeState(state: number) {
+		// it's weid here
 		if (this.state === ButtonStates.Disable || state === ButtonStates.Disable) {
 			return;
 		}
@@ -72,50 +73,167 @@ export class Clickable extends Component {
 	}
 }
 
-export class Icon extends Clickable {
-	image: IGdiBitmap;
-	downImage: IGdiBitmap;
-	hoverImage: IGdiBitmap;
-	private hoverAlpha = 200;
-	private downAlpha = 128;
-	constructor(opts: object, callbacks?: IInjectableCallbacks) {
-		super(opts, callbacks);
-		if (isObject(opts)) {
-			Object.assign(this, opts);
-		}
-		if (isObject(callbacks)) {
-			Object.assign(this, callbacks);
-		}
-		this.setImage(this.image, this.hoverImage, this.downImage);
+export const enum ButtonStyles {
+	Default = 1,
+	Round = 2,
+	Rectangle = 4
+}
+
+
+/**
+ * For buttons only contains an icon, currently there is no click animations or
+ * background color effects.
+ */
+export class IconButton extends Clickable {
+	code: string;
+	fontName: string;
+	fontSize: number;
+	fontStyle: number = 0;
+	colors: number[] = [];
+	private _iconFont: IGdiFont;
+
+	constructor(options: {
+		code: string;
+		fontName?: string;
+		fontSize: number;
+		fontStyle?: number;
+		colors: number[];
+	}) {
+		super(options);
+		this.setIcon(options.code,
+			options.fontSize && this.fontSize,
+			options.fontName && MaterialFont,
+			options.fontStyle && 0);
+		this.setColors.apply(this, options.colors);
 	}
-	setImage(img: IGdiBitmap, hoverImg?: IGdiBitmap, downImg?: IGdiBitmap) {
-		this.image = img;
-		this.hoverImage = hoverImg;
-		this.downImage = downImg;
-		this.setBoundary(this.x, this.y, img.Width, img.Height);
+
+	setIcon(code: string, fontSize?: number, fontName: string = MaterialFont, fontStyle: number = 0) {
+		this.code = code;
+		if (fontSize) this.fontSize = fontSize;
+		this.fontName = fontName;
+		this.fontStyle = fontStyle;
+		this._iconFont = gdi.Font(this.fontName, this.fontSize, this.fontStyle);
 	}
+
+	/**
+	 * By default,
+	 */
+	setColors(normalColor: number, hoverColor?: number, downColor?: number, disableColor?: number) {
+		if (!hoverColor) hoverColor = setAlpha(normalColor, 200);
+		if (!downColor) downColor = setAlpha(normalColor, 127);
+		if (!disableColor) disableColor = downColor;
+		this.colors = [normalColor, hoverColor, downColor, disableColor];
+	}
+
 	on_paint(gr: IGdiGraphics) {
-		let img = this.image;
-		let alpha = 255;
-		if (this.state === ButtonStates.Hover) {
-			if (this.hoverImage) {
-				img = this.hoverImage;
-			}
-			else {
-				alpha = this.hoverAlpha;
-			}
+		let { code, _iconFont, colors, state } = this;
+
+		gr.DrawString(code, _iconFont, colors[state], this.x, this.y, this.width, this.height, StringFormat.Center);
+	}
+}
+
+export class Button3 extends Clickable {
+
+	text: string;
+	_textFont: IGdiFont;
+	_textLeft: number;
+	_textTop: number;
+	icon: SerializableIcon;
+	_iconLeft: number;
+	_iconTop: number;
+	foreColors: number[];
+	backgroundColors: number[];
+	style: number;
+
+	constructor(options: {
+		text?: string;
+		icon?: string;
+		foreColors: number[];
+		backgroundColors?: number[];
+		style?: number;
+		onClick?: (x?: number, y?: number) => void;
+	}) {
+		super(options);
+
+		this._setText(options.text);
+		this._setIcon(options.icon);
+		this.foreColors = options.foreColors;
+		if (options.backgroundColors) this.backgroundColors = options.backgroundColors;
+		this.style = (options.style ? options.style : 0);
+		if (options.onClick) this.on_click = options.onClick;
+		this.style = (options.style ? options.style : ButtonStyles.Default);
+	}
+
+	_setText(textInfo: string) {
+		if (textInfo == null) return;
+		let _textInfoArr = textInfo.split(",")
+		this.text = _textInfoArr[0];
+		this._textFont = gdi.Font(_textInfoArr[1], +_textInfoArr[2]);
+	}
+
+	_setIcon(iconInfo: string) {
+		if (iconInfo == null) return;
+		let _iconInfoArr = iconInfo.split(",");
+		this.icon = new SerializableIcon(_iconInfoArr[0], _iconInfoArr[1], +_iconInfoArr[2]);
+	}
+
+	on_size() {
+		if (!(this.text && this.icon)) return;
+
+		// calc icon & text position;
+		// --------------------------
+
+		if (this.text && this.icon) {
+			let _gap = (this.icon ? this.icon.iconFont.Height / 2 : 0);
+			let _iconSize = MeasureString(this.icon.code, this.icon.iconFont);
+			let _textSize = MeasureString(this.text, this._textFont);
+
+			// icon;
+			this._iconLeft = (this.width - _iconSize.Width - _textSize.Width - _gap) / 2;
+			this._iconTop = (this.height - _iconSize.Height) / 2;
+
+			// text;
+			this._textLeft = this._iconLeft + _iconSize.Width + _gap
+			this._textTop = (this.height - _iconSize.Height) / 2;
+		} else if (this.text) {
+			// text;
+			let _textSize = MeasureString(this.text, this._textFont);
+			this._textLeft = (this.width - _textSize.Width) / 2;
+			this._textTop = (this.height - _textSize.Height) / 2;
+		} else if (this.icon) {
+			// icon;
+			let _iconSize = MeasureString(this.icon.code, this.icon.iconFont);
+			this._iconLeft = (this.width - _iconSize.Width) / 2;
+			this._iconTop = (this.height - _iconSize.Height) / 2;
 		}
-		else if (this.state === ButtonStates.Down
-			|| this.state === ButtonStates.Disable
-		) {
-			if (this.downImage) {
-				img = this.downImage;
+	}
+
+	on_paint(gr: IGdiGraphics) {
+		let { state, x, y, width, height, style } = this;
+		let { foreColors, backgroundColors } = this;
+		let { icon, text, _textFont } = this;
+
+		let textColor = foreColors[state];
+		let backgroundColor = backgroundColors[state];
+
+		// draw background;
+		gr.SetSmoothingMode(SmoothingMode.AntiAlias);
+		if (style === ButtonStyles.Round) {
+			if (width === height) {
+				backgroundColor && gr.FillEllipse(x, y, width, height, backgroundColor);
+			} else {
+
 			}
-			else {
-				alpha = this.downAlpha;
-			}
+		} else if (style === ButtonStyles.Rectangle) {
+			backgroundColor && gr.FillRoundRect(x, y, width, height, scale(2), scale(2), backgroundColor);
 		}
-		gr.DrawImage(img, this.x, this.y, this.width, this.height, 0, 0, img.Width, img.Height, 0, alpha);
+		gr.SetSmoothingMode(SmoothingMode.Default);
+
+		// draw icon;
+		icon && icon.draw(gr, textColor, x + this._iconLeft, y + this._iconTop, width, height, StringFormat.LeftTop);
+
+		// draw text label;
+		text && gr.DrawString(text, _textFont, textColor, x + this._textLeft, y + this._textTop, width, height, StringFormat.LeftTop);
 	}
 }
 

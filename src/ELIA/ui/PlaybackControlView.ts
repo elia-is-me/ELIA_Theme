@@ -6,14 +6,14 @@ import { MenuFlag, Repaint, StopReason } from "../common/common";
 import { TextLink } from "../common/TextLink";
 import { NowplayingArtwork } from "../common/AlbumArt";
 import { Slider, SliderThumbImage } from "../common/Slider";
-import { Icon } from "../common/Button";
 import { Component } from "../common/BasePart";
 import { Material, MaterialFont } from "../common/Icon"
-import { scale, imageFromCode, PlaybackOrder, SmoothingMode, blendColors, MeasureString, StringFormat } from "../common/common";
+import { scale, PlaybackOrder, SmoothingMode, blendColors, MeasureString, StringFormat } from "../common/common";
 import { IThemeColors, bottomColors, globalFontName } from "./Theme";
 import { IInputPopupOptions } from "./InputPopupPanel";
 import { notifyOthers } from "../common/UserInterface";
 import { isValidPlaylist } from "./PlaylistView";
+import { IconButton } from "../common/Button";
 
 function pos2vol(pos: number) {
 	return (50 * Math.log(0.99 * pos + 0.01)) / Math.LN10;
@@ -48,34 +48,10 @@ export function toggleMood(metadb: IFbMetadb) {
 }
 
 type ButtonKeys = "playOrPause" | "next" | "prev" | "love" | "repeat" | "shuffle" | "volume";
-type ImageKeys = "pause" | "play" | "next" | "prev" | "heart" | "heart_empty"
-	| "repeat_off" | "repeat_on" | "repeat1_on" | "shuffle_off" | "shuffle_on"
-	| "volume" | "volume_mute";
-type TPlaybackButtons = { [K in ButtonKeys]: Icon };
+type IButtons = { [K in ButtonKeys]: IconButton };
 
-const createBottomButtons = (themeColors?: IThemeColors) => {
-	const colors = bottomColors;
-	let iconName = MaterialFont;
-	let iconFont = gdi.Font(iconName, scale(24));
-	let iconFont2 = gdi.Font(iconName, scale(22));
-	let bw_1 = scale(32);
-	let bw_2 = scale(32);
-	let images: { [K in ImageKeys]: IGdiBitmap } = {
-		pause: imageFromCode(Material.pause, iconFont, colors.text, bw_1, bw_1),
-		play: imageFromCode(Material.play_arrow, iconFont, colors.text, bw_1, bw_1),
-		next: imageFromCode(Material.skip_next, iconFont, colors.text, bw_1, bw_1),
-		prev: imageFromCode(Material.skip_prev, iconFont, colors.text, bw_1, bw_1),
-		heart: imageFromCode(Material.heart, iconFont2, colors.heart, bw_2, bw_2),
-		heart_empty: imageFromCode(Material.heart_empty, iconFont2, colors.text, bw_2, bw_2),
-		repeat_off: imageFromCode(Material.repeat, iconFont2, colors.text, bw_2, bw_2),
-		repeat_on: imageFromCode(Material.repeat, iconFont2, colors.highlight, bw_2, bw_2),
-		repeat1_on: imageFromCode(Material.repeat1, iconFont2, colors.highlight, bw_2, bw_2),
-		shuffle_off: imageFromCode(Material.shuffle, iconFont2, colors.text, bw_2, bw_2),
-		shuffle_on: imageFromCode(Material.shuffle, iconFont2, colors.highlight, bw_2, bw_2),
-		volume: imageFromCode(Material.volume, iconFont2, colors.text, bw_2, bw_2),
-		volume_mute: imageFromCode(Material.volume_mute, iconFont2, colors.text, bw_2, bw_2),
-	}
-	let buttons: TPlaybackButtons = {
+const createBottomButtons = () => {
+	let buttons: IButtons = {
 		playOrPause: null,
 		next: null,
 		prev: null,
@@ -83,19 +59,31 @@ const createBottomButtons = (themeColors?: IThemeColors) => {
 		repeat: null,
 		shuffle: null,
 		volume: null
+	};
+
+	const createIconButton = (code: string, fontSize: number, color: number): IconButton => {
+		return new IconButton({
+			code: code,
+			fontSize: fontSize,
+			fontName: MaterialFont,
+			colors: [color]
+		});
 	}
 
-	//
+	const defaultColor = bottomColors.text;
+	const highlightColor = bottomColors.highlight;
+	const iconSize = scale(22);
 
-	buttons.playOrPause = new Icon({
-		image: images.pause,
+	// button 'Play or Pause';
+	buttons.playOrPause = createIconButton(Material.pause, iconSize, defaultColor);
+	Object.assign(buttons.playOrPause, {
 		on_click: function () {
 			fb.PlayOrPause();
-			this.on_init();
-			Repaint();
+			// this.on_init();
+			// this.repaint();
 		},
 		on_init: function () {
-			this.setImage(fb.IsPlaying && !fb.IsPaused ? images.pause : images.play);
+			(this as IconButton).setIcon(fb.IsPlaying && !fb.IsPaused ? Material.pause : Material.play);
 		},
 		on_playback_new_track: function () {
 			this.on_init();
@@ -110,40 +98,42 @@ const createBottomButtons = (themeColors?: IThemeColors) => {
 			Repaint();
 		}
 	});
-	buttons.next = new Icon({
-		image: images.next,
 
-		on_click: function () {
-			fb.Next();
-		}
-	});
+	// button 'Next';
+	buttons.next = createIconButton(Material.skip_next, iconSize, defaultColor);
+	buttons.next.on_click = function () {
+		fb.Next();
+	};
 
-	buttons.prev = new Icon({
-		image: images.prev,
-		on_click: function () {
-			fb.Prev();
-		}
-	});
+	// button 'Prev';
+	buttons.prev = createIconButton(Material.skip_prev, iconSize, defaultColor);
+	buttons.prev.on_click = function () {
+		fb.Prev();
+	};
 
-	buttons.love = new Icon({
-		image: images.heart_empty,
+	// button 'Love', enabled when 'foo_playcount' is installed (currently);
+	buttons.love = createIconButton(Material.heart, iconSize, highlightColor);
+	Object.assign(buttons.love, {
 		on_init: function () {
-			var metadb = fb.GetNowPlaying();
+			let metadb = fb.GetNowPlaying();
 			if (!metadb || !fb.IsMetadbInMediaLibrary(metadb)) {
-				this.setImage(images.heart_empty);
+				buttons.love.setIcon(Material.heart_empty);
+				buttons.love.setColors(defaultColor);
 			} else {
-				this.setImage(+TF_RATING.EvalWithMetadb(metadb) == 5 ? images.heart : images.heart_empty);
+				let loved = +TF_RATING.EvalWithMetadb(metadb) === 5;
+				buttons.love.setIcon(loved ? Material.heart : Material.heart_empty);
+				buttons.love.setColors(loved ? highlightColor : defaultColor);
 			}
 			if (!metadb || !fb.IsPlaying) {
-				(this as Icon).disable();
+				this.disable();
 			} else {
-				(this as Icon).enable();
+				this.enable();
 			}
 		},
 		on_click: function () {
-			var metadb = fb.GetNowPlaying();
+			let metadb = fb.GetNowPlaying();
 			if (metadb && fb.IsMetadbInMediaLibrary(metadb)) {
-				var loved_ = +TF_RATING.EvalWithMetadb(metadb) == 5;
+				let loved_ = +TF_RATING.EvalWithMetadb(metadb) == 5;
 				fb.RunContextCommandWithMetadb(loved_ ? CMD_UNLOVE : CMD_LOVE, metadb, 8);
 			}
 			this.on_init();
@@ -165,18 +155,22 @@ const createBottomButtons = (themeColors?: IThemeColors) => {
 		}
 	});
 
-	buttons.repeat = new Icon({
-		image: images.repeat_off,
+
+	buttons.repeat = createIconButton(Material.repeat, iconSize, defaultColor);
+	Object.assign(buttons.repeat, {
 		on_init() {
 			switch (plman.PlaybackOrder) {
 				case PlaybackOrder.RepeatPlaylist:
-					this.setImage(images.repeat_on);
+					this.setIcon(Material.repeat);
+					this.setColors(highlightColor);
 					break;
 				case PlaybackOrder.RepeatTrack:
-					this.setImage(images.repeat1_on);
+					this.setIcon(Material.repeat1);
+					this.setColors(highlightColor);
 					break;
 				default: // repeat off
-					this.setImage(images.repeat_off);
+					this.setIcon(Material.repeat);
+					this.setColors(defaultColor);
 					break;
 			}
 		},
@@ -188,23 +182,23 @@ const createBottomButtons = (themeColors?: IThemeColors) => {
 			} else {
 				plman.PlaybackOrder = 1;
 			}
-
-			this.on_init();
-			Repaint();
+			// this.on_init();
+			// Repaint();
 		},
 		on_playback_order_changed() {
 			this.on_init();
-			Repaint();
+			this.repaint();
 		}
-	})
+	});
 
-	buttons.shuffle = new Icon({
-		image: images.shuffle_off,
+	// button 'Shuffle';
+	buttons.shuffle = createIconButton(Material.shuffle, iconSize, defaultColor);
+	Object.assign(buttons.shuffle, {
 		on_init() {
 			if (plman.PlaybackOrder === getShuffleOrder()) {
-				this.setImage(images.shuffle_on);
+				this.setColors(highlightColor);
 			} else {
-				this.setImage(images.shuffle_off);
+				this.setColors(defaultColor);
 			}
 		},
 		on_click() {
@@ -213,34 +207,36 @@ const createBottomButtons = (themeColors?: IThemeColors) => {
 			} else {
 				plman.PlaybackOrder = getShuffleOrder();
 			}
-			this.on_init();
+			// this.on_init();
 		},
 		on_playback_order_changed() {
 			this.on_init();
-			Repaint();
+			this.repaint();
 		},
 	});
 
-	buttons.volume = new Icon({
-		image: images.volume,
+	// button 'Volume Mute Toggle';
+	buttons.volume = createIconButton(Material.volume, iconSize, defaultColor);
+	Object.assign(buttons.volume, {
 		on_init() {
-			this.setImage(
-				fb.Volume == -100 ? images.volume_mute : images.volume
-			);
+			this.setIcon(fb.Volume === -100 ? Material.volume_mute : Material.volume);
 		},
 		on_click() {
 			fb.VolumeMute();
 		},
 		on_volume_change() {
 			this.on_init();
-			Repaint();
+			this.repaint();
 		}
+	});
+
+	// Set ALL buttons' size;
+	Object.values(buttons).forEach(btn => {
+		btn.setSize(scale(32), scale(32));
 	});
 
 	return buttons;
 }
-
-
 
 function createThumbImg(colors: IThemeColors): SliderThumbImage {
 	let tw = scale(14);
@@ -356,7 +352,7 @@ export class PlaybackControlView extends Component {
 	seekbar: Slider;
 	artwork: NowplayingArtwork;
 	artist: TextLink;
-	buttons: TPlaybackButtons;
+	buttons: IButtons;
 
 	constructor() {
 		super({});
@@ -451,7 +447,7 @@ export class PlaybackControlView extends Component {
 		buttons.volume.setPosition(bx_6, by_6);
 
 		// love;
-		buttons.love.setPosition(bx_6 - bw_2, by_6);
+		buttons.love.setPosition(bx_6 - bw_2 - scale(8), by_6);
 
 		// seekbar;
 		let seek_max_w = scale(640);
