@@ -26,7 +26,7 @@ const playlistManager = new PlaylistManagerView();
 const root = new Layout({
 	topbar: topbar,
 	playbackControlBar: playbackControlBar,
-	playlsitManager: playlistManager,
+	playlistManager: playlistManager,
 	playlistView: playlistView,
 });
 

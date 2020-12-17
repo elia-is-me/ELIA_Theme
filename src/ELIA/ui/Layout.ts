@@ -34,7 +34,7 @@ export class Layout extends Component {
 	constructor(options: {
 		topbar: TopBar;
 		playbackControlBar: PlaybackControlView;
-		playlsitManager: PlaylistManagerView;
+		playlistManager: PlaylistManagerView;
 		playlistView: PlaylistView;
 		addPlaylistPanel?: InputPopupPanel;
 	}) {
@@ -45,7 +45,7 @@ export class Layout extends Component {
 		//
 		this.topbar = options.topbar;
 		this.playbackControlBar = options.playbackControlBar;
-		this.playlistManager = options.playlsitManager;
+		this.playlistManager = options.playlistManager;
 		this.playlistView = options.playlistView;
 
 		this.addChild(this.topbar);
