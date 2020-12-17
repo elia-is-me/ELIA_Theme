@@ -8,11 +8,11 @@ import { ThrottledRepaint } from "../common/common";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
 import { Component, IBoxModel, IPaddings } from "../common/BasePart";
-import { Material, MaterialFont, SerializableIcon } from "../common/Icon";
+import { Material, MaterialFont, IconObject } from "../common/Icon";
 import { PlaylistArtwork } from "../common/AlbumArt";
 import { toggleMood } from "./PlaybackControlView";
 import { notifyOthers, ui } from "../common/UserInterface";
-import { Button2 } from "../common/Button";
+import { Button } from "../common/Button";
 import { IInputPopupOptions } from "./InputPopupPanel";
 import { IAlertDialogOptions } from "./AlertDialog";
 
@@ -136,10 +136,10 @@ class PlaylistHeaderView extends Component {
 
 	playlistIndex: number;
 	artwork: PlaylistArtwork;
-	shuffleBtn: Button2;
-	editBtn: Button2;
-	contextBtn: Button2;
-	sortBtn: Button2;
+	shuffleBtn: Button;
+	editBtn: Button;
+	contextBtn: Button;
+	sortBtn: Button;
 
 	constructor(options: { titleText?: string; discriptionText?: string; primaryColor: number; secondaryColor: number }) {
 		super({});
@@ -169,8 +169,14 @@ class PlaylistHeaderView extends Component {
 		this.artwork = new PlaylistArtwork();
 		this.addChild(this.artwork);
 
-		this.shuffleBtn = new Button2({ text: "Shuffle All", icon: Material.shuffle, style: 1 });
-		this.shuffleBtn.setSize(scale(120), scale(36));
+		this.shuffleBtn = new Button({
+			style: "contained",
+			text: "Shuffle All",
+			icon: Material.shuffle,
+			foreColor: RGB(15, 15, 15),
+			backgroundColor: RGB(255, 255, 255)
+		});
+		// this.shuffleBtn.setSize(scale(120), scale(36));
 		this.shuffleBtn.on_click = () => {
 			if (plman.PlaylistItemCount(plman.ActivePlaylist) > 0) {
 				plman.ExecutePlaylistDefaultAction(plman.ActivePlaylist, Math.floor(Math.random() * plman.PlaylistItemCount(plman.ActivePlaylist)));
@@ -179,23 +185,38 @@ class PlaylistHeaderView extends Component {
 		this.addChild(this.shuffleBtn);
 
 		// Playlist edit btn;
-		this.editBtn = new Button2({ icon: Material.edit });
-		this.editBtn.setSize(scale(36), scale(36));
+		this.editBtn = new Button({
+			style: "outlined",
+			icon: Material.edit,
+			text: "Edit",
+			foreColor: RGB(255, 255, 255)
+		});
+		// this.editBtn.setSize(scale(36), scale(36));
 		this.editBtn.on_click = () => {
 			// notifyOthers()
 		};
 		// this.addChild(this.editBtn);
 
 		// Playlist context btn;
-		this.contextBtn = new Button2({ icon: Material.more_vert });
-		this.contextBtn.setSize(scale(36), scale(36));
+		this.contextBtn = new Button({
+			style: "text",
+			icon: Material.more_vert,
+			text: "More",
+			foreColor: mainColors.text
+		});
+		// this.contextBtn.setSize(scale(36), scale(36));
 		this.contextBtn.on_click = (x, y) => {
 			showHeaderContextMenu(plman.ActivePlaylist, x, y);
 		};
 		this.addChild(this.contextBtn);
 
 		// Playlist Sort btn;
-		this.sortBtn = new Button2({ text: "Sort", icon: Material.sort });
+		this.sortBtn = new Button({
+			style: "text",
+			text: "Sort",
+			icon: Material.sort,
+			foreColor: mainColors.text
+		});
 		this.sortBtn.setSize(scale(80), scale(36));
 		this.sortBtn.on_click = (x, y) => {
 			showSortPlaylistMenu(plman.ActivePlaylist, x, y);
@@ -336,7 +357,7 @@ class PlaylistHeaderView extends Component {
 		for (let i = 0; i < btns.length; i++) {
 			btns[i].setPosition(btnX, btnY);
 			if (btns[i + 1]) {
-				btnX += (btns[i + 1].text ? scale(16) : scale(4)) + btns[i].width;
+				btnX += (btns[i + 1].text ? scale(8) : scale(4)) + btns[i].width;
 			}
 		}
 	}
@@ -466,10 +487,10 @@ export class PlaylistView extends ScrollView {
 
 	headerView: PlaylistHeaderView;
 
-	playingIco: SerializableIcon;
-	pauseIco: SerializableIcon;
-	heartOnIco: SerializableIcon;
-	heartOffIco: SerializableIcon;
+	playingIco: IconObject;
+	pauseIco: IconObject;
+	heartOnIco: IconObject;
+	heartOffIco: IconObject;
 
 	_columnsMap: Map<string, PlaylistColumn> = new Map();
 	clickOnSelection: boolean;
@@ -503,13 +524,13 @@ export class PlaylistView extends ScrollView {
 		 * Create icons;
 		 */
 
-		this.playingIco = new SerializableIcon(Material.volume, MaterialFont, scale(16));
+		this.playingIco = new IconObject(Material.volume, MaterialFont, scale(16));
 
-		this.pauseIco = new SerializableIcon(Material.volume_mute, MaterialFont, scale(16));
+		this.pauseIco = new IconObject(Material.volume_mute, MaterialFont, scale(16));
 
-		this.heartOnIco = new SerializableIcon(Material.heart, MaterialFont, scale(16));
+		this.heartOnIco = new IconObject(Material.heart, MaterialFont, scale(16));
 
-		this.heartOffIco = new SerializableIcon(Material.heart_empty, MaterialFont, scale(16));
+		this.heartOffIco = new IconObject(Material.heart_empty, MaterialFont, scale(16));
 
 		/**
 		 * Set getMoodId method;

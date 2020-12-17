@@ -63,7 +63,7 @@ const createBottomButtons = () => {
 
 	const createIconButton = (code: string, fontSize: number, color: number): IconButton => {
 		return new IconButton({
-			code: code,
+			icon: code,
 			fontSize: fontSize,
 			fontName: MaterialFont,
 			colors: [color]
@@ -75,7 +75,7 @@ const createBottomButtons = () => {
 	const iconSize = scale(22);
 
 	// button 'Play or Pause';
-	buttons.playOrPause = createIconButton(Material.pause, iconSize, defaultColor);
+	buttons.playOrPause = createIconButton(Material.pause, scale(32), defaultColor);
 	Object.assign(buttons.playOrPause, {
 		on_click: function () {
 			fb.PlayOrPause();
@@ -219,7 +219,7 @@ const createBottomButtons = () => {
 	buttons.volume = createIconButton(Material.volume, iconSize, defaultColor);
 	Object.assign(buttons.volume, {
 		on_init() {
-			this.setIcon(fb.Volume === -100 ? Material.volume_mute : Material.volume);
+			this.setIcon(fb.Volume === -100 ? Material.volume_off : Material.volume);
 		},
 		on_click() {
 			fb.VolumeMute();
@@ -442,7 +442,7 @@ export class PlaybackControlView extends Component {
 		volume.setBoundary(vol_x, vol_y >> 0, vol_w, vol_h);
 
 		// volume mute button;
-		let bx_6 = vol_x - bw_2 - scale(4);
+		let bx_6 = vol_x - bw_2 - scale(8);
 		let by_6 = (top + (height - bw_2) / 2) >> 0;
 		buttons.volume.setPosition(bx_6, by_6);
 
@@ -667,11 +667,3 @@ function setShuffleOrder(order: number) {
 	window.SetProperty("Global.DefaultShuffle", order);
 	return order;
 }
-
-
-/**
- * TODO:
- *
- * - info area onClick action;
- * - artist onClick action; // 等等
- */

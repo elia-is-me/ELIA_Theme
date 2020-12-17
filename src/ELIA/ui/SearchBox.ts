@@ -2,75 +2,39 @@
  * SearchBox on TopBar, Search library, playlist, etc.
  * ------------------------------------------------- */
 
-import { Component, IInjectableCallbacks } from "../common/BasePart";
+import { Component } from "../common/BasePart";
 import { InputBox } from "../common/Inputbox";
-import { Icon2 } from "../common/Button";
-import { scale, setAlpha, RGB, MeasureString } from "../common/common";
-import { Material, MaterialFont, SerializableIcon } from "../common/Icon";
+import { IconButton } from "../common/Button";
+import { scale, RGB, MeasureString } from "../common/common";
+import { Material, } from "../common/Icon";
 import { mainColors, globalFontName } from "./Theme";
-import { notifyOthers, ui } from "../common/UserInterface";
-
-type TIconKeys = "loupe" | "delta" | "cross";
-const iconFontSize = scale(20);
-const iconHeight = scale(32);
-
-const icons: {
-	[keys in TIconKeys]: SerializableIcon;
-} = {
-	loupe: new SerializableIcon(Material.search, MaterialFont, iconFontSize),
-	delta: new SerializableIcon(Material.arrow_drop_down, MaterialFont, iconFontSize),
-	cross: new SerializableIcon(Material.close, MaterialFont, iconFontSize)
-};
-
-interface IIconColors {
-	normal: number;
-	hover?: number;
-	down?: number;
-}
-
-const iconColor: IIconColors = {
-	normal: mainColors.text,
-	hover: setAlpha(mainColors.text, 200),
-	down: setAlpha(mainColors.text, 128),
-};
-
-const searchBoxColors = {
-	backgroundColor: RGB(60, 60, 60),
-	backgroundActiveColor: RGB(77, 77, 77),
-	foreColor: mainColors.text,
-};
+import { notifyOthers } from "../common/UserInterface";
 
 export class SearchBox extends Component {
 	inputbox: InputBox;
-	searchBtn: Icon2;
-	clearBtn: Icon2;
-	// menuBtn: Icon2;
+	searchBtn: IconButton;
+	clearBtn: IconButton;
 
-	backgroundColor: number;
-	foreColor: number;
+	backgroundColor: number = RGB(60, 60, 60);
+	foreColor: number = mainColors.text;
 	borderColor: number;
 	borderActiveColor: number;
-	backgroundActiveColor: number;
+	backgroundActiveColor: number = RGB(77, 77, 77);
 
-	inputState: number = 0;
-	icons: { [keys in TIconKeys]: SerializableIcon };
-	iconHeight: number;
+	private iconSize = scale(20);
+	private iconHeight = scale(32);
 	_inputboxHeight: number;
 
 	constructor() {
 		super({});
 
-		this.icons = icons;
-		this.iconHeight = iconHeight;
-		Object.assign(this, searchBoxColors);
-
 		this.grabFocus = false;
+		let iconFontSize = this.iconSize;
 
-		this.searchBtn = new Icon2({
-			fontIcon: this.icons.loupe,
-			hoverColor: iconColor.normal,
-			downColor: iconColor.normal,
-			normalColor: iconColor.normal,
+		this.searchBtn = new IconButton({
+			icon: Material.search,
+			fontSize: iconFontSize,
+			colors: [this.foreColor]
 		});
 
 		this.searchBtn.on_click = () => {
@@ -86,25 +50,15 @@ export class SearchBox extends Component {
 			this.repaint();
 		};
 
-		this.clearBtn = new Icon2({
-			fontIcon: this.icons.cross,
-			hoverColor: iconColor.hover,
-			downColor: iconColor.down,
-			normalColor: iconColor.normal,
-			onClick() {
-				handleClear();
-			},
+		this.clearBtn = new IconButton({
+			icon: Material.close,
+			fontSize: iconFontSize,
+			colors: [this.foreColor]
 		});
+		this.clearBtn.on_click = () => {
+			handleClear();
+		}
 		this.clearBtn.grabFocus = false;
-
-		// this.menuBtn = new Icon2({
-		// 	fontIcon: this.icons.delta,
-		// 	hoverColor: iconColor.hover,
-		// 	downColor: iconColor.down,
-		// 	normalColor: iconColor.normal,
-		// });
-		// this.menuBtn.grabFocus = false;
-
 
 		this.inputbox = new InputBox({
 			font: gdi.Font(globalFontName, scale(14)),
@@ -121,7 +75,7 @@ export class SearchBox extends Component {
 
 		this._inputboxHeight = MeasureString("ABCDgl汉字", this.inputbox.font).Height + scale(4);
 
-		[this.searchBtn, this.clearBtn, /*this.menuBtn,*/ this.inputbox].forEach((btn) =>
+		[this.searchBtn, this.clearBtn, this.inputbox].forEach((btn) =>
 			this.addChild(btn)
 		);
 
@@ -155,19 +109,13 @@ export class SearchBox extends Component {
 	on_init() { }
 
 	on_size() {
-		const { searchBtn, clearBtn, /* menuBtn,*/ inputbox } = this;
+		const { searchBtn, clearBtn, inputbox } = this;
 		const { iconHeight } = this;
 
 		let btnY = this.y + this.height - iconHeight;
 		let marginLeft = scale(8);
 
 		searchBtn.setBoundary(this.x + marginLeft, btnY, iconHeight, iconHeight);
-		// menuBtn.setBoundary(
-		// 	this.x + this.width - marginLeft - iconHeight,
-		// 	btnY,
-		// 	iconHeight,
-		// 	iconHeight
-		// );
 		clearBtn.setBoundary(
 			this.x + this.width - marginLeft - iconHeight,
 			btnY,

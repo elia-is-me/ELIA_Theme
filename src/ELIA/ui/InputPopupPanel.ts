@@ -1,6 +1,6 @@
 import { Component } from "../common/BasePart";
 import { MeasureString, RGB, scale, StringFormat, setAlpha, isEmptyString, isFunction } from "../common/common";
-import { Button2, } from "../common/Button";
+import { Button, } from "../common/Button";
 import { InputBox } from "../common/Inputbox";
 import { notifyOthers } from "../common/UserInterface";
 import { mainColors, globalFontName } from "./Theme";
@@ -55,8 +55,8 @@ export class InputPopupPanel
 	onSuccess?: () => void;
 	onFail?: () => void;
 
-	okBtn: Button2;
-	cancelBtn: Button2;
+	okBtn: Button;
+	cancelBtn: Button;
 	inputbox: InputBox;
 	inputboxHeight: number;
 
@@ -70,8 +70,12 @@ export class InputPopupPanel
 		this.paddings.left = scale(40);
 
 		// create buttons;
-		this.okBtn = new Button2({ text: "OK", style: 1, });
-		this.okBtn.setSize(scale(80), scale(32));
+		this.okBtn = new Button({
+			text: "OK",
+			style: "text",
+			foreColor: mainColors.text
+		});
+		// this.okBtn.setSize(scale(80), scale(32));
 		this.okBtn.on_click = () => {
 			if (this.inputbox.text) {
 				if (isFunction(opts.onSuccess)) {
@@ -82,8 +86,12 @@ export class InputPopupPanel
 			notifyOthers("Hide.InputPopupPanel", this.cid);
 		};
 
-		this.cancelBtn = new Button2({ text: "Cancel", });
-		this.cancelBtn.setSize(scale(80), scale(32));
+		this.cancelBtn = new Button({
+			style: "text",
+			text: "Cancel",
+			foreColor: mainColors.text,
+		});
+		// this.cancelBtn.setSize(scale(80), scale(32));
 		this.cancelBtn.on_click = () => {
 			notifyOthers("Hide.InputPopupPanel", this.cid);
 		};

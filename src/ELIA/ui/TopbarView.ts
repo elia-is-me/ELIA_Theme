@@ -1,19 +1,22 @@
 import { scale, RGB, StringFormat, TextRenderingHint, setAlpha, MenuFlag } from "../common/common";
-import { Icon2 } from "../common/Button";
+import { IconButton } from "../common/Button";
 import { Component } from "../common/BasePart";
 import { mainColors } from "./Theme";
 import { SearchBox } from "./SearchBox";
 import { notifyOthers, ui } from "../common/UserInterface";
-import { Material, MaterialFont, SerializableIcon } from "../common/Icon";
+import { Material, MaterialFont, IconObject } from "../common/Icon";
 
 const iconSize = scale(20);
 const textRenderingHint = ui.textRender;
 
-const menuIcon = new SerializableIcon(Material.menu, MaterialFont, iconSize);
-
-const settingsIcon = new SerializableIcon(Material.gear, MaterialFont, iconSize);
-
-const appsIcon = new SerializableIcon(Material.apps, MaterialFont, iconSize);	
+const createIconButton = (code: string, fontSize: number, color: number) => {
+	return new IconButton({
+		icon: code,
+		fontName: MaterialFont,
+		fontSize: fontSize,
+		colors: [color]
+	});
+};
 
 const topbarColors = {
 	backgroundColor: RGB(37, 37, 37),
@@ -32,9 +35,9 @@ export class TopBar extends Component {
 	private _logoFont = gdi.Font("Impact", scale(18));
 	private _logoText = "foobar2000";
 
-	mainIco: Icon2;
-	settingsIco: Icon2;
-	switchIco: Icon2;
+	mainIco: IconButton;
+	settingsIco: IconButton;
+	switchIco: IconButton;
 	searchBox: SearchBox;
 
 	constructor() {
@@ -43,31 +46,19 @@ export class TopBar extends Component {
 		this.foreColor = topbarColors.foreColor;
 		this.backgroundColor = topbarColors.backgroundColor;
 
-		this.mainIco = new Icon2({
-			fontIcon: menuIcon,
-			normalColor: this.foreColor,
-			hoverColor: setAlpha(this.foreColor, 200),
-			downColor: setAlpha(this.foreColor, 128),
-		});
+		// button 'Main';
+		this.mainIco = createIconButton(Material.menu, iconSize, this.foreColor);
 
 		this.mainIco.on_click = () => {
 			notifyOthers("Toggle.PlaylistManager");
 		};
 
-		this.settingsIco = new Icon2({
-			fontIcon: settingsIcon,
-			normalColor: this.foreColor,
-			hoverColor: setAlpha(this.foreColor, 200),
-			downColor: setAlpha(this.foreColor, 128),
-		});
-		this.settingsIco.disable();
+		// button 'Settings';
+		this.settingsIco = createIconButton(Material.gear, iconSize, this.foreColor);
+		// this.settingsIco.disable();
 
-		this.switchIco = new Icon2({
-			fontIcon: appsIcon,
-			normalColor: this.foreColor,
-			hoverColor: setAlpha(this.foreColor, 200),
-			downColor: setAlpha(this.foreColor, 128),
-		});
+		// button 'Page Switch';
+		this.switchIco = createIconButton(Material.apps, iconSize, this.foreColor);
 		this.switchIco.disable();
 
 		this.searchBox = new SearchBox();
@@ -113,11 +104,11 @@ export class TopBar extends Component {
 		const logoX = this.mainIco.x + this.mainIco.width + scale(16);
 
 		gr.SetTextRenderingHint(TextRenderingHint.AntiAlias);
-		gr.DrawString( _logoText, _logoFont, foreColor, logoX, this.y, 1000, this.height, StringFormat.LeftCenter);
+		gr.DrawString(_logoText, _logoFont, foreColor, logoX, this.y, 1000, this.height, StringFormat.LeftCenter);
 		gr.SetTextRenderingHint(textRenderingHint);
 	}
 
-	on_mouse_rbtn_up (x: number, y: number) {
+	on_mouse_rbtn_up(x: number, y: number) {
 		showMainMenu(x, y);
 	}
 }

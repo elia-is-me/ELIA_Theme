@@ -4,10 +4,10 @@ import { mainColors, globalFontName, scrollbarColor } from "./Theme";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
 import { IPaddings } from "../common/BasePart";
-import { MaterialFont, Material, SerializableIcon } from "../common/Icon";
+import { MaterialFont, Material, IconObject } from "../common/Icon";
 import { toggleMood } from "./PlaybackControlView";
 import { notifyOthers, ui } from "../common/UserInterface";
-import { Button, Button2 } from "../common/Button";
+import { Button, IconButton } from "../common/Button";
 
 const textRenderingHint = ui.textRender;
 
@@ -294,11 +294,11 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 
 	scrollbar: Scrollbar;
 	headerView: HeaderView;
-	heartOnIco: SerializableIcon;
-	heartOffIco: SerializableIcon;
-	playingIco: SerializableIcon;
-	pauseIco: SerializableIcon;
-	closeBtn: Button2;
+	heartOnIco: IconObject;
+	heartOffIco: IconObject;
+	playingIco: IconObject;
+	pauseIco: IconObject;
+	closeBtn: IconButton;
 
 	_columnsMap: Map<string, PlaylistColumn> = new Map();
 
@@ -318,7 +318,13 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 			metadbs: this.metadbs,
 		});
 
-		this.closeBtn = new Button2({ icon: Material.close, iconSize: scale(28) });
+		// this.closeBtn = new Button({ style: "text", icon: Material.close, text: "close", foreColor: mainColors.text });
+		this.closeBtn = new IconButton({
+			icon: Material.close,
+			fontName: MaterialFont,
+			fontSize: scale(28),
+			colors: [mainColors.text]
+		})
 		this.closeBtn.setSize(scale(48), scale(48));
 		this.closeBtn.z = 10;
 		this.closeBtn.on_click = () => {
@@ -332,13 +338,13 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 		;[this.scrollbar, this.headerView, this.closeBtn]
 			.forEach(child => this.addChild(child));
 
-		this.heartOnIco = new SerializableIcon(Material.heart, MaterialFont, scale(16));
+		this.heartOnIco = new IconObject(Material.heart, MaterialFont, scale(16));
 
-		this.heartOffIco = new SerializableIcon(Material.heart_empty, MaterialFont, scale(16));
+		this.heartOffIco = new IconObject(Material.heart_empty, MaterialFont, scale(16));
 
-		this.playingIco = new SerializableIcon(Material.volume, MaterialFont, scale(16));
+		this.playingIco = new IconObject(Material.volume, MaterialFont, scale(16));
 
-		this.pauseIco = new SerializableIcon(Material.volume_mute, MaterialFont, scale(16));
+		this.pauseIco = new IconObject(Material.volume_mute, MaterialFont, scale(16));
 
 		let moodWidth = this.rowHeight;//+ scale(4);
 

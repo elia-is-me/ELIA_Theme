@@ -2,13 +2,13 @@
 // Playlist Manager
 // -------------------------
 
-import { scale, blendColors, RGB, StringFormat, ThrottledRepaint, MenuFlag } from "../common/common";
+import { scale, blendColors, RGB, StringFormat, ThrottledRepaint, MenuFlag, setAlpha } from "../common/common";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
 import { Component } from "../common/BasePart";
-import { Material, MaterialFont, SerializableIcon } from "../common/Icon";
+import { Material, MaterialFont, IconObject } from "../common/Icon";
 import { scrollbarWidth, IThemeColors, mainColors, sidebarColors, scrollbarColor, globalFontName } from "./Theme";
-import { Button, IButtonColors } from "../common/Button";
+import { Clickable } from "../common/Button";
 import { isValidPlaylist } from "./PlaylistView";
 import { IInputPopupOptions } from "./InputPopupPanel";
 import { IAlertDialogOptions } from "./AlertDialog";
@@ -38,13 +38,13 @@ interface IPlaylistManagerProps {
 	colors: IPlaylistManagerColors;
 	itemFont: IGdiFont;
 	rowHeight: number;
-	icons: { [keys in IconSets]: SerializableIcon };
+	icons: { [keys in IconSets]: IconObject };
 }
 
-const icons: { [keys in IconSets]: SerializableIcon } = {
-	volume: new SerializableIcon(Material.volume, MaterialFont, scale(20)),
-	gear: new SerializableIcon(Material.gear, MaterialFont, scale(20)),
-	queue_music: new SerializableIcon(Material.queue_music, MaterialFont, scale(20)),
+const icons: { [keys in IconSets]: IconObject } = {
+	volume: new IconObject(Material.volume, MaterialFont, scale(20)),
+	gear: new IconObject(Material.gear, MaterialFont, scale(20)),
+	queue_music: new IconObject(Material.queue_music, MaterialFont, scale(20)),
 };
 
 interface IPlaylistManagerColors extends IThemeColors {
@@ -70,47 +70,48 @@ export const PLM_Properties = {
 	colors: PLM_Colors,
 };
 
+class AddPlaylistButton extends Clickable {
+
+	private textFont = PLM_Properties.itemFont;
+	private addIcon = new IconObject(Material.circle_add, MaterialFont, scale(20))
+	private text = "\u65B0\u5EFA\u5217\u8868";
+	private colors = [PLM_Colors.text, PLM_Colors.textActive, setAlpha(PLM_Colors.text, 127)];
+
+	constructor() {
+		super({})
+	}
+
+	on_paint(gr: IGdiGraphics) {
+		let color = this.colors[this.state];
+
+		this.addIcon.draw(gr, color, this.x + scale(16), this.y, scale(40), this.height, StringFormat.Center);
+		gr.DrawString(this.text, this.textFont, color, this.x + scale(16 + 40 + 4), this.y, this.width - scale(16 + 40 + 4), this.height, StringFormat.LeftCenter);
+
+	}
+
+	on_click() {
+		notifyOthers("Popup.InputPopupPanel", {
+			title: "Create new playlist",
+			onSuccess(text: string) {
+				let playlistIndex = plman.CreatePlaylist(plman.PlaylistCount, text);
+				if (isValidPlaylist(playlistIndex)) {
+					plman.ActivePlaylist = playlistIndex;
+				}
+			}
+		})
+	}
+}
+
 class PLM_Header extends Component {
 	label: string = "PLAYLISTS";
 	colors: IPlaylistManagerColors;
-	addPlaylistBtn: Button;
+	addPlaylistBtn: AddPlaylistButton;
 
 	constructor(attrs: { colors: IPlaylistManagerColors }) {
 		super({});
 
 		this.colors = attrs.colors;
-		this.setAddPlaylistBtn();
-	}
-
-	private setAddPlaylistBtn() {
-		let addIcon = new SerializableIcon(Material.circle_add, MaterialFont, scale(20));
-		let font = gdi.Font(globalFontName, scale(14));
-		let colors: IButtonColors = {
-			textColor: PLM_Properties.colors.text,
-			hoverColor: PLM_Properties.colors.textActive,
-			downColor: PLM_Properties.colors.textActive,
-		};
-
-		this.addPlaylistBtn = new Button({
-			icon: addIcon,
-			text: "ADD PLAYLIST",
-			font: font,
-			colors: colors,
-			paddings: { top: 0, bottom: 0, left: scale(16), right: scale(8) },
-			gap: scale(4),
-			onClick: () => {
-				notifyOthers("Popup.InputPopupPanel", {
-					title: "Create new playlist",
-					onSuccess(text: string) {
-						let playlistIndex = plman.CreatePlaylist(plman.PlaylistCount, text);
-						if (isValidPlaylist(playlistIndex)) {
-							plman.ActivePlaylist = playlistIndex;
-						}
-					},
-				});
-			},
-		});
-
+		this.addPlaylistBtn = new AddPlaylistButton();
 		this.addChild(this.addPlaylistBtn);
 	}
 
@@ -161,13 +162,13 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 	itemFont: IGdiFont;
 	colors: IPlaylistManagerColors;
 	icons: {
-		volume: SerializableIcon;
-		gear: SerializableIcon;
-		queue_music: SerializableIcon;
+		volume: IconObject;
+		gear: IconObject;
+		queue_music: IconObject;
 	};
 
-	playingIco: SerializableIcon;
-	pauseIco: SerializableIcon;
+	playingIco: IconObject;
+	pauseIco: IconObject;
 
 	constructor(attrs: IPlaylistManagerProps = PLM_Properties) {
 		super(attrs);
@@ -187,9 +188,9 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 		this.addChild(this.scrollbar);
 		this.addChild(this.header);
 
-		this.playingIco = new SerializableIcon(Material.volume, MaterialFont, scale(16));
+		this.playingIco = new IconObject(Material.volume, MaterialFont, scale(16));
 
-		this.pauseIco = new SerializableIcon(Material.volume_mute, MaterialFont, scale(16));
+		this.pauseIco = new IconObject(Material.volume_mute, MaterialFont, scale(16));
 	}
 
 	initList() {

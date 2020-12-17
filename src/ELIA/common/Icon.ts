@@ -14,6 +14,7 @@ export const Material = {
     circle_play: '\ue039',
     volume: '\ue050',
     volume_mute: '\ue04e',
+    volume_off: '\ue04f',
     more_horiz: '\ue5d3',
     music_note: '\ue3a1',
     star_border: '\ue83a',
@@ -43,7 +44,7 @@ export const MaterialFont = "Material Icons";
 const defaultRenderingHint = ui.textRender;
 const _iconFontCache: Map<string, IGdiFont> = new Map();
 
-export class SerializableIcon {
+export class IconObject {
     fontName: string;
     code: string;
     fontSize: number;

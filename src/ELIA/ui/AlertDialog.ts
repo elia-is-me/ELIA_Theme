@@ -1,5 +1,5 @@
 import { Component } from "../common/BasePart";
-import { Button2 } from "../common/Button";
+import { Button } from "../common/Button";
 import { globalFontName, mainColors } from "./Theme";
 import {
 	scale,
@@ -49,8 +49,8 @@ export class AlertDialog
 
 	title: string;
 
-	okBtn: Button2;
-	cancelBtn: Button2;
+	okBtn: Button;
+	cancelBtn: Button;
 
 	constructor(options: IAlertDialogOptions) {
 		super({});
@@ -60,8 +60,11 @@ export class AlertDialog
 		this.paddings.top = scale(44);
 		this.paddings.left = scale(40);
 
-		this.okBtn = new Button2({
+		this.okBtn = new Button({
+			style: "text",
 			text: "OK",
+			foreColor: mainColors.text,
+
 			// textColor: this.highlightColor,
 			// textHoverColor: setAlpha(this.highlightColor, 200),
 			// textDownColor: setAlpha(this.highlightColor, 127),
@@ -74,8 +77,11 @@ export class AlertDialog
 			notifyOthers("Hide.AlertDialog");
 		};
 
-		this.cancelBtn = new Button2({
+		this.cancelBtn = new Button({
+			style: "text",
 			text: "Cancel",
+			foreColor: mainColors.text,
+
 			// textColor: this.textColor,
 			// textHoverColor: setAlpha(this.textColor, 200),
 			// textDownColor: setAlpha(this.textColor, 127),
