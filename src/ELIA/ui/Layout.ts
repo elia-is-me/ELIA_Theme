@@ -227,17 +227,14 @@ export class Layout extends Component {
 				this.setPartsVisible(this.viewState);
 				this.on_size();
 				ui.updateParts();
-				console.log("playlsit visib	: ", this.playlistView.visible);
 				this.repaint();
 				break;
 			case "Show.Playlist":
-				console.log(this.children.length);
 				if (this.searchResultView) {
 					this.searchResultView.visible = false; 
 					this.searchResultView.parent?.removeChild(this.searchResultView);
 					this.searchResultView = undefined;
 				}
-				console.log(this.children.length);
 				this.viewState = ViewStates.Default;
 				this.setPartsVisible(this.viewState);
 				this.on_size();
