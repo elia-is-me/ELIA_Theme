@@ -6,10 +6,10 @@
   "dependencies": {},
   "devDependencies": {
     "browserify": "^16.5.2",
-    "gulp": "^4.0.0",
+    "gulp": "^4.0.2",
     "gulp-cli": "^2.3.0",
     "gulp-typescript": "^6.0.0-alpha.1",
-    "tsify": "^5.0.0",
+    "tsify": "^5.0.2",
     "typescript": "^3.9.7",
     "vinyl-source-stream": "^2.0.0"
   },
