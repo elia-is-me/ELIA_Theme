@@ -247,7 +247,6 @@ export class Button extends Clickable {
 		let { text, icon, _textFont, _iconFont } = this;
 		if (icon) {
 			gr.SetTextRenderingHint(TextRenderingHint.AntiAlias);
-			// gr.FillSolidRect(_iconX, y, _iconWidth, height, 0xf0aabbcc);
 			gr.DrawString(icon, _iconFont, foreColor, _iconX, y, _iconWidth, height, StringFormat.Center);
 			gr.SetTextRenderingHint(textRenderingHint);
 		}

@@ -53,8 +53,14 @@ export const scrollbarColor = {
 
 export const scrollbarWidth = scale(14);
 
-// export const globalFontName = "Microsoft YaHei";
-export const globalFontName = "Segoe UI";
 
+// Font names that may used;
+// -------------------------
+
+export const globalFontName = "Segoe UI";
+export const fontNormalName = "Segoe UI";
+export const fontNameSemibold = "Segoe UI Semibold";
+export const fontNameBold = "Segoe UI"; // the same with normal font name;
+export const fontNameHeavy = "Segoe UI Black";
 
 export const sliderHeight = scale(20);
