@@ -1,4 +1,5 @@
 import { RGB, RGBA, scale } from "../common/common"
+import { MaterialFont } from "../common/Icon"
 
 export interface IThemeColors {
     text: number;
@@ -46,17 +47,18 @@ export const sidebarColors: IThemeColors = {
 /**
  * Scrollbar color;
  */
-export const scrollbarColor = {
-    cursor: 0x50ffffff & mainColors.text,
-    background: 0, // opacity
-}
+// export const scrollbarColor = {
+//     cursor: 0x50ffffff & mainColors.text,
+//     background: 0, // opacity
+// }
 
 // Custom colors;
+// --------------
 
 export const themeColors = {
     // 
     titleText: RGB(255, 255, 255),
-    text: RGBA(255, 255, 255, 235),
+    text: RGBA(255, 255, 255, 245),
     secondaryText: RGBA(255, 255, 255, 170),
     highlight: RGB(251, 114, 153),
 
@@ -64,18 +66,20 @@ export const themeColors = {
     mood: RGB(221, 0, 27),
 
     // topbar spec
-    topbarBackground: RGB(40, 40, 40),
+    topbarBackground: RGB(18, 18, 18),
 
     // playback control bar,
     playbackBarBackground: RGB(40, 40, 40),
 
     // siderbar,
     sidebarInactiveText: RGBA(255, 255, 255, 200),
-    sidebarBackground: RGB(24, 24, 24),
+    sidebarBackground: RGB(18, 18, 18),
+    sidebarSplitLine: RGBA(255, 255, 255, 118),
 
     // playlist,
     playlistBackground: RGB(24, 24, 24),
     playlistBackgroundSelection: RGBA(255, 255, 255, 17),
+    playlistSplitLine: RGBA(255, 255, 255, 15),
 
     // scrollbar,
     scrollbarCursor: RGBA(255, 255, 255, 80),
@@ -84,19 +88,33 @@ export const themeColors = {
     // buttons,
     primary: RGB(255, 255, 255),
     onPrimary: RGBA(0, 0, 0, 245),
+    secondary: RGB(255, 255, 255),
+    onSecondary: RGBA(0, 0, 0, 245),
 
 }
-
 
 
 // Font names that may used;
 // -------------------------
 
-export const globalFontName = "Segoe UI";
-export const fontNameNormal = "Segoe UI";
-export const fontNameSemibold = "Segoe UI Semibold";
-export const fontNameBold = "Segoe UI"; // the same with normal font name;
-export const fontNameHeavy = "Segoe UI Black";
+export const globalFontName = "Yu Gothic UI";
+export const fontNameNormal = "Yu Gothic UI";
+export const fontNameSemibold = "Yu Gothic UI Semibold";
+export const fontNameBold = fontNameNormal;
+export const fontNameHeavy = "Yu Gothic UI Bold";
+
+export const fonts = {
+    normal_12: gdi.Font(fontNameNormal, scale(12)),
+    normal_13: gdi.Font(fontNameNormal, scale(13)),
+    normal_14: gdi.Font(fontNameNormal, scale(14)),
+    semibold_14: gdi.Font(fontNameSemibold, scale(14)),
+
+    material_22: gdi.Font(MaterialFont, scale(22)),
+
+    // playback time;
+    trebuchet_12: gdi.Font("Trebuchet MS", scale(12)),
+
+}
 
 // Height of seekbar or volumebar;
 export const sliderHeight = scale(20);

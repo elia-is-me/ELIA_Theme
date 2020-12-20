@@ -1,13 +1,13 @@
 import { Component, IBoxModel } from "../common/BasePart";
 import { RGB, scale, isEmptyString, StringFormat, MeasureString, TextRenderingHint, StopReason, VKeyCode, MenuFlag, clamp, KMask } from "../common/common";
-import { mainColors, globalFontName, scrollbarColor } from "./Theme";
+import { mainColors, globalFontName, themeColors } from "./Theme";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
 import { IPaddings } from "../common/BasePart";
 import { MaterialFont, Material, IconObject } from "../common/Icon";
 import { toggleMood } from "./PlaybackControlView";
 import { notifyOthers, ui } from "../common/UserInterface";
-import { Button, IconButton } from "../common/Button";
+import { IconButton } from "../common/Button";
 
 const textRenderingHint = ui.textRender;
 
@@ -308,8 +308,8 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 		Object.assign(this, defaultOptions, options);
 
 		this.scrollbar = new Scrollbar({
-			cursorColor: scrollbarColor.cursor,
-			backgroundColor: 0,
+			cursorColor: themeColors.scrollbarCursor,
+			backgroundColor: themeColors.scrollbarBackground,
 		});
 		this.scrollbar.z = 10;
 

@@ -9,7 +9,7 @@ import { Slider, SliderThumbImage } from "../common/Slider";
 import { Component } from "../common/BasePart";
 import { Material, MaterialFont } from "../common/Icon"
 import { scale, PlaybackOrder, SmoothingMode, blendColors, MeasureString, StringFormat } from "../common/common";
-import { IThemeColors, bottomColors, globalFontName } from "./Theme";
+import { IThemeColors, bottomColors, themeColors, fonts } from "./Theme";
 import { IInputPopupOptions } from "./InputPopupPanel";
 import { notifyOthers } from "../common/UserInterface";
 import { isValidPlaylist } from "./PlaylistView";
@@ -70,8 +70,8 @@ const createBottomButtons = () => {
 		});
 	}
 
-	const defaultColor = bottomColors.text;
-	const highlightColor = bottomColors.highlight;
+	const defaultColor = themeColors.text;
+	const highlightColor = themeColors.highlight;
 	const iconSize = scale(22);
 
 	// button 'Play or Pause';
@@ -89,7 +89,7 @@ const createBottomButtons = () => {
 			this.on_init();
 			Repaint();
 		},
-		on_playback_stop: function (reason: number) {
+		on_playback_stop: function () {
 			this.on_init();
 			Repaint();
 		},
@@ -112,7 +112,7 @@ const createBottomButtons = () => {
 	};
 
 	// button 'Love', enabled when 'foo_playcount' is installed (currently);
-	buttons.love = createIconButton(Material.heart, iconSize, highlightColor);
+	buttons.love = createIconButton(Material.heart, iconSize, themeColors.mood);
 	Object.assign(buttons.love, {
 		on_init: function () {
 			let metadb = fb.GetNowPlaying();
@@ -122,7 +122,7 @@ const createBottomButtons = () => {
 			} else {
 				let loved = +TF_RATING.EvalWithMetadb(metadb) === 5;
 				buttons.love.setIcon(loved ? Material.heart : Material.heart_empty);
-				buttons.love.setColors(loved ? highlightColor : defaultColor);
+				buttons.love.setColors(loved ? themeColors.mood : defaultColor);
 			}
 			if (!metadb || !fb.IsPlaying) {
 				this.disable();
@@ -294,11 +294,10 @@ const volumebar = new Slider({
 const TF_TRACK_TITLE = fb.TitleFormat("%title%");
 // \u30fb: Middle dot char code.
 const TF_ARTIST = fb.TitleFormat("$if2([%artist%],未知艺人)[\u30fb$year(%date%)]");
-const artistFont = gdi.Font(globalFontName, scale(12));
 
 const artistText = new TextLink({
 	text: "ARTIST",
-	font: artistFont,
+	font: fonts.normal_12,
 	textColor: blendColors(bottomColors.text, bottomColors.background, 0.2),
 	textHoverColor: blendColors(bottomColors.text, bottomColors.background, 0.2),
 }, {
@@ -340,8 +339,8 @@ export class PlaybackControlView extends Component {
 	playbackTime: string = "";
 	playbackLength: string = "";
 	trackTitle: string = "";
-	titleFont = gdi.Font("Segoe UI Semibold", scale(13));
-	timeFont = gdi.Font("Segoe UI", scale(12));
+	titleFont = fonts.semibold_14;
+	timeFont = fonts.trebuchet_12;
 	timeWidth = 1;
 	volumeWidth = scale(80);
 	artworkWidth = scale(55);
@@ -403,7 +402,6 @@ export class PlaybackControlView extends Component {
 
 	on_size() {
 		let { seekbar, volume, buttons, artwork, artist } = this;
-		// let buttons = pb_btns2;
 		let left = this.x,
 			top = this.y,
 			width = this.width,
@@ -461,14 +459,15 @@ export class PlaybackControlView extends Component {
 		seekbar.setBoundary(seek_x, seek_y >> 0, seek_w, scale(16));
 
 		// art;
-		let art_w = scale(48);
-		let art_pad = (height - art_w) / 2;
-		artwork.setBoundary(left + art_pad, top + art_pad, art_w, art_w);
+		let art_pad_left = scale(12);
+		let art_pad_top = scale(12);
+		let art_width = (height - 2 * art_pad_top);
+		artwork.setBoundary(left + art_pad_left, top + art_pad_top, art_width, art_width);
 
 		// artist text;
 		let artist_y = this.y + this.height / 2;
 		let pb_time_x = seekbar.x - this.timeWidth - scale(4);
-		let artist_x = albumArt.x + albumArt.width + scale(8);
+		let artist_x = albumArt.x + albumArt.width + scale(12);
 		let artist_max_w = pb_time_x - scale(16) - artist_x;
 		artist.setMaxWidth(artist_max_w);
 		artist.setSize(null, scale(20));
@@ -476,25 +475,23 @@ export class PlaybackControlView extends Component {
 	}
 
 	on_paint(gr: IGdiGraphics) {
-		let { colors } = this;
-
 		// bg
-		gr.FillSolidRect(this.x, this.y, this.width, this.height, colors.background);
+		gr.FillSolidRect(this.x, this.y, this.width, this.height, themeColors.playbackBarBackground);
 
 		// playback time;
 		let pb_time_x = seekbar.x - this.timeWidth - scale(4);
 		let pb_time_y = seekbar.y;
-		gr.DrawString(this.playbackTime, this.timeFont, colors.text, pb_time_x, pb_time_y, this.timeWidth, seekbar.height, StringFormat.Center);
+		gr.DrawString(this.playbackTime, this.timeFont, themeColors.secondaryText, pb_time_x, pb_time_y, this.timeWidth, seekbar.height, StringFormat.Center);
 
 		// playback length;
 		let pb_len_x = seekbar.x + seekbar.width + scale(4);
-		gr.DrawString(this.playbackLength, this.timeFont, colors.text, pb_len_x, pb_time_y, this.timeWidth, seekbar.height, StringFormat.Center);
+		gr.DrawString(this.playbackLength, this.timeFont, themeColors.secondaryText, pb_len_x, pb_time_y, this.timeWidth, seekbar.height, StringFormat.Center);
 
 		// track title;
-		let title_x = albumArt.x + albumArt.width + scale(8);
+		let title_x = albumArt.x + albumArt.width + scale(12);
 		let title_max_w = pb_time_x - scale(16) - title_x;
 		let title_y = this.y + this.height / 2 - scale(22) - scale(2);
-		gr.DrawString(this.trackTitle, this.titleFont, colors.text, title_x, title_y, title_max_w, scale(22), StringFormat.LeftCenter);
+		gr.DrawString(this.trackTitle, this.titleFont, themeColors.text, title_x, title_y, title_max_w, scale(22), StringFormat.LeftCenter);
 	}
 
 	on_playback_new_track() {
@@ -513,7 +510,7 @@ export class PlaybackControlView extends Component {
 		}
 	}
 
-	on_mouse_rbtn_down(x: number, y: number) {
+	on_mouse_rbtn_down() {
 		this._rightDown = true;
 	}
 
@@ -633,23 +630,6 @@ function showPanelContextMenu(metadb: IFbMetadb, x: number, y: number) {
 
 }
 
-function showShuffleBtnMenu(x: number, y: number) {
-	const objMenu = window.CreatePopupMenu();
-
-	objMenu.AppendMenuItem(MenuFlag.STRING, PlaybackOrder.Random, "Random");
-	objMenu.AppendMenuItem(MenuFlag.STRING, PlaybackOrder.ShuffleTracks, "Shuffle(tracks)");
-	objMenu.AppendMenuItem(MenuFlag.STRING, PlaybackOrder.ShuffleAlbums, "Shuffle(albums)");
-	objMenu.AppendMenuItem(MenuFlag.STRING, PlaybackOrder.ShuffleFolders, "Shuffle(Folders)");
-
-	let orderSetting = getShuffleOrder();
-	objMenu.CheckMenuRadioItem(PlaybackOrder.Random, PlaybackOrder.ShuffleFolders, orderSetting);
-
-	let ret = objMenu.TrackPopupMenu(x, y);
-
-	setShuffleOrder(ret);
-	plman.PlaybackOrder = ret;
-
-}
 
 function getShuffleOrder() {
 	let orderSetting = +window.GetProperty("Global.DefaultShuffle", 4);

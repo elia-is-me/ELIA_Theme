@@ -2,12 +2,12 @@
 // Playlist Manager
 // -------------------------
 
-import { scale, blendColors, RGB, StringFormat, ThrottledRepaint, MenuFlag, setAlpha } from "../common/common";
+import { scale, RGB, StringFormat, ThrottledRepaint, MenuFlag, setAlpha } from "../common/common";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
 import { Component } from "../common/BasePart";
 import { Material, MaterialFont, IconObject } from "../common/Icon";
-import { scrollbarWidth, IThemeColors, mainColors, sidebarColors, scrollbarColor, globalFontName } from "./Theme";
+import { scrollbarWidth, globalFontName, themeColors } from "./Theme";
 import { Clickable } from "../common/Button";
 import { isValidPlaylist } from "./PlaylistView";
 import { IInputPopupOptions } from "./InputPopupPanel";
@@ -35,7 +35,6 @@ let mouseDown = false;
 type IconSets = "volume" | "gear" | "queue_music";
 
 interface IPlaylistManagerProps {
-	colors: IPlaylistManagerColors;
 	itemFont: IGdiFont;
 	rowHeight: number;
 	icons: { [keys in IconSets]: IconObject };
@@ -47,19 +46,6 @@ const icons: { [keys in IconSets]: IconObject } = {
 	queue_music: new IconObject(Material.queue_music, MaterialFont, scale(20)),
 };
 
-interface IPlaylistManagerColors extends IThemeColors {
-	textActive: number;
-	background_hover: number;
-}
-
-const PLM_Colors: IPlaylistManagerColors = {
-	text: blendColors(mainColors.text, mainColors.background, 0.3),
-	textActive: mainColors.text,
-	background: RGB(18, 18, 18),
-	highlight: mainColors.highlight,
-	background_sel: RGB(20, 20, 20),
-	background_hover: RGB(10, 10, 10),
-};
 
 export const PLM_Properties = {
 	minWidth: scale(256),
@@ -67,15 +53,14 @@ export const PLM_Properties = {
 	itemFont: gdi.Font(globalFontName, scale(14)),
 	headerHeight: scale(80),
 	icons: icons,
-	colors: PLM_Colors,
 };
 
 class AddPlaylistButton extends Clickable {
 
 	private textFont = PLM_Properties.itemFont;
 	private addIcon = new IconObject(Material.circle_add, MaterialFont, scale(20))
-	private text = "\u65B0\u5EFA\u5217\u8868";
-	private colors = [PLM_Colors.text, PLM_Colors.textActive, setAlpha(PLM_Colors.text, 127)];
+	private text = "\u65B0\u5EFA\u64ad\u653e\u5217\u8868";
+	private colors = [themeColors.sidebarInactiveText, themeColors.text, setAlpha(themeColors.text, 127)];
 
 	constructor() {
 		super({})
@@ -104,13 +89,10 @@ class AddPlaylistButton extends Clickable {
 
 class PLM_Header extends Component {
 	label: string = "PLAYLISTS";
-	colors: IPlaylistManagerColors;
 	addPlaylistBtn: AddPlaylistButton;
 
-	constructor(attrs: { colors: IPlaylistManagerColors }) {
+	constructor() {
 		super({});
-
-		this.colors = attrs.colors;
 		this.addPlaylistBtn = new AddPlaylistButton();
 		this.addChild(this.addPlaylistBtn);
 	}
@@ -120,17 +102,15 @@ class PLM_Header extends Component {
 	}
 
 	on_paint(gr: IGdiGraphics) {
-		const { colors } = this;
-
 		// draw background;
-		gr.FillSolidRect(this.x, this.y, this.width, this.height, colors.background);
+		gr.FillSolidRect(this.x, this.y, this.width, this.height, themeColors.sidebarBackground);
 
 		// split line;
 		let lineY = this.y + scale(40 + 10 + 20);
 		let lineX1 = this.x + scale(20);
 		let lineX2 = this.x + this.width - scale(16);
 
-		gr.DrawLine(lineX1, lineY, lineX2, lineY, scale(1), RGB(100, 100, 100));
+		gr.DrawLine(lineX1, lineY, lineX2, lineY, scale(1), themeColors.sidebarSplitLine);
 	}
 }
 
@@ -160,7 +140,6 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 	minWidth: number = scale(256);
 	rowHeight: number;
 	itemFont: IGdiFont;
-	colors: IPlaylistManagerColors;
 	icons: {
 		volume: IconObject;
 		gear: IconObject;
@@ -175,16 +154,13 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 
 		this.rowHeight = attrs.rowHeight;
 		this.itemFont = attrs.itemFont;
-		this.colors = attrs.colors;
 		this.icons = attrs.icons;
 
 		this.scrollbar = new Scrollbar({
-			cursorColor: scrollbarColor.cursor,
-			backgroundColor: 0,
+			cursorColor: themeColors.scrollbarCursor,
+			backgroundColor: themeColors.scrollbarBackground,
 		});
-		this.header = new PLM_Header({
-			colors: this.colors,
-		});
+		this.header = new PLM_Header();
 		this.addChild(this.scrollbar);
 		this.addChild(this.header);
 
@@ -241,7 +217,6 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 	on_paint(gr: IGdiGraphics) {
 		let rowHeight = this.rowHeight;
 		let items_ = this.items;
-		let colors = this.colors;
 		let itemFont = this.itemFont;
 		let headerHeight = PLM_Properties.headerHeight;
 		let paddingL = scale(16);
@@ -250,7 +225,7 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 		let iconWidth = scale(40);
 
 		// draw background
-		gr.FillSolidRect(this.x, this.y, this.width, this.height, colors.background);
+		gr.FillSolidRect(this.x, this.y, this.width, this.height, themeColors.sidebarBackground);
 
 		// draw items;
 		for (let i = 0, len = items_.length; i < len; i++) {
@@ -262,13 +237,10 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 			// items in visible area;
 			if (rowItem.y + rowHeight >= this.y + headerHeight && rowItem.y < this.y + this.height) {
 				let isActive = rowItem.index === plman.ActivePlaylist;
-				let textColor = isActive ? colors.textActive : colors.text;
-				if (i === this.hoverId) {
-					textColor = colors.textActive;
-				}
+				let textColor = (((i === this.hoverId) || isActive) ? themeColors.text : themeColors.sidebarInactiveText);
 
 				if (isActive) {
-					gr.FillSolidRect(rowItem.x, rowItem.y, rowItem.width, rowItem.height, colors.text & 0x1fffffff);
+					gr.FillSolidRect(rowItem.x, rowItem.y, rowItem.width, rowItem.height, themeColors.text & 0x1fffffff);
 				}
 
 				// draw icon;
@@ -279,7 +251,7 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 				let iconX = this.x + this.width - scale(40) - this.scrollbar.width - scale(8);
 				if (fb.IsPlaying && rowItem.index === plman.PlayingPlaylist) {
 					let _volumeIcon = (fb.IsPaused ? this.pauseIco : this.playingIco);
-					_volumeIcon.draw(gr, colors.highlight, iconX, rowItem.y, scale(40), scale(40));
+					_volumeIcon.draw(gr, themeColors.highlight, iconX, rowItem.y, scale(40), scale(40));
 				}
 
 				let textWidth = rowItem.width - paddingL - paddingR - scale(40) - scale(4);
@@ -315,7 +287,7 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 			if (lineY < this.y) {
 				lineY += this.rowHeight;
 			}
-			gr.DrawLine(this.x, lineY, this.x + this.width, lineY, lineWidth, colors.text);
+			gr.DrawLine(this.x, lineY, this.x + this.width, lineY, lineWidth, themeColors.text);
 		}
 	}
 

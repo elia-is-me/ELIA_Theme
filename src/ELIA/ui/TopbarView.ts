@@ -1,10 +1,10 @@
-import { scale, RGB, StringFormat, TextRenderingHint, setAlpha, MenuFlag } from "../common/common";
-import { IconButton } from "../common/Button";
+import { scale, StringFormat, TextRenderingHint, MenuFlag } from "../common/common";
 import { Component } from "../common/BasePart";
-import { mainColors } from "./Theme";
-import { SearchBox } from "./SearchBox";
+import { IconButton } from "../common/Button";
+import { Material, MaterialFont } from "../common/Icon";
 import { notifyOthers, ui } from "../common/UserInterface";
-import { Material, MaterialFont, IconObject } from "../common/Icon";
+import { themeColors } from "./Theme";
+import { SearchBox } from "./SearchBox";
 
 const iconSize = scale(20);
 const textRenderingHint = ui.textRender;
@@ -19,10 +19,9 @@ const createIconButton = (code: string, fontSize: number, color: number) => {
 };
 
 const topbarColors = {
-	backgroundColor: RGB(37, 37, 37),
-	foreColor: mainColors.text,
+	backgroundColor: themeColors.topbarBackground,
+	foreColor: themeColors.text
 };
-
 
 export const Topbar_Properties = {
 	height: scale(56),
@@ -55,7 +54,6 @@ export class TopBar extends Component {
 
 		// button 'Settings';
 		this.settingsIco = createIconButton(Material.gear, iconSize, this.foreColor);
-		// this.settingsIco.disable();
 
 		// button 'Page Switch';
 		this.switchIco = createIconButton(Material.apps, iconSize, this.foreColor);
@@ -98,7 +96,7 @@ export class TopBar extends Component {
 	}
 
 	on_paint(gr: IGdiGraphics) {
-		gr.FillSolidRect(this.x, this.y, this.width, this.height, this.backgroundColor);
+		gr.FillSolidRect(this.x, this.y, this.width, this.height, themeColors.topbarBackground);
 
 		const { _logoFont, _logoText, foreColor } = this;
 		const logoX = this.mainIco.x + this.mainIco.width + scale(16);

@@ -72,8 +72,8 @@ export class Clickable extends Component {
 }
 
 /**
- * For buttons only contains an icon, currently there is no click animations or
- * background color effects.
+ * Icon button that only contains an icon; Currently there is no click
+ * animations or background color effects.
  */
 export class IconButton extends Clickable {
 	icon: string;
@@ -107,7 +107,11 @@ export class IconButton extends Clickable {
 	 * By default,
 	 */
 	setColors(foreColor: number, backgroundColor?: number) {
-		this.foreColors = [foreColor, setAlpha(foreColor, 200), setAlpha(foreColor, 127), setAlpha(foreColor, 127)];
+		this.foreColors = [
+			foreColor,
+			setAlpha(foreColor, 200),
+			setAlpha(foreColor, 127),
+			setAlpha(foreColor, 100)];
 
 		// TODO;
 		if (backgroundColor) {
@@ -117,7 +121,9 @@ export class IconButton extends Clickable {
 
 	on_paint(gr: IGdiGraphics) {
 		let { icon, _iconFont, foreColors, state } = this;
+		gr.SetTextRenderingHint(TextRenderingHint.AntiAlias);
 		gr.DrawString(icon, _iconFont, foreColors[state], this.x, this.y, this.width, this.height, StringFormat.Center);
+		gr.SetTextRenderingHint(textRenderingHint);
 	}
 }
 
@@ -185,7 +191,7 @@ export class Button extends Clickable {
 					foreColor,
 					setAlpha(foreColor, 200),
 					setAlpha(foreColor, 127),
-					setAlpha(foreColor, 127)
+					setAlpha(foreColor, 100)
 				];
 				this._backgroundColors = [];
 				break;
@@ -231,6 +237,7 @@ export class Button extends Clickable {
 		let borderWidth = scale(1);
 
 		// Button's background & border;
+		// -----
 		gr.SetSmoothingMode(SmoothingMode.AntiAlias);
 		if (this.style === "contained") {
 			gr.FillRoundRect(x, y, width, height, radius, radius, backgroundColor);
@@ -239,8 +246,8 @@ export class Button extends Clickable {
 		}
 		gr.SetSmoothingMode(SmoothingMode.Default);
 
-		// draw button's icon & text;
-
+		// draw  icon & text;
+		// ------
 		this._iconX = this.x + this._padLR;
 		this._textX = this.x + this._padLR + (this.icon ? this._iconWidth + this._gap : 0)
 		let { _iconX, _iconWidth, _textX, _textWidth } = this;
