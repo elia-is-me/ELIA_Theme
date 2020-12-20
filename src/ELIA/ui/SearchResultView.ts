@@ -1,6 +1,6 @@
 import { Component, IBoxModel } from "../common/BasePart";
 import { RGB, scale, isEmptyString, StringFormat, MeasureString, TextRenderingHint, StopReason, VKeyCode, MenuFlag, clamp, KMask } from "../common/common";
-import { mainColors, globalFontName, themeColors } from "./Theme";
+import { mainColors, themeColors, fonts } from "./Theme";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
 import { IPaddings } from "../common/BasePart";
@@ -16,38 +16,21 @@ interface IHeaderOptions {
 	metadbs?: IFbMetadbList;
 }
 
-interface IDefaultHeaderOptions {
-	textColor: number;
-	secondaryColor: number;
-	backgroundColor: number;
-	titleFont: IGdiFont;
-	textFont: IGdiFont;
-}
-
-const defaultHeaderOptions: IDefaultHeaderOptions = {
-	textColor: mainColors.text,
-	secondaryColor: mainColors.secondaryText,
-	backgroundColor: RGB(28, 28, 28),
-	titleFont: gdi.Font(globalFontName, scale(28)),
-	textFont: gdi.Font(globalFontName, scale(14)),
-};
-
-class HeaderView extends Component implements IHeaderOptions, IDefaultHeaderOptions {
+class HeaderView extends Component implements IHeaderOptions {
 	titleText: string = "";
 	desciptionText: string = "";
 	metadbs: IFbMetadbList;
 
-	textColor: number;
-	secondaryColor: number;
-	backgroundColor: number;
-	titleFont: IGdiFont;
-	textFont: IGdiFont;
+	private _textFont = fonts.normal_14;
+	private _titleFont = fonts.normal_28;
 
-	constructor(options: IHeaderOptions) {
+	constructor() {
 		super({});
+	}
 
-		Object.assign(this, defaultHeaderOptions, options);
-
+	updateTitle(titleText: string, metadbs: IFbMetadbList) {
+		this.titleText = titleText;
+		this.metadbs = metadbs;
 		if (this.metadbs != null) {
 			this.desciptionText =
 				this.metadbs.Count +
@@ -58,16 +41,21 @@ class HeaderView extends Component implements IHeaderOptions, IDefaultHeaderOpti
 	}
 
 	setPaddings(width: number): void {
-		// let thin = scale(600);
-		// let wide = scale(920);
-		// let extrawide = scale(1120);
-
 		if ((this.parent as any).paddings) {
 			this.paddings.left = (this.parent as any).paddings.left;
 			this.paddings.right = (this.parent as any).paddings.right;
 		}
 
 		this.paddings.top = this.paddings.bottom = scale(40);
+	}
+
+
+	calcHeight() {
+		return 2 * this._textFont.Height
+			+ 1.5 * this._titleFont.Height
+			+ this._textFont.Height
+			+ this.paddings.top
+			+ this.paddings.bottom;
 	}
 
 	on_size() {
@@ -78,24 +66,25 @@ class HeaderView extends Component implements IHeaderOptions, IDefaultHeaderOpti
 		let textY = this.y + this.paddings.top;
 		let textX = this.x + this.paddings.left;
 		let textW = this.width - this.paddings.left - this.paddings.right;
-		let textFont = this.textFont;
-		let titleFont = this.titleFont;
+		let textFont = this._textFont;
+		let titleFont = this._titleFont;
 
 		// type;
-		gr.DrawString("SEARCH RESULTS", textFont, this.secondaryColor, textX, textY, textW, 2 * textFont.Height, StringFormat.LeftTop);
+		gr.DrawString("SEARCH RESULTS", textFont, themeColors.secondaryText, textX, textY, textW, 2 * textFont.Height, StringFormat.LeftTop);
 
 		textX += scale(16);
 		textY += 2 * textFont.Height;
 
 		// title;
 		gr.SetTextRenderingHint(TextRenderingHint.AntiAlias);
-		gr.DrawString(`"${this.titleText}"`, titleFont, this.textColor, textX, textY, textW, 2 * titleFont.Height, StringFormat.LeftTop);
+		gr.DrawString(`"${this.titleText}"`, titleFont, themeColors.titleText, textX, textY, textW, 2 * titleFont.Height, StringFormat.LeftTop);
 		gr.SetTextRenderingHint(textRenderingHint);
 
 		textY += 1.2 * titleFont.Height;
 
 		// description text;
-		gr.DrawString(this.desciptionText, textFont, this.secondaryColor, textX, textY, textW, 2 * textFont.Height, StringFormat.LeftTop);
+		gr.DrawString(this.desciptionText, textFont, themeColors.secondaryText, textX, textY, textW, 2 * textFont.Height, StringFormat.LeftTop);
+
 	}
 }
 
@@ -257,28 +246,16 @@ interface IDefaultOptions {
 	rowHeight: number;
 }
 
-const defaultOptions: IDefaultOptions = {
-	textColor: mainColors.text,
-	secondaryColor: mainColors.secondaryText,
-	backgroundColor: RGB(28, 28, 28),
-	highlightColor: mainColors.highlight,
-	moodColor: RGB(221, 0, 27),
-	selectionColor: RGB(42, 42, 42),
-	itemFont: gdi.Font(globalFontName, scale(14)),
-	rowHeight: scale(40),
-};
-
 export class SearchResultView extends ScrollView implements ISearchPanelOptions, IDefaultOptions {
-	textColor: number;
-	secondaryColor: number;
-	backgroundColor: number;
-	selectionColor: number;
-	highlightColor: number;
-	moodColor: number;
 
-	itemFont: IGdiFont;
-	rowHeight: number;
-	paddings: IPaddings;
+	textColor: number = themeColors.text;
+	secondaryColor: number = themeColors.secondaryText;
+	backgroundColor: number = themeColors.playlistBackground;
+	highlightColor: number = themeColors.highlight;
+	moodColor: number = themeColors.mood;
+	selectionColor: number = themeColors.playlistBackgroundSelection;
+	itemFont: IGdiFont = fonts.normal_14;
+	rowHeight: number = scale(40);
 
 	titleText: string = "";
 	metadbs: IFbMetadbList;
@@ -302,10 +279,8 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 
 	_columnsMap: Map<string, PlaylistColumn> = new Map();
 
-	constructor(options: ISearchPanelOptions) {
+	constructor() {
 		super({});
-
-		Object.assign(this, defaultOptions, options);
 
 		this.scrollbar = new Scrollbar({
 			cursorColor: themeColors.scrollbarCursor,
@@ -313,12 +288,9 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 		});
 		this.scrollbar.z = 10;
 
-		this.headerView = new HeaderView({
-			titleText: this.titleText,
-			metadbs: this.metadbs,
-		});
+		this.headerView = new HeaderView();
+		this.headerView.z = 1;
 
-		// this.closeBtn = new Button({ style: "text", icon: Material.close, text: "close", foreColor: mainColors.text });
 		this.closeBtn = new IconButton({
 			icon: Material.close,
 			fontName: MaterialFont,
@@ -339,14 +311,11 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 			.forEach(child => this.addChild(child));
 
 		this.heartOnIco = new IconObject(Material.heart, MaterialFont, scale(16));
-
 		this.heartOffIco = new IconObject(Material.heart_empty, MaterialFont, scale(16));
-
 		this.playingIco = new IconObject(Material.volume, MaterialFont, scale(16));
-
 		this.pauseIco = new IconObject(Material.volume_mute, MaterialFont, scale(16));
 
-		let moodWidth = this.rowHeight;//+ scale(4);
+		let moodWidth = this.rowHeight;
 
 		this.getActiveMoodId = (x: number, y: number): number => {
 			let moodColumn = this._columnsMap.get("mood");
@@ -371,17 +340,30 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 		this._columnsMap.set("mood", new PlaylistColumn());
 		this._columnsMap.set("time", new PlaylistColumn());
 
-		this.setList();
+		// this.updateList(this.titleText, this.metadbs);
 	}
 
-	setList() {
-		let metadbs = this.metadbs;
+	updateList(titleText: string, metadbs: IFbMetadbList) {
+
+		// update properties;
+		// ----
+		this.titleText = titleText;
+		this.metadbs = metadbs;
+
+		// update header;
+		// ----
+		this.headerView.updateTitle(this.titleText, this.metadbs);
+
+		// init list;
+		// ----
 		let resultItems: PlaylistViewItem[] = [];
 		let resultCount = metadbs.Count;
 		let rowHeight = this.rowHeight;
 		let itemYOffset = 0;
 		this._selectedIndexes = [];
 
+		// set items;
+		// ----
 		for (let i = 0; i < resultCount; i++) {
 			let rowItem = new PlaylistViewItem();
 			rowItem.rowIndex = i;
@@ -446,7 +428,17 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 		// ------------------
 		// Set columns' size;
 		// ------------------
-		trackNumber.width = scale(60);
+
+		// calc tracknumber width;
+		if (this.items.length < 100) {
+			trackNumber.width = MeasureString("00", this.itemFont).Width + scale(16);
+		} else if (this.items.length < 1000) {
+			trackNumber.width = MeasureString("000", this.itemFont).Width + scale(16);
+		} else {
+			let d = ("" + this.items.length).length - 1;
+			trackNumber.width = MeasureString("0".repeat(d), this.itemFont).Width + scale(16);
+		}
+
 		time.width = scale(16) + MeasureString("0:00:00", this.itemFont).Width;
 		mood.width = scale(48);
 
@@ -486,7 +478,6 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 
 		time.x = album.x + album.width;
 
-		// ----------------------
 		// Set columns' paddings
 		// ----------------------
 		title.setPaddings({ right: scale(16) });
@@ -509,12 +500,7 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 		this.scrollbar.setBoundary(this.x + this.width - scale(14), this.y, scale(14), this.height);
 
 		this.headerView.setPaddings(this.width);
-		let headerHeight =
-			2 * this.headerView.textFont.Height +
-			1.2 * this.headerView.titleFont.Height +
-			this.headerView.textFont.Height +
-			this.headerView.paddings.top +
-			this.headerView.paddings.bottom;
+		let headerHeight = this.headerView.calcHeight();
 		this.headerView.setBoundary(this.x, this.y, this.width, headerHeight);
 		this.closeBtn.setPosition(this.x + this.width - scale(64), this.y + scale(16) - this.scroll);
 
@@ -524,7 +510,7 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 	}
 
 	on_paint(gr: IGdiGraphics) {
-		let { top, bottom, right, left } = this.paddings;
+		let { right, left } = this.paddings;
 		let { itemFont } = this;
 
 		let _columnsMap = this._columnsMap;
@@ -566,13 +552,18 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 				// draw items background;
 				// ----------------------
 
+				// selection row highlight;
 				if (rowItem.isSelect) {
 					gr.FillSolidRect(rowItem.x, rowItem.y, rowItem.width, rowItem.height, this.selectionColor);
 				}
 
+				// focused rectangle;
 				if (this.focusIndex === i) {
 					gr.DrawRect(rowItem.x, rowItem.y, rowItem.width - 1, rowItem.height - 1, scale(1), RGB(127, 127, 127));
 				}
+
+				// item split line;
+				gr.DrawLine(rowItem.x, rowItem.y + this.rowHeight - 1, rowItem.x + rowItem.width, rowItem.y + this.rowHeight - 1, 1, themeColors.playlistSplitLine);
 
 				// -------------
 				// draw columns;
@@ -581,7 +572,7 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 				// index;
 				if (this.playingIndex === i) {
 					(fb.IsPaused ? this.pauseIco : this.playingIco)
-						.draw(gr, this.highlightColor, cTrackNumber.x+scale(8), rowItem.y, cTrackNumber.width, this.rowHeight);
+						.draw(gr, this.highlightColor, cTrackNumber.x + scale(8), rowItem.y, cTrackNumber.width, this.rowHeight);
 				} else {
 					cTrackNumber.draw(gr, i + 1, itemFont, this.secondaryColor, rowItem, StringFormat.Center);
 				}
@@ -611,6 +602,9 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 				}
 			}
 		}
+
+		// Shadow top cover;
+		gr.FillGradRect(this.x, this.y, this.width, scale(40), 90, themeColors.topbarBackground, 0, 1.0);
 	}
 
 	private findHoverItem(x: number, y: number) {

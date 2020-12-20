@@ -7,12 +7,13 @@ import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
 import { Component } from "../common/BasePart";
 import { Material, MaterialFont, IconObject } from "../common/Icon";
-import { scrollbarWidth, globalFontName, themeColors } from "./Theme";
+import { scrollbarWidth, themeColors, fonts } from "./Theme";
 import { Clickable } from "../common/Button";
 import { isValidPlaylist } from "./PlaylistView";
 import { IInputPopupOptions } from "./InputPopupPanel";
 import { IAlertDialogOptions } from "./AlertDialog";
 import { dndMask, notifyOthers, ui } from "../common/UserInterface";
+import { layout } from "./Layout";
 
 const enum DropEffect {
 	None = 0,
@@ -48,9 +49,9 @@ const icons: { [keys in IconSets]: IconObject } = {
 
 
 export const PLM_Properties = {
-	minWidth: scale(256),
+	minWidth: layout.plmanMinWidth,
 	rowHeight: scale(40),
-	itemFont: gdi.Font(globalFontName, scale(14)),
+	itemFont: fonts.normal_14,
 	headerHeight: scale(80),
 	icons: icons,
 };

@@ -1,18 +1,22 @@
+import { scale } from "../common/common";
 import { Component } from "../common/BasePart";
+import { ui } from "../common/UserInterface";
 import { TopBar } from "./TopbarView";
 import { PlaybackControlView } from "./PlaybackControlView";
-import { PlaylistManagerView, PLM_Properties } from "./PlaylistManagerView";
+import { PlaylistManagerView } from "./PlaylistManagerView";
 import { PlaylistView } from "./PlaylistView";
-import { scale } from "../common/common";
 import { InputPopupPanel, IInputPopupOptions } from "./InputPopupPanel";
 import { AlertDialog, IAlertDialogOptions } from "./AlertDialog";
 import { SearchResultView } from "./SearchResultView";
-import { ui } from "../common/UserInterface";
 
 
 const CONTROL_BAR_HEIGHT = scale(76);
 const TOPBAR_HEIGHT = scale(48);
-const PLMAN_MIN_WIDTH = PLM_Properties.minWidth;
+const PLMAN_MIN_WIDTH = scale(256);
+
+export const layout = {
+	plmanMinWidth: PLMAN_MIN_WIDTH
+};
 
 const enum ViewStates {
 	Default,
@@ -25,7 +29,7 @@ export class Layout extends Component {
 	playbackControlBar: PlaybackControlView;
 	playlistManager: PlaylistManagerView;
 	playlistView: PlaylistView;
-	searchResultView?: SearchResultView;
+	searchResult: SearchResultView;
 	inputPopupPanel?: InputPopupPanel;
 	alertDialog?: AlertDialog;
 
@@ -37,6 +41,7 @@ export class Layout extends Component {
 		playlistManager: PlaylistManagerView;
 		playlistView: PlaylistView;
 		addPlaylistPanel?: InputPopupPanel;
+		searchResult: SearchResultView;
 	}) {
 		super({});
 
@@ -47,11 +52,13 @@ export class Layout extends Component {
 		this.playbackControlBar = options.playbackControlBar;
 		this.playlistManager = options.playlistManager;
 		this.playlistView = options.playlistView;
+		this.searchResult = options.searchResult;
 
 		this.addChild(this.topbar);
 		this.addChild(this.playbackControlBar);
 		this.addChild(this.playlistManager);
 		this.addChild(this.playlistView);
+		this.addChild(this.searchResult);
 
 		this.setPartsZIndex();
 		this.setPartsVisible(this.viewState);
@@ -68,11 +75,11 @@ export class Layout extends Component {
 		if (viewState === ViewStates.Default) {
 			this.playlistManager.visible = true;
 			this.playlistView.visible = true;
-			this.searchResultView && (this.searchResultView.visible = false);
+			this.searchResult.visible = false;
 		} else if (viewState === ViewStates.Search) {
 			this.playlistManager.visible = true;
 			this.playlistView.visible = false;
-			this.searchResultView && (this.searchResultView.visible = true);
+			this.searchResult.visible = true;
 		}
 	}
 
@@ -94,10 +101,9 @@ export class Layout extends Component {
 		 * Set others;
 		 */
 		const { playlistView, playlistManager } = this;
-		const { searchResultView } = this;
+		const { searchResult } = this;
 		const listY = this.topbar.y + this.topbar.height;
-		const listHeight =
-			this.height - this.topbar.height - this.playbackControlBar.height;
+		const listHeight = this.height - this.topbar.height - this.playbackControlBar.height;
 
 		switch (viewState) {
 			case ViewStates.Default:
@@ -118,14 +124,14 @@ export class Layout extends Component {
 				playlistManager.visible &&
 					playlistManager.setBoundary(x, listY, PLMAN_MIN_WIDTH, listHeight);
 				if (playlistManager.visible) {
-					searchResultView.setBoundary(
+					searchResult.setBoundary(
 						playlistManager.x + playlistManager.width,
 						listY,
 						this.x + this.width - (playlistManager.x + playlistManager.width),
 						listHeight
 					);
 				} else {
-					searchResultView.setBoundary(x, listY, width, listHeight);
+					searchResult.setBoundary(x, listY, width, listHeight);
 				}
 				break;
 		}
@@ -157,15 +163,25 @@ export class Layout extends Component {
 		this.topbar.z = 100;
 		this.playbackControlBar.z = 10;
 		this.playlistView.z = 0;
+		this.searchResult.z = 0;
 		this.playlistManager.z = 0;
 	}
 
-	/**
-	 * TODO;
-	 */
-	setViewState() { }
-
 	on_paint(gr: IGdiGraphics) { }
+
+	private _showResultView() {
+		// this.searchResultView = new SearchResultView({
+		// 	titleText: (data as any).titleText,
+		// 	metadbs: (data as any).metadbs,
+		// });
+		// this.addChild(this.searchResultView);
+		// this.children.sort((a, b) => a.z - b.z)
+		// this.viewState = ViewStates.Search;
+		// this.setPartsVisible(this.viewState);
+		// this.on_size();
+		// ui.updateParts();
+		// this.repaint();
+	}
 
 	onNotifyData(message: string, data?: any) {
 		switch (message) {
@@ -217,26 +233,18 @@ export class Layout extends Component {
 				this.repaint();
 				break;
 			case "Show.SearchResult":
-				this.searchResultView = new SearchResultView({
-					titleText: (data as any).titleText,
-					metadbs: (data as any).metadbs,
-				});
-				this.addChild(this.searchResultView);
-				this.children.sort((a, b) => a.z - b.z)
+				this.searchResult.updateList((data as any).titleText, (data as any).metadbs);
+				this.searchResult.visible = true;
+				this.playlistView.visible = false;
 				this.viewState = ViewStates.Search;
-				this.setPartsVisible(this.viewState);
 				this.on_size();
 				ui.updateParts();
 				this.repaint();
 				break;
 			case "Show.Playlist":
-				if (this.searchResultView) {
-					this.searchResultView.visible = false; 
-					this.searchResultView.parent?.removeChild(this.searchResultView);
-					this.searchResultView = undefined;
-				}
+				this.searchResult.visible = false;
+				this.playlistView.visible = true;
 				this.viewState = ViewStates.Default;
-				this.setPartsVisible(this.viewState);
 				this.on_size();
 				ui.updateParts();
 				this.repaint();

@@ -107,6 +107,7 @@ export const fonts = {
     normal_12: gdi.Font(fontNameNormal, scale(12)),
     normal_13: gdi.Font(fontNameNormal, scale(13)),
     normal_14: gdi.Font(fontNameNormal, scale(14)),
+    normal_28: gdi.Font(fontNameNormal, scale(28)),
     semibold_14: gdi.Font(fontNameSemibold, scale(14)),
 
     material_22: gdi.Font(MaterialFont, scale(22)),

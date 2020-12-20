@@ -856,9 +856,7 @@ export class PlaylistView extends ScrollView {
 			}
 		}
 
-		// if (this.scroll > 0) {
 		gr.FillGradRect(this.x, this.y, this.width, scale(40), 90, themeColors.topbarBackground, 0, 1.0);
-		// }
 	}
 
 	on_playlists_changed() {

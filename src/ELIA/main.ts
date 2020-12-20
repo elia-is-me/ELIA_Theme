@@ -1,9 +1,10 @@
-﻿import { PlaybackControlView } from "./ui/PlaybackControlView";
+﻿import { ui } from "./common/UserInterface";
+import { Layout } from "./ui/Layout";
+import { PlaybackControlView } from "./ui/PlaybackControlView";
 import { TopBar } from "./ui/TopbarView";
 import { PlaylistView } from "./ui/PlaylistView";
 import { PlaylistManagerView } from "./ui/PlaylistManagerView";
-import { Layout } from "./ui/Layout";
-import { ui } from "./common/UserInterface";
+import { SearchResultView } from "./ui/SearchResultView";
 
 window.DefinePanel("ELIA THEME", {
 	features: { drag_n_drop: true },
@@ -20,6 +21,8 @@ const playlistView = new PlaylistView();
 
 const playlistManager = new PlaylistManagerView();
 
+const searchResult = new SearchResultView();
+
 /**
  * Root part of this panel;
  */
@@ -28,6 +31,7 @@ const root = new Layout({
 	playbackControlBar: playbackControlBar,
 	playlistManager: playlistManager,
 	playlistView: playlistView,
+	searchResult: searchResult
 });
 
 
