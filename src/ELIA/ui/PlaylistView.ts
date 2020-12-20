@@ -910,6 +910,7 @@ export class PlaylistView extends ScrollView {
 	}
 
 	on_playlist_switch() {
+		this.stopScroll();
 		this.scroll = 0;
 		this.setList();
 		this.headerView.setPlaylistIndex(plman.ActivePlaylist);

@@ -58,6 +58,12 @@ export abstract class ScrollView extends Component {
 		onTimeout();
 	}
 
+	stopScroll() {
+		this.scroll = Math.round(this.scroll);
+		this.scrolling = false;
+		window.ClearTimeout(this.timerId);
+	}
+
 	pageDown() {
 		this.scrollTo(this.scroll - this.parent.height);
 	}
