@@ -1,9 +1,9 @@
 import { Component } from "../common/BasePart";
-import { MeasureString, RGB, scale, StringFormat, setAlpha, isEmptyString, isFunction } from "../common/common";
+import { MeasureString, RGB, scale, StringFormat, isEmptyString, isFunction } from "../common/common";
 import { Button, } from "../common/Button";
 import { InputBox } from "../common/Inputbox";
 import { notifyOthers } from "../common/UserInterface";
-import { mainColors, globalFontName } from "./Theme";
+import { mainColors, globalFontName, themeColors, fonts } from "./Theme";
 
 
 export interface IInputPopupOptions {
@@ -72,14 +72,13 @@ export class InputPopupPanel
 		// create buttons;
 		this.okBtn = new Button({
 			text: "OK",
-			style: "text",
-			foreColor: mainColors.text
+			style: "contained",
+			foreColor: themeColors.onPrimary,
+			backgroundColor: themeColors.primary
 		});
-		// this.okBtn.setSize(scale(80), scale(32));
 		this.okBtn.on_click = () => {
 			if (this.inputbox.text) {
 				if (isFunction(opts.onSuccess)) {
-					console.log(this.inputbox.text)
 					opts.onSuccess(this.inputbox.text);
 				}
 			}
@@ -91,15 +90,14 @@ export class InputPopupPanel
 			text: "Cancel",
 			foreColor: mainColors.text,
 		});
-		// this.cancelBtn.setSize(scale(80), scale(32));
 		this.cancelBtn.on_click = () => {
 			notifyOthers("Hide.InputPopupPanel", this.cid);
 		};
 
 		// inputbox;
 		this.inputbox = new InputBox({
-			font: gdi.Font(globalFontName, scale(14)),
-			font_italic: gdi.Font(globalFontName, scale(14), 2),
+			font: fonts.semibold_14,
+			font_italic: fonts.semibold_14,
 			foreColor: mainColors.background,
 			backgroundActiveColor: RGB(255, 255, 255),
 			backgroundSelectionColor: RGB(33, 136, 255),
