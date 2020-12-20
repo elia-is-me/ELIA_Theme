@@ -33,10 +33,10 @@ class HeaderView extends Component implements IHeaderOptions {
 		this.metadbs = metadbs;
 		if (this.metadbs != null) {
 			this.desciptionText =
-				this.metadbs.Count +
-				" tracks" +
-				" \u2022" +
-				utils.FormatDuration(this.metadbs.CalcTotalDuration());
+				this.metadbs.Count
+				+ " tracks"
+				+ " \u2022 "
+				+ utils.FormatDuration(this.metadbs.CalcTotalDuration());
 		}
 	}
 
@@ -300,11 +300,7 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 		this.closeBtn.setSize(scale(48), scale(48));
 		this.closeBtn.z = 10;
 		this.closeBtn.on_click = () => {
-			// Close search result view;
-			if (this.parent) {
-				this.parent.removeChild(this);
-				notifyOthers("Show.Playlist")
-			}
+			notifyOthers("Show.Playlist")
 		};
 
 		;[this.scrollbar, this.headerView, this.closeBtn]

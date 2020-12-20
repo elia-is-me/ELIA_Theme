@@ -169,20 +169,6 @@ export class Layout extends Component {
 
 	on_paint(gr: IGdiGraphics) { }
 
-	private _showResultView() {
-		// this.searchResultView = new SearchResultView({
-		// 	titleText: (data as any).titleText,
-		// 	metadbs: (data as any).metadbs,
-		// });
-		// this.addChild(this.searchResultView);
-		// this.children.sort((a, b) => a.z - b.z)
-		// this.viewState = ViewStates.Search;
-		// this.setPartsVisible(this.viewState);
-		// this.on_size();
-		// ui.updateParts();
-		// this.repaint();
-	}
-
 	onNotifyData(message: string, data?: any) {
 		switch (message) {
 			case "Toggle.PlaylistManager":
