@@ -23,17 +23,14 @@ const topbarColors = {
 	foreColor: themeColors.text
 };
 
-export const Topbar_Properties = {
-	height: scale(56),
-};
-
 export class TopBar extends Component {
 	foreColor: number;
 	backgroundColor: number;
-	private _icoWidth: number = scale(40);
+	private _iconWidth: number = scale(40);
 	private _logoFont = gdi.Font("Impact", scale(18));
 	private _logoText = "foobar2000";
 
+	buttons: Map<string, IconButton> = new Map();
 	mainIco: IconButton;
 	settingsIco: IconButton;
 	switchIco: IconButton;
@@ -45,7 +42,7 @@ export class TopBar extends Component {
 		this.foreColor = topbarColors.foreColor;
 		this.backgroundColor = topbarColors.backgroundColor;
 
-		// button 'Main';
+		// button 'toggle list';
 		this.mainIco = createIconButton(Material.menu, iconSize, this.foreColor);
 
 		this.mainIco.on_click = () => {
@@ -54,10 +51,13 @@ export class TopBar extends Component {
 
 		// button 'Settings';
 		this.settingsIco = createIconButton(Material.gear, iconSize, this.foreColor);
+		this.settingsIco.disable();
 
 		// button 'Page Switch';
 		this.switchIco = createIconButton(Material.apps, iconSize, this.foreColor);
 		this.switchIco.disable();
+
+		// button 'main menu';
 
 		this.searchBox = new SearchBox();
 
@@ -69,22 +69,22 @@ export class TopBar extends Component {
 	on_init() { }
 
 	on_size() {
-		let icoOffsetTop = ((this.height - this._icoWidth) / 2) | 0;
+		let icoOffsetTop = ((this.height - this._iconWidth) / 2) | 0;
 		let padLeft = scale(16);
-		let { _icoWidth } = this;
+		let { _iconWidth } = this;
 
-		this.mainIco.setBoundary(this.x + padLeft, this.y + icoOffsetTop, _icoWidth, _icoWidth);
+		this.mainIco.setBoundary(this.x + padLeft, this.y + icoOffsetTop, _iconWidth, _iconWidth);
 		this.settingsIco.setBoundary(
-			this.x + this.width - padLeft - _icoWidth,
+			this.x + this.width - padLeft - _iconWidth,
 			this.y + icoOffsetTop,
-			_icoWidth,
-			_icoWidth
+			_iconWidth,
+			_iconWidth
 		);
 		this.switchIco.setBoundary(
-			this.settingsIco.x - _icoWidth - scale(4),
+			this.settingsIco.x - _iconWidth - scale(4),
 			this.y + icoOffsetTop,
-			_icoWidth,
-			_icoWidth
+			_iconWidth,
+			_iconWidth
 		);
 
 		this.searchBox.setBoundary(
