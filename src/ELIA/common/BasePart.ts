@@ -208,9 +208,6 @@ export abstract class Component implements IBoxModel, ICallbacks {
 		}
 	}
 
-	// setSize(size: { width?: number; height?: number }): void;
-	// setSize(width: number, height: number): void;
-	// setSize(arg_1: number | { width?: number; height?: number }, arg_2?: number) {
 	setSize(width?: number, height?: number) {
 		if (width == null && height == null) {
 			// Refresh layout;

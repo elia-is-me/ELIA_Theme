@@ -1,4 +1,4 @@
-import { scale } from "../common/common";
+import { scale, ThrottledRepaint } from "../common/common";
 import { Component } from "../common/BasePart";
 import { ui } from "../common/UserInterface";
 import { TopBar } from "./TopbarView";
@@ -49,18 +49,20 @@ export class Layout extends Component {
 
 		//
 		this.topbar = options.topbar;
-		this.playbackControlBar = options.playbackControlBar;
-		this.playlistManager = options.playlistManager;
-		this.playlistView = options.playlistView;
-		this.searchResult = options.searchResult;
-
+		this.topbar.z = 100;
 		this.addChild(this.topbar);
+		this.playbackControlBar = options.playbackControlBar;
+		this.playbackControlBar.z = 10;
 		this.addChild(this.playbackControlBar);
+		this.playlistManager = options.playlistManager;
+		// this.playlistManager.z = 0;
 		this.addChild(this.playlistManager);
+		this.playlistView = options.playlistView;
+		// this.playlistView.z = 0;
 		this.addChild(this.playlistView);
+		this.searchResult = options.searchResult;
+		// this.searchResult.z = 0;
 		this.addChild(this.searchResult);
-
-		this.setPartsZIndex();
 		this.setPartsVisible(this.viewState);
 	}
 

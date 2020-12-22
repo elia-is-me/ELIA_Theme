@@ -1,5 +1,4 @@
 import { Component } from "./BasePart";
-import { Repaint } from "./common";
 
 export abstract class ScrollView extends Component {
 	className = "ScrollView";
@@ -52,7 +51,8 @@ export abstract class ScrollView extends Component {
 				window.ClearTimeout(this.timerId);
 				this.scrolling = false;
 			}
-			Repaint();
+			// Repaint();
+			this.repaint();
 		};
 		window.ClearTimeout(this.timerId);
 		onTimeout();

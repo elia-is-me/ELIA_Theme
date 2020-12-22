@@ -1,6 +1,5 @@
-import { StringFormat, CropImage, TextRenderingHint, drawImage, SmoothingMode, RGB, RGBA, debounce, InterpolationMode, StopReason } from "./common";
+import { StringFormat, CropImage, TextRenderingHint, drawImage, SmoothingMode, RGB, RGBA, debounce, StopReason } from "./common";
 import { Component } from "./BasePart";
-import { mainColors } from "../ui/Theme";
 
 export const enum AlbumArtId {
 	Front = 0,
