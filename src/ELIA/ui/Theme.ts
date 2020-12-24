@@ -99,8 +99,9 @@ export const themeColors = {
 
 export const globalFontName = "Yu Gothic UI";
 export const fontNameNormal = "Yu Gothic UI";
-export const fontNameSemibold = "Yu Gothic UI Semibold";
-export const fontNameBold = fontNameNormal;
+// export const fontNameSemibold = "Yu Gothic UI Semibold";
+export const fontNameSemibold = "source han sans sc medium";
+export const fontNameBold = "source han sans sc";
 export const fontNameHeavy = "Yu Gothic UI Bold";
 
 export const fonts = {

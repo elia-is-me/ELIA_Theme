@@ -3,8 +3,8 @@
 //====================================
 
 import { TextRenderingHint, StringTrimming, StringFormatFlags, MenuFlag, VKeyCode, KMask, scale, RGB, deepClone, MeasureString, isEmptyString, StringFormat } from "../common/common";
-import { IThemeColors, mainColors, scrollbarWidth, globalFontName, themeColors, fontNameBold } from "./Theme";
 import { ThrottledRepaint } from "../common/common";
+import { IThemeColors, mainColors, scrollbarWidth, globalFontName, themeColors, fontNameBold } from "./Theme";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
 import { Component, IBoxModel, IPaddings } from "../common/BasePart";
@@ -111,13 +111,48 @@ const PlaylistProperties = {
 };
 
 const playlistColors: IThemeColors = {
-	text: mainColors.text,
-	secondaryText: mainColors.secondaryText,
-	background: RGB(24, 24, 24),
-	backgroundSelection: RGB(51, 51, 51),
-	highlight: mainColors.highlight,
-	HEART_RED: RGB(221, 0, 27),
+	text: themeColors.text,
+	secondaryText: themeColors.secondaryText,
+	background: themeColors.playlistBackground,
+	backgroundSelection: themeColors.playlistBackgroundSelection,
+	highlight: themeColors.highlight,
+	HEART_RED: themeColors.mood,
 };
+
+function formatPlaylistDuration(duration: number) {
+	let MINUTE = 60;
+	let HOUR = 3600;
+	let DAY = 86400;
+	let WEEK = 604800;
+	let names = {
+		seconds: ' \u79d2', // 秒
+		minutes: ' \u5206\u949f ',
+		hour: ' \u5c0f\u65f6 ',
+		day: ' \u5929 ',
+		week: ' \u661f\u671f '
+	};
+	let formated = '';
+
+	let weeks = (duration / WEEK) >> 0;
+	duration -= weeks * WEEK;
+	if (weeks > 0) formated += weeks + names.week;
+
+	let days = (duration / DAY) >> 0;
+	duration -= days * DAY;
+	if (days > 0) formated += days + names.day;
+
+	let hours = (duration / HOUR) >> 0;
+	duration -= hours * HOUR;
+	if (hours > 0) formated += hours + names.hour;
+
+	let minutes = (duration / MINUTE) >> 0;
+	if (weeks === 0 && days === 0 && minutes > 0) formated += minutes + names.minutes;
+
+	let seconds = (duration - minutes * MINUTE) >> 0;
+	if (weeks === 0 && days === 0 && hours === 0 && seconds > 0) formated += seconds + names.seconds;
+
+	return formated;
+}
 
 /**
  * Flow with list items;
@@ -165,7 +200,8 @@ class PlaylistHeaderView extends Component {
 
 		this.shuffleBtn = new Button({
 			style: "contained",
-			text: "Shuffle All",
+			//&#x968F;&#x673A;&#x64AD;&#x653E;&#x6240;&#x6709;
+			text: "\u968f\u673a\u64ad\u653e\u6240\u6709",
 			icon: Material.shuffle,
 			foreColor: themeColors.onPrimary,
 			backgroundColor: themeColors.primary
@@ -181,7 +217,9 @@ class PlaylistHeaderView extends Component {
 		this.contextBtn = new Button({
 			style: "text",
 			icon: Material.more_vert,
-			text: "More",
+			//&#x66F4;&#x591A;
+			text: "\u66f4\u591a",
+			// text: "More",
 			foreColor: themeColors.secondary
 		});
 		this.contextBtn.on_click = (x, y) => {
@@ -192,7 +230,8 @@ class PlaylistHeaderView extends Component {
 		// Playlist Sort btn;
 		this.sortBtn = new Button({
 			style: "text",
-			text: "Sort",
+			//&#x6392;&#x5E8F;
+			text: "\u6392\u5e8f",
 			icon: Material.sort,
 			foreColor: themeColors.secondary
 		});
@@ -281,10 +320,15 @@ class PlaylistHeaderView extends Component {
 	setTitles() {
 		this.titleText = plman.GetPlaylistName(this.playlistIndex);
 		this.descriptionText =
-			plman.PlaylistItemCount(this.playlistIndex)
-			+ " tracks"
+			"\u64ad\u653e\u5217\u8868"
 			+ " \u2022 "
-			+ utils.FormatDuration(plman.GetPlaylistItems(this.playlistIndex).CalcTotalDuration());
+			+ plman.PlaylistItemCount(this.playlistIndex)
+			+ " \u97f3\u8f68";
+		if (plman.PlaylistItemCount(this.playlistIndex) > 0) {
+			this.descriptionText +=
+				" \u2022 "
+				+ formatPlaylistDuration(plman.GetPlaylistItems(this.playlistIndex).CalcTotalDuration());
+		}
 	}
 
 	setPlaylistIndex(value: number): void {
@@ -343,7 +387,8 @@ class PlaylistHeaderView extends Component {
 		const textAreaWidth = this.width - paddingLeft - artworkWidth - scale(24) - paddingLeft;
 
 		// Type,
-		gr.DrawString("PLAYLIST", descriptionFont, secondaryTextColor, textX, textY_, textAreaWidth, 1.5 * descriptionFont.Height, StringFormat.LeftTopNoTrim);
+		//&#x64AD;&#x653E;&#x5217;&#x8868;
+		// gr.DrawString("\u64ad\u653e\u5217\u8868", descriptionFont, secondaryTextColor, textX, textY_, textAreaWidth, 1.5 * descriptionFont.Height, StringFormat.LeftTopNoTrim);
 		textY_ += 1.5 * descriptionFont.Height;
 
 		// Title;

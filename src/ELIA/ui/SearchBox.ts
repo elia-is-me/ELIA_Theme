@@ -67,7 +67,8 @@ export class SearchBox extends Component {
 			backgroundColor: this.backgroundColor,
 			backgroundActiveColor: this.backgroundActiveColor,
 			backgroundSelectionColor: RGB(180, 180, 180),
-			empty_text: "Search Library",
+			//&#x5A92;&#x4F53;&#x5E93;&#x641C;&#x7D22;
+			empty_text: "\u5a92\u4f53\u5e93\u641c\u7d22",
 			func: () => {
 				this.handleSearch();
 			},

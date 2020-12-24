@@ -2,6 +2,7 @@ import { scale, StringFormat, TextRenderingHint, MeasureString, CursorName, setA
 import { Component } from "./BasePart";
 import { ui } from "./UserInterface";
 import { MaterialFont } from "./Icon";
+import { fontNameSemibold } from "../ui/Theme";
 
 const textRenderingHint = ui.textRender;
 
@@ -133,7 +134,7 @@ export const enum ButtonStyles {
 	Text = "text"
 }
 
-const buttonTextFont = gdi.Font("segoe ui semibold", scale(14));
+const buttonTextFont = gdi.Font(fontNameSemibold, scale(14));
 const buttonIconFont = gdi.Font(MaterialFont, scale(22));
 
 export interface IButtonOptions {
