@@ -55,13 +55,10 @@ export class Layout extends Component {
 		this.playbackControlBar.z = 10;
 		this.addChild(this.playbackControlBar);
 		this.playlistManager = options.playlistManager;
-		// this.playlistManager.z = 0;
 		this.addChild(this.playlistManager);
 		this.playlistView = options.playlistView;
-		// this.playlistView.z = 0;
 		this.addChild(this.playlistView);
 		this.searchResult = options.searchResult;
-		// this.searchResult.z = 0;
 		this.addChild(this.searchResult);
 		this.setPartsVisible(this.viewState);
 	}

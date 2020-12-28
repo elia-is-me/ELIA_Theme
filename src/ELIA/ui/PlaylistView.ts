@@ -4,7 +4,7 @@
 
 import { TextRenderingHint, StringTrimming, StringFormatFlags, MenuFlag, VKeyCode, KMask, scale, RGB, deepClone, MeasureString, isEmptyString, StringFormat } from "../common/common";
 import { ThrottledRepaint } from "../common/common";
-import { IThemeColors, mainColors, scrollbarWidth, globalFontName, themeColors, fontNameBold } from "./Theme";
+import { IThemeColors, scrollbarWidth, globalFontName, themeColors, fontNameBold, fonts, fontNameHeavy } from "./Theme";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
 import { Component, IBoxModel, IPaddings } from "../common/BasePart";
@@ -15,6 +15,7 @@ import { notifyOthers, ui } from "../common/UserInterface";
 import { Button } from "../common/Button";
 import { IInputPopupOptions } from "./InputPopupPanel";
 import { IAlertDialogOptions } from "./AlertDialog";
+import { lang } from "./Lang";
 
 const __DEV__ = window.GetProperty("__DEV__", true);
 
@@ -106,7 +107,7 @@ const tfTrackInfo = fb.TitleFormat("%tracknumber%^^[%artist%]^^%title%^^%length%
 
 const PlaylistProperties = {
 	rowHeight: scale(40),
-	itemFont: gdi.Font(globalFontName, scale(14), 0),
+	itemFont: fonts.normal_14,
 	emptyFont: gdi.Font(globalFontName, scale(20)),
 };
 
@@ -119,17 +120,20 @@ const playlistColors: IThemeColors = {
 	HEART_RED: themeColors.mood,
 };
 
-function formatPlaylistDuration(duration: number) {
+const spaceStart = (str: string) => str.padStart(str.length + 1);
+const spaceStartEnd = (str: string) => spaceStart(str).padEnd(str.length + 2);
+
+export function formatPlaylistDuration(duration: number) {
 	let MINUTE = 60;
 	let HOUR = 3600;
 	let DAY = 86400;
 	let WEEK = 604800;
 	let names = {
-		seconds: ' \u79d2', // 秒
-		minutes: ' \u5206\u949f ',
-		hour: ' \u5c0f\u65f6 ',
-		day: ' \u5929 ',
-		week: ' \u661f\u671f '
+		seconds: spaceStart(lang("sec")),
+		minutes: spaceStartEnd(lang("min")),
+		hour: spaceStartEnd(lang("hr")),
+		day: spaceStartEnd(lang("d")),
+		week: spaceStartEnd(lang("wk"))
 	};
 	let formated = '';
 
@@ -178,8 +182,8 @@ class PlaylistHeaderView extends Component {
 		super({});
 
 		// Set fonts;
-		this.titleFont = gdi.Font(fontNameBold, scale(32), 1);
-		this.descriptionFont = gdi.Font(globalFontName, scale(14));
+		this.titleFont = gdi.Font(fontNameHeavy, scale(32), 1);
+		this.descriptionFont = fonts.normal_14;
 
 		// Set stub image;
 		let stubImageWidth_ = 500;
@@ -201,7 +205,7 @@ class PlaylistHeaderView extends Component {
 		this.shuffleBtn = new Button({
 			style: "contained",
 			//&#x968F;&#x673A;&#x64AD;&#x653E;&#x6240;&#x6709;
-			text: "\u968f\u673a\u64ad\u653e\u6240\u6709",
+			text: lang("Shuffle All"),
 			icon: Material.shuffle,
 			foreColor: themeColors.onPrimary,
 			backgroundColor: themeColors.primary
@@ -217,9 +221,7 @@ class PlaylistHeaderView extends Component {
 		this.contextBtn = new Button({
 			style: "text",
 			icon: Material.more_vert,
-			//&#x66F4;&#x591A;
-			text: "\u66f4\u591a",
-			// text: "More",
+			text: lang("More"),
 			foreColor: themeColors.secondary
 		});
 		this.contextBtn.on_click = (x, y) => {
@@ -230,8 +232,7 @@ class PlaylistHeaderView extends Component {
 		// Playlist Sort btn;
 		this.sortBtn = new Button({
 			style: "text",
-			//&#x6392;&#x5E8F;
-			text: "\u6392\u5e8f",
+			text: lang("Sort"),
 			icon: Material.sort,
 			foreColor: themeColors.secondary
 		});
@@ -320,13 +321,13 @@ class PlaylistHeaderView extends Component {
 	setTitles() {
 		this.titleText = plman.GetPlaylistName(this.playlistIndex);
 		this.descriptionText =
-			"\u64ad\u653e\u5217\u8868"
-			+ " \u2022 "
+			lang("playlist")
+			+ spaceStartEnd("\u2022")
 			+ plman.PlaylistItemCount(this.playlistIndex)
-			+ " \u97f3\u8f68";
+			+ spaceStart(plman.PlaylistItemCount(this.playlistIndex) > 1 ? lang("tracks") : lang("track"));
 		if (plman.PlaylistItemCount(this.playlistIndex) > 0) {
 			this.descriptionText +=
-				" \u2022 "
+				spaceStartEnd("\u2022")
 				+ formatPlaylistDuration(plman.GetPlaylistItems(this.playlistIndex).CalcTotalDuration());
 		}
 	}
@@ -393,7 +394,7 @@ class PlaylistHeaderView extends Component {
 
 		// Title;
 		gr.SetTextRenderingHint(TextRenderingHint.AntiAlias);
-		const titleText_ = this.titleText || "NO TITLE";
+		const titleText_ = this.titleText || lang("NO TITLE");
 		const titleFullWidth_ = MeasureString(titleText_, titleFont).Width;
 		if (titleFullWidth_ > textAreaWidth) {
 			let sf = StringFormat(0, 0, StringTrimming.EllipsisCharacter, StringFormatFlags.LineLimit);
@@ -1451,8 +1452,8 @@ export function showTrackContextMenu(playlistIndex: number, metadbs: IFbMetadbLi
 	//
 	if (hasMetadbs) {
 		const addToMenu = window.CreatePopupMenu();
-		addToMenu.AppendTo(rootMenu, MenuFlag.STRING, "Add to playlist");
-		addToMenu.AppendMenuItem(MenuFlag.STRING, 2000, "New playlist...");
+		addToMenu.AppendTo(rootMenu, MenuFlag.STRING, lang("Add to playlist"));
+		addToMenu.AppendMenuItem(MenuFlag.STRING, 2000, lang("Create playlist..."));
 		if (plman.PlaylistCount > 0) {
 			addToMenu.AppendMenuSeparator();
 		}
@@ -1461,14 +1462,14 @@ export function showTrackContextMenu(playlistIndex: number, metadbs: IFbMetadbLi
 		}
 
 		//
-		rootMenu.AppendMenuItem(isPlaylistLocked ? MenuFlag.GRAYED : MenuFlag.STRING, 1, "Remove from playlist");
+		rootMenu.AppendMenuItem(isPlaylistLocked ? MenuFlag.GRAYED : MenuFlag.STRING, 1, lang("Remove from playlist"));
 		rootMenu.AppendMenuSeparator();
 	}
 
 	//
 	if (hasMetadbs) {
-		rootMenu.AppendMenuItem(isPlaylistLocked ? MenuFlag.GRAYED : MenuFlag.STRING, 2, "Cut");
-		rootMenu.AppendMenuItem(MenuFlag.STRING, 3, "Copy");
+		rootMenu.AppendMenuItem(isPlaylistLocked ? MenuFlag.GRAYED : MenuFlag.STRING, 2, lang("Cut"));
+		rootMenu.AppendMenuItem(MenuFlag.STRING, 3, lang("Copy"));
 	}
 
 	if (nullMetadbs) {
@@ -1476,7 +1477,7 @@ export function showTrackContextMenu(playlistIndex: number, metadbs: IFbMetadbLi
 	}
 
 	if (fb.CheckClipboardContents()) {
-		rootMenu.AppendMenuItem(isPlaylistLocked ? MenuFlag.GRAYED : MenuFlag.STRING, 4, "Paste");
+		rootMenu.AppendMenuItem(isPlaylistLocked ? MenuFlag.GRAYED : MenuFlag.STRING, 4, lang("Paste"));
 	}
 
 	if (hasMetadbs) {
@@ -1485,8 +1486,8 @@ export function showTrackContextMenu(playlistIndex: number, metadbs: IFbMetadbLi
 
 	if (hasMetadbs) {
 		const artistMenu = window.CreatePopupMenu();
-		artistMenu.AppendTo(rootMenu, MenuFlag.GRAYED, "Go to artist");
-		rootMenu.AppendMenuItem(MenuFlag.GRAYED, 20, "Go to album");
+		artistMenu.AppendTo(rootMenu, MenuFlag.GRAYED, lang("Go to artist"));
+		rootMenu.AppendMenuItem(MenuFlag.GRAYED, 20, lang("Go to album"));
 		rootMenu.AppendMenuSeparator();
 	}
 
@@ -1564,19 +1565,19 @@ function showHeaderContextMenu(playlistIndex: number, x: number, y: number) {
 	const hasTracks = plman.PlaylistItemCount(playlistIndex) > 0;
 	const menu = window.CreatePopupMenu();
 
-	menu.AppendMenuItem(MenuFlag.STRING, 10, "Edit playlist...");
+	menu.AppendMenuItem(MenuFlag.STRING, 10, lang("Edit playlist..."));
 	if (plman.IsAutoPlaylist(playlistIndex)) {
-		menu.AppendMenuItem(MenuFlag.STRING, 11, "Edit autoplaylist property...");
+		menu.AppendMenuItem(MenuFlag.STRING, 11, lang("Edit autoplaylist..."));
 	}
 	menu.AppendMenuSeparator();
 
-	menu.AppendMenuItem(hasTracks ? MenuFlag.STRING : MenuFlag.GRAYED, 20, "Play");
-	menu.AppendMenuItem(hasTracks ? MenuFlag.STRING : MenuFlag.GRAYED, 21, "Play next");
-	menu.AppendMenuItem(hasTracks ? MenuFlag.STRING : MenuFlag.GRAYED, 22, "Add to queue");
+	menu.AppendMenuItem(hasTracks ? MenuFlag.STRING : MenuFlag.GRAYED, 20, lang("Play"));
+	menu.AppendMenuItem(hasTracks ? MenuFlag.STRING : MenuFlag.GRAYED, 21, lang("Play next"));
+	menu.AppendMenuItem(hasTracks ? MenuFlag.STRING : MenuFlag.GRAYED, 22, lang("Add to queue"));
 
 	menu.AppendMenuSeparator();
 
-	menu.AppendMenuItem(MenuFlag.STRING, 30, "Delete");
+	menu.AppendMenuItem(MenuFlag.STRING, 30, lang("Delete"));
 
 	let ret = menu.TrackPopupMenu(x, y);
 
@@ -1607,7 +1608,7 @@ function showHeaderContextMenu(playlistIndex: number, x: number, y: number) {
 			// 
 			break;
 		case ret === 22:
-			let queuePlaylist = plman.FindOrCreatePlaylist("Queue", true);
+			let queuePlaylist = plman.FindOrCreatePlaylist(lang("Queue"), true);
 			plman.InsertPlaylistItems(queuePlaylist, plman.PlaylistItemCount(queuePlaylist), plman.GetPlaylistItems(playlistIndex));
 			break;
 
@@ -1636,33 +1637,33 @@ function showSortPlaylistMenu(playlistIndex: number, x: number, y: number, selec
 	// Sort selection;
 	// ---------------
 
-	sel.AppendTo(menu, hasMultiSelection ? MenuFlag.STRING : MenuFlag.GRAYED, "Selection");
-	sel.AppendMenuItem(MenuFlag.STRING, 20, "Sort by...");
-	sel.AppendMenuItem(MenuFlag.STRING, 21, "Randomize");
-	sel.AppendMenuItem(MenuFlag.STRING, 22, "Reverse");
+	sel.AppendTo(menu, hasMultiSelection ? MenuFlag.STRING : MenuFlag.GRAYED, lang("Selection"));
+	sel.AppendMenuItem(MenuFlag.STRING, 20, lang("Sort by..."));
+	sel.AppendMenuItem(MenuFlag.STRING, 21, lang("Randomize"));
+	sel.AppendMenuItem(MenuFlag.STRING, 22, lang("Reverse"));
 	sel.AppendMenuSeparator();
 	//
-	sel.AppendMenuItem(MenuFlag.STRING, 200, "Album");
-	sel.AppendMenuItem(MenuFlag.STRING, 201, "Artist");
-	sel.AppendMenuItem(MenuFlag.STRING, 202, "File path");
-	sel.AppendMenuItem(MenuFlag.STRING, 203, "Title");
-	sel.AppendMenuItem(MenuFlag.STRING, 204, "Track number");
+	sel.AppendMenuItem(MenuFlag.STRING, 200, lang("Album"));
+	sel.AppendMenuItem(MenuFlag.STRING, 201, lang("Artist"));
+	sel.AppendMenuItem(MenuFlag.STRING, 202, lang("File path"));
+	sel.AppendMenuItem(MenuFlag.STRING, 203, lang("Title"));
+	sel.AppendMenuItem(MenuFlag.STRING, 204, lang("Track number"));
 	menu.AppendMenuSeparator();
 
 	// --------------
 	// Sort playlist
 	// --------------
 
-	menu.AppendMenuItem(MenuFlag.STRING, 10, "Sort by...");
-	menu.AppendMenuItem(MenuFlag.STRING, 11, "Randomize");
-	menu.AppendMenuItem(MenuFlag.STRING, 12, "Reverse");
+	menu.AppendMenuItem(MenuFlag.STRING, 10, lang("Sort by..."));
+	menu.AppendMenuItem(MenuFlag.STRING, 11, lang("Randomize"));
+	menu.AppendMenuItem(MenuFlag.STRING, 12, lang("Reverse"));
 	menu.AppendMenuSeparator();
 	//
-	menu.AppendMenuItem(MenuFlag.STRING, 100, "Album");
-	menu.AppendMenuItem(MenuFlag.STRING, 101, "Artist");
-	menu.AppendMenuItem(MenuFlag.STRING, 102, "File path");
-	menu.AppendMenuItem(MenuFlag.STRING, 103, "Title");
-	menu.AppendMenuItem(MenuFlag.STRING, 104, "Track number");
+	menu.AppendMenuItem(MenuFlag.STRING, 100, lang("Album"));
+	menu.AppendMenuItem(MenuFlag.STRING, 101, lang("Artist"));
+	menu.AppendMenuItem(MenuFlag.STRING, 102, lang("File path"));
+	menu.AppendMenuItem(MenuFlag.STRING, 103, lang("Title"));
+	menu.AppendMenuItem(MenuFlag.STRING, 104, lang("Track number"));
 
 	const ret = menu.TrackPopupMenu(x, y);
 

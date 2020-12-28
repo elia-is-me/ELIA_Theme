@@ -1,5 +1,5 @@
 import { Component, IBoxModel } from "../common/BasePart";
-import { RGB, scale, isEmptyString, StringFormat, MeasureString, TextRenderingHint, StopReason, VKeyCode, MenuFlag, clamp, KMask } from "../common/common";
+import { RGB, scale, isEmptyString, StringFormat, MeasureString, TextRenderingHint, StopReason, VKeyCode, MenuFlag, clamp, KMask, spaceStart, spaceStartEnd } from "../common/common";
 import { mainColors, themeColors, fonts } from "./Theme";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
@@ -8,6 +8,8 @@ import { MaterialFont, Material, IconObject } from "../common/Icon";
 import { toggleMood } from "./PlaybackControlView";
 import { notifyOthers, ui } from "../common/UserInterface";
 import { IconButton } from "../common/Button";
+import { lang } from "./Lang";
+import { formatPlaylistDuration } from "./PlaylistView";
 
 const textRenderingHint = ui.textRender;
 
@@ -32,11 +34,10 @@ class HeaderView extends Component implements IHeaderOptions {
 		this.titleText = titleText;
 		this.metadbs = metadbs;
 		if (this.metadbs != null) {
-			this.desciptionText =
-				this.metadbs.Count
-				+ " tracks"
-				+ " \u2022 "
-				+ utils.FormatDuration(this.metadbs.CalcTotalDuration());
+			this.desciptionText = this.metadbs.Count
+				+ spaceStart(lang("tracks"))
+				+ spaceStartEnd("\u2022")
+				+ formatPlaylistDuration(this.metadbs.CalcTotalDuration());
 		}
 	}
 
@@ -70,7 +71,7 @@ class HeaderView extends Component implements IHeaderOptions {
 		let titleFont = this._titleFont;
 
 		// type;
-		gr.DrawString("SEARCH RESULTS", textFont, themeColors.secondaryText, textX, textY, textW, 2 * textFont.Height, StringFormat.LeftTop);
+		gr.DrawString(lang("SEARCH RESULTS"), textFont, themeColors.secondaryText, textX, textY, textW, 2 * textFont.Height, StringFormat.LeftTop);
 
 		textX += scale(16);
 		textY += 2 * textFont.Height;
@@ -668,7 +669,7 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 		}
 
 		if (hoverItem != null) {
-			let queue = plman.FindOrCreatePlaylist("Queue", true);
+			let queue = plman.FindOrCreatePlaylist(lang("Queue"), true);
 			let metadbs = plman.GetPlaylistItems(queue);
 			let findResult = metadbs.Find(hoverItem.metadb);
 
@@ -865,10 +866,10 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 		const rootmenu = window.CreatePopupMenu();
 		const addto = window.CreatePopupMenu();
 
-		addto.AppendTo(rootmenu, MenuFlag.STRING, "Add to playlist");
+		addto.AppendTo(rootmenu, MenuFlag.STRING, lang("Add to playlist"));
 		rootmenu.AppendMenuSeparator();
 
-		addto.AppendMenuItem(MenuFlag.STRING, 2000, "New plalist...");
+		addto.AppendMenuItem(MenuFlag.STRING, 2000, lang("Create playlist..."));
 		if (plman.PlaylistCount > 0) {
 			addto.AppendMenuSeparator();
 		}
@@ -880,13 +881,13 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 			);
 		}
 
-		rootmenu.AppendMenuItem(MenuFlag.GRAYED, 2, "Cut\tCtrl-X");
-		rootmenu.AppendMenuItem(MenuFlag.STRING, 3, "Copy\tCtrl-C");
+		rootmenu.AppendMenuItem(MenuFlag.GRAYED, 2, lang("Cut\tCtrl-X"));
+		rootmenu.AppendMenuItem(MenuFlag.STRING, 3, lang("Copy\tCtrl-C"));
 		rootmenu.AppendMenuSeparator();
 
 		const artistmenu = window.CreatePopupMenu();
-		artistmenu.AppendTo(rootmenu, MenuFlag.GRAYED, "Go to artist");
-		artistmenu.AppendMenuItem(MenuFlag.GRAYED, 20, "Go to album");
+		artistmenu.AppendTo(rootmenu, MenuFlag.GRAYED, lang("Go to artist"));
+		artistmenu.AppendMenuItem(MenuFlag.GRAYED, 20, lang("Go to album"));
 		artistmenu.AppendMenuSeparator();
 
 		// context menu;
@@ -917,7 +918,7 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 				// let listId = plman.CreatePlaylist(plman.PlaylistCount, "");
 				// plman.InsertPlaylistItems(listId, 0, metadbs, false);
 				notifyOthers("Popup.InputPopupPanel", {
-					title: "Create new playlist"
+					title: "Create playlist"
 				});
 				break;
 		}

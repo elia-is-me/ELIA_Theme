@@ -2,7 +2,7 @@
 // Playlist Manager
 // -------------------------
 
-import { scale, RGB, StringFormat, ThrottledRepaint, MenuFlag, setAlpha } from "../common/common";
+import { scale, RGB, StringFormat, ThrottledRepaint, MenuFlag, setAlpha, spaceStartEnd, spaceStart } from "../common/common";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
 import { Component } from "../common/BasePart";
@@ -14,6 +14,7 @@ import { IInputPopupOptions } from "./InputPopupPanel";
 import { IAlertDialogOptions } from "./AlertDialog";
 import { dndMask, notifyOthers, ui } from "../common/UserInterface";
 import { layout } from "./Layout";
+import { lang } from "./Lang";
 
 const enum DropEffect {
 	None = 0,
@@ -60,7 +61,7 @@ class AddPlaylistButton extends Clickable {
 
 	private textFont = PLM_Properties.itemFont;
 	private addIcon = new IconObject(Material.circle_add, MaterialFont, scale(20))
-	private text = "\u65B0\u5EFA\u64ad\u653e\u5217\u8868";
+	private text = lang("Create Playlist");
 	private colors = [themeColors.sidebarInactiveText, themeColors.text, setAlpha(themeColors.text, 127)];
 
 	constructor() {
@@ -499,14 +500,14 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 		const hasContents = metadbs.Count > 0;
 		const rootMenu = window.CreatePopupMenu();
 
-		rootMenu.AppendMenuItem(!hasContents ? MenuFlag.GRAYED : MenuFlag.STRING, 1, "Play");
-		rootMenu.AppendMenuItem(MenuFlag.STRING, 2, "Rename");
-		rootMenu.AppendMenuItem(MenuFlag.STRING, 3, "Delete");
-		rootMenu.AppendMenuItem(MenuFlag.STRING, 4, "Create new playlist");
+		rootMenu.AppendMenuItem(!hasContents ? MenuFlag.GRAYED : MenuFlag.STRING, 1, lang("Play"));
+		rootMenu.AppendMenuItem(MenuFlag.STRING, 2, lang("Rename"));
+		rootMenu.AppendMenuItem(MenuFlag.STRING, 3, lang("Delete"));
+		rootMenu.AppendMenuItem(MenuFlag.STRING, 4, lang("Create playlist"));
 
 		if (plman.IsAutoPlaylist(playlistIndex)) {
 			rootMenu.AppendMenuSeparator();
-			rootMenu.AppendMenuItem(MenuFlag.STRING, 5, "Edit autoplaylist...");
+			rootMenu.AppendMenuItem(MenuFlag.STRING, 5, lang("Edit autoplaylist..."));
 		}
 
 		const contents = window.CreatePopupMenu();
@@ -518,7 +519,7 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 			Context.BuildMenu(contents, idOffset, -1);
 			// ---
 			rootMenu.AppendMenuSeparator();
-			contents.AppendTo(rootMenu, hasContents ? MenuFlag.STRING : MenuFlag.GRAYED, metadbs.Count + (metadbs.Count > 1 ? " tracks" : " track"));
+			contents.AppendTo(rootMenu, hasContents ? MenuFlag.STRING : MenuFlag.GRAYED, metadbs.Count + spaceStart(metadbs.Count > 1 ? lang("tracks") : lang("track")));
 		}
 
 		const id = rootMenu.TrackPopupMenu(x, y);
@@ -635,10 +636,3 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 		ThrottledRepaint();
 	}
 }
-
-/**
- * TODO:
- *
- * - 有一个问题，拖放列表时，会忘掉拖的是哪个列表，而界面上没有提示。
- * - AddPlaylist btn action?
- */

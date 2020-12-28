@@ -2,9 +2,10 @@
 import { Layout } from "./ui/Layout";
 import { PlaybackControlView } from "./ui/PlaybackControlView";
 import { TopBar } from "./ui/TopbarView";
-import { PlaylistView } from "./ui/PlaylistView";
+import { isValidPlaylist, PlaylistView } from "./ui/PlaylistView";
 import { PlaylistManagerView } from "./ui/PlaylistManagerView";
 import { SearchResultView } from "./ui/SearchResultView";
+import { lang } from "./ui/Lang";
 
 window.DefinePanel("ELIA THEME", {
 	features: { drag_n_drop: true },
@@ -39,10 +40,22 @@ ui.setRoot(root);
 
 const onReady = () => {
 	checkDefautPlaylist();
+	checkActivePlaylist();
 };
 
+function checkActivePlaylist() {
+	if (!isValidPlaylist(plman.ActivePlaylist)) {
+		if (plman.PlaylistCount > 0) {
+			plman.ActivePlaylist = 0;
+		} else {
+			checkActivePlaylist();
+			plman.ActivePlaylist = 0;
+		}
+	}
+}
+
 function checkDefautPlaylist() {
-	const defaultPlaylistName = "Default";
+	const defaultPlaylistName = lang("Default");
 	const compareName = defaultPlaylistName.toLowerCase();
 	const playlistCount = plman.PlaylistCount;
 
@@ -53,14 +66,13 @@ function checkDefautPlaylist() {
 		}
 	}
 
-	// 'Default' playlsit does not exists;
+	// 'Default' playlist does not exists;
 	const fail = plman.CreatePlaylist(plman.PlaylistCount, defaultPlaylistName);
 
 	if (fail == -1) {
 		console.log("ELIA THEME: fail to create default playlist.");
 	}
 }
-
 
 /* When all ready; */
 window.SetTimeout(() => {

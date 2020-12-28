@@ -4,6 +4,7 @@ import { Button, } from "../common/Button";
 import { InputBox } from "../common/Inputbox";
 import { notifyOthers } from "../common/UserInterface";
 import { mainColors, globalFontName, themeColors, fonts } from "./Theme";
+import { lang } from "./Lang";
 
 
 export interface IInputPopupOptions {
@@ -71,7 +72,7 @@ export class InputPopupPanel
 
 		// create buttons;
 		this.okBtn = new Button({
-			text: "OK",
+			text: lang("OK"),
 			style: "contained",
 			foreColor: themeColors.onPrimary,
 			backgroundColor: themeColors.primary
@@ -87,7 +88,7 @@ export class InputPopupPanel
 
 		this.cancelBtn = new Button({
 			style: "text",
-			text: "Cancel",
+			text: lang("Cancel"),
 			foreColor: mainColors.text,
 		});
 		this.cancelBtn.on_click = () => {
@@ -113,7 +114,7 @@ export class InputPopupPanel
 
 		this.inputboxHeight =
 			Math.round(
-				(MeasureString("ABCDgl汉字", this.inputbox.font).Height + scale(8)) / 4
+				(MeasureString("ABCDgll" + lang("OK"), this.inputbox.font).Height + scale(8)) / 4
 			) * 4;
 
 		[this.inputbox, this.okBtn, this.cancelBtn].forEach(btn => {

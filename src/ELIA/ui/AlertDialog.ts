@@ -9,6 +9,7 @@ import {
 	StringFormatFlags, isFunction
 } from "../common/common";
 import { notifyOthers } from "../common/UserInterface";
+import { lang } from "./Lang";
 
 export interface IAlertDialogOptions {
 	title: string;
@@ -62,12 +63,8 @@ export class AlertDialog
 
 		this.okBtn = new Button({
 			style: "text",
-			text: "OK",
+			text: lang("OK"),
 			foreColor: mainColors.text,
-
-			// textColor: this.highlightColor,
-			// textHoverColor: setAlpha(this.highlightColor, 200),
-			// textDownColor: setAlpha(this.highlightColor, 127),
 		});
 		this.okBtn.setSize(scale(80), scale(32));
 		this.okBtn.on_click = () => {
@@ -79,12 +76,8 @@ export class AlertDialog
 
 		this.cancelBtn = new Button({
 			style: "text",
-			text: "Cancel",
+			text: lang("Cancel"),
 			foreColor: mainColors.text,
-
-			// textColor: this.textColor,
-			// textHoverColor: setAlpha(this.textColor, 200),
-			// textDownColor: setAlpha(this.textColor, 127),
 		});
 		this.cancelBtn.setSize(scale(80), scale(32));
 		this.cancelBtn.on_click = () => {

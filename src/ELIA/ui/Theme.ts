@@ -97,12 +97,11 @@ export const themeColors = {
 // Font names that may used;
 // -------------------------
 
-export const globalFontName = "Yu Gothic UI";
-export const fontNameNormal = "Yu Gothic UI";
-// export const fontNameSemibold = "Yu Gothic UI Semibold";
+export const globalFontName = "source han sans sc";
+export const fontNameNormal = "source han sans sc";
 export const fontNameSemibold = "source han sans sc medium";
 export const fontNameBold = "source han sans sc";
-export const fontNameHeavy = "Yu Gothic UI Bold";
+export const fontNameHeavy = "source han sans sc heavy";
 
 export const fonts = {
     normal_12: gdi.Font(fontNameNormal, scale(12)),

@@ -7,8 +7,9 @@ import { InputBox } from "../common/Inputbox";
 import { IconButton } from "../common/Button";
 import { scale, RGB, MeasureString } from "../common/common";
 import { Material, } from "../common/Icon";
-import { mainColors, globalFontName } from "./Theme";
+import { mainColors, globalFontName, fonts } from "./Theme";
 import { notifyOthers } from "../common/UserInterface";
+import { lang } from "./Lang";
 
 export class SearchBox extends Component {
 	inputbox: InputBox;
@@ -61,20 +62,18 @@ export class SearchBox extends Component {
 		this.clearBtn.grabFocus = false;
 
 		this.inputbox = new InputBox({
-			font: gdi.Font(globalFontName, scale(14)),
-			font_italic: gdi.Font(globalFontName, scale(14), 2),
+			font: fonts.normal_14,
 			foreColor: mainColors.text,
 			backgroundColor: this.backgroundColor,
 			backgroundActiveColor: this.backgroundActiveColor,
 			backgroundSelectionColor: RGB(180, 180, 180),
-			//&#x5A92;&#x4F53;&#x5E93;&#x641C;&#x7D22;
-			empty_text: "\u5a92\u4f53\u5e93\u641c\u7d22",
+			empty_text: lang("Library Search"),
 			func: () => {
 				this.handleSearch();
 			},
 		});
 
-		this._inputboxHeight = MeasureString("ABCDgl汉字", this.inputbox.font).Height + scale(4);
+		this._inputboxHeight = MeasureString("ABCDgl" + lang("Library Search"), this.inputbox.font).Height + scale(4);
 
 		[this.searchBtn, this.clearBtn, this.inputbox].forEach((btn) =>
 			this.addChild(btn)

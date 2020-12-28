@@ -14,6 +14,7 @@ import { IInputPopupOptions } from "./InputPopupPanel";
 import { notifyOthers } from "../common/UserInterface";
 import { isValidPlaylist } from "./PlaylistView";
 import { IconButton } from "../common/Button";
+import { lang } from "./Lang";
 
 function pos2vol(pos: number) {
 	return (50 * Math.log(0.99 * pos + 0.01)) / Math.LN10;
@@ -292,11 +293,11 @@ const volumebar = new Slider({
 });
 
 const TF_TRACK_TITLE = fb.TitleFormat("%title%");
-// \u30fb: Middle dot char code.
-const TF_ARTIST = fb.TitleFormat("$if2([%artist%],未知艺人)[\u30fb$year(%date%)]");
+const TF_ARTIST = fb.TitleFormat("$if2([$trim(%artist%)]," + "\u672A\u77E5\u827A\u4EBA" + ")$if(%date%,[ \u30fb $year($replace($replace(%date%,.,-),/,-))],)");
+const defaultArtistName = lang("ARTIST");
 
 const artistText = new TextLink({
-	text: "ARTIST",
+	text: defaultArtistName,
 	font: fonts.normal_12,
 	textColor: blendColors(bottomColors.text, bottomColors.background, 0.2),
 	textHoverColor: blendColors(bottomColors.text, bottomColors.background, 0.2),
@@ -305,7 +306,7 @@ const artistText = new TextLink({
 	on_init() {
 		let metadb = fb.GetNowPlaying();
 		this.setText(
-			metadb ? TF_ARTIST.EvalWithMetadb(metadb) : "ARTIST"
+			metadb ? TF_ARTIST.EvalWithMetadb(metadb) : defaultArtistName
 		);
 	},
 
@@ -377,7 +378,7 @@ export class PlaybackControlView extends Component {
 		onPlaybackTimer_();
 
 		let npMetadb = fb.GetNowPlaying();
-		this.trackTitle = npMetadb == null ? "NOT PLAYING" : TF_TRACK_TITLE.EvalWithMetadb(npMetadb);
+		this.trackTitle = npMetadb == null ? lang("NOT PLAYING") : TF_TRACK_TITLE.EvalWithMetadb(npMetadb);
 		if (fb.IsPlaying) {
 			this.playbackTime = formatPlaybackTime(fb.PlaybackTime);
 			this.playbackLength = formatPlaybackTime(fb.PlaybackLength);

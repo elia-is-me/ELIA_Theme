@@ -480,6 +480,9 @@ export function isEmptyString(str: string) {
 	return !str;
 }
 
+export const spaceStart = (str: string) => str.padStart(str.length + 1);
+export const spaceStartEnd = (str: string) => spaceStart(str).padEnd(str.length + 2);
+
 export const enum StopReason {
 	InvokedByUser = 0,
 	EndOfFile = 1,

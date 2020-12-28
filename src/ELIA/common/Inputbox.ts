@@ -1,5 +1,6 @@
 ﻿import { Component } from "./BasePart";
 import { blendColors } from "./common";
+import { lang2 } from "./Lang";
 
 const IDC_ARROW = 32512;
 const IDC_IBEAM = 32513;
@@ -126,6 +127,7 @@ export class InputBox extends Component implements IInputBoxOptions {
             this.font_italic = this.font;
         }
         this.text = this.default_text;
+        console.log(this.font.Name);
     }
 
 
@@ -402,10 +404,10 @@ export class InputBox extends Component implements IInputBoxOptions {
         var idx;
         var _menu = window.CreatePopupMenu();
         cInputbox.clipboard = cInputbox.doc.parentWindow.clipboardData.getData("Text");
-        _menu.AppendMenuItem(this.select ? MF_STRING : MF_GRAYED | MF_DISABLED, 1, "Copy");
-        _menu.AppendMenuItem(this.select ? MF_STRING : MF_GRAYED | MF_DISABLED, 2, "Cut");
+        _menu.AppendMenuItem(this.select ? MF_STRING : MF_GRAYED | MF_DISABLED, 1, lang2("Copy"));
+        _menu.AppendMenuItem(this.select ? MF_STRING : MF_GRAYED | MF_DISABLED, 2, lang2("Cut"));
         _menu.AppendMenuSeparator();
-        _menu.AppendMenuItem(cInputbox.clipboard ? MF_STRING : MF_GRAYED | MF_DISABLED, 3, "Paste");
+        _menu.AppendMenuItem(cInputbox.clipboard ? MF_STRING : MF_GRAYED | MF_DISABLED, 3, lang2("Paste"));
         // if (utils.IsKeyPressed(VK_SHIFT)) {
         //     _menu.AppendMenuSeparator();
         //     _menu.AppendMenuItem(MF_STRING, 20, "Properties");
@@ -911,7 +913,6 @@ export class InputBox extends Component implements IInputBoxOptions {
     }
 
     on_change_focus(is_focused: boolean) {
-        // console.log("input change focus: ", is_focused);
         if (!is_focused) {
             this.check("down", -1, -1);
         }
