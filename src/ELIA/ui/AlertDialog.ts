@@ -1,6 +1,6 @@
 import { Component } from "../common/BasePart";
 import { Button } from "./Buttons";
-import { fontNameNormal, mainColors } from "./Theme";
+import { fontNameNormal, themeColors } from "./Theme";
 import {
 	scale,
 	RGB,
@@ -30,9 +30,9 @@ const defaultOptions: IDefaultOptions = {
 	titleFont: gdi.Font(fontNameNormal, scale(16)),
 	panelWidth: scale(400),
 	panelHeight: scale(225),
-	textColor: mainColors.text,
+	textColor: themeColors.titleText,
 	backgroundColor: RGB(33, 33, 33),
-	highlightColor: mainColors.highlight,
+	highlightColor: themeColors.highlight,
 };
 
 export class AlertDialog
@@ -62,11 +62,12 @@ export class AlertDialog
 		this.paddings.left = scale(40);
 
 		this.okBtn = new Button({
-			style: "text",
+			style: "contained",
 			text: lang("OK"),
-			foreColor: mainColors.text,
+			foreColor: themeColors.onPrimary,
+			backgroundColor: themeColors.primary
+
 		});
-		this.okBtn.setSize(scale(80), scale(32));
 		this.okBtn.on_click = () => {
 			if (isFunction(options.onSuccess)) {
 				options.onSuccess();
@@ -77,9 +78,8 @@ export class AlertDialog
 		this.cancelBtn = new Button({
 			style: "text",
 			text: lang("Cancel"),
-			foreColor: mainColors.text,
+			foreColor: themeColors.secondary
 		});
-		this.cancelBtn.setSize(scale(80), scale(32));
 		this.cancelBtn.on_click = () => {
 			notifyOthers("Hide.AlertDialog");
 		};

@@ -1,6 +1,6 @@
 import { Component, IBoxModel } from "../common/BasePart";
 import { RGB, scale, isEmptyString, StringFormat, MeasureString, TextRenderingHint, StopReason, VKeyCode, MenuFlag, clamp, KMask, spaceStart, spaceStartEnd } from "../common/common";
-import { mainColors, themeColors, fonts } from "./Theme";
+import { themeColors, fonts } from "./Theme";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
 import { IPaddings } from "../common/BasePart";
@@ -296,7 +296,7 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 			icon: Material.close,
 			fontName: MaterialFont,
 			fontSize: scale(28),
-			colors: [mainColors.text]
+			colors: [themeColors.secondary]
 		})
 		this.closeBtn.setSize(scale(48), scale(48));
 		this.closeBtn.z = 10;

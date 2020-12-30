@@ -16,7 +16,10 @@ export const enum ArtworkType {
 	Playlist,
 }
 
+const tf_album = fb.TitleFormat("[%album artist%]^^%album%");
+
 // Create stub images;
+// ----
 
 /** 0: Cover, 1: Photo, 2: Art */
 let stubImages: IGdiBitmap[] = [];
@@ -45,20 +48,13 @@ for (let i = 0; i < 3; i++) {
 	});
 }
 
-let maskImage = drawImage(500, 500, true, (g: IGdiGraphics) => {
-	g.FillSolidRect(0, 0, 500, 500, RGB(255, 255, 255));
-	g.SetSmoothingMode(SmoothingMode.HighQuality);
-	g.FillEllipse(1, 1, 498, 498, RGBA(0, 0, 0, 255));
-});
-
-const tf_album = fb.TitleFormat("[%album artist%]^^%album%");
-
 export class PlaylistArtwork extends Component {
 	className = "PlaylistArtwork";
 	stubImage: IGdiBitmap = stubImages[2];
 	image: IGdiBitmap;
 
-	_cache:Map<string|number, IGdiBitmap> = new Map();
+	private _cache: Map<string | number, IGdiBitmap> = new Map();
+	private _noCoverKey = "<no-cover>";
 
 	constructor() {
 		super({});
@@ -73,14 +69,16 @@ export class PlaylistArtwork extends Component {
 			this._cache.set(-1, stub);
 		}
 
-		// No tracks in active playlist;
 		let metadbs = plman.GetPlaylistItems(plman.ActivePlaylist);
+
+		// No tracks in active playlist;
 		if (!metadbs || metadbs.Count === 0) {
 			this.image = stub;
 			this.repaint();
 			return;
 		}
 
+		// Image cached already;
 		let img = this._cache.get(plman.ActivePlaylist);
 		if (img) {
 			this.image = img;
@@ -132,17 +130,17 @@ export class PlaylistArtwork extends Component {
 		if (images.length === 0) {
 			this.image = stub;
 			this._cache.set(plman.ActivePlaylist, stub);
-		} else if (images.length === 1) {
+		} else if (images.length < 4) {
 			this.image = this.processImage(images[0]);
 			this._cache.set(plman.ActivePlaylist, this.image)
 		} else {
 			images = images.map(img => CropImage(img, 250, 250));
-			if (images.length < 4) {
-				let stubimg = CropImage(stubImages[0], 250, 250);
-				for (let i = images.length; i < 4; i++) {
-					images.push(stubimg);
-				}
-			}
+			// if (images.length < 4) {
+			// 	let stubimg = CropImage(stubImages[0], 250, 250);
+			// 	for (let i = images.length; i < 4; i++) {
+			// 		images.push(stubimg);
+			// 	}
+			// }
 			let img = gdi.CreateImage(500, 500);
 			let g = img.GetGraphics();
 			g.DrawImage(images[0], 0, 0, 250, 250, 0, 0, 250, 250);

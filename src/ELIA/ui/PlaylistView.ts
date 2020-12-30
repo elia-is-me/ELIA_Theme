@@ -4,7 +4,7 @@
 
 import { TextRenderingHint, StringTrimming, StringFormatFlags, MenuFlag, VKeyCode, KMask, scale, RGB, deepClone, MeasureString, isEmptyString, StringFormat } from "../common/common";
 import { ThrottledRepaint } from "../common/common";
-import { IThemeColors, scrollbarWidth, themeColors, fonts, fontNameNormal, GdiFont } from "./Theme";
+import { scrollbarWidth, themeColors, fonts, fontNameNormal, GdiFont } from "./Theme";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
 import { Component, IBoxModel, IPaddings } from "../common/BasePart";
@@ -113,7 +113,7 @@ const PlaylistProperties = {
 	emptyFont: gdi.Font(fontNameNormal, scale(20)),
 };
 
-const playlistColors: IThemeColors = {
+const playlistColors = {
 	text: themeColors.text,
 	secondaryText: themeColors.secondaryText,
 	background: themeColors.playlistBackground,

@@ -7,7 +7,7 @@ import { InputBox } from "../common/Inputbox";
 import { IconButton } from "./Buttons";
 import { scale, RGB, MeasureString } from "../common/common";
 import { Material, } from "../common/Icon";
-import { mainColors, fonts } from "./Theme";
+import { fonts, themeColors } from "./Theme";
 import { notifyOthers } from "../common/UserInterface";
 import { lang } from "./Lang";
 
@@ -17,7 +17,7 @@ export class SearchBox extends Component {
 	clearBtn: IconButton;
 
 	backgroundColor: number = RGB(60, 60, 60);
-	foreColor: number = mainColors.text;
+	foreColor: number = themeColors.text;
 	borderColor: number;
 	borderActiveColor: number;
 	backgroundActiveColor: number = RGB(77, 77, 77);
@@ -63,7 +63,7 @@ export class SearchBox extends Component {
 
 		this.inputbox = new InputBox({
 			font: fonts.normal_14,
-			foreColor: mainColors.text,
+			foreColor: themeColors.text,
 			backgroundColor: this.backgroundColor,
 			backgroundActiveColor: this.backgroundActiveColor,
 			backgroundSelectionColor: RGB(180, 180, 180),

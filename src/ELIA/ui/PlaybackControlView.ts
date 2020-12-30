@@ -9,7 +9,7 @@ import { Slider, SliderThumbImage } from "../common/Slider";
 import { Component } from "../common/BasePart";
 import { Material, MaterialFont } from "../common/Icon"
 import { scale, PlaybackOrder, SmoothingMode, blendColors, MeasureString, StringFormat } from "../common/common";
-import { IThemeColors, bottomColors, themeColors, fonts } from "./Theme";
+import { themeColors, fonts } from "./Theme";
 import { IInputPopupOptions } from "./InputPopupPanel";
 import { notifyOthers } from "../common/UserInterface";
 import { isValidPlaylist } from "./PlaylistView";
@@ -33,6 +33,20 @@ function formatPlaybackTime(sec: number) {
 		else return '' + num;
 	};
 	return pad(minutes) + ":" + pad(seconds);
+}
+
+interface IThemeColors {
+	text: number;
+	secondaryText: number;
+	background: number;
+	highlight: number;
+}
+
+const bottomColors: IThemeColors = {
+	text: themeColors.text,
+	secondaryText: themeColors.secondaryText,
+	background: themeColors.playbackBarBackground,
+	highlight: themeColors.highlight
 }
 
 const CMD_LOVE = 'Playback Statistics/Rating/5';

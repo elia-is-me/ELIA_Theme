@@ -3,7 +3,7 @@ import { MeasureString, RGB, scale, StringFormat, isEmptyString, isFunction } fr
 import { Button } from "./Buttons";
 import { InputBox } from "../common/Inputbox";
 import { notifyOthers } from "../common/UserInterface";
-import { mainColors, themeColors, fonts, fontNameNormal } from "./Theme";
+import { themeColors, fonts, fontNameNormal } from "./Theme";
 import { lang } from "./Lang";
 
 
@@ -30,9 +30,9 @@ const defaultOptions: IInputPopupDefaultOptions = {
 	textFont: gdi.Font(fontNameNormal, scale(14)),
 	panelWidth: scale(650),
 	panelHeight: scale(225),
-	textColor: mainColors.text,
+	textColor: themeColors.titleText,
 	backgroundColor: RGB(15, 15, 15),
-	highlightColor: mainColors.highlight,
+	highlightColor: themeColors.highlight,
 }
 
 
@@ -89,7 +89,7 @@ export class InputPopupPanel
 		this.cancelBtn = new Button({
 			style: "text",
 			text: lang("Cancel"),
-			foreColor: mainColors.text,
+			foreColor: themeColors.secondary,
 		});
 		this.cancelBtn.on_click = () => {
 			notifyOthers("Hide.InputPopupPanel", this.cid);
@@ -99,7 +99,7 @@ export class InputPopupPanel
 		this.inputbox = new InputBox({
 			font: fonts.normal_14,
 			font_italic: fonts.normal_14,
-			foreColor: mainColors.background,
+			foreColor: RGB(0, 0, 0),
 			backgroundActiveColor: RGB(255, 255, 255),
 			backgroundSelectionColor: RGB(33, 136, 255),
 			empty_text: isEmptyString(this.emptyText) ? "" : this.emptyText,
