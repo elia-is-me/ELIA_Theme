@@ -4,7 +4,7 @@
 
 import { TextRenderingHint, StringTrimming, StringFormatFlags, MenuFlag, VKeyCode, KMask, scale, RGB, deepClone, MeasureString, isEmptyString, StringFormat } from "../common/common";
 import { ThrottledRepaint } from "../common/common";
-import { IThemeColors, scrollbarWidth, globalFontName, themeColors, fontNameBold, fonts, fontNameHeavy } from "./Theme";
+import { IThemeColors, scrollbarWidth, themeColors, fonts, fontNameNormal, GdiFont } from "./Theme";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
 import { Component, IBoxModel, IPaddings } from "../common/BasePart";
@@ -12,7 +12,7 @@ import { Material, MaterialFont, IconObject } from "../common/Icon";
 import { PlaylistArtwork } from "../common/AlbumArt";
 import { toggleMood } from "./PlaybackControlView";
 import { notifyOthers, ui } from "../common/UserInterface";
-import { Button } from "../common/Button";
+import { Button } from "./Buttons";
 import { IInputPopupOptions } from "./InputPopupPanel";
 import { IAlertDialogOptions } from "./AlertDialog";
 import { lang } from "./Lang";
@@ -105,10 +105,12 @@ let selecting = new SelectionHelper();
 
 const tfTrackInfo = fb.TitleFormat("%tracknumber%^^[%artist%]^^%title%^^%length%^^%rating%^^[%album%]^^[%artist%]");
 
+const playlistFontProps = window.GetProperty("Playlist.Item Font", "normal,14").split(",");
+
 const PlaylistProperties = {
-	rowHeight: scale(40),
-	itemFont: fonts.normal_14,
-	emptyFont: gdi.Font(globalFontName, scale(20)),
+	rowHeight: scale(48),
+	itemFont: GdiFont(playlistFontProps[0], scale(+playlistFontProps[1] || 14)),
+	emptyFont: gdi.Font(fontNameNormal, scale(20)),
 };
 
 const playlistColors: IThemeColors = {
@@ -182,7 +184,7 @@ class PlaylistHeaderView extends Component {
 		super({});
 
 		// Set fonts;
-		this.titleFont = gdi.Font(fontNameHeavy, scale(32), 1);
+		this.titleFont = GdiFont("bold", scale(32));
 		this.descriptionFont = fonts.normal_14;
 
 		// Set stub image;

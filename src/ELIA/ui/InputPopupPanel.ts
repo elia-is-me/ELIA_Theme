@@ -1,9 +1,9 @@
 import { Component } from "../common/BasePart";
 import { MeasureString, RGB, scale, StringFormat, isEmptyString, isFunction } from "../common/common";
-import { Button, } from "../common/Button";
+import { Button } from "./Buttons";
 import { InputBox } from "../common/Inputbox";
 import { notifyOthers } from "../common/UserInterface";
-import { mainColors, globalFontName, themeColors, fonts } from "./Theme";
+import { mainColors, themeColors, fonts, fontNameNormal } from "./Theme";
 import { lang } from "./Lang";
 
 
@@ -26,8 +26,8 @@ interface IInputPopupDefaultOptions {
 }
 
 const defaultOptions: IInputPopupDefaultOptions = {
-	titleFont: gdi.Font(globalFontName, scale(20), 1),
-	textFont: gdi.Font(globalFontName, scale(14)),
+	titleFont: gdi.Font(fontNameNormal, scale(20), 1),
+	textFont: gdi.Font(fontNameNormal, scale(14)),
 	panelWidth: scale(650),
 	panelHeight: scale(225),
 	textColor: mainColors.text,
@@ -97,8 +97,8 @@ export class InputPopupPanel
 
 		// inputbox;
 		this.inputbox = new InputBox({
-			font: fonts.semibold_14,
-			font_italic: fonts.semibold_14,
+			font: fonts.normal_14,
+			font_italic: fonts.normal_14,
 			foreColor: mainColors.background,
 			backgroundActiveColor: RGB(255, 255, 255),
 			backgroundSelectionColor: RGB(33, 136, 255),

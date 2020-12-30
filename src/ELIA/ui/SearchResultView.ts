@@ -7,7 +7,7 @@ import { IPaddings } from "../common/BasePart";
 import { MaterialFont, Material, IconObject } from "../common/Icon";
 import { toggleMood } from "./PlaybackControlView";
 import { notifyOthers, ui } from "../common/UserInterface";
-import { IconButton } from "../common/Button";
+import { IconButton } from "./Buttons";
 import { lang } from "./Lang";
 import { formatPlaylistDuration } from "./PlaylistView";
 

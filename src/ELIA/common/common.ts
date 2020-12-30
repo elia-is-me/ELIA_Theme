@@ -481,6 +481,7 @@ export function isEmptyString(str: string) {
 }
 
 export const spaceStart = (str: string) => str.padStart(str.length + 1);
+export const spaceEnd = (str: string) => str.padEnd(str.length + 1);
 export const spaceStartEnd = (str: string) => spaceStart(str).padEnd(str.length + 2);
 
 export const enum StopReason {

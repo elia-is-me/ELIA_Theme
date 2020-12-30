@@ -1,5 +1,5 @@
-import { Component, IBoxModel } from "./BasePart";
 import { GetKeyboardMask, isFunction, KMask, lastIndex, RGBA, scale, TextRenderingHint, VKeyCode } from "./common";
+import { Component, IBoxModel } from "./BasePart";
 
 let partlist: Component[] = [];
 let vis_parts: Component[] = [];
@@ -411,7 +411,6 @@ function on_drag_over(action: IDropTargetAction, x: number, y: number) {
 }
 
 function on_drag_drop(action: IDropTargetAction, x: number, y: number) {
-	console.log("on_drag_drop", x, y);
 	dropTargetPart = findDropTargetPart(x, y);
 	if (dropTargetPart) {
 		invoke(dropTargetPart, "on_drag_drop", action, x, y);

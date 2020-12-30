@@ -2,12 +2,12 @@
 // Playlist Manager
 // -------------------------
 
-import { scale, RGB, StringFormat, ThrottledRepaint, MenuFlag, setAlpha, spaceStartEnd, spaceStart } from "../common/common";
+import { scale, RGB, StringFormat, ThrottledRepaint, MenuFlag, setAlpha, spaceStartEnd, spaceStart, spaceEnd } from "../common/common";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
 import { Component } from "../common/BasePart";
 import { Material, MaterialFont, IconObject } from "../common/Icon";
-import { scrollbarWidth, themeColors, fonts } from "./Theme";
+import { scrollbarWidth, themeColors, fonts, GdiFont } from "./Theme";
 import { Clickable } from "../common/Button";
 import { isValidPlaylist } from "./PlaylistView";
 import { IInputPopupOptions } from "./InputPopupPanel";
@@ -48,11 +48,12 @@ const icons: { [keys in IconSets]: IconObject } = {
 	queue_music: new IconObject(Material.queue_music, MaterialFont, scale(20)),
 };
 
+const plmanFontProps = window.GetProperty("PlaylistManager.Item Font", "semibold,14").split(",");
 
 export const PLM_Properties = {
 	minWidth: layout.plmanMinWidth,
-	rowHeight: scale(40),
-	itemFont: fonts.normal_14,
+	rowHeight: scale(32),
+	itemFont: GdiFont(plmanFontProps[0], scale(+plmanFontProps[1] || 14)),
 	headerHeight: scale(80),
 	icons: icons,
 };
@@ -78,7 +79,7 @@ class AddPlaylistButton extends Clickable {
 
 	on_click() {
 		notifyOthers("Popup.InputPopupPanel", {
-			title: "Create new playlist",
+			title: lang("Create playlist"),
 			onSuccess(text: string) {
 				let playlistIndex = plman.CreatePlaylist(plman.PlaylistCount, text);
 				if (isValidPlaylist(playlistIndex)) {
@@ -247,22 +248,22 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 
 				// draw icon;
 				let _listItemIcon = rowItem.isAuto ? icons.gear : icons.queue_music;
-				_listItemIcon.draw(gr, textColor, rowItem.x + paddingL, rowItem.y, scale(40), scale(40));
+				_listItemIcon.draw(gr, textColor, rowItem.x + paddingL, rowItem.y, iconWidth, rowItem.height);
 
 				//
-				let iconX = this.x + this.width - scale(40) - this.scrollbar.width - scale(8);
+				let iconX = this.x + this.width - iconWidth - this.scrollbar.width - scale(8);
 				if (fb.IsPlaying && rowItem.index === plman.PlayingPlaylist) {
 					let _volumeIcon = (fb.IsPaused ? this.pauseIco : this.playingIco);
-					_volumeIcon.draw(gr, themeColors.highlight, iconX, rowItem.y, scale(40), scale(40));
+					_volumeIcon.draw(gr, themeColors.highlight, iconX, rowItem.y, iconWidth, rowItem.height);
 				}
 
-				let textWidth = rowItem.width - paddingL - paddingR - scale(40) - scale(4);
+				let textWidth = rowItem.width - paddingL - paddingR - iconWidth - scale(4);
 				if (fb.IsPlaying && rowItem.index === plman.PlayingPlaylist) {
-					textWidth = iconX - (rowItem.x + paddingL + scale(40) + scale(4)) - scale(4);
+					textWidth = iconX - (rowItem.x + paddingL + iconWidth + scale(4)) - scale(4);
 				}
 
 				// draw list name;
-				gr.DrawString(rowItem.listName, itemFont, textColor, rowItem.x + paddingL + scale(40) + scale(4), rowItem.y, textWidth, rowHeight, StringFormat.LeftCenter);
+				gr.DrawString(rowItem.listName, itemFont, textColor, rowItem.x + paddingL + iconWidth + scale(4), rowItem.y, textWidth, rowHeight, StringFormat.LeftCenter);
 			}
 		}
 
@@ -531,7 +532,7 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 			case id === 2:
 				// Rename;
 				options = {
-					title: "Rename playlist",
+					title: lang("Rename playlist"),
 					defaultText: plman.GetPlaylistName(playlistIndex),
 					onSuccess(text: string) {
 						plman.RenamePlaylist(playlistIndex, text);
@@ -543,7 +544,7 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 			case id === 3:
 				// Delete playlist;
 				let alertOptions: IAlertDialogOptions = {
-					title: "Delete playlist?",
+					title: spaceEnd(lang("Delete")) + plman.GetPlaylistName(playlistIndex) + "?",
 					onSuccess: () => {
 						let deleteActivePlaylist = (playlistIndex === plman.ActivePlaylist);
 						plman.RemovePlaylist(playlistIndex);
@@ -557,7 +558,7 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 			case id === 4:
 				// Create new playlist;
 				options = {
-					title: "Create new playlist",
+					title: lang("Create playlist"),
 				};
 				notifyOthers("Popup.InputPopupPanel", options);
 				break;

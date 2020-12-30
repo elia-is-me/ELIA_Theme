@@ -1,6 +1,6 @@
 import { scale, StringFormat, TextRenderingHint, MenuFlag } from "../common/common";
 import { Component } from "../common/BasePart";
-import { IconButton } from "../common/Button";
+import { IconButton } from "./Buttons";
 import { Material, MaterialFont } from "../common/Icon";
 import { notifyOthers, ui } from "../common/UserInterface";
 import { themeColors } from "./Theme";

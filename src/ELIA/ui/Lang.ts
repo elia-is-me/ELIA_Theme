@@ -88,7 +88,8 @@ const Language = {
         "wk": "&#x661F;&#x671F;",
         "OK": "&#x786E;&#x5B9A;",
         "Cancel": "&#x53D6;&#x6D88;",
-        "NOT PLAYING": "&#x505C;&#x6B62;&#x64AD;&#x653E;"
+        "NOT PLAYING": "&#x505C;&#x6B62;&#x64AD;&#x653E;",
+        "Rename playlist": "&#x91CD;&#x547D;&#x540D;&#x64AD;&#x653E;&#x5217;&#x8868;"
     },
 }
 

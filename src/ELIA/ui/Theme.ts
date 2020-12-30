@@ -72,7 +72,7 @@ export const themeColors = {
     playbackBarBackground: RGB(40, 40, 40),
 
     // siderbar,
-    sidebarInactiveText: RGBA(255, 255, 255, 200),
+    sidebarInactiveText: RGBA(255, 255, 255, 170),
     sidebarBackground: RGB(18, 18, 18),
     sidebarSplitLine: RGBA(255, 255, 255, 118),
 
@@ -97,11 +97,58 @@ export const themeColors = {
 // Font names that may used;
 // -------------------------
 
-export const globalFontName = "source han sans sc";
-export const fontNameNormal = "source han sans sc";
-export const fontNameSemibold = "source han sans sc medium";
-export const fontNameBold = "source han sans sc";
-export const fontNameHeavy = "source han sans sc heavy";
+const useFbFonts = window.GetProperty("Font.Use foobar fonts", true);
+
+const fontNames = {
+    normal: window.GetProperty("Font.Normal", ""),
+    semibold: window.GetProperty("Font.Semibold", ""),
+    bold: window.GetProperty("Font.bold", ""),
+}
+
+const FontTypeCUI = {
+    items: 0,
+    labels: 1
+};
+// Used in window.GetFontDUI()
+const FontTypeDUI = {
+    defaults: 0,
+    tabs: 1,
+    lists: 2,
+    playlists: 3,
+    statusbar: 4,
+    console: 5
+};
+
+
+function getFonts() {
+    let fbFont: IGdiFont;
+    let fbSemiFont: IGdiFont;
+    let instanceType = window.InstanceType;
+
+    if (useFbFonts) {
+        if (instanceType === 0) {
+            fbFont = window.GetFontCUI(FontTypeCUI.items, "{82196D79-69BC-4041-8E2A-E3B4406BB6FC}");
+            fbSemiFont = window.GetFontCUI(FontTypeCUI.labels, "{C0D3B76C-324D-46D3-BB3C-E81C7D3BCB85}");
+        } else {
+            fbFont = window.GetFontDUI(FontTypeDUI.defaults);
+            fbSemiFont = window.GetFontDUI(FontTypeDUI.tabs);
+        }
+
+        fontNames.normal = fbFont.Name;
+        fontNames.semibold = fbSemiFont.Name;
+        fontNames.bold = fbFont.Name;
+    } else {
+        fontNames.normal = window.GetProperty("Font.Normal", "");
+        fontNames.semibold = window.GetProperty("Font.Semibold", "");
+        fontNames.bold = window.GetProperty("Font.bold", "");
+    }
+}
+
+getFonts();
+
+export const fontNameNormal = fontNames.normal;
+export const fontNameSemibold = fontNames.semibold;
+export const fontNameBold = fontNames.bold;
 
 export const fonts = {
     normal_12: gdi.Font(fontNameNormal, scale(12)),
@@ -109,12 +156,24 @@ export const fonts = {
     normal_14: gdi.Font(fontNameNormal, scale(14)),
     normal_28: gdi.Font(fontNameNormal, scale(28)),
     semibold_14: gdi.Font(fontNameSemibold, scale(14)),
+    bold_32: gdi.Font(fontNameBold, scale(32), 1),
 
     material_22: gdi.Font(MaterialFont, scale(22)),
 
     // playback time;
     trebuchet_12: gdi.Font("Trebuchet MS", scale(12)),
+}
 
+export function GdiFont(fontName: string, size: number, style?: number) {
+    fontName = fontName.trim().toLowerCase();
+    if (fontName === "semibold" || fontName === "semi") {
+        fontName = fontNames.semibold;
+    } else if (fontName === "normal") {
+        fontName = fontNames.normal;
+    } else if (fontName === "bold") {
+        fontName = fontNames.bold;
+    } else { }
+    return gdi.Font(fontName, size, style);
 }
 
 // Height of seekbar or volumebar;

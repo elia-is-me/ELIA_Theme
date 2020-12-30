@@ -4,10 +4,10 @@
 
 import { Component } from "../common/BasePart";
 import { InputBox } from "../common/Inputbox";
-import { IconButton } from "../common/Button";
+import { IconButton } from "./Buttons";
 import { scale, RGB, MeasureString } from "../common/common";
 import { Material, } from "../common/Icon";
-import { mainColors, globalFontName, fonts } from "./Theme";
+import { mainColors, fonts } from "./Theme";
 import { notifyOthers } from "../common/UserInterface";
 import { lang } from "./Lang";
 

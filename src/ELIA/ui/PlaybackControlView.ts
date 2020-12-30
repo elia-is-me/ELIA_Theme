@@ -13,7 +13,7 @@ import { IThemeColors, bottomColors, themeColors, fonts } from "./Theme";
 import { IInputPopupOptions } from "./InputPopupPanel";
 import { notifyOthers } from "../common/UserInterface";
 import { isValidPlaylist } from "./PlaylistView";
-import { IconButton } from "../common/Button";
+import { IconButton } from "./Buttons";
 import { lang } from "./Lang";
 
 function pos2vol(pos: number) {

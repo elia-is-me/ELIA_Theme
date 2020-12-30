@@ -1,6 +1,6 @@
 import { Component } from "../common/BasePart";
-import { Button } from "../common/Button";
-import { globalFontName, mainColors } from "./Theme";
+import { Button } from "./Buttons";
+import { fontNameNormal, mainColors } from "./Theme";
 import {
 	scale,
 	RGB,
@@ -27,7 +27,7 @@ interface IDefaultOptions {
 }
 
 const defaultOptions: IDefaultOptions = {
-	titleFont: gdi.Font(globalFontName, scale(16)),
+	titleFont: gdi.Font(fontNameNormal, scale(16)),
 	panelWidth: scale(400),
 	panelHeight: scale(225),
 	textColor: mainColors.text,
