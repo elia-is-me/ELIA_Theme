@@ -668,13 +668,13 @@ export class PlaylistView extends ScrollView {
 		mood.width = scale(36);
 
 		let whitespace = this.width - padLeft - padRight;
-		let reservedWidth = scale(80);
+		let reservedWidth = scale(40);
 		whitespace -= reservedWidth;
 		mood.visible && (whitespace -= mood.width);
 		whitespace -= time.width;
 		whitespace -= trackNumber.width;
 
-		let titleWidth_ = scale(215);
+		let titleWidth_ = scale(180);
 		let artistWidth_ = scale(100);
 		let albumWidth_ = scale(100);
 
