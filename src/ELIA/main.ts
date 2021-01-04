@@ -1,11 +1,11 @@
 ﻿import { ui } from "./common/UserInterface";
-import { Layout } from "./ui/Layout";
-import { PlaybackControlView } from "./ui/PlaybackControlView";
-import { TopBar } from "./ui/TopbarView";
-import { isValidPlaylist, PlaylistView } from "./ui/PlaylistView";
-import { PlaylistManagerView } from "./ui/PlaylistManagerView";
-import { SearchResultView } from "./ui/SearchResultView";
-import { lang } from "./ui/Lang";
+import { Layout } from "./parts/Layout";
+import { PlaybackControlView } from "./parts/PlaybackControlView";
+import { TopBar } from "./parts/TopbarView";
+import { isValidPlaylist, PlaylistView } from "./parts/PlaylistView";
+import { PlaylistManagerView } from "./parts/PlaylistManagerView";
+import { SearchResultView } from "./parts/SearchResultView";
+import { lang } from "./parts/Lang";
 
 window.DefinePanel("ELIA THEME", {
 	features: { drag_n_drop: true },
