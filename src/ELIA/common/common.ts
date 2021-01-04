@@ -164,6 +164,15 @@ export function isFunction(obj: any) {
 	return Object.prototype.toString.call(obj) === "[object Function]";
 }
 
+/**
+ * In **contrast** to just checking `typeof` this will return `false` for `NaN`.
+ * @returns whether the provided parameter is a JavaScript Number or not.
+ */
+export function isNumber(obj: any): obj is number {
+	return (typeof obj === 'number' && !isNaN(obj));
+}
+
+
 export function shuffleArray(array: any[]) {
 	for (let i = array.length - 1; i > 0; i--) {
 		let j = Math.floor(Math.random() * (i + 1));
@@ -196,7 +205,7 @@ export const BuildFullPath = function (path: string) {
 		tmpFileLoc = tmpFileLoc.concat(result[0]);
 		try {
 			create(tmpFileLoc);
-		} catch (e) {}
+		} catch (e) { }
 	}
 };
 
@@ -338,60 +347,68 @@ export function throttle(fn: Function, threshhold: number, scope?: any) {
 }
 
 /**
- *
- * @param {IGdiBitmap} image
+ * 缩放图片到指定大小，如果目标图片的长宽比与原始图片不同，则裁剪图片以适应。
+ * 不修改原始图片。
+ * @param {IGdiBitmap} srcImg
  * @param {number} width
  * @param {number} height
- * @param {number?} itp
+ * @param {number?} itp - 见 InterpolationMode
+ * @returns {IGdiBitmap}
  */
-export function CropImage(
-	image: IGdiBitmap,
-	width: number,
-	height?: number,
-	itp: number = 0
-) {
-	if (height == null) {
-		height = width;
-	}
-	var sc = width / height;
-	var src_w = image.Width;
-	var src_h = image.Height;
-	var src_sc = src_w / src_h;
-	var tmp_w, tmp_h, crop, tmp_img;
-	if (src_sc > sc) {
-		tmp_w = src_h * sc;
-		crop = Math.round((src_w - tmp_w) / 2);
-		tmp_img = image.Clone(crop, 0, tmp_w, src_h);
+export function CropImage(srcImg: IGdiBitmap, width: number, height: number, itp: number = InterpolationMode.Default) {
+	const srcW = srcImg.Width;
+	const srcH = srcImg.Height;
+	const srcRatio = srcW / srcH;
+	const dstRatio = width / height;
+	let tmpW, tmpH, crop, tmpImg;
+	if (srcRatio > dstRatio) {
+		tmpW = (srcH * dstRatio) >> 0;
+		crop = ((srcW - tmpW) / 2) >> 0;
+		tmpImg = srcImg.Clone(crop, 0, tmpW, srcH);
 	} else {
-		tmp_h = src_w / sc;
-		crop = Math.round((src_h - tmp_h) / 2);
-		tmp_img = image.Clone(0, crop, src_w, tmp_h);
+		tmpH = (srcW / dstRatio) >> 0;
+		crop = ((srcH - tmpH) / 2) >> 0;
+		tmpImg = srcImg.Clone(0, crop, srcW, tmpH);
 	}
-	return tmp_img.Resize(width, height, itp);
+	return tmpImg.Resize(width, height, itp);
 }
 
-export function imageFromCode(
-	code: string,
-	font: IGdiFont,
-	color: number,
-	width: number,
-	height: number,
-	fmt = StringFormat(1, 1)
-): IGdiBitmap {
-	var img = gdi.CreateImage(width, height);
-	var g = img.GetGraphics();
-	g.SetTextRenderingHint(TextRenderingHint.AntiAlias);
-	g.DrawString(code, font, color, 0, 0, width, height, fmt);
-	img.ReleaseGraphics(g);
-	return img;
+/**
+ * 缩放图片到指定大小，保持长宽比，且不裁剪。
+ */
+export function ScaleImage(srcImg: IGdiBitmap, width: number, height: number, itp: number = InterpolationMode.Default) {
+	if (srcImg == null) {
+		return;
+	}
+	const ratio = Math.min(width / srcImg.Width, height / srcImg.Height);
+	const w = (srcImg.Width * ratio) >> 0;
+	const h = (srcImg.Height * ratio) >> 0;
+	return srcImg.Resize(w, h, itp);
 }
 
-export function drawImage(
-	w: number,
-	h: number,
-	im: boolean,
-	func: (gr: IGdiGraphics) => void
-) {
+/**
+ * 在 Canvas 画图片.
+ */
+export function DrawImageScale(gr: IGdiGraphics, img: IGdiBitmap, x: number, y: number, width: number, height: number) {
+	let s1 = width / img.Width;
+	let s2 = height / img.Height;
+	let s = Math.min(s1, s2);
+
+	if (s === s1) {
+		let w = width;
+		let h = (s * img.Height) >> 0;
+		let h_offset = ((height - h) / 2) >> 0;
+		return gr.DrawImage(img, x, y + h_offset, w, h, 0, 0, img.Width, img.Height, 0, 255);
+	} else if (s === s2) {
+		let w = (s * img.Width) >> 0;
+		let h = height;
+		let w_offset = ((width - w) / 2) >> 0;
+		return gr.DrawImage(img, x + w_offset, y, w, h, 0, 0, img.Width, img.Height, 0, 255);
+	}
+}
+
+
+export function drawImage(w: number, h: number, im: boolean, func: (gr: IGdiGraphics) => void) {
 	let i = gdi.CreateImage(Math.max(w, 1) | 0, Math.max(h, 1) | 0);
 	let g = i.GetGraphics();
 	func(g);
@@ -467,12 +484,12 @@ export function lastIndex<T>(array: ReadonlyArray<T>, fn: (item: T) => boolean):
 * findLastIndex immediately returns that element index. Otherwise, findLastIndex returns -1.
 */
 export function findLastIndex<T>(array: Array<T>, predicate: (value: T, index: number, obj: T[]) => boolean): number {
-    let l = array.length;
-    while (l--) {
-        if (predicate(array[l], l, array))
-            return l;
-    }
-    return -1;
+	let l = array.length;
+	while (l--) {
+		if (predicate(array[l], l, array))
+			return l;
+	}
+	return -1;
 }
 
 
@@ -569,3 +586,8 @@ export const enum CursorName {
 	IDC_HAND = 32649,
 	IDC_HELP = 32651,
 }
+
+
+export const fso: {
+	FileExists: (par: string) => boolean;
+} = new ActiveXObject("Scripting.FileSystemObject");

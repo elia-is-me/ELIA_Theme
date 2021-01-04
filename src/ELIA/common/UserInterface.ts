@@ -1,5 +1,6 @@
 import { GetKeyboardMask, isFunction, KMask, lastIndex, RGBA, scale, TextRenderingHint, VKeyCode } from "./common";
 import { Component, IBoxModel } from "./BasePart";
+import { imageCache } from "./AlbumArt";
 
 let partlist: Component[] = [];
 let vis_parts: Component[] = [];
@@ -132,7 +133,6 @@ function updateParts() {
 			p.resetUpdateState();
 		});
 	partlist.forEach(p => monitor(p));
-	console.log("Part COUNT: ", partlist.length, " | ", vis_parts.length);
 }
 
 export function notifyOthers(message: string, data?: any) {
@@ -479,6 +479,16 @@ function on_volume_change(val: number) {
 		invoke(p, invoke(p, "on_volume_change", val)));
 }
 
+
+function on_get_album_art_done(metadb: IFbMetadb | null, art_id: number, image: IGdiBitmap | null, image_path: string) {
+	imageCache.on_get_album_art_done(metadb, art_id, image, image_path);
+}
+
+function on_load_image_done(cookie: number, image: IGdiBitmap | null, image_path: string) {
+	imageCache.on_load_image_done(cookie, image);
+}
+
+
 /**
  * foo_spider_monkey_panel.dll does not provide a globalThis var and the
  * `window` object is readonly that none new properties  & methods can be assign
@@ -527,6 +537,8 @@ Object.assign(systemCallbacks, {
 	on_item_focus_change: on_item_focus_change,
 	on_metadb_changed: on_metadb_changed,
 	on_volume_change: on_volume_change,
+	on_load_image_done: on_load_image_done,
+	on_get_album_art_done: on_get_album_art_done,
 });
 
 /**

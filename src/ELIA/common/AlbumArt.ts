@@ -1,5 +1,168 @@
-import { StringFormat, CropImage, TextRenderingHint, drawImage, SmoothingMode, RGB, RGBA, debounce, StopReason } from "./common";
+import { StringFormat, CropImage, TextRenderingHint, drawImage, SmoothingMode, debounce, StopReason, BuildFullPath, fso, scale, InterpolationMode, isNumber, ScaleImage, DrawImageScale } from "./common";
 import { Component } from "./BasePart";
+
+// image cache;
+// ---- 
+
+interface CacheObj {
+	image: IGdiBitmap | null;
+	load_request: number;
+	tid: number;
+}
+
+class ImageCache {
+	private _cacheFolder = fb.ProfilePath + "ELIA_CACHE\\";
+	private _imageSize = +window.GetProperty("ImageCache.Image Size", 500);
+	private _cacheMap: Map<string | number, CacheObj> = new Map();
+	tf_crc = fb.TitleFormat("$crc32($directory(%path%)^^%album%)");
+	noCover: IGdiBitmap;
+	noArt: IGdiBitmap;
+	noPhoto: IGdiBitmap;
+
+	private coverLoad: number | null;
+	private coverDone: number | null;
+
+	constructor() {
+		BuildFullPath(this._cacheFolder);
+		if (!isNumber(this._imageSize)) {
+			this._imageSize = 500;
+			window.SetProperty("ImageCache.Image Size", this._imageSize);
+		}
+		this._createStubImages();
+		this.noCover = this._stubImages[0];
+		this.noArt = this._stubImages[2];
+		this.noPhoto = this._stubImages[1];
+	}
+
+	clear() {
+		this._cacheMap.clear();
+	}
+
+	hit(metadb: IFbMetadb, crcKey?: string, is_scrolling = false) {
+		if (!metadb) {
+			return;
+		}
+		let cacheKey = this.tf_crc.EvalWithMetadb(metadb);
+		let cacheObj = this._cacheMap.get(cacheKey);
+		if (cacheObj && cacheObj.image) return cacheObj.image;
+		if (cacheObj == null) {
+			cacheObj = {
+				tid: -1,
+				image: null,
+				load_request: 0
+			};
+			this._cacheMap.set(cacheKey, cacheObj);
+		};
+		if (cacheObj.image == null) {
+			if (cacheObj.load_request === 0) {
+				if (!this.coverLoad) {
+					this.coverLoad = window.SetTimeout(() => {
+						try {
+							cacheObj.tid = this.loadImageFromCache(cacheKey);
+							cacheObj.load_request = 1;
+						} catch (e) { }
+						this.coverLoad && window.ClearTimeout(this.coverLoad);
+						this.coverLoad = null;
+					}, is_scrolling ? 100 : 5);
+				}
+
+			}
+		}
+		if (cacheObj.load_request !== 0) {
+			if (!this.coverLoad) {
+				this.coverLoad = window.SetTimeout(() => {
+					utils.GetAlbumArtAsync(window.ID, metadb, AlbumArtId.Front, false);
+					this.coverLoad && window.ClearTimeout(this.coverLoad);
+					this.coverLoad = null;
+				}, (is_scrolling ? 100 : 5));
+			}
+		}
+
+	}
+
+	on_load_image_done(tid: number, image: IGdiBitmap | null) {
+		let cacheObj: CacheObj;
+		for (let [key, obj] of this._cacheMap) {
+			if (obj.tid === tid) {
+				cacheObj = obj;
+				cacheObj.tid = -1; // reset;
+				cacheObj.image = image;
+				cacheObj.load_request = 2;
+				break;
+			}
+		}
+	}
+
+	on_get_album_art_done(metadb: IFbMetadb, art_id: number, image: IGdiBitmap | null, image_path: string) {
+		if (!metadb) {
+			return;
+		}
+		if (!image && art_id === AlbumArtId.Front) {
+			if (!this.coverLoad) {
+				this.coverLoad = window.SetTimeout(() => {
+					// 网易云下载的音乐会把封面存在 'Disc' 中;
+					utils.GetAlbumArtAsync(window.ID, metadb, AlbumArtId.Disc, false);
+					this.coverLoad && window.ClearTimeout(this.coverLoad);
+					this.coverLoad = null;
+				}, 5);
+			}
+		} else {
+			let cacheKey = this.tf_crc.EvalWithMetadb(metadb);
+			let cacheObj: CacheObj = {
+				tid: -1,
+				image: ScaleImage(image, this._imageSize, this._imageSize, InterpolationMode.HighQuality),
+				load_request: 2
+			}
+			this._cacheMap.set(cacheKey, cacheObj);
+			window.SetTimeout(() => {
+				if (fso.FileExists(this._cacheFolder + cacheKey)) {
+					//
+				} else {
+					if (cacheObj.image) {
+						cacheObj.image.SaveAs(this._cacheFolder + cacheKey, "image/jpeg");
+						console.log("save image to " + this._cacheFolder + cacheKey)
+					}
+				}
+			}, 5);
+		}
+	}
+
+	private loadImageFromCache(crc: string) {
+		return gdi.LoadImageAsync(window.ID, this._cacheFolder + crc);
+	}
+
+	private _stubImages: IGdiBitmap[] = [];
+
+	private _createStubImages() {
+		let stubImages: IGdiBitmap[] = [];
+		let font1 = gdi.Font("Segoe UI", 230, 1);
+		let font2 = gdi.Font("Segoe UI", 120, 1);
+		for (let i = 0; i < 3; i++) {
+			stubImages[i] = drawImage(500, 500, true, g => {
+				g.SetSmoothingMode(SmoothingMode.HighQuality);
+				g.FillRoundRect(0, 0, 500, 500, 8, 8, 0x0fffffff);
+				g.SetTextRenderingHint(TextRenderingHint.AntiAlias);
+				g.DrawString("NO", font1, 0x25ffffff, 0, 0, 500, 275, StringFormat.Center);
+				g.DrawString(
+					["COVER", "PHOTO", "ART"][i],
+					font2,
+					0x20ffffff,
+					2.5,
+					175,
+					500,
+					275,
+					StringFormat.Center
+				);
+				g.FillSolidRect(60, 400, 380, 20, 0x15fffffff);
+			});
+		}
+		this._stubImages = stubImages;
+	}
+}
+
+export const imageCache = new ImageCache();
+
+// -----
 
 export const enum AlbumArtId {
 	Front = 0,
@@ -16,41 +179,11 @@ export const enum ArtworkType {
 	Playlist,
 }
 
-const tf_album = fb.TitleFormat("[%album artist%]^^%album%");
-
-// Create stub images;
-// ----
-
-/** 0: Cover, 1: Photo, 2: Art */
-let stubImages: IGdiBitmap[] = [];
-let font1 = gdi.Font("Segoe UI", 230, 1);
-let font2 = gdi.Font("Segoe UI", 120, 1);
-let font3 = gdi.Font("Segoe UI", 200, 1);
-let font4 = gdi.Font("Segoe UI", 90, 1);
-
-for (let i = 0; i < 3; i++) {
-	stubImages[i] = drawImage(500, 500, true, g => {
-		g.SetSmoothingMode(SmoothingMode.HighQuality);
-		g.FillRoundRect(0, 0, 500, 500, 8, 8, 0x0fffffff);
-		g.SetTextRenderingHint(TextRenderingHint.AntiAlias);
-		g.DrawString("NO", font1, 0x25ffffff, 0, 0, 500, 275, StringFormat.Center);
-		g.DrawString(
-			["COVER", "PHOTO", "ART"][i],
-			font2,
-			0x20ffffff,
-			2.5,
-			175,
-			500,
-			275,
-			StringFormat.Center
-		);
-		g.FillSolidRect(60, 400, 380, 20, 0x15fffffff);
-	});
-}
+const tf_album = fb.TitleFormat("$directory(%path%)^^%album%");
 
 export class PlaylistArtwork extends Component {
-	className = "PlaylistArtwork";
-	stubImage: IGdiBitmap = stubImages[2];
+	readonly className = "PlaylistArtwork";
+	readonly stubImage: IGdiBitmap = imageCache.noArt;
 	image: IGdiBitmap;
 
 	private _cache: Map<string | number, IGdiBitmap> = new Map();
@@ -65,7 +198,7 @@ export class PlaylistArtwork extends Component {
 		// Check stub_image;
 		let stub = this._cache.get(-1);
 		if (!stub) {
-			stub = CropImage(stubImages[2], this.width, this.height);
+			stub = CropImage(this.stubImage, this.width, this.height);
 			this._cache.set(-1, stub);
 		}
 
@@ -135,12 +268,6 @@ export class PlaylistArtwork extends Component {
 			this._cache.set(plman.ActivePlaylist, this.image)
 		} else {
 			images = images.map(img => CropImage(img, 250, 250));
-			// if (images.length < 4) {
-			// 	let stubimg = CropImage(stubImages[0], 250, 250);
-			// 	for (let i = images.length; i < 4; i++) {
-			// 		images.push(stubimg);
-			// 	}
-			// }
 			let img = gdi.CreateImage(500, 500);
 			let g = img.GetGraphics();
 			g.DrawImage(images[0], 0, 0, 250, 250, 0, 0, 250, 250);
@@ -170,8 +297,19 @@ export class PlaylistArtwork extends Component {
 	}
 
 	on_playlist_switch() {
+		this._cache.clear();
 		this.getArtwork();
 	}
+
+	on_playlist_items_added = debounce(() => {
+		this._cache.clear();
+		this.getArtwork();
+	}, 1000);
+
+	on_playlist_items_removed = debounce(() => {
+		this._cache.clear();
+		this.getArtwork();
+	}, 1000);
 
 	on_paint(gr: IGdiGraphics) {
 		let img = this.image || this.stubImage;
@@ -185,16 +323,24 @@ export class PlaylistArtwork extends Component {
 }
 
 export class NowplayingArtwork extends Component {
+	readonly className = "NowplayingArtwork";
+	readonly stubImage: IGdiBitmap = imageCache.noCover;	
 	image: IGdiBitmap;
-	stubImage: IGdiBitmap = stubImages[0];
-	trackKey: string = "##@!";
-	className = "NowplayingArtwork";
+	_noCover: IGdiBitmap;
+	trackKey: string = "0123456789";
+	metadb: IFbMetadb;
 
 	constructor() {
 		super({});
 	}
 
 	async getArtwork(metadb?: IFbMetadb) {
+		// check stub image;
+		if (!this._noCover || this._noCover.Width !== this.width) {
+			this._noCover = this.processImage(this.stubImage);
+		}
+
+		// get album art;
 		if (metadb) {
 			let trackKey = tf_album.EvalWithMetadb(metadb);
 			if (trackKey !== this.trackKey || !this.image) {
@@ -243,14 +389,12 @@ export class NowplayingArtwork extends Component {
 	}
 
 	on_paint(gr: IGdiGraphics) {
-		let img = this.image || this.stubImage;
+		let img = this.image || this._noCover;
 		if (!img) return;
-
 		gr.DrawImage(img, this.x, this.y, this.width, this.height, 0, 0, img.Width, img.Height);
 	}
 
 	on_size = debounce(() => {
-		this.stubImage = this.processImage(stubImages[0]);
 		this.getArtwork(fb.GetNowPlaying());
 	}, 100);
 }
