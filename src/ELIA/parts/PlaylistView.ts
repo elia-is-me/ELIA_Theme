@@ -439,7 +439,7 @@ class PlaylistColumn {
 		this.visible = visible;
 	}
 
-	draw(gr: IGdiGraphics, text: string, font: IGdiFont, color: number, row: IBoxModel, sf: number = StringFormat.LeftCenter) {
+	draw(gr: IGdiGraphics, text: string | number, font: IGdiFont, color: number, row: IBoxModel, sf: number = StringFormat.LeftCenter) {
 		let x_ = this.x + this._paddingLeft;
 		let width_ = this.width - (this._paddingLeft + this._paddingRight);
 		let y_ = row.y;
@@ -841,7 +841,7 @@ export class PlaylistView extends ScrollView {
 					(fb.IsPaused ? this.pauseIco : this.playingIco)
 						.draw(gr, colors.highlight, trackNumber.x, row.y, trackNumber.width, rowHeight);
 				} else {
-					trackNumber.draw(gr, row.trackNumber, itemFont, textSecondaryColor, row, StringFormat.Center);
+					trackNumber.draw(gr, row.playlistItemIndex + 1, itemFont, textSecondaryColor, row, StringFormat.Center);
 				}
 
 				/**
