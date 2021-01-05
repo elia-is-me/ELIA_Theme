@@ -213,7 +213,13 @@ interface IFbUtils {
     DoDragDrop(
         windowId: number,
         handle_list: IFbMetadbList,
-        effect: number
+        effect: number,
+        options?: {
+            show_text?: boolean;
+            use_album_art?: boolean;
+            use_theming?: boolean;
+            custom_image?: IGdiBitmap;
+        }
     ): number;
 
     /** @method */

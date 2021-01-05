@@ -256,7 +256,7 @@ function monitor(object: Component) {
 	};
 }
 
-let mouseCursor = {
+export const mouseCursor = {
 	x: -1,
 	y: -1,
 };

@@ -1,4 +1,4 @@
-import { RGB, RGBA, scale } from "../common/common"
+import { isNumber, RGB, RGBA, scale } from "../common/common"
 import { MaterialFont } from "../common/Icon"
 
 // Custom colors;
@@ -113,16 +113,34 @@ export const fonts = {
     trebuchet_12: gdi.Font("Trebuchet MS", scale(12)),
 }
 
-export function GdiFont(fontName: string, size: number, style?: number) {
-    fontName = fontName.trim().toLowerCase();
-    if (fontName === "semibold" || fontName === "semi") {
-        fontName = fontNames.semibold;
-    } else if (fontName === "normal") {
-        fontName = fontNames.normal;
-    } else if (fontName === "bold") {
-        fontName = fontNames.bold;
-    } else { }
-    return gdi.Font(fontName, size, style);
+export function GdiFont(fontInfo: string): IGdiFont;
+export function GdiFont(fontName: string, size: number, style?: number): IGdiFont;
+export function GdiFont(infoOrName: string, size?: number, style?: number): IGdiFont {
+    if (size != null) {
+        let fontName = infoOrName.trim().toLowerCase();
+        if (fontName === "semibold" || fontName === "semi") {
+            fontName = fontNames.semibold;
+        } else if (fontName === "normal") {
+            fontName = fontNames.normal;
+        } else if (fontName === "bold") {
+            fontName = fontNames.bold;
+        } else { }
+        return gdi.Font(fontName, size, style);
+    } else {
+        let infos = infoOrName.split(",").map(i => i.trim());
+        let fontName = infos[0];
+        let size: number;
+        let style: number;
+        if (!isNumber(+infos[1])) {
+            throw new Error("Invalid parameter: GdiFont(), " + infoOrName)
+        } else {
+            size = scale(+infos[1]);
+        }
+        if (isNumber(+infos[2])) {
+            style = +infos[2];
+        }
+        return GdiFont(fontName, size, style);
+    }
 }
 
 // Height of seekbar or volumebar;

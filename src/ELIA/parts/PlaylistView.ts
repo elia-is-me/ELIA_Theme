@@ -17,8 +17,6 @@ import { IInputPopupOptions } from "./InputPopupPanel";
 import { IAlertDialogOptions } from "./AlertDialog";
 import { lang } from "./Lang";
 
-const __DEV__ = window.GetProperty("__DEV__", true);
-
 const mouseCursor = {
 	x: -1,
 	y: -1,
@@ -825,14 +823,8 @@ export class PlaylistView extends ScrollView {
 
 				gr.DrawLine(row.x, row.y + rowHeight - 1, row.x + row.width, row.y + rowHeight - 1, 1, themeColors.playlistSplitLine);
 
-				// --------------
 				//  Draw columns;
 				// --------------
-
-				// for debug;
-				if (__DEV__) {
-					gr.DrawString(row.rowIndex, itemFont, textSecondaryColor, this.x, row.y, this.width, row.height, StringFormat.LeftCenter);
-				}
 
 				/**
 				 * Draw tracknumber | playing icon;
