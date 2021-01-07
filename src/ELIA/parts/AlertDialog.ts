@@ -7,11 +7,12 @@ import { lang } from "./Lang";
 
 export interface IAlertDialogOptions {
 	title: string;
-	description?: string;
+	text?: string;
 	onSuccess?: () => void;
 }
 
 interface IDefaultOptions {
+	textFont: IGdiFont;
 	titleFont: IGdiFont;
 	panelWidth: number;
 	panelHeight: number;
@@ -21,7 +22,8 @@ interface IDefaultOptions {
 }
 
 const defaultOptions: IDefaultOptions = {
-	titleFont: GdiFont("semibold, 20"),
+	textFont: GdiFont("semibold, 16"),
+	titleFont: GdiFont("bold, 20"),
 	panelWidth: scale(400),
 	panelHeight: scale(225),
 	textColor: themeColors.titleText,
@@ -34,6 +36,7 @@ export class AlertDialog extends Component implements IAlertDialogOptions, IDefa
 	readonly modal: boolean = true;
 
 	titleFont: IGdiFont;
+	textFont: IGdiFont;
 	panelWidth: number;
 	panelHeight: number;
 	textColor: number;
@@ -41,6 +44,7 @@ export class AlertDialog extends Component implements IAlertDialogOptions, IDefa
 	highlightColor: number;
 
 	title: string;
+	text: string;
 
 	okBtn: Button;
 	cancelBtn: Button;
@@ -85,12 +89,13 @@ export class AlertDialog extends Component implements IAlertDialogOptions, IDefa
 		let panel_height: number = 0;
 		let temp_image = gdi.CreateImage(1, 1);
 		let temp_gr = temp_image.GetGraphics();
-		let textWidth = temp_gr.MeasureString(this.title, this.titleFont, 0, 0, panel_width, 1000).Width;
+		let textWidth = temp_gr.MeasureString(this.title, this.textFont, 0, 0, panel_width, 1000).Width;
 		if (textWidth > panel_width) {
-			panel_height = 2 * this.paddings.top + scale(24) + 2 * this.titleFont.Height * 1.5 + this.okBtn.height;
+			panel_height = 2 * this.paddings.top + scale(24) + this.titleFont.Height * 1.5 + this.textFont.Height * 1.3 * 2 + this.okBtn.height;
 		} else {
-			panel_height = 2 * this.paddings.top + scale(24) + this.titleFont.Height * 1.5 + this.okBtn.height;
+			panel_height = 2 * this.paddings.top + scale(24) + this.titleFont.Height * 1.5 + this.textFont.Height * 1.3 + this.okBtn.height;
 		}
+		temp_image.ReleaseGraphics(temp_gr);
 		// then set panel size;
 		this.setSize(panel_width, panel_height);
 	}
@@ -108,7 +113,7 @@ export class AlertDialog extends Component implements IAlertDialogOptions, IDefa
 
 	on_paint(gr: IGdiGraphics) {
 		const { textColor, backgroundColor } = this;
-		const titleFont = this.titleFont;
+		const { titleFont, textFont } = this;
 		const { top, left } = this.paddings;
 
 		// background;
@@ -116,6 +121,11 @@ export class AlertDialog extends Component implements IAlertDialogOptions, IDefa
 		gr.DrawRoundRect(this.x, this.y, this.width - scale(1), this.height - scale(1), scale(2), scale(2), scale(1), setAlpha(textColor, 50));
 
 		// title;
-		gr.DrawString(this.title, titleFont, textColor, this.x + left, this.y + top, this.width - 2 * left, this.height - 2 * top, StringFormat(0, 0, StringTrimming.None, StringFormatFlags.NoClip));
+		gr.DrawString(this.title, titleFont, textColor, this.x + left, this.y + top, this.width - 2 * left, this.titleFont.Height, StringFormat.LeftTop);
+
+		// text;
+		if (this.text) {
+			gr.DrawString(this.text, textFont, textColor, this.x + left, this.y + top + 1.5 * this.titleFont.Height, this.width - 2 * left, 2.2 * textFont.Height, StringFormat.LeftTop);
+		}
 	}
 }

@@ -3,7 +3,7 @@ import { MeasureString, RGB, scale, StringFormat, isEmptyString, isFunction, set
 import { Button } from "./Buttons";
 import { InputBox } from "../common/Inputbox";
 import { notifyOthers } from "../common/UserInterface";
-import { themeColors, fonts, fontNameNormal, GdiFont } from "./Theme";
+import { themeColors, fonts, GdiFont } from "./Theme";
 import { lang } from "./Lang";
 
 

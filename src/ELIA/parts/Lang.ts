@@ -34,6 +34,7 @@ const Language = {
         "d": "&#x5929;",
         "Default": "\u9ED8\u8BA4\u5217\u8868",
         "Delete": "&#x5220;&#x9664;",
+        "Delete playlist": "&#x5220;&#x9664;&#x64AD;&#x653E;&#x5217;&#x8868;",
         "Edit autoplaylist...": "&#x7F16;&#x8F91;&#x667A;&#x80FD;&#x5217;&#x8868;",
         "Edit playlist...": "&#x7F16;&#x8F91;&#x64AD;&#x653E;&#x5217;&#x8868;",
         "Go to album": "&#x524D;&#x5F80;&#x4E13;&#x8F91;",
