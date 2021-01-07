@@ -86,7 +86,7 @@ const Language = {
     },
 }
 
-let langCode = window.GetProperty("Global.GUI Language", "en").toLowerCase();
+let langCode = window.GetProperty("Global.GUI Language", "<auto>").toLowerCase();
 let langPack = (<any>Language)[langCode];
 
 if (langPack == null) {

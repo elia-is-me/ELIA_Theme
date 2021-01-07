@@ -1,44 +1,22 @@
+let UTF_literal = /&#x/;
 
-const Language = {
-    "en": {
-        "Create Playlist": "Create Playlist",
-        "Create playlist": "Create playlist",
-        "playlist": "playlist",
-        "Shuffle All": "Shuffle All",
-        "Sort": "Sort",
-        "More": "More",
-        "Library Search": "Library Search",
-        "Media Library": "Media Library",
-        "Never Played": "Never Played",
-        "Newly Added": "Newly Added",
-        "Default": "Default",
-        "Liked Songs": "Liked Songs",
-        "Playback Queue": "Playback Queue",
-        "track": "track",
-        "tracks": "tracks",
-        "hr": "hr",
-        "min": "min",
-        "sec": "sec",
-        "d": "d",
-        "wk": "wk",
-        "OK": "OK",
-        "Cancel": "Cancel",
-        "Edit playlist": "Edit playlist",
-        "Play": "Play",
-        "Play next": "Play next",
-        "Add to queue": "Add to queue",
-        "Delete": "Delete",
-        "Selection": "Selection",
-        "Sort by...": "Sort by...",
-        "Randomize": "Randomize",
-        "Reverse": "Reverse",
-        "Album": "Album",
-        "Artist": "Artist",
-        "File path": "File path",
-        "Title": "Title",
-        "Track number": "Track number",
+//UTF字符转换
+let UTFTranslate = {
+    toUTF8: function (pValue: string) {
+        return pValue.replace(/[^\u0000-\u00FF]/g, function ($0) {
+            return escape($0).replace(/(%u)(\w{4})/gi, "&#x$2;")
+        });
     },
+    toHanzi: function (pValue: string) {
+        return unescape(pValue.replace(/&#x/g, '%u').replace(/\\u/g, '%u').replace(/;/g, ''));
+    }
+};
+
+// Lang pack;
+const Language = {
+    "en": {},
     "zh-cn": {
+        "[UNKNOWN FUNCTION]": "[&#x672A;&#x77E5;&#x51FD;&#x6570;]",
         "Add to playlist": "&#x6DFB;&#x52A0;&#x5230;&#x64AD;&#x653E;&#x5217;&#x8868;",
         "Add to queue": "&#x6DFB;&#x52A0;&#x5230;&#x961F;&#x5217;",
         "Album": "&#x4E13;&#x8F91;",
@@ -89,18 +67,34 @@ const Language = {
         "OK": "&#x786E;&#x5B9A;",
         "Cancel": "&#x53D6;&#x6D88;",
         "NOT PLAYING": "&#x505C;&#x6B62;&#x64AD;&#x653E;",
-        "Rename playlist": "&#x91CD;&#x547D;&#x540D;&#x64AD;&#x653E;&#x5217;&#x8868;"
+        "Rename playlist": "&#x91CD;&#x547D;&#x540D;&#x64AD;&#x653E;&#x5217;&#x8868;",
+        "File": "&#x6587;&#x4EF6;",
+        "Edit": "&#x7F16;&#x8F91;",
+        "View": "&#x89C6;&#x56FE;",
+        "Playback": "&#x64AD;&#x653E;",
+        "Library": "&#x5A92;&#x4F53;&#x5E93;",
+        "Help": "&#x5E2E;&#x52A9;",
     },
-}
+};
 
-let langCode = window.GetProperty("Global.GUI Language", "en").toLowerCase();
-let langPack = (<any>Language)[langCode];
+const Commands: { [propName: string]: { [propName: string]: string } } = {
+    "en": {},
+    "zh-cn": {
+        "Edit/Sort/Sort by...": "&#x7F16;&#x8F91;/&#x6392;&#x5E8F;/&#x6392;&#x5E8F;&#x6309;...",
+        "Edit/Sort/Reverse": "&#x7F16;&#x8F91;/&#x6392;&#x5E8F;/&#x98A0;&#x5012;",
+        "Playback Statistics/Rating/5": "&#x64AD;&#x653E;&#x7EDF;&#x8BA1;&#x4FE1;&#x606F;/&#x7B49;&#x7EA7;/5",
+        "Playback Statistics/Rating/<not set>": "&#x64AD;&#x653E;&#x7EDF;&#x8BA1;&#x4FE1;&#x606F;/&#x7B49;&#x7EA7;/<&#x4E0D;&#x8BBE;&#x7F6E;>",
+    }
+};
+
+// foobar2000 binary exectuable language;
+const fbLangCode = (fb.TitleFormat("$meta()").Eval(true) == UTFTranslate.toHanzi(Language["zh-cn"]["[UNKNOWN FUNCTION]"]) ? "zh-cn" : "en");
+const langCode = window.GetProperty("Global.GUI Language", "<auto>").toLowerCase();
+let langPack = (<any>Language)[langCode] || (<any>Language)[fbLangCode];
 
 if (langPack == null) {
     langPack = Language["en"] || {};
 }
-
-let UTF_literal = /&#x/;
 
 export function lang(str: string) {
     let str_return: string = langPack[str] || str;
@@ -111,14 +105,22 @@ export function lang(str: string) {
     }
 }
 
-//UTF字符转换
-let UTFTranslate = {
-    toUTF8: function (pValue: string) {
-        return pValue.replace(/[^\u0000-\u00FF]/g, function ($0) {
-            return escape($0).replace(/(%u)(\w{4})/gi, "&#x$2;")
-        });
-    },
-    toHanzi: function (pValue: string) {
-        return unescape(pValue.replace(/&#x/g, '%u').replace(/\\u/g, '%u').replace(/;/g, ''));
+// `command` in English;
+export function RunContextCommandWithMetadb(command: string, handle_or_handle_list: IFbMetadb | IFbMetadbList, flags?: number): boolean {
+    let command_2 = UTFTranslate.toHanzi(Commands[fbLangCode][command]);
+    if (command_2 != null) {
+        return fb.RunContextCommandWithMetadb(command, handle_or_handle_list, flags) || fb.RunContextCommandWithMetadb(command_2, handle_or_handle_list, flags);
+    } else {
+        return fb.RunContextCommandWithMetadb(command, handle_or_handle_list, flags);
     }
-};
+}
+
+// `command` in English;
+export function RunContextCommand(command: string, flags?: number): boolean {
+    let command_2 = UTFTranslate.toHanzi(Commands[fbLangCode][command]);
+    if (command_2 != null) {
+        return fb.RunContextCommand(command, flags) || fb.RunContextCommand(command_2, flags);
+    } else {
+        return fb.RunContextCommand(command, flags);
+    }
+}

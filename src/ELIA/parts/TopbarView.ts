@@ -5,6 +5,7 @@ import { Material, MaterialFont } from "../common/Icon";
 import { notifyOthers, ui } from "../common/UserInterface";
 import { themeColors } from "./Theme";
 import { SearchBox } from "./SearchBox";
+import { lang } from "./Lang";
 
 const iconSize = scale(20);
 const textRenderingHint = ui.textRender;
@@ -124,12 +125,12 @@ function showMainMenu(x: number, y: number) {
 	const libraryMenu = window.CreatePopupMenu();
 	const helpMenu = window.CreatePopupMenu();
 
-	fileMenu.AppendTo(objMenu, MenuFlag.STRING, "File");
-	editMenu.AppendTo(objMenu, MenuFlag.STRING, "Edit");
-	viewMenu.AppendTo(objMenu, MenuFlag.STRING, "View");
-	playbackMenu.AppendTo(objMenu, MenuFlag.STRING, "Playback");
-	libraryMenu.AppendTo(objMenu, MenuFlag.STRING, "Library");
-	helpMenu.AppendTo(objMenu, MenuFlag.STRING, "Help");
+	fileMenu.AppendTo(objMenu, MenuFlag.STRING, lang("File"));
+	editMenu.AppendTo(objMenu, MenuFlag.STRING, lang("Edit"));
+	viewMenu.AppendTo(objMenu, MenuFlag.STRING, lang("View"));
+	playbackMenu.AppendTo(objMenu, MenuFlag.STRING, lang("Playback"));
+	libraryMenu.AppendTo(objMenu, MenuFlag.STRING, lang("Library"));
+	helpMenu.AppendTo(objMenu, MenuFlag.STRING, lang("Help"));
 
 	// Menu managers;
 	const fileMan = fb.CreateMainMenuManager();

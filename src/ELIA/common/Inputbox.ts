@@ -127,7 +127,6 @@ export class InputBox extends Component implements IInputBoxOptions {
             this.font_italic = this.font;
         }
         this.text = this.default_text;
-        console.log(this.font.Name);
     }
 
 

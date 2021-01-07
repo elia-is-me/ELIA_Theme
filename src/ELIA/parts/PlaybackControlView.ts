@@ -14,7 +14,7 @@ import { IInputPopupOptions } from "./InputPopupPanel";
 import { notifyOthers } from "../common/UserInterface";
 import { isValidPlaylist } from "./PlaylistView";
 import { IconButton } from "./Buttons";
-import { lang } from "./Lang";
+import { lang, RunContextCommandWithMetadb } from "./Lang";
 
 function pos2vol(pos: number) {
 	return (50 * Math.log(0.99 * pos + 0.01)) / Math.LN10;
@@ -53,14 +53,6 @@ const CMD_LOVE = 'Playback Statistics/Rating/5';
 const CMD_UNLOVE = 'Playback Statistics/Rating/<not set>';
 const TF_RATING = fb.TitleFormat('%rating%');
 
-export function toggleMood(metadb: IFbMetadb) {
-	if (metadb && fb.IsMetadbInMediaLibrary(metadb)) {
-		let moodOn = +TF_RATING.EvalWithMetadb(metadb) === 5;
-		fb.RunContextCommandWithMetadb(
-			moodOn ? CMD_UNLOVE : CMD_LOVE, metadb, 8
-		);
-	}
-}
 
 type ButtonKeys = "playOrPause" | "next" | "prev" | "love" | "repeat" | "shuffle" | "volume";
 type IButtons = { [K in ButtonKeys]: IconButton };
@@ -139,7 +131,7 @@ const createBottomButtons = () => {
 				buttons.love.setIcon(loved ? Material.heart : Material.heart_empty);
 				buttons.love.setColors(loved ? themeColors.mood : defaultColor);
 			}
-			if (!metadb || !fb.IsPlaying) {
+			if (!metadb || !fb.IsPlaying! || !fb.IsMetadbInMediaLibrary(metadb)) {
 				this.disable();
 			} else {
 				this.enable();
@@ -149,7 +141,10 @@ const createBottomButtons = () => {
 			let metadb = fb.GetNowPlaying();
 			if (metadb && fb.IsMetadbInMediaLibrary(metadb)) {
 				let loved_ = +TF_RATING.EvalWithMetadb(metadb) == 5;
-				fb.RunContextCommandWithMetadb(loved_ ? CMD_UNLOVE : CMD_LOVE, metadb, 8);
+				RunContextCommandWithMetadb(loved_ ? CMD_UNLOVE : CMD_LOVE, metadb, 8);
+			} else {
+				// if (!metadb) console.log("toggle mood failed: NULL metadb!");
+				// if (!fb.IsMetadbInMediaLibrary(metadb)) console.log("toggle mood failed, metadb not in MediaLibrary!")
 			}
 			this.on_init();
 			this.repaint();
@@ -661,4 +656,14 @@ function setShuffleOrder(order: number) {
 	}
 	window.SetProperty("Global.DefaultShuffle", order);
 	return order;
+}
+
+export function toggleMood(metadb: IFbMetadb) {
+	if (metadb && fb.IsMetadbInMediaLibrary(metadb)) {
+		let liked = +TF_RATING.EvalWithMetadb(metadb) === 5;
+		RunContextCommandWithMetadb(liked ? CMD_UNLOVE : CMD_LOVE, metadb, 8);
+	} else {
+		// if (!metadb) console.log("toggle mood failed: NULL metadb!");
+		// if (!fb.IsMetadbInMediaLibrary(metadb)) console.log("toggle mood failed, metadb not in MediaLibrary!")
+	}
 }

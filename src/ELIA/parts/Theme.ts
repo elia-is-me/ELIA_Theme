@@ -116,7 +116,7 @@ export const fonts = {
 export function GdiFont(fontInfo: string): IGdiFont;
 export function GdiFont(fontName: string, size: number, style?: number): IGdiFont;
 export function GdiFont(infoOrName: string, size?: number, style?: number): IGdiFont {
-    if (size != null) {
+    if (size !== undefined) {
         let fontName = infoOrName.trim().toLowerCase();
         if (fontName === "semibold" || fontName === "semi") {
             fontName = fontNames.semibold;
