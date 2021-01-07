@@ -285,12 +285,12 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 			gr.DrawLine(this.x, lineY, this.x + this.width, lineY, this.dragdrop.lineWidth, themeColors.highlight);
 		}
 
-		if (this.drag_cursorImage) {
-			gr.DrawImage(this.drag_cursorImage,
-				mouseCursor.x, mouseCursor.y, this.drag_cursorImage.Width, this.drag_cursorImage.Height,
-				0, 0, this.drag_cursorImage.Width, this.drag_cursorImage.Height,
-				0, 250);
-		}
+		// if (this.drag_cursorImage) {
+		// 	gr.DrawImage(this.drag_cursorImage,
+		// 		mouseCursor.x, mouseCursor.y, this.drag_cursorImage.Width, this.drag_cursorImage.Height,
+		// 		0, 0, this.drag_cursorImage.Width, this.drag_cursorImage.Height,
+		// 		0, 250);
+		// }
 	}
 
 	createItemImage(itemIndex: number) {
@@ -368,7 +368,8 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 				if (Math.abs(Math.pow(x - this.lastPressed.x, 2) + Math.pow(y - this.lastPressed.y, 2)) > scale(49)) {
 					this.dragdrop.isDrag = true;
 					this.drag_cursorImage = this.createItemImage(this.clickedIndex);
-					window.SetCursor(CursorName.IDC_HELP);
+					ui.setCursorImage(this.drag_cursorImage);
+					window.SetCursor(this.trace(x, y) ? CursorName.IDC_HELP : CursorName.IDC_NO);
 					this.repaint();
 				}
 			} else {
@@ -428,6 +429,7 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 		this.dragdrop.isDrag = false;
 		this.dragdrop.targetIndex = -1;
 		this.drag_cursorImage = null;
+		ui.setCursorImage(null);
 		window.SetCursor(CursorName.IDC_ARROW);
 
 		this.repaint();

@@ -45,10 +45,10 @@ const setRoot = (root: Component) => {
 
 function _getHoverPart(root: Component, x: number, y: number): Component {
 	if (!root || !root.trace(x, y)) {
-		return ;
+		return;
 	}
 	const children = root.children;
-	const resultIndex = lastIndex(children, n=> n.trace(x, y));
+	const resultIndex = lastIndex(children, n => n.trace(x, y));
 	if (resultIndex > -1) {
 		return _getHoverPart(children[resultIndex], x, y);
 	} else {
@@ -206,12 +206,33 @@ function drawNode(node: Component, gr: IGdiGraphics) {
 	}
 }
 
+let cursorImage: IGdiBitmap | null = null;
+
+function drawCursorImage(gr: IGdiGraphics, cur_img: IGdiBitmap | null, x: number, y: number) {
+	if (cur_img == null) {
+		return;
+	}
+	gr.DrawImage(cur_img, x, y, cur_img.Width, cur_img.Height, 0, 0, cur_img.Width, cur_img.Height, 0, 200);
+}
+
+function setCursorImage(image: IGdiBitmap) {
+	if (image != cursorImage) {
+		cursorImage = image;
+	}
+}
+
+
 function on_paint(gr: IGdiGraphics) {
 	profiler.Reset();
 	gr.SetTextRenderingHint(textRenderingHint);
 
+
 	// Draw visible parts;
 	drawNode(rootPart, gr);
+
+	// if (isDrag) {
+	drawCursorImage(gr, cursorImage, mouseCursor.x, mouseCursor.y);
+	// }
 
 	// draw dnd mask;
 	if (dropTargetPart && dndMask.visible) {
@@ -257,11 +278,6 @@ function monitor(object: Component) {
 }
 
 export const mouseCursor = {
-	x: -1,
-	y: -1,
-};
-
-let lastPressedCoord = {
 	x: -1,
 	y: -1,
 };
@@ -553,4 +569,5 @@ export const ui = {
 	compareParts: compareParts,
 	monitor: monitor,
 	setFocusPart: setFocusPart,
+	setCursorImage: setCursorImage,
 };
