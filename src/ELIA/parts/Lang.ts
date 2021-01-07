@@ -107,20 +107,12 @@ export function lang(str: string) {
 
 // `command` in English;
 export function RunContextCommandWithMetadb(command: string, handle_or_handle_list: IFbMetadb | IFbMetadbList, flags?: number): boolean {
-    let command_2 = UTFTranslate.toHanzi(Commands[fbLangCode][command]);
-    if (command_2 != null) {
+    let commandPack = Commands[fbLangCode] || {};
+    let command_2 = commandPack[command] || command;
+    if (UTF_literal.test(command_2)) {
+        command_2 = UTFTranslate.toHanzi(command_2);
         return fb.RunContextCommandWithMetadb(command, handle_or_handle_list, flags) || fb.RunContextCommandWithMetadb(command_2, handle_or_handle_list, flags);
     } else {
         return fb.RunContextCommandWithMetadb(command, handle_or_handle_list, flags);
-    }
-}
-
-// `command` in English;
-export function RunContextCommand(command: string, flags?: number): boolean {
-    let command_2 = UTFTranslate.toHanzi(Commands[fbLangCode][command]);
-    if (command_2 != null) {
-        return fb.RunContextCommand(command, flags) || fb.RunContextCommand(command_2, flags);
-    } else {
-        return fb.RunContextCommand(command, flags);
     }
 }

@@ -1,9 +1,9 @@
 import { Component } from "../common/BasePart";
-import { MeasureString, RGB, scale, StringFormat, isEmptyString, isFunction } from "../common/common";
+import { MeasureString, RGB, scale, StringFormat, isEmptyString, isFunction, setAlpha } from "../common/common";
 import { Button } from "./Buttons";
 import { InputBox } from "../common/Inputbox";
 import { notifyOthers } from "../common/UserInterface";
-import { themeColors, fonts, fontNameNormal } from "./Theme";
+import { themeColors, fonts, fontNameNormal, GdiFont } from "./Theme";
 import { lang } from "./Lang";
 
 
@@ -26,12 +26,12 @@ interface IInputPopupDefaultOptions {
 }
 
 const defaultOptions: IInputPopupDefaultOptions = {
-	titleFont: gdi.Font(fontNameNormal, scale(20), 1),
-	textFont: gdi.Font(fontNameNormal, scale(14)),
-	panelWidth: scale(650),
+	titleFont: GdiFont("bold, 20"),
+	textFont: GdiFont("semibold,14"),
+	panelWidth: scale(450),
 	panelHeight: scale(225),
 	textColor: themeColors.titleText,
-	backgroundColor: RGB(15, 15, 15),
+	backgroundColor: RGB(33, 33, 33),
 	highlightColor: themeColors.highlight,
 }
 
@@ -67,8 +67,8 @@ export class InputPopupPanel
 		this.z = 1000;
 		Object.assign(this, defaultOptions, opts);
 
-		this.paddings.top = scale(44);
-		this.paddings.left = scale(40);
+		this.paddings.top = scale(24);
+		this.paddings.left = scale(24);
 
 		// create buttons;
 		this.okBtn = new Button({
@@ -121,29 +121,32 @@ export class InputPopupPanel
 			this.addChild(btn);
 		});
 
-		this.setSize(this.panelWidth, this.panelHeight);
-	}
 
-	getInputText() {
-		return this.inputbox.text;
+		// calculate panel height;
+		let title_height = this.titleFont.Height;
+		let panel_height = 2 * this.paddings.top + title_height + scale(16) + this.inputboxHeight + scale(24) + this.okBtn.height;
+
+		// set panel size;
+		this.setSize(this.panelWidth, panel_height);
 	}
 
 	on_size() {
-		const { inputbox, cancelBtn, okBtn: saveBtn } = this;
+		const { inputbox, cancelBtn, okBtn } = this;
 		const { top, left } = this.paddings;
 
 		inputbox.setBoundary(
 			this.x + left + scale(8),
-			this.y + top + scale(52),
+			this.y + top + this.titleFont.Height + scale(16),
 			this.width - 2 * left - scale(16),
 			this.inputboxHeight
 		);
 
-		saveBtn.setPosition(
-			this.x + this.width - saveBtn.width - left,
-			inputbox.y + inputbox.height + scale(36)
+		okBtn.setPosition(
+			this.x + this.width - okBtn.width - left,
+			inputbox.y + inputbox.height + scale(24)
 		);
-		cancelBtn.setPosition(saveBtn.x - cancelBtn.width - scale(24), saveBtn.y);
+
+		cancelBtn.setPosition(okBtn.x - cancelBtn.width - scale(24), okBtn.y);
 	}
 
 	on_paint(gr: IGdiGraphics) {
@@ -153,18 +156,10 @@ export class InputPopupPanel
 
 		// background;
 		gr.FillSolidRect(this.x, this.y, this.width, this.height, backgroundColor);
+		gr.DrawRoundRect(this.x, this.y, this.width - scale(1), this.height - scale(1), scale(2), scale(2), scale(1), setAlpha(textColor, 50));
 
 		// title;
-		gr.DrawString(
-			this.title,
-			titleFont,
-			textColor,
-			this.x + left,
-			this.y + top,
-			this.width - 2 * left,
-			scale(26),
-			StringFormat.LeftTop
-		);
+		gr.DrawString(this.title, titleFont, textColor, this.x + left, this.y + top, this.width - 2 * left, scale(26), StringFormat.LeftTop);
 
 		// draw inputbox background;
 		let offset = (scale(36) - this.inputbox.height) / 2;

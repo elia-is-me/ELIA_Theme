@@ -136,11 +136,11 @@ export class Layout extends Component {
 		}
 
 		if (this.inputPopupPanel && this.inputPopupPanel.visible) {
-			if (this.width >= scale(600 + 16 * 2)) {
-				this.inputPopupPanel.setSize(scale(600), scale(220));
-			} else {
-				this.inputPopupPanel.setSize(Math.max(scale(280), this.width - scale(32)), scale(220));
-			}
+			// if (this.width >= scale(600 + 16 * 2)) {
+			// 	this.inputPopupPanel.setSize(scale(600), scale(220));
+			// } else {
+			// 	this.inputPopupPanel.setSize(Math.max(scale(280), this.width - scale(32)), scale(220));
+			// }
 			this.inputPopupPanel.setPosition(
 				this.x + (this.width - this.inputPopupPanel.width) / 2,
 				this.y + (this.height - this.inputPopupPanel.height) / 2

@@ -2,7 +2,7 @@
 // Playback control bar;
 // ---------------------
 
-import { MenuFlag, Repaint, StopReason } from "../common/common";
+import { MenuFlag, Repaint, setAlpha, StopReason } from "../common/common";
 import { TextLink } from "../common/TextLink";
 import { NowplayingArtwork } from "../common/AlbumArt";
 import { Slider, SliderThumbImage } from "../common/Slider";
@@ -270,7 +270,7 @@ function createThumbImg(colors: IThemeColors): SliderThumbImage {
 
 const thumbImages = createThumbImg(bottomColors);
 const progressHeight = scale(4);
-const slider_secondaryColor = blendColors(bottomColors.text, bottomColors.background, 0.7);
+const slider_secondaryColor = setAlpha(bottomColors.text, 76);
 const seekbar = new Slider({
 	progressHeight: progressHeight,
 	thumbImage: thumbImages.normal,

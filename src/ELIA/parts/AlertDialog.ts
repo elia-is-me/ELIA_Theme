@@ -1,13 +1,7 @@
+import { scale, RGB, StringFormat, StringTrimming, StringFormatFlags, isFunction, setAlpha } from "../common/common";
 import { Component } from "../common/BasePart";
 import { Button } from "./Buttons";
-import { fontNameNormal, themeColors } from "./Theme";
-import {
-	scale,
-	RGB,
-	StringFormat,
-	StringTrimming,
-	StringFormatFlags, isFunction
-} from "../common/common";
+import { GdiFont, themeColors } from "./Theme";
 import { notifyOthers } from "../common/UserInterface";
 import { lang } from "./Lang";
 
@@ -27,7 +21,7 @@ interface IDefaultOptions {
 }
 
 const defaultOptions: IDefaultOptions = {
-	titleFont: gdi.Font(fontNameNormal, scale(16)),
+	titleFont: GdiFont("semibold, 20"),
 	panelWidth: scale(400),
 	panelHeight: scale(225),
 	textColor: themeColors.titleText,
@@ -35,9 +29,7 @@ const defaultOptions: IDefaultOptions = {
 	highlightColor: themeColors.highlight,
 };
 
-export class AlertDialog
-	extends Component
-	implements IAlertDialogOptions, IDefaultOptions {
+export class AlertDialog extends Component implements IAlertDialogOptions, IDefaultOptions {
 	className = "AlertDialog";
 	readonly modal: boolean = true;
 
@@ -58,8 +50,8 @@ export class AlertDialog
 
 		Object.assign(this, defaultOptions, options);
 
-		this.paddings.top = scale(44);
-		this.paddings.left = scale(40);
+		this.paddings.top = scale(24);
+		this.paddings.left = scale(24);
 
 		this.okBtn = new Button({
 			style: "contained",
@@ -88,7 +80,19 @@ export class AlertDialog
 			this.addChild(btn);
 		});
 
-		this.setSize(this.panelWidth, this.panelHeight);
+		// Measure string;
+		let panel_width = scale(400) - 2 * this.paddings.left;
+		let panel_height: number = 0;
+		let temp_image = gdi.CreateImage(1, 1);
+		let temp_gr = temp_image.GetGraphics();
+		let textWidth = temp_gr.MeasureString(this.title, this.titleFont, 0, 0, panel_width, 1000).Width;
+		if (textWidth > panel_width) {
+			panel_height = 2 * this.paddings.top + scale(24) + 2 * this.titleFont.Height * 1.5 + this.okBtn.height;
+		} else {
+			panel_height = 2 * this.paddings.top + scale(24) + this.titleFont.Height * 1.5 + this.okBtn.height;
+		}
+		// then set panel size;
+		this.setSize(panel_width, panel_height);
 	}
 
 	on_size() {
@@ -109,17 +113,9 @@ export class AlertDialog
 
 		// background;
 		gr.FillSolidRect(this.x, this.y, this.width, this.height, backgroundColor);
+		gr.DrawRoundRect(this.x, this.y, this.width - scale(1), this.height - scale(1), scale(2), scale(2), scale(1), setAlpha(textColor, 50));
 
 		// title;
-		gr.DrawString(
-			this.title,
-			titleFont,
-			textColor,
-			this.x + left,
-			this.y + top,
-			this.width - 2 * left,
-			this.height - 2 * top,
-			StringFormat(0, 0, StringTrimming.None, StringFormatFlags.NoClip)
-		);
+		gr.DrawString(this.title, titleFont, textColor, this.x + left, this.y + top, this.width - 2 * left, this.height - 2 * top, StringFormat(0, 0, StringTrimming.None, StringFormatFlags.NoClip));
 	}
 }

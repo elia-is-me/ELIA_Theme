@@ -590,7 +590,7 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 			case id === 3:
 				// Delete playlist;
 				let alertOptions: IAlertDialogOptions = {
-					title: spaceEnd(lang("Delete")) + plman.GetPlaylistName(playlistIndex) + "?",
+					title: spaceEnd(lang("Delete")) + "\"" + plman.GetPlaylistName(playlistIndex) + "\"?",
 					onSuccess: () => {
 						let deleteActivePlaylist = (playlistIndex === plman.ActivePlaylist);
 						plman.RemovePlaylist(playlistIndex);
