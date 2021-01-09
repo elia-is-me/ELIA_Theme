@@ -204,7 +204,6 @@ class PlaylistHeaderView extends Component {
 
 		this.shuffleBtn = new Button({
 			style: "contained",
-			//&#x968F;&#x673A;&#x64AD;&#x653E;&#x6240;&#x6709;
 			text: lang("Shuffle All"),
 			icon: Material.shuffle,
 			foreColor: themeColors.onPrimary,

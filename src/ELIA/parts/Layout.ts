@@ -14,6 +14,7 @@ import { SettingsView } from "./SettingsView";
 const CONTROL_BAR_HEIGHT = scale(76);
 const TOPBAR_HEIGHT = scale(48);
 const PLMAN_MIN_WIDTH = scale(256);
+const MIN_TWO_COLUMN_WIDTH = scale(850);
 
 export const layout = {
 	plmanMinWidth: PLMAN_MIN_WIDTH
@@ -38,6 +39,10 @@ export class Layout extends Component {
 
 	viewState: ViewStates;
 
+	// No matter window is wide or thin, only changed by clicking on toggle menu
+	// btn;
+	hidePlman: boolean = window.GetProperty("Layout.Hide Plman", false);
+
 	constructor(options: {
 		topbar: TopBar;
 		playbackControlBar: PlaybackControlView;
@@ -59,6 +64,7 @@ export class Layout extends Component {
 		this.playbackControlBar.z = 10;
 		this.addChild(this.playbackControlBar);
 		this.playlistManager = options.playlistManager;
+		this.playlistManager.z = 1;
 		this.addChild(this.playlistManager);
 		this.playlistView = options.playlistView;
 		this.addChild(this.playlistView);
@@ -75,7 +81,14 @@ export class Layout extends Component {
 	}
 
 	on_size() {
-		this.setPartsLayout(this.viewState);
+
+		if (this.width >= MIN_TWO_COLUMN_WIDTH) {
+			this.playlistManager.visible = !this.hidePlman;
+		} else {
+			this.playlistManager.visible = false;
+		}
+
+		this.updatePartsLayout();
 	}
 
 	setPartsVisibility(viewState: ViewStates) {
@@ -94,7 +107,7 @@ export class Layout extends Component {
 		}
 	}
 
-	setPartsLayout(viewState: ViewStates) {
+	updatePartsLayout() {
 		const { x, y, width, height } = this;
 
 		/**
@@ -122,6 +135,9 @@ export class Layout extends Component {
 		// Get visible main view;
 		let mainView = [playlistView, searchResult, settingsView].find(p => p.visible);
 		let mainViewX = (playlistManager.visible ? playlistManager.x + playlistManager.width : x);
+		if (this.width < MIN_TWO_COLUMN_WIDTH) {
+			mainViewX = x;
+		}
 		let mainViewWidth = x + width - mainViewX;
 
 		mainView.setBoundary(mainViewX, listY, mainViewWidth, listHeight);
@@ -141,25 +157,38 @@ export class Layout extends Component {
 		}
 	}
 
+	private togglePlman() {
+		// Current state;
+		let prevVisibleState = this.playlistManager.visible;
+
+		if (this.width >= MIN_TWO_COLUMN_WIDTH) {
+			this.hidePlman = !!prevVisibleState;
+			window.SetProperty("Layout.Hide Plman", this.hidePlman);
+		}
+
+		this.playlistManager.visible = !prevVisibleState;
+		if (this.playlistManager.visible) {
+			this.playlistManager.on_init();
+		}
+		this.updatePartsLayout();
+		ui.updateParts();
+		this.repaint();
+	}
+
 	on_paint(gr: IGdiGraphics) { }
 
 	onNotifyData(message: string, data?: any) {
 		switch (message) {
 			case "Toggle.PlaylistManager":
-				this.playlistManager.visible = !this.playlistManager.visible;
-				if (this.playlistManager.visible) {
-					this.playlistManager.on_init();
-				}
-				this.on_size();
-				ui.updateParts();
-				this.repaint();
+				this.togglePlman();
 				break;
 			case "Popup.InputPopupPanel":
 				let options = data as IInputPopupOptions;
 				if (options == null) break;
 				this.inputPopupPanel = new InputPopupPanel(options);
 				this.addChild(this.inputPopupPanel);
-				this.on_size();
+				// this.on_size();
+				this.updatePartsLayout();
 				ui.updateParts();
 				ui.setFocusPart(this.inputPopupPanel.inputbox);
 				this.inputPopupPanel.inputbox.activeInput();
@@ -170,7 +199,8 @@ export class Layout extends Component {
 				this.inputPopupPanel.visible = false;
 				this.removeChild(this.inputPopupPanel);
 				this.inputPopupPanel = null;
-				this.on_size();
+				// this.on_size();
+				this.updatePartsLayout();
 				ui.updateParts();
 				this.repaint();
 				break;
@@ -180,7 +210,8 @@ export class Layout extends Component {
 				this.alertDialog = new AlertDialog(alertOptions);
 				this.alertDialog.visible = true;
 				this.addChild(this.alertDialog);
-				this.on_size();
+				// this.on_size();
+				this.updatePartsLayout();
 				ui.updateParts();
 				this.repaint();
 				break;
@@ -188,7 +219,8 @@ export class Layout extends Component {
 				if (!this.alertDialog) break;
 				this.removeChild(this.alertDialog);
 				this.alertDialog = null;
-				this.on_size();
+				// this.on_size();
+				this.updatePartsLayout();
 				ui.updateParts();
 				this.repaint();
 				break;
@@ -196,21 +228,25 @@ export class Layout extends Component {
 				this.searchResult.updateList((data as any).titleText, (data as any).metadbs);
 				this.viewState = ViewStates.Search;
 				this.setPartsVisibility(this.viewState);
-				this.on_size();
+				// this.on_size();
+				this.updatePartsLayout();
 				ui.updateParts();
 				this.repaint();
 				break;
 			case "Show.Playlist":
 				this.viewState = ViewStates.Default;
 				this.setPartsVisibility(this.viewState);
-				this.on_size();
+				// this.on_size();
+				this.updatePartsLayout();
+
 				ui.updateParts();
 				this.repaint();
 				break;
 			case "Show.Settings":
 				this.viewState = ViewStates.Settings;
 				this.setPartsVisibility(this.viewState);
-				this.on_size();
+				this.updatePartsLayout();
+				// this.on_size();
 				ui.updateParts();
 				this.repaint();
 				break;
