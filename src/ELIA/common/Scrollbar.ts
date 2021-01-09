@@ -1,4 +1,4 @@
-import { scale, Repaint } from "./common";
+import { scale, Repaint, SmoothingMode } from "./common";
 import { Component, ICallbacks } from "./BasePart";
 import { ButtonStates } from "./Button";
 import { ScrollView } from "./ScrollView";
@@ -41,11 +41,13 @@ export class Scrollbar extends Component implements ICallbacks {
 				gr.FillSolidRect(this.x, this.y, this.width, this.height, this.backgroundColor);
 			}
 			// Draw cursor;
+			gr.SetSmoothingMode(SmoothingMode.AntiAlias);
 			if (this.narrow) {
 				gr.FillRoundRect(this.x + this.width - this.narrowWidth - scale(2), this.cursorY + 1, this.narrowWidth, this.cursorHeight - 2, 0.9, 0.9, this.cursorColor);
 			} else {
-				gr.FillSolidRect(this.x + 1, this.cursorY + 1, this.width - 2, this.cursorHeight - 2, this.cursorColor);
+				gr.FillRoundRect(this.x + 1, this.cursorY + 1, this.width - 2, this.cursorHeight - 2, scale(2), scale(2), this.cursorColor);
 			}
+			gr.SetSmoothingMode(SmoothingMode.Default);
 		}
 	}
 	traceCursor(x: number, y: number) {
