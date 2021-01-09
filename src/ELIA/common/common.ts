@@ -591,3 +591,12 @@ export const enum CursorName {
 export const fso: {
 	FileExists: (par: string) => boolean;
 } = new ActiveXObject("Scripting.FileSystemObject");
+
+function WrapLine(str: string, font: IGdiFont, width: number) {
+
+}
+
+function WrapLineRecur(str: string, font: IGdiFont, width: number, out: string[]) {
+
+}
+
