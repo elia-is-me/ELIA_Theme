@@ -5,6 +5,7 @@ import { TopBar } from "./parts/TopbarView";
 import { isValidPlaylist, PlaylistView } from "./parts/PlaylistView";
 import { PlaylistManagerView } from "./parts/PlaylistManagerView";
 import { SearchResultView } from "./parts/SearchResultView";
+import { SettingsView } from "./parts/SettingsView";
 import { lang } from "./parts/Lang";
 
 window.DefinePanel("ELIA THEME", {
@@ -24,6 +25,8 @@ const playlistManager = new PlaylistManagerView();
 
 const searchResult = new SearchResultView();
 
+const settingsView = new SettingsView();
+
 /**
  * Root part of this panel;
  */
@@ -32,7 +35,8 @@ const root = new Layout({
 	playbackControlBar: playbackControlBar,
 	playlistManager: playlistManager,
 	playlistView: playlistView,
-	searchResult: searchResult
+	searchResult: searchResult,
+	settingsView: settingsView
 });
 
 
@@ -48,7 +52,7 @@ function checkActivePlaylist() {
 		if (plman.PlaylistCount > 0) {
 			plman.ActivePlaylist = 0;
 		} else {
-			checkActivePlaylist();
+			checkDefautPlaylist();
 			plman.ActivePlaylist = 0;
 		}
 	}

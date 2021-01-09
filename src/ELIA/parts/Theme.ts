@@ -39,9 +39,7 @@ export const themeColors = {
     onPrimary: RGBA(0, 0, 0, 245),
     secondary: RGB(255, 255, 255),
     onSecondary: RGBA(0, 0, 0, 245),
-
-}
-
+};
 
 // Font names that may used;
 // -------------------------

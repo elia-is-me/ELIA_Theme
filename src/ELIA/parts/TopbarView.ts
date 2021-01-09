@@ -32,9 +32,9 @@ export class TopBar extends Component {
 	private _logoText = "foobar2000";
 
 	buttons: Map<string, IconButton> = new Map();
-	mainIco: IconButton;
-	settingsIco: IconButton;
-	switchIco: IconButton;
+	mainBtn: IconButton;
+	settingsBtn: IconButton;
+	swithcBtn: IconButton;
 	searchBox: SearchBox;
 
 	constructor() {
@@ -44,25 +44,28 @@ export class TopBar extends Component {
 		this.backgroundColor = topbarColors.backgroundColor;
 
 		// button 'toggle list';
-		this.mainIco = createIconButton(Material.menu, iconSize, this.foreColor);
+		this.mainBtn = createIconButton(Material.menu, iconSize, this.foreColor);
 
-		this.mainIco.on_click = () => {
+		this.mainBtn.on_click = () => {
 			notifyOthers("Toggle.PlaylistManager");
 		};
 
 		// button 'Settings';
-		this.settingsIco = createIconButton(Material.gear, iconSize, this.foreColor);
-		this.settingsIco.disable();
+		this.settingsBtn = createIconButton(Material.gear, iconSize, this.foreColor);
+		// this.settingsIco.disable();
+		this.settingsBtn.on_click = () => {
+			notifyOthers("Show.Settings");
+		}
 
 		// button 'Page Switch';
-		this.switchIco = createIconButton(Material.apps, iconSize, this.foreColor);
-		this.switchIco.disable();
+		this.swithcBtn = createIconButton(Material.apps, iconSize, this.foreColor);
+		this.swithcBtn.disable();
 
 		// button 'main menu';
 
 		this.searchBox = new SearchBox();
 
-		[this.mainIco, this.switchIco, this.searchBox, this.settingsIco].forEach((child) =>
+		[this.mainBtn, this.swithcBtn, this.searchBox, this.settingsBtn].forEach((child) =>
 			this.addChild(child)
 		);
 	}
@@ -74,15 +77,15 @@ export class TopBar extends Component {
 		let padLeft = scale(16);
 		let { _iconWidth } = this;
 
-		this.mainIco.setBoundary(this.x + padLeft, this.y + icoOffsetTop, _iconWidth, _iconWidth);
-		this.settingsIco.setBoundary(
+		this.mainBtn.setBoundary(this.x + padLeft, this.y + icoOffsetTop, _iconWidth, _iconWidth);
+		this.settingsBtn.setBoundary(
 			this.x + this.width - padLeft - _iconWidth,
 			this.y + icoOffsetTop,
 			_iconWidth,
 			_iconWidth
 		);
-		this.switchIco.setBoundary(
-			this.settingsIco.x - _iconWidth - scale(4),
+		this.swithcBtn.setBoundary(
+			this.settingsBtn.x - _iconWidth - scale(4),
 			this.y + icoOffsetTop,
 			_iconWidth,
 			_iconWidth
@@ -100,7 +103,7 @@ export class TopBar extends Component {
 		gr.FillSolidRect(this.x, this.y, this.width, this.height, themeColors.topbarBackground);
 
 		const { _logoFont, _logoText, foreColor } = this;
-		const logoX = this.mainIco.x + this.mainIco.width + scale(16);
+		const logoX = this.mainBtn.x + this.mainBtn.width + scale(16);
 
 		gr.SetTextRenderingHint(TextRenderingHint.AntiAlias);
 		gr.DrawString(_logoText, _logoFont, foreColor, logoX, this.y, 1000, this.height, StringFormat.LeftCenter);

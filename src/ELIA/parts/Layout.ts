@@ -8,6 +8,7 @@ import { PlaylistView } from "./PlaylistView";
 import { InputPopupPanel, IInputPopupOptions } from "./InputPopupPanel";
 import { AlertDialog, IAlertDialogOptions } from "./AlertDialog";
 import { SearchResultView } from "./SearchResultView";
+import { SettingsView } from "./SettingsView";
 
 
 const CONTROL_BAR_HEIGHT = scale(76);
@@ -21,6 +22,7 @@ export const layout = {
 const enum ViewStates {
 	Default,
 	Search,
+	Settings,
 }
 
 export class Layout extends Component {
@@ -30,6 +32,7 @@ export class Layout extends Component {
 	playlistManager: PlaylistManagerView;
 	playlistView: PlaylistView;
 	searchResult: SearchResultView;
+	settingsView?: SettingsView;
 	inputPopupPanel?: InputPopupPanel;
 	alertDialog?: AlertDialog;
 
@@ -42,6 +45,7 @@ export class Layout extends Component {
 		playlistView: PlaylistView;
 		addPlaylistPanel?: InputPopupPanel;
 		searchResult: SearchResultView;
+		settingsView: SettingsView;
 	}) {
 		super({});
 
@@ -60,25 +64,33 @@ export class Layout extends Component {
 		this.addChild(this.playlistView);
 		this.searchResult = options.searchResult;
 		this.addChild(this.searchResult);
-		this.setPartsVisible(this.viewState);
+		this.settingsView = options.settingsView;
+		this.addChild(this.settingsView);
+
+		// init view;
+		this.topbar.visible = true;
+		this.playbackControlBar.visible = true;
+		this.playlistManager.visible = true;
+		this.setPartsVisibility(this.viewState);
 	}
 
 	on_size() {
 		this.setPartsLayout(this.viewState);
 	}
 
-	setPartsVisible(viewState: ViewStates) {
-		this.topbar.visible = true;
-		this.playbackControlBar.visible = true;
-
+	setPartsVisibility(viewState: ViewStates) {
 		if (viewState === ViewStates.Default) {
-			this.playlistManager.visible = true;
 			this.playlistView.visible = true;
 			this.searchResult.visible = false;
+			this.settingsView.visible = false;
 		} else if (viewState === ViewStates.Search) {
-			this.playlistManager.visible = true;
 			this.playlistView.visible = false;
 			this.searchResult.visible = true;
+			this.settingsView.visible = false;
+		} else if (viewState === ViewStates.Settings) {
+			this.playlistView.visible = false;
+			this.searchResult.visible = false;
+			this.settingsView.visible = true;
 		}
 	}
 
@@ -99,48 +111,22 @@ export class Layout extends Component {
 		/**
 		 * Set others;
 		 */
-		const { playlistView, playlistManager } = this;
+		const { playlistView, playlistManager, settingsView } = this;
 		const { searchResult } = this;
 		const listY = this.topbar.y + this.topbar.height;
 		const listHeight = this.height - this.topbar.height - this.playbackControlBar.height;
 
-		switch (viewState) {
-			case ViewStates.Default:
-				playlistManager.visible &&
-					playlistManager.setBoundary(x, listY, PLMAN_MIN_WIDTH, listHeight);
-				if (playlistManager.visible) {
-					playlistView.setBoundary(
-						playlistManager.x + playlistManager.width,
-						listY,
-						this.x + this.width - (playlistManager.x + playlistManager.width),
-						listHeight
-					);
-				} else {
-					playlistView.setBoundary(x, listY, width, listHeight);
-				}
-				break;
-			case ViewStates.Search:
-				playlistManager.visible &&
-					playlistManager.setBoundary(x, listY, PLMAN_MIN_WIDTH, listHeight);
-				if (playlistManager.visible) {
-					searchResult.setBoundary(
-						playlistManager.x + playlistManager.width,
-						listY,
-						this.x + this.width - (playlistManager.x + playlistManager.width),
-						listHeight
-					);
-				} else {
-					searchResult.setBoundary(x, listY, width, listHeight);
-				}
-				break;
-		}
+		// Playlist Manager;
+		playlistManager.visible && playlistManager.setBoundary(x, listY, PLMAN_MIN_WIDTH, listHeight);
+
+		// Get visible main view;
+		let mainView = [playlistView, searchResult, settingsView].find(p => p.visible);
+		let mainViewX = (playlistManager.visible ? playlistManager.x + playlistManager.width : x);
+		let mainViewWidth = x + width - mainViewX;
+
+		mainView.setBoundary(mainViewX, listY, mainViewWidth, listHeight);
 
 		if (this.inputPopupPanel && this.inputPopupPanel.visible) {
-			// if (this.width >= scale(600 + 16 * 2)) {
-			// 	this.inputPopupPanel.setSize(scale(600), scale(220));
-			// } else {
-			// 	this.inputPopupPanel.setSize(Math.max(scale(280), this.width - scale(32)), scale(220));
-			// }
 			this.inputPopupPanel.setPosition(
 				this.x + (this.width - this.inputPopupPanel.width) / 2,
 				this.y + (this.height - this.inputPopupPanel.height) / 2
@@ -153,17 +139,6 @@ export class Layout extends Component {
 				this.y + (this.height - this.alertDialog.height) / 2
 			);
 		}
-	}
-
-	/**
-	 * TODO
-	 */
-	private setPartsZIndex() {
-		this.topbar.z = 100;
-		this.playbackControlBar.z = 10;
-		this.playlistView.z = 0;
-		this.searchResult.z = 0;
-		this.playlistManager.z = 0;
 	}
 
 	on_paint(gr: IGdiGraphics) { }
@@ -219,17 +194,22 @@ export class Layout extends Component {
 				break;
 			case "Show.SearchResult":
 				this.searchResult.updateList((data as any).titleText, (data as any).metadbs);
-				this.searchResult.visible = true;
-				this.playlistView.visible = false;
 				this.viewState = ViewStates.Search;
+				this.setPartsVisibility(this.viewState);
 				this.on_size();
 				ui.updateParts();
 				this.repaint();
 				break;
 			case "Show.Playlist":
-				this.searchResult.visible = false;
-				this.playlistView.visible = true;
 				this.viewState = ViewStates.Default;
+				this.setPartsVisibility(this.viewState);
+				this.on_size();
+				ui.updateParts();
+				this.repaint();
+				break;
+			case "Show.Settings":
+				this.viewState = ViewStates.Settings;
+				this.setPartsVisibility(this.viewState);
 				this.on_size();
 				ui.updateParts();
 				this.repaint();
