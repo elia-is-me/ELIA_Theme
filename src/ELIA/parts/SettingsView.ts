@@ -1,5 +1,9 @@
 import { scale, StringFormat } from "../common/common";
+import { Material, MaterialFont } from "../common/Icon";
+import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
+import { notifyOthers } from "../common/UserInterface";
+import { IconButton } from "./Buttons";
 import { lang } from "./Lang";
 import { GdiFont, themeColors } from "./Theme";
 
@@ -19,8 +23,30 @@ export class SettingsView extends ScrollView {
     subTitleFont = GdiFont("semibold, 16");
     textFont = GdiFont("normal, 14");
 
+    closeBtn: IconButton;
+    scrollbar: Scrollbar;
+
     constructor() {
         super({});
+
+        this.closeBtn = new IconButton({
+            icon: Material.close,
+            fontName: MaterialFont,
+            fontSize: scale(28),
+            colors: [themeColors.secondary]
+        });
+        this.closeBtn.setSize(scale(48), scale(48));
+        this.closeBtn.z = 10;
+        this.closeBtn.on_click = () => {
+            notifyOthers("Show.Playlist");
+        };
+        this.addChild(this.closeBtn);
+    }
+
+    on_size() {
+        let closeBtnX = this.x + this.width - this.closeBtn.width - scale(24);
+        let closeBtnY = this.y + scale(24) - this.scroll;
+        this.closeBtn.setPosition(closeBtnX, closeBtnY);
     }
 
     on_paint(gr: IGdiGraphics) {
