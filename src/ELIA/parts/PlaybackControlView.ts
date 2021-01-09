@@ -302,8 +302,19 @@ const volumebar = new Slider({
 });
 
 const TF_TRACK_TITLE = fb.TitleFormat("%title%");
-const TF_ARTIST = fb.TitleFormat("$if2([$trim(%artist%)]," + "\u672A\u77E5\u827A\u4EBA" + ")$if(%date%,[ \u30fb $year($replace($replace(%date%,.,-),/,-))],)");
+const TF_ARTIST = fb.TitleFormat("$if2([$trim(%artist%)]," + lang("UNKNOWN ARTIST") + ")");
+const TF_DATE = fb.TitleFormat("%date%");
 const defaultArtistName = lang("ARTIST");
+
+/**
+ * yyyy-mm-dd or yyyy/mm/dd or yyyy.mm.dd => yyyy
+ * yyyy => yyyy
+ * "" => ""
+ */
+function getYear(str: string) {
+	let arr = str.split(/[\.\/\-]/);
+	return arr.find(s => s.length === 4) || "";
+}
 
 const artistText = new TextLink({
 	text: defaultArtistName,
@@ -314,9 +325,16 @@ const artistText = new TextLink({
 
 	on_init() {
 		let metadb = fb.GetNowPlaying();
-		this.setText(
-			metadb ? TF_ARTIST.EvalWithMetadb(metadb) : defaultArtistName
-		);
+		if (metadb) {
+			let artistText = TF_ARTIST.EvalWithMetadb(metadb);
+			let date = TF_DATE.EvalWithMetadb(metadb);
+			let year = getYear(date);
+			let yearText = year ? " \u30FB " + year : "";
+
+			this.setText(artistText + yearText);
+		} else {
+			this.setText(defaultArtistName);
+		}
 	},
 
 	on_click() {
