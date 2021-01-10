@@ -260,14 +260,15 @@ export class Layout extends Component {
  * will be changed to the newly created one; 
  * Click 'Cancel' to cancel action;
  */
-export function CreatePlaylistPopup() {
+export function CreatePlaylistPopup(metadbs?: IFbMetadbList) {
 	let options = {
 		title: lang("Create playlist"),
 		onSuccess(playlistName: string) {
 			let playlistIndex = plman.CreatePlaylist(plman.PlaylistCount, playlistName);
-			if (isValidPlaylist(playlistIndex)) {
-				plman.ActivePlaylist = playlistIndex;
+			if (metadbs && metadbs.Count > 0) {
+				plman.InsertPlaylistItems(playlistIndex, plman.PlaylistItemCount(playlistIndex), metadbs, false);
 			}
+			plman.ActivePlaylist = playlistIndex;
 		}
 	};
 	notifyOthers("Popup.InputPopupPanel", options);

@@ -11,12 +11,10 @@ import { Component, IBoxModel, IPaddings } from "../common/BasePart";
 import { Material, MaterialFont, IconObject } from "../common/Icon";
 import { PlaylistArtwork } from "../common/AlbumArt";
 import { toggleMood } from "./PlaybackControlView";
-import { notifyOthers, ui } from "../common/UserInterface";
+import { ui } from "../common/UserInterface";
 import { Button } from "./Buttons";
-import { IInputPopupOptions } from "./InputPopupPanel";
-import { IAlertDialogOptions } from "./AlertDialog";
 import { lang } from "./Lang";
-import { DeletePlaylistDialog, RenamePlaylist } from "./Layout";
+import { CreatePlaylistPopup, DeletePlaylistDialog, RenamePlaylist } from "./Layout";
 
 const mouseCursor = {
 	x: -1,
@@ -1540,8 +1538,7 @@ export function showTrackContextMenu(playlistIndex: number, metadbs: IFbMetadbLi
 
 		// "Add to... (a newly created playlist)";
 		case ret === 2000:
-			targetId = plman.CreatePlaylist(plman.PlaylistCount, "");
-			plman.InsertPlaylistItems(targetId, 0, metadbs, false);
+			CreatePlaylistPopup(metadbs);
 			break;
 
 		case ret > 2000 && ret < 3000:
