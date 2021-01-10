@@ -13,6 +13,7 @@ export interface ITextLinkProps {
 export class TextLink extends Clickable {
 	className = "TextLink";
 	text: string = "";
+	font: IGdiFont;
 	textWidth: number = 0;
 	maxWidth: number = 0;
 	_fontMap: Map<ButtonStates, IGdiFont> = new Map();
@@ -23,6 +24,7 @@ export class TextLink extends Clickable {
 
 		// set font;
 		const font_ = opts.font || gdi.Font("tahoma", scale(12));
+		this.font = font_;
 		const underlinedFont = gdi.Font(font_.Name, font_.Size, 4);
 		this._fontMap.set(ButtonStates.Normal, font_);
 		this._fontMap.set(ButtonStates.Hover, underlinedFont);

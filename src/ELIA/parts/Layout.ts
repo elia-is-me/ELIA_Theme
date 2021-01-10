@@ -261,8 +261,27 @@ export class Layout extends Component {
  * Click 'Cancel' to cancel action;
  */
 export function CreatePlaylistPopup(metadbs?: IFbMetadbList) {
+	let playlistCount = plman.PlaylistCount;
+	let reName = /New Playlist(\s+\((\d+)\))?$/i;
+	let defaultName = "New Playlist";
+	let num = 0;
+	for (let i = 0; i < playlistCount; i++) {
+		if (reName.test(plman.GetPlaylistName(i))) {
+			if (num === 0) {
+				num = 1;
+			}
+			let count = +plman.GetPlaylistName(i).match(reName)[2];
+			if (Number.isInteger(count) && count > num) {
+				num = count;
+			}
+		};
+	}
+	if (num > 0) {
+		defaultName += ` (${num + 1})`;
+	}
 	let options = {
 		title: lang("Create playlist"),
+		defaultText: defaultName,
 		onSuccess(playlistName: string) {
 			let playlistIndex = plman.CreatePlaylist(plman.PlaylistCount, playlistName);
 			if (metadbs && metadbs.Count > 0) {

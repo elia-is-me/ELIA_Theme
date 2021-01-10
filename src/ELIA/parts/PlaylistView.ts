@@ -10,7 +10,7 @@ import { ScrollView } from "../common/ScrollView";
 import { Component, IBoxModel, IPaddings } from "../common/BasePart";
 import { Material, MaterialFont, IconObject } from "../common/Icon";
 import { PlaylistArtwork } from "../common/AlbumArt";
-import { toggleMood } from "./PlaybackControlView";
+import { ToggleMood } from "./PlaybackControlView";
 import { ui } from "../common/UserInterface";
 import { Button } from "./Buttons";
 import { lang } from "./Lang";
@@ -1315,7 +1315,7 @@ export class PlaylistView extends ScrollView {
 			let hoverMoodId = this.getActiveMoodId(x, y);
 			if (hoverMoodId === this.clickedMoodId) {
 				// onClickMood action;
-				toggleMood(this.items[this.clickedMoodId].metadb);
+				ToggleMood(this.items[this.clickedMoodId].metadb);
 			}
 			return;
 		}

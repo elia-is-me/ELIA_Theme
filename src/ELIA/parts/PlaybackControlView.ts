@@ -9,12 +9,13 @@ import { Slider, SliderThumbImage } from "../common/Slider";
 import { Component } from "../common/BasePart";
 import { Material, MaterialFont } from "../common/Icon"
 import { scale, PlaybackOrder, SmoothingMode, blendColors, MeasureString, StringFormat } from "../common/common";
-import { themeColors, fonts } from "./Theme";
+import { themeColors, fonts, GdiFont } from "./Theme";
 import { IInputPopupOptions } from "./InputPopupPanel";
 import { notifyOthers } from "../common/UserInterface";
 import { isValidPlaylist } from "./PlaylistView";
 import { IconButton } from "./Buttons";
 import { lang, RunContextCommandWithMetadb } from "./Lang";
+import { CreatePlaylistPopup } from "./Layout";
 
 function pos2vol(pos: number) {
 	return (50 * Math.log(0.99 * pos + 0.01)) / Math.LN10;
@@ -54,7 +55,7 @@ const CMD_UNLOVE = 'Playback Statistics/Rating/<not set>';
 const TF_RATING = fb.TitleFormat('%rating%');
 
 
-type ButtonKeys = "playOrPause" | "next" | "prev" | "love" | "repeat" | "shuffle" | "volume";
+type ButtonKeys = "playOrPause" | "next" | "prev" | "love" | "repeat" | "shuffle" | "volume" | "context";
 type IButtons = { [K in ButtonKeys]: IconButton };
 
 const createBottomButtons = () => {
@@ -65,7 +66,8 @@ const createBottomButtons = () => {
 		love: null,
 		repeat: null,
 		shuffle: null,
-		volume: null
+		volume: null,
+		context: null,
 	};
 
 	const createIconButton = (code: string, fontSize: number, color: number): IconButton => {
@@ -80,6 +82,7 @@ const createBottomButtons = () => {
 	const defaultColor = themeColors.text;
 	const highlightColor = themeColors.highlight;
 	const iconSize = scale(22);
+	const smallIconSize = scale(20);
 
 	// button 'Play or Pause';
 	buttons.playOrPause = createIconButton(Material.pause, scale(32), defaultColor);
@@ -119,7 +122,7 @@ const createBottomButtons = () => {
 	};
 
 	// button 'Love', enabled when 'foo_playcount' is installed (currently);
-	buttons.love = createIconButton(Material.heart, iconSize, themeColors.mood);
+	buttons.love = createIconButton(Material.heart, iconSize - scale(2), themeColors.mood);
 	Object.assign(buttons.love, {
 		on_init: function () {
 			let metadb = fb.GetNowPlaying();
@@ -138,14 +141,7 @@ const createBottomButtons = () => {
 			}
 		},
 		on_click: function () {
-			let metadb = fb.GetNowPlaying();
-			if (metadb && fb.IsMetadbInMediaLibrary(metadb)) {
-				let loved_ = +TF_RATING.EvalWithMetadb(metadb) == 5;
-				RunContextCommandWithMetadb(loved_ ? CMD_UNLOVE : CMD_LOVE, metadb, 8);
-			} else {
-				// if (!metadb) console.log("toggle mood failed: NULL metadb!");
-				// if (!fb.IsMetadbInMediaLibrary(metadb)) console.log("toggle mood failed, metadb not in MediaLibrary!")
-			}
+			ToggleMood(fb.GetNowPlaying());
 			this.on_init();
 			this.repaint();
 		},
@@ -166,7 +162,7 @@ const createBottomButtons = () => {
 	});
 
 
-	buttons.repeat = createIconButton(Material.repeat, iconSize, defaultColor);
+	buttons.repeat = createIconButton(Material.repeat, smallIconSize, defaultColor);
 	Object.assign(buttons.repeat, {
 		on_init() {
 			switch (plman.PlaybackOrder) {
@@ -202,7 +198,7 @@ const createBottomButtons = () => {
 	});
 
 	// button 'Shuffle';
-	buttons.shuffle = createIconButton(Material.shuffle, iconSize, defaultColor);
+	buttons.shuffle = createIconButton(Material.shuffle, smallIconSize, defaultColor);
 	Object.assign(buttons.shuffle, {
 		on_init() {
 			if (plman.PlaybackOrder === getShuffleOrder()) {
@@ -226,7 +222,7 @@ const createBottomButtons = () => {
 	});
 
 	// button 'Volume Mute Toggle';
-	buttons.volume = createIconButton(Material.volume, iconSize, defaultColor);
+	buttons.volume = createIconButton(Material.volume, smallIconSize, defaultColor);
 	Object.assign(buttons.volume, {
 		on_init() {
 			this.setIcon(fb.Volume === -100 ? Material.volume_off : Material.volume);
@@ -237,6 +233,13 @@ const createBottomButtons = () => {
 		on_volume_change() {
 			this.on_init();
 			this.repaint();
+		}
+	});
+
+	buttons.context = createIconButton(Material.more_vert, smallIconSize, defaultColor);
+	Object.assign(buttons.context, {
+		on_click(x: number, y: number) {
+			// popup context menu;
 		}
 	});
 
@@ -362,12 +365,14 @@ const artistText = new TextLink({
 
 const albumArt = new NowplayingArtwork();
 
+const THIN_MODE_WIDTH = scale(640);
+
 export class PlaybackControlView extends Component {
 	private timerId: number = -1;
 	playbackTime: string = "";
 	playbackLength: string = "";
 	trackTitle: string = "";
-	titleFont = fonts.semibold_14;
+	titleFont = GdiFont("semibold, 14");
 	timeFont = fonts.trebuchet_12;
 	timeWidth = 1;
 	volumeWidth = scale(80);
@@ -396,8 +401,7 @@ export class PlaybackControlView extends Component {
 				this.playbackTime = formatPlaybackTime(fb.PlaybackTime);
 				this.playbackLength = formatPlaybackTime(fb.PlaybackLength);
 				Repaint();
-			} else {
-			}
+			} else {/** do nothing */ }
 			window.ClearTimeout(this.timerId);
 			this.timerId = window.SetTimeout(onPlaybackTimer_, panelRefreshInterval);
 		};
@@ -412,6 +416,12 @@ export class PlaybackControlView extends Component {
 		}
 
 		this._rightDown = false;
+
+		let isThin = (this.width <= THIN_MODE_WIDTH);
+		if (isThin !== this.isThinMode) {
+			this.isThinMode = isThin;
+			this.setChildrenVisibility();
+		}
 	}
 
 	setChildPanels() {
@@ -428,7 +438,75 @@ export class PlaybackControlView extends Component {
 		Object.values(this.buttons).forEach((btn) => this.addChild(btn));
 	}
 
-	on_size() {
+	setChildrenVisibility() {
+		const { playOrPause, next, prev, shuffle, repeat } = this.buttons;
+		const { volume, love, context } = this.buttons;
+
+		let thinModeVis = this.width <= THIN_MODE_WIDTH;
+		let wideModeVis = !thinModeVis;
+
+		playOrPause.visible = true;
+		next.visible = true;
+		prev.visible = true;
+
+		shuffle.visible = wideModeVis;
+		repeat.visible = wideModeVis;
+		volume.visible = wideModeVis;
+		love.visible = true;
+		context.visible = thinModeVis;
+
+		this.volume.visible = wideModeVis;
+		this.seekbar.visible = true;
+
+		this.artwork.visible = wideModeVis;
+		this.artist.visible = true;
+	}
+
+	private on_size_thinMode() {
+		const { playOrPause, prev, next, love, context } = this.buttons;
+		const { seekbar, artist } = this;
+
+		// seekbar
+		// ----
+		let seek_x = this.x + scale(8) + this.timeWidth;
+		let seek_w = this.width - 2 * (scale(8) + this.timeWidth);
+		let seek_h = scale(16);
+		let seek_y = this.y + this.height - seek_h - scale(8);
+
+		seekbar.setBoundary(seek_x, seek_y, seek_w, seek_h);
+
+		// buttons;
+		// -----
+		let bw_1 = playOrPause.width;
+		let by_1 = (this.y + (scale(50) - bw_1) / 2) >> 0;
+		let pad_1 = scale(8);
+		let bx_context = (this.x + this.width - bw_1 - scale(8));
+		context.setPosition(bx_context, by_1);
+
+		let bx_next = bx_context - bw_1 - pad_1;
+		next.setPosition(bx_next, by_1);
+
+		let bx_playorpause = bx_next - bw_1 - pad_1;
+		playOrPause.setPosition(bx_playorpause, by_1);
+
+		let bx_prev = bx_playorpause - bw_1 - pad_1;
+		prev.setPosition(bx_prev, by_1);
+
+		let bx_love = bx_prev - bw_1 - pad_1;
+		love.setPosition(bx_love, by_1);
+
+		// artist text;
+		// ----
+		let artist_x = scale(16);
+		let artist_y = this.y + (this.height - seek_h) / 2;
+		let artist_max_w = Math.min(scale(300), love.x - artist_x - scale(16));
+		let artist_h = Math.ceil(artist.font.Height);
+		artist.setMaxWidth(artist_max_w);
+		artist.setSize(null, artist_h);
+		artist.setPosition(artist_x, artist_y);
+	}
+
+	private on_size_wideMode() {
 		let { seekbar, volume, buttons, artwork, artist } = this;
 		let left = this.x,
 			top = this.y,
@@ -468,12 +546,12 @@ export class PlaybackControlView extends Component {
 		volume.setBoundary(vol_x, vol_y >> 0, vol_w, vol_h);
 
 		// volume mute button;
-		let bx_6 = vol_x - bw_2 - scale(8);
+		let bx_6 = vol_x - bw_2 - scale(4);
 		let by_6 = (top + (height - bw_2) / 2) >> 0;
 		buttons.volume.setPosition(bx_6, by_6);
 
 		// love;
-		buttons.love.setPosition(bx_6 - bw_2 - scale(8), by_6);
+		buttons.love.setPosition(bx_6 - bw_2, by_6);
 
 		// seekbar;
 		let seek_max_w = scale(640);
@@ -496,10 +574,27 @@ export class PlaybackControlView extends Component {
 		let artist_y = this.y + this.height / 2;
 		let pb_time_x = seekbar.x - this.timeWidth - scale(4);
 		let artist_x = albumArt.x + albumArt.width + scale(12);
-		let artist_max_w = pb_time_x - scale(16) - artist_x;
+		let artist_h = Math.ceil(artist.font.Height);
+		let artist_max_w = Math.min(pb_time_x - scale(16) - artist_x, scale(300));
 		artist.setMaxWidth(artist_max_w);
-		artist.setSize(null, scale(20));
+		artist.setSize(null, artist_h);
 		artist.setPosition(artist_x, artist_y);
+	}
+
+	private isThinMode = false;
+
+	on_size() {
+		let isThin = (this.width <= THIN_MODE_WIDTH);
+		if (isThin !== this.isThinMode) {
+			this.isThinMode = isThin;
+			this.setChildrenVisibility();
+		}
+
+		if (this.isThinMode) {
+			this.on_size_thinMode();
+		} else {
+			this.on_size_wideMode();
+		}
 	}
 
 	on_paint(gr: IGdiGraphics) {
@@ -516,10 +611,19 @@ export class PlaybackControlView extends Component {
 		gr.DrawString(this.playbackLength, this.timeFont, themeColors.secondaryText, pb_len_x, pb_time_y, this.timeWidth, seekbar.height, StringFormat.Center);
 
 		// track title;
-		let title_x = albumArt.x + albumArt.width + scale(12);
-		let title_max_w = pb_time_x - scale(16) - title_x;
-		let title_y = this.y + this.height / 2 - scale(22) - scale(2);
-		gr.DrawString(this.trackTitle, this.titleFont, themeColors.text, title_x, title_y, title_max_w, scale(22), StringFormat.LeftCenter);
+		if (this.isThinMode) {
+			let title_x = this.x + scale(16);
+			let title_max_w = Math.min(this.buttons.love.x - title_x - scale(16), scale(300));
+			let title_h = (this.titleFont.Height * 1.1) >> 0;
+			let title_y = this.artist.y - title_h;//this.y + (this.height - this.seekbar.height - scale(16)) / 2 - title_h;
+			gr.DrawString(this.trackTitle, this.titleFont, themeColors.text, title_x, title_y, title_max_w, title_h, StringFormat.LeftTop);
+		} else {
+			let title_x = albumArt.x + albumArt.width + scale(12);
+			let title_max_w = Math.min(pb_time_x - scale(16) - title_x, scale(300));
+			let title_h = (this.titleFont.Height * 1.1) >> 0;
+			let title_y = this.artist.y - title_h;//this.y + this.height / 2 - title_h;
+			gr.DrawString(this.trackTitle, this.titleFont, themeColors.text, title_x, title_y, title_max_w, title_h, StringFormat.LeftTop);
+		}
 	}
 
 	on_playback_new_track() {
@@ -628,18 +732,7 @@ function showPanelContextMenu(metadb: IFbMetadb, x: number, y: number) {
 			Context.ExecuteByID(ret - BaseID);
 			break;
 		case ret === 5000:
-			inputOptions = {
-				title: "Add to playlist...",
-				defaultText: "New playlist",
-				onSuccess(playlistName: string) {
-					let playlistIndex = plman.CreatePlaylist(plman.PlaylistCount, playlistName);
-					if (isValidPlaylist(playlistIndex)) {
-						plman.ActivePlaylist = playlistIndex;
-						plman.InsertPlaylistItems(playlistIndex, plman.PlaylistItemCount(playlistIndex), metadbs, false);
-					}
-				}
-			}
-			notifyOthers("Popup.InputPopupPanel", inputOptions);
+			CreatePlaylistPopup();
 			break;
 		case ret >= 5001 && ret < 9000:
 			let playlistIndex = ret - 5001;
@@ -676,7 +769,7 @@ function setShuffleOrder(order: number) {
 	return order;
 }
 
-export function toggleMood(metadb: IFbMetadb) {
+export function ToggleMood(metadb: IFbMetadb) {
 	if (metadb && fb.IsMetadbInMediaLibrary(metadb)) {
 		let liked = +TF_RATING.EvalWithMetadb(metadb) === 5;
 		RunContextCommandWithMetadb(liked ? CMD_UNLOVE : CMD_LOVE, metadb, 8);

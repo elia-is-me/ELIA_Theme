@@ -5,7 +5,7 @@ import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
 import { IPaddings } from "../common/BasePart";
 import { MaterialFont, Material, IconObject } from "../common/Icon";
-import { toggleMood } from "./PlaybackControlView";
+import { ToggleMood } from "./PlaybackControlView";
 import { notifyOthers, ui } from "../common/UserInterface";
 import { IconButton } from "./Buttons";
 import { lang } from "./Lang";
@@ -802,7 +802,7 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 		// handle click mood;
 		if (this.clickedMoodId > -1) {
 			if (this.getActiveMoodId(x, y) === this.clickedMoodId) {
-				toggleMood(this.items[this.clickedMoodId].metadb);
+				ToggleMood(this.items[this.clickedMoodId].metadb);
 				this.items[this.clickedMoodId].title = undefined;
 				this.repaint();
 			}
