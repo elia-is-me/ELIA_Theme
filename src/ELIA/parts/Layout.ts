@@ -1,14 +1,15 @@
 import { scale, ThrottledRepaint } from "../common/common";
 import { Component } from "../common/BasePart";
-import { ui } from "../common/UserInterface";
+import { notifyOthers, ui } from "../common/UserInterface";
 import { TopBar } from "./TopbarView";
 import { PlaybackControlView } from "./PlaybackControlView";
 import { PlaylistManagerView } from "./PlaylistManagerView";
-import { PlaylistView } from "./PlaylistView";
+import { isValidPlaylist, PlaylistView } from "./PlaylistView";
 import { InputPopupPanel, IInputPopupOptions } from "./InputPopupPanel";
 import { AlertDialog, IAlertDialogOptions } from "./AlertDialog";
 import { SearchResultView } from "./SearchResultView";
 import { SettingsView } from "./SettingsView";
+import { lang } from "./Lang";
 
 
 const CONTROL_BAR_HEIGHT = scale(76);
@@ -254,3 +255,56 @@ export class Layout extends Component {
 	}
 }
 
+/**
+ * Popup an input panel for users to create a playlist, and the active_playlist
+ * will be changed to the newly created one; 
+ * Click 'Cancel' to cancel action;
+ */
+export function CreatePlaylistPopup() {
+	let options = {
+		title: lang("Create playlist"),
+		onSuccess(playlistName: string) {
+			let playlistIndex = plman.CreatePlaylist(plman.PlaylistCount, playlistName);
+			if (isValidPlaylist(playlistIndex)) {
+				plman.ActivePlaylist = playlistIndex;
+			}
+		}
+	};
+	notifyOthers("Popup.InputPopupPanel", options);
+}
+
+/**
+ * Rename a playlist with a popup panel;
+ */
+export function RenamePlaylist(playlistIndex: number) {
+	let options = {
+		title: lang("Rename playlist"),
+		defaultText: plman.GetPlaylistName(playlistIndex),
+		onSuccess(playlistName: string) {
+			plman.RenamePlaylist(playlistIndex, playlistName);
+		}
+	}
+	notifyOthers("Popup.InputPopupPanel", options);
+}
+
+/**
+ * Delete a playlist and popup an alert to ensure do not delete it just by
+ * mistake;
+ */
+export function DeletePlaylistDialog(playlistIndex: number) {
+	if (!isValidPlaylist(playlistIndex)) {
+		return;
+	}
+	let dlgOptions: IAlertDialogOptions = {
+		title: lang("Delete playlist") + "?",
+		text: plman.GetPlaylistName(playlistIndex),
+		onSuccess() {
+			let isActivePlaylist = (playlistIndex === plman.ActivePlaylist);
+			plman.RemovePlaylist(playlistIndex);
+			if (isActivePlaylist && isValidPlaylist(playlistIndex)) {
+				plman.ActivePlaylist = playlistIndex;
+			}
+		}
+	}
+	notifyOthers("Show.AlertDialog", dlgOptions);
+}

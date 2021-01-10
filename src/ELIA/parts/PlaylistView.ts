@@ -16,6 +16,7 @@ import { Button } from "./Buttons";
 import { IInputPopupOptions } from "./InputPopupPanel";
 import { IAlertDialogOptions } from "./AlertDialog";
 import { lang } from "./Lang";
+import { DeletePlaylistDialog, RenamePlaylist } from "./Layout";
 
 const mouseCursor = {
 	x: -1,
@@ -1435,7 +1436,6 @@ export class PlaylistView extends ScrollView {
 }
 
 export function showTrackContextMenu(playlistIndex: number, metadbs: IFbMetadbList, x: number, y: number) {
-	// if (!metadbs || metadbs.Count === 0) return;
 	let nullMetadbs = !metadbs || metadbs.Count === 0;
 	let hasMetadbs = !nullMetadbs;
 
@@ -1451,7 +1451,12 @@ export function showTrackContextMenu(playlistIndex: number, metadbs: IFbMetadbLi
 			addToMenu.AppendMenuSeparator();
 		}
 		for (let index = 0; index < plman.PlaylistCount; index++) {
-			addToMenu.AppendMenuItem(plman.IsPlaylistLocked(index) || index === playlistIndex ? MenuFlag.GRAYED : MenuFlag.STRING, 2001 + index, plman.GetPlaylistName(index));
+			let flag = plman.IsPlaylistLocked(index) || index === playlistIndex ? MenuFlag.GRAYED : MenuFlag.STRING;
+			let playlistName = plman.GetPlaylistName(index);
+			if (index === playlistIndex) {
+				playlistName += lang("(*Current)");
+			};
+			addToMenu.AppendMenuItem(flag, 2001 + index, playlistName);
 		}
 
 		//
@@ -1558,7 +1563,7 @@ function showHeaderContextMenu(playlistIndex: number, x: number, y: number) {
 	const hasTracks = plman.PlaylistItemCount(playlistIndex) > 0;
 	const menu = window.CreatePopupMenu();
 
-	menu.AppendMenuItem(MenuFlag.STRING, 10, lang("Edit playlist..."));
+	menu.AppendMenuItem(MenuFlag.STRING, 10, lang("Rename playlist"));
 	if (plman.IsAutoPlaylist(playlistIndex)) {
 		menu.AppendMenuItem(MenuFlag.STRING, 11, lang("Edit autoplaylist..."));
 	}
@@ -1576,16 +1581,7 @@ function showHeaderContextMenu(playlistIndex: number, x: number, y: number) {
 
 	switch (true) {
 		case ret === 10:
-			let opt_1: IInputPopupOptions = {
-				title: "Rename playlist",
-				defaultText: plman.GetPlaylistName(playlistIndex),
-				onSuccess(text: string) {
-					if (text !== plman.GetPlaylistName(playlistIndex)) {
-						plman.RenamePlaylist(playlistIndex, text);
-					}
-				}
-			};
-			notifyOthers("Popup.InputPopupPanel", opt_1);
+			RenamePlaylist(playlistIndex);
 			break;
 		case ret === 11:
 			if (plman.IsAutoPlaylist(playlistIndex)) {
@@ -1606,16 +1602,7 @@ function showHeaderContextMenu(playlistIndex: number, x: number, y: number) {
 			break;
 
 		case ret === 30:
-			let options_30: IAlertDialogOptions = {
-				title: "Delete playlist",
-				onSuccess: () => {
-					plman.RemovePlaylist(playlistIndex);
-					if (isValidPlaylist(playlistIndex)) {
-						plman.ActivePlaylist, playlistIndex;
-					}
-				}
-			};
-			notifyOthers("Show.AlertDialog", options_30);
+			DeletePlaylistDialog(playlistIndex);
 			break;
 	}
 

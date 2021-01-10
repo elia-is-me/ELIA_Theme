@@ -1,7 +1,7 @@
 // Playlist Manager
 // -------------------------
 
-import { scale, RGB, RGBA, StringFormat, ThrottledRepaint, MenuFlag, setAlpha, spaceStart, spaceEnd, SmoothingMode, CursorName } from "../common/common";
+import { scale, RGB, RGBA, StringFormat, ThrottledRepaint, MenuFlag, setAlpha, spaceStart, SmoothingMode, CursorName } from "../common/common";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
 import { Component } from "../common/BasePart";
@@ -10,9 +10,8 @@ import { scrollbarWidth, themeColors, fonts, GdiFont } from "./Theme";
 import { Clickable } from "../common/Button";
 import { isValidPlaylist } from "./PlaylistView";
 import { IInputPopupOptions } from "./InputPopupPanel";
-import { IAlertDialogOptions } from "./AlertDialog";
 import { dndMask, mouseCursor, notifyOthers, ui } from "../common/UserInterface";
-import { layout } from "./Layout";
+import { CreatePlaylistPopup, DeletePlaylistDialog, layout, RenamePlaylist } from "./Layout";
 import { lang } from "./Lang";
 
 type IconSets = "volume" | "gear" | "queue_music" | "playing" | "pause";
@@ -63,15 +62,16 @@ class AddPlaylistButton extends Clickable {
 	}
 
 	on_click() {
-		notifyOthers("Popup.InputPopupPanel", {
-			title: lang("Create playlist"),
-			onSuccess(text: string) {
-				let playlistIndex = plman.CreatePlaylist(plman.PlaylistCount, text);
-				if (isValidPlaylist(playlistIndex)) {
-					plman.ActivePlaylist = playlistIndex;
-				}
-			}
-		})
+		// notifyOthers("Popup.InputPopupPanel", {
+		// 	title: lang("Create playlist"),
+		// 	onSuccess(text: string) {
+		// 		let playlistIndex = plman.CreatePlaylist(plman.PlaylistCount, text);
+		// 		if (isValidPlaylist(playlistIndex)) {
+		// 			plman.ActivePlaylist = playlistIndex;
+		// 		}
+		// 	}
+		// })
+		CreatePlaylistPopup();
 	}
 }
 
@@ -578,38 +578,13 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 			case id === 1:
 				break;
 			case id === 2:
-				// Rename;
-				options = {
-					title: lang("Rename playlist"),
-					defaultText: plman.GetPlaylistName(playlistIndex),
-					onSuccess(text: string) {
-						plman.RenamePlaylist(playlistIndex, text);
-					},
-				};
-				notifyOthers("Popup.InputPopupPanel", options);
+				RenamePlaylist(playlistIndex);
 				break;
-
 			case id === 3:
-				// Delete playlist;
-				let alertOptions: IAlertDialogOptions = {
-					title: lang("Delete playlist") + "?",
-					text: plman.GetPlaylistName(playlistIndex),
-					onSuccess: () => {
-						let deleteActivePlaylist = (playlistIndex === plman.ActivePlaylist);
-						plman.RemovePlaylist(playlistIndex);
-						if (deleteActivePlaylist && isValidPlaylist(playlistIndex)) {
-							plman.ActivePlaylist = playlistIndex;
-						}
-					},
-				};
-				notifyOthers("Show.AlertDialog", alertOptions);
+				DeletePlaylistDialog(playlistIndex);
 				break;
 			case id === 4:
-				// Create new playlist;
-				options = {
-					title: lang("Create playlist"),
-				};
-				notifyOthers("Popup.InputPopupPanel", options);
+				CreatePlaylistPopup();
 				break;
 			case id === 5:
 				if (plman.IsAutoPlaylist(playlistIndex)) {
