@@ -1,10 +1,11 @@
 import { Component } from "../common/BasePart";
-import { MeasureString, RGB, scale, StringFormat, isEmptyString, isFunction, setAlpha } from "../common/common";
+import { RGB, scale, isEmptyString, isFunction, setAlpha } from "../common/common";
 import { Button } from "./Buttons";
 import { InputBox } from "../common/Inputbox";
 import { notifyOthers } from "../common/UserInterface";
 import { themeColors, fonts, GdiFont } from "./Theme";
 import { lang } from "./Lang";
+import { MeasureString, StringFormat } from "../common/String";
 
 
 export interface IInputPopupOptions {

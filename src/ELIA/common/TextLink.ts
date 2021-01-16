@@ -1,6 +1,7 @@
-import { StringFormat, scale, MeasureString, isEmptyString } from "./common";
+import { scale } from "./common";
 import { ButtonStates, Clickable } from "./Button";
 import { IInjectableCallbacks } from "./BasePart";
+import { MeasureString, StringFormat } from "./String";
 
 export interface ITextLinkProps {
 	text: string;
@@ -67,20 +68,12 @@ export class TextLink extends Clickable {
 	}
 
 	on_paint(gr: IGdiGraphics) {
-		if (isEmptyString(this.text)) {
+		if (!this.text) {
 			return;
 		}
 		let font_: IGdiFont = this._fontMap.get(this.state);
 		let textColor_: number = this._colorMap.get(this.state);
-		gr.DrawString(
-			this.text,
-			font_,
-			textColor_,
-			this.x,
-			this.y,
-			this.width,
-			this.height,
-			StringFormat.LeftCenter
-		);
+		gr.DrawString(this.text, font_, textColor_,
+			this.x, this.y, this.width, this.height, StringFormat.LeftCenter);
 	}
 }

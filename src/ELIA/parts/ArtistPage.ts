@@ -1,9 +1,10 @@
 import { NowplayingArtwork, PlaylistArtwork } from "../common/AlbumArt";
 import { Component } from "../common/BasePart";
-import { scale, StringFormat, TextRenderingHint } from "../common/common";
+import { scale, TextRenderingHint } from "../common/common";
 import { Material, MaterialFont } from "../common/Icon";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
+import { StringFormat } from "../common/String";
 import { ui } from "../common/UserInterface";
 import { Button } from "./Buttons";
 import { lang } from "./Lang";

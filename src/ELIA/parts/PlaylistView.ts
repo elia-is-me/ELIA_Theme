@@ -2,7 +2,8 @@
 // Simple Playlist View
 //====================================
 
-import { TextRenderingHint, StringTrimming, StringFormatFlags, MenuFlag, VKeyCode, KMask, scale, RGB, deepClone, MeasureString, isEmptyString, StringFormat } from "../common/common";
+import { TextRenderingHint, MenuFlag, VKeyCode, KMask, scale, RGB, deepClone, isEmptyString } from "../common/common";
+import { StringTrimming, StringFormatFlags, MeasureString, StringFormat } from "../common/String";
 import { ThrottledRepaint } from "../common/common";
 import { scrollbarWidth, themeColors, fonts, fontNameNormal, GdiFont } from "./Theme";
 import { Scrollbar } from "../common/Scrollbar";
@@ -1478,7 +1479,7 @@ export function showTrackContextMenu(playlistIndex: number, metadbs: IFbMetadbLi
 			artistMenu.AppendTo(rootMenu, MenuFlag.STRING, lang("Go to artist"));
 			rootMenu.AppendMenuItem(MenuFlag.STRING, 20, lang("Go to album"));
 
-		rootMenu.AppendMenuSeparator();
+			rootMenu.AppendMenuSeparator();
 		}
 	}
 

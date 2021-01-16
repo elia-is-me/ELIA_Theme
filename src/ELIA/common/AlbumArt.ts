@@ -1,5 +1,8 @@
-import { StringFormat, CropImage, TextRenderingHint, drawImage, SmoothingMode, debounce, StopReason, BuildFullPath, fso, scale, InterpolationMode, isNumber, ScaleImage, DrawImageScale } from "./common";
+/// <reference path="../../typings/foo_spider_monkey_panel.d.ts" />
+
+import { CropImage, TextRenderingHint, drawImage, SmoothingMode, debounce, StopReason, BuildFullPath, fso, scale, InterpolationMode, isNumber, ScaleImage, DrawImageScale } from "./common";
 import { Component } from "./BasePart";
+import { StringFormat } from "./String";
 
 // image cache;
 // ---- 

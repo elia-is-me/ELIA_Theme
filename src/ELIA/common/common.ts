@@ -2,6 +2,7 @@
  *  Commonly used utilites, constants, etc.
  *------------------------------------------------------------------------------------*/
 
+
 /*
  * 不知为何在 tsconfig.json 里 include foo_spider_monkey_panel.d.ts 时，使用
  * browserify + tsify 编译始终报错，提示找不到变量什么的。
@@ -209,29 +210,6 @@ export const BuildFullPath = function (path: string) {
 	}
 };
 
-export const enum StringTrimming {
-	None = 0,
-	Character = 1,
-	Word = 2,
-	EllipsisCharacter = 3,
-	EllipsisWord = 4,
-	EllipsisPath = 5,
-}
-
-// flags, can be combined of:
-// http://msdn.microsoft.com/en-us/library/ms534181(VS.85).aspx
-export const enum StringFormatFlags {
-	DirectionRightToLeft = 0x00000001,
-	DirectionVertical = 0x00000002,
-	NoFitBlackBox = 0x00000004,
-	DisplayFormatControl = 0x00000020,
-	NoFontFallback = 0x00000400,
-	MeasureTrailingSpaces = 0x00000800,
-	NoWrap = 0x00001000,
-	LineLimit = 0x00002000,
-	NoClip = 0x00004000,
-}
-
 // Used in SetSmoothingMode()
 // For more information, see: http://msdn.microsoft.com/en-us/library/ms534173(VS.85).aspx
 export const enum SmoothingMode {
@@ -275,44 +253,6 @@ export const enum PlaybackOrder {
 	ShuffleAlbums = 5,
 	ShuffleFolders = 6,
 }
-
-// Helper function for DrawString() and MeasureString()
-// args: h_align, v_align, trimming, flags
-export function StringFormat(
-	h_align = 0,
-	v_align = 0,
-	trimming = 0,
-	flags = 0
-) {
-	return (h_align << 28) | (v_align << 24) | (trimming << 20) | flags;
-}
-StringFormat.LeftCenter = StringFormat(
-	0,
-	1,
-	StringTrimming.EllipsisCharacter,
-	StringFormatFlags.NoWrap
-);
-StringFormat.Center = StringFormat(
-	1,
-	1,
-	StringTrimming.Character,
-	StringFormatFlags.NoWrap
-);
-StringFormat.LeftTop = StringFormat(
-	0,
-	0,
-	StringTrimming.EllipsisCharacter,
-	StringFormatFlags.NoWrap
-);
-StringFormat.LeftTopNoTrim = StringFormat(
-	0,
-	0,
-	StringTrimming.None,
-	StringFormatFlags.NoWrap
-);
-StringFormat.RightCenter = StringFormat(
-	2, 1, StringTrimming.EllipsisCharacter, StringFormatFlags.NoWrap
-);
 
 export function debounce(fn: Function, delay: number) {
 	var timer: number = null;
@@ -421,15 +361,6 @@ export function drawImage(w: number, h: number, im: boolean, func: (gr: IGdiGrap
 	else i = null;
 }
 
-/**
- * @param {string} str
- * @param {IGdiFont} str
- */
-export const MeasureString = (() => {
-	let g = gdi.CreateImage(1, 1).GetGraphics();
-	return (str: string | number, font: IGdiFont) =>
-		g.MeasureString(str, font, 0, 0, 99999, 999, StringFormat.LeftCenter);
-})();
 
 export const enum MenuFlag {
 	STRING = 0x00000000,
@@ -500,9 +431,6 @@ export function isEmptyString(str: string) {
 	return !str;
 }
 
-export const spaceStart = (str: string) => str.padStart(str.length + 1);
-export const spaceEnd = (str: string) => str.padEnd(str.length + 1);
-export const spaceStartEnd = (str: string) => spaceStart(str).padEnd(str.length + 2);
 
 export const enum StopReason {
 	InvokedByUser = 0,
@@ -594,15 +522,6 @@ export const enum CursorName {
 export const fso: {
 	FileExists: (par: string) => boolean;
 } = new ActiveXObject("Scripting.FileSystemObject");
-
-function WrapLine(str: string, font: IGdiFont, width: number) {
-
-}
-
-function WrapLineRecur(str: string, font: IGdiFont, width: number, out: string[]) {
-
-}
-
 
 export function pos2vol(pos: number) {
 	return (50 * Math.log(0.99 * pos + 0.01)) / Math.LN10;

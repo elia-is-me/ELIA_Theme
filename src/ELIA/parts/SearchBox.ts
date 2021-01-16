@@ -5,11 +5,12 @@
 import { Component } from "../common/BasePart";
 import { InputBox } from "../common/Inputbox";
 import { IconButton } from "./Buttons";
-import { scale, RGB, MeasureString } from "../common/common";
+import { scale, RGB } from "../common/common";
 import { Material, } from "../common/Icon";
 import { GdiFont, themeColors } from "./Theme";
 import { notifyOthers } from "../common/UserInterface";
 import { lang } from "./Lang";
+import { MeasureString } from "../common/String";
 
 export class SearchBox extends Component {
 	inputbox: InputBox;

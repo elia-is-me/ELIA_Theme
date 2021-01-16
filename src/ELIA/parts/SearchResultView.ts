@@ -1,5 +1,5 @@
 import { Component, IBoxModel } from "../common/BasePart";
-import { RGB, scale, isEmptyString, StringFormat, MeasureString, TextRenderingHint, StopReason, VKeyCode, MenuFlag, clamp, KMask, spaceStart, spaceStartEnd } from "../common/common";
+import { RGB, scale, isEmptyString, TextRenderingHint, StopReason, VKeyCode, MenuFlag, clamp, KMask, } from "../common/common";
 import { themeColors, fonts } from "./Theme";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
@@ -10,6 +10,7 @@ import { notifyOthers, ui } from "../common/UserInterface";
 import { IconButton } from "./Buttons";
 import { lang } from "./Lang";
 import { formatPlaylistDuration } from "./PlaylistView";
+import { StringFormat, MeasureString, spaceStart, spaceStartEnd } from "../common/String";
 
 const textRenderingHint = ui.textRender;
 

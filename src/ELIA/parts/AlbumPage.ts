@@ -1,6 +1,7 @@
-import { AlbumArtwork, NowplayingArtwork } from "../common/AlbumArt";
+import { MeasureString, StringFormat, spaceStartEnd, spaceEnd, spaceStart } from "../common/String";
+import { AlbumArtwork } from "../common/AlbumArt";
 import { Component } from "../common/BasePart";
-import { MeasureString, scale, shuffleArray, spaceEnd, spaceStart, spaceStartEnd, StringFormat, TextRenderingHint } from "../common/common";
+import { scale, TextRenderingHint } from "../common/common";
 import { Material, MaterialFont } from "../common/Icon";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";

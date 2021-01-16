@@ -1,4 +1,5 @@
-import { scale, RGB, StringFormat, StringTrimming, StringFormatFlags, isFunction, setAlpha } from "../common/common";
+import { scale, RGB, isFunction, setAlpha } from "../common/common";
+import { StringTrimming, StringFormatFlags, StringFormat } from "../common/String";
 import { Component } from "../common/BasePart";
 import { Button } from "./Buttons";
 import { GdiFont, themeColors } from "./Theme";

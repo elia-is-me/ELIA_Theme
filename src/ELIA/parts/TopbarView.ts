@@ -1,4 +1,4 @@
-import { scale, StringFormat, TextRenderingHint, MenuFlag } from "../common/common";
+import { scale, TextRenderingHint, MenuFlag } from "../common/common";
 import { Component } from "../common/BasePart";
 import { IconButton } from "./Buttons";
 import { Material, MaterialFont } from "../common/Icon";
@@ -6,6 +6,7 @@ import { notifyOthers, ui } from "../common/UserInterface";
 import { themeColors } from "./Theme";
 import { SearchBox } from "./SearchBox";
 import { lang } from "./Lang";
+import { StringFormat } from "../common/String";
 
 const iconSize = scale(20);
 const textRenderingHint = ui.textRender;

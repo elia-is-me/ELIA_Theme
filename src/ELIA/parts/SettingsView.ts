@@ -1,7 +1,8 @@
-import { scale, StringFormat } from "../common/common";
+import { scale } from "../common/common";
 import { Material, MaterialFont } from "../common/Icon";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
+import { StringFormat } from "../common/String";
 import { notifyOthers } from "../common/UserInterface";
 import { IconButton } from "./Buttons";
 import { lang } from "./Lang";
@@ -56,6 +57,7 @@ export class SettingsView extends ScrollView {
         gr.FillSolidRect(this.x, this.y, this.width, this.height, this.colors.background);
 
         // Title 1;
-        gr.DrawString(lang("Settings"), titleFont, colors.titleText, this.x + paddingL, this.y + scale(40) - this.scroll, 0.5 * (this.width - 2 * paddingL), titleFont.Height, StringFormat.LeftTop);
+        gr.DrawString(lang("Settings"), titleFont, colors.titleText,
+            this.x + paddingL, this.y + scale(40) - this.scroll, 0.5 * (this.width - 2 * paddingL), titleFont.Height, StringFormat.LeftTop);
     }
 };

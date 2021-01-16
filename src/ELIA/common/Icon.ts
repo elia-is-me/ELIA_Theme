@@ -1,4 +1,5 @@
-import { StringFormat, TextRenderingHint } from "./common";
+import { TextRenderingHint } from "./common";
+import { StringFormat } from "./String";
 import { ui } from "./UserInterface";
 
 export const Material = {

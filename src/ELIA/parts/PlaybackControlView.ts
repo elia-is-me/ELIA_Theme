@@ -8,12 +8,13 @@ import { NowplayingArtwork } from "../common/AlbumArt";
 import { Slider, SliderThumbImage } from "../common/Slider";
 import { Component } from "../common/BasePart";
 import { Material, MaterialFont } from "../common/Icon"
-import { scale, PlaybackOrder, SmoothingMode, blendColors, MeasureString, StringFormat } from "../common/common";
+import { scale, PlaybackOrder, SmoothingMode } from "../common/common";
 import { themeColors, fonts, GdiFont } from "./Theme";
 import { IconButton } from "./Buttons";
 import { lang, RunContextCommandWithMetadb } from "./Lang";
 import { CreatePlaylistPopup, GoToAlbum, GoToArtist, ShowPlaybackBarMenu } from "./Layout";
 import { ui } from "../common/UserInterface";
+import { MeasureString, StringFormat } from "../common/String";
 
 
 function pos2vol(pos: number) {

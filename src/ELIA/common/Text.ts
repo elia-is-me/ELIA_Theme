@@ -1,4 +1,4 @@
-import { StringFormat } from "./common";
+import { StringFormat } from "./String";
 
 export class TextLine {
 	className = "TextLine";

@@ -1,7 +1,7 @@
 // Playlist Manager
 // -------------------------
 
-import { scale, RGB, RGBA, StringFormat, ThrottledRepaint, MenuFlag, setAlpha, spaceStart, SmoothingMode, CursorName } from "../common/common";
+import { scale, RGB, RGBA, ThrottledRepaint, MenuFlag, setAlpha, SmoothingMode, CursorName } from "../common/common";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
 import { Component } from "../common/BasePart";
@@ -13,6 +13,7 @@ import { IInputPopupOptions } from "./InputPopupPanel";
 import { dndMask, mouseCursor, notifyOthers, ui } from "../common/UserInterface";
 import { CreatePlaylistPopup, DeletePlaylistDialog, layout, RenamePlaylist } from "./Layout";
 import { lang } from "./Lang";
+import { StringFormat, spaceStart } from "../common/String";
 
 type IconSets = "volume" | "gear" | "queue_music" | "playing" | "pause";
 

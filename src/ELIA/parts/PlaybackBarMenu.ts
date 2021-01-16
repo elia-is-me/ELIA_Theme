@@ -1,4 +1,4 @@
-import { PlaybackOrder, pos2vol, RGB, RGBA, scale, setAlpha, SmoothingMode, StringFormat, TextRenderingHint, vol2pos } from "../common/common";
+import { PlaybackOrder, pos2vol, RGB, RGBA, scale, setAlpha, SmoothingMode, TextRenderingHint, vol2pos } from "../common/common";
 import { Component } from "../common/BasePart";
 import { Material, MaterialFont } from "../common/Icon";
 import { IconButton } from "./Buttons";
@@ -8,6 +8,7 @@ import { ui } from "../common/UserInterface";
 import { lang } from "./Lang";
 import { ButtonStates, Clickable } from "../common/Button";
 import { getShuffleOrder } from "./PlaybackControlView";
+import { StringFormat } from "../common/String";
 
 const MENU_ITEM_HEIGHT = scale(40);
 const MENU_WIDTH = scale(164);
