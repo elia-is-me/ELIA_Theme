@@ -371,6 +371,9 @@ export class NowplayingArtwork extends Component {
 	}
 
 	processImage(image: IGdiBitmap) {
+		if (!this.width || !this.height) {
+			return;
+		}
 		return CropImage(image, this.width, this.height);
 	}
 
@@ -397,4 +400,70 @@ export class NowplayingArtwork extends Component {
 	on_size = debounce(() => {
 		this.getArtwork(fb.GetNowPlaying());
 	}, 100);
+}
+
+export class AlbumArtwork extends Component {
+	readonly className = "AlbumArtwork";
+	readonly stubImage = imageCache.noCover;
+
+	image: IGdiBitmap;
+	_noCover: IGdiBitmap;
+	metadb: IFbMetadb;
+
+	constructor() {
+		super({})
+	}
+	processImage(image: IGdiBitmap) {
+		if (!this.width || !this.height) {
+			return;
+		}
+		return CropImage(image, this.width, this.height);
+	}
+
+	async getArtwork(metadb: IFbMetadb) {
+		if (!this._noCover || this._noCover.Width !== this.width) {
+			// console.log(this.width, this.height);
+			this._noCover = this.processImage(this.stubImage);
+		}
+
+		// getalbumart;
+		if (metadb) {
+			this.metadb = metadb;
+
+			let result = await utils.GetAlbumArtAsyncV2(
+				window.ID, metadb, AlbumArtId.Front
+			);
+			if (!result || !result.image) {
+				result = await utils.GetAlbumArtAsyncV2(
+					window.ID, metadb, AlbumArtId.Disc
+				);
+			};
+			if (result && result.image) {
+				this.image = this.processImage(result.image);
+			} else {
+				this.image = null;
+			}
+		} else {
+			this.image = null;
+			this.metadb = null;
+		}
+		this.repaint();
+	}
+
+	on_init() {
+		if (this.metadb) {
+			this.getArtwork(this.metadb);
+		}
+	}
+
+	on_paint(gr: IGdiGraphics) {
+		let img = this.image || this._noCover;
+		if (!img) return;
+		gr.DrawImage(img, this.x, this.y, this.width, this.height, 0, 0, img.Width, img.Height);
+	}
+
+	on_size = debounce(() => {
+		this.getArtwork(this.metadb);
+	}, 100);
+
 }

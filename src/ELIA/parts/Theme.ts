@@ -8,11 +8,11 @@ export const themeColors = {
     // 
     titleText: RGB(255, 255, 255),
     text: RGBA(255, 255, 255, 245),
-    secondaryText: RGBA(255, 255, 255, 170),
+    secondaryText: RGBA(255, 255, 255, 100),
     highlight: RGB(251, 114, 153),
 
     // loved,
-    mood: RGB(221, 0, 27),
+    mood: RGBA(221, 0, 27, 220),
 
     // topbar spec
     topbarBackground: RGB(18, 18, 18),
@@ -21,7 +21,7 @@ export const themeColors = {
     playbackBarBackground: RGB(40, 40, 40),
 
     // siderbar,
-    sidebarInactiveText: RGBA(255, 255, 255, 170),
+    sidebarInactiveText: RGBA(255, 255, 255, 120),
     sidebarBackground: RGB(18, 18, 18),
     sidebarSplitLine: RGBA(255, 255, 255, 118),
 

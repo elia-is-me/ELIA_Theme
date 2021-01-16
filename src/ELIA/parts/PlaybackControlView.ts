@@ -10,12 +10,11 @@ import { Component } from "../common/BasePart";
 import { Material, MaterialFont } from "../common/Icon"
 import { scale, PlaybackOrder, SmoothingMode, blendColors, MeasureString, StringFormat } from "../common/common";
 import { themeColors, fonts, GdiFont } from "./Theme";
-import { IInputPopupOptions } from "./InputPopupPanel";
-import { notifyOthers } from "../common/UserInterface";
-import { isValidPlaylist } from "./PlaylistView";
 import { IconButton } from "./Buttons";
 import { lang, RunContextCommandWithMetadb } from "./Lang";
-import { CreatePlaylistPopup } from "./Layout";
+import { CreatePlaylistPopup, GoToAlbum, GoToArtist, ShowPlaybackBarMenu } from "./Layout";
+import { ui } from "../common/UserInterface";
+
 
 function pos2vol(pos: number) {
 	return (50 * Math.log(0.99 * pos + 0.01)) / Math.LN10;
@@ -239,7 +238,7 @@ const createBottomButtons = () => {
 	buttons.context = createIconButton(Material.more_vert, smallIconSize, defaultColor);
 	Object.assign(buttons.context, {
 		on_click(x: number, y: number) {
-			// popup context menu;
+			ShowPlaybackBarMenu();
 		}
 	});
 
@@ -314,7 +313,7 @@ const defaultArtistName = lang("ARTIST");
  * yyyy => yyyy
  * "" => ""
  */
-function getYear(str: string) {
+export function getYear(str: string) {
 	let arr = str.split(/[\.\/\-]/);
 	return arr.find(s => s.length === 4) || "";
 }
@@ -322,8 +321,8 @@ function getYear(str: string) {
 const artistText = new TextLink({
 	text: defaultArtistName,
 	font: fonts.normal_12,
-	textColor: blendColors(bottomColors.text, bottomColors.background, 0.2),
-	textHoverColor: blendColors(bottomColors.text, bottomColors.background, 0.2),
+	textColor: bottomColors.secondaryText,
+	textHoverColor: bottomColors.text,
 }, {
 
 	on_init() {
@@ -458,18 +457,27 @@ export class PlaybackControlView extends Component {
 		this.volume.visible = wideModeVis;
 		this.seekbar.visible = true;
 
-		this.artwork.visible = wideModeVis;
+		this.artwork.visible = true;
 		this.artist.visible = true;
 	}
 
 	private on_size_thinMode() {
 		const { playOrPause, prev, next, love, context } = this.buttons;
-		const { seekbar, artist } = this;
+		const { seekbar, artist, artwork } = this;
+
+		// artwork;
+		let pad = scale(12);
+		let artwork_h = this.height - 2 * pad;
+		let artwork_x = this.x + pad;
+		let artwork_y = this.y + pad;
+		this.artwork.setBoundary(artwork_x, artwork_y, artwork_h, artwork_h);
+
+		let other_x = this.x + artwork_h + 2 * pad;
 
 		// seekbar
 		// ----
-		let seek_x = this.x + scale(8) + this.timeWidth;
-		let seek_w = this.width - 2 * (scale(8) + this.timeWidth);
+		let seek_x = other_x + this.timeWidth;
+		let seek_w = this.x + this.width - other_x - scale(16) - 2 * this.timeWidth;
 		let seek_h = scale(16);
 		let seek_y = this.y + this.height - seek_h - scale(8);
 
@@ -497,7 +505,7 @@ export class PlaybackControlView extends Component {
 
 		// artist text;
 		// ----
-		let artist_x = scale(16);
+		let artist_x = other_x;
 		let artist_y = this.y + (this.height - seek_h) / 2;
 		let artist_max_w = Math.min(scale(300), love.x - artist_x - scale(16));
 		let artist_h = Math.ceil(artist.font.Height);
@@ -612,13 +620,13 @@ export class PlaybackControlView extends Component {
 
 		// track title;
 		if (this.isThinMode) {
-			let title_x = this.x + scale(16);
+			let title_x = this.artist.x;
 			let title_max_w = Math.min(this.buttons.love.x - title_x - scale(16), scale(300));
 			let title_h = (this.titleFont.Height * 1.1) >> 0;
 			let title_y = this.artist.y - title_h;//this.y + (this.height - this.seekbar.height - scale(16)) / 2 - title_h;
 			gr.DrawString(this.trackTitle, this.titleFont, themeColors.text, title_x, title_y, title_max_w, title_h, StringFormat.LeftTop);
 		} else {
-			let title_x = albumArt.x + albumArt.width + scale(12);
+			let title_x = this.artist.x;
 			let title_max_w = Math.min(pb_time_x - scale(16) - title_x, scale(300));
 			let title_h = (this.titleFont.Height * 1.1) >> 0;
 			let title_y = this.artist.y - title_h;//this.y + this.height / 2 - title_h;
@@ -673,6 +681,8 @@ export class PlaybackControlView extends Component {
 }
 
 const tf_title = fb.TitleFormat("%title%");
+const tf_artist_ = fb.TitleFormat("%album artist%^^%artist%^^%composer%");
+const tf_album = fb.TitleFormat("%album%");
 
 function showPanelContextMenu(metadb: IFbMetadb, x: number, y: number) {
 	const objMenu = window.CreatePopupMenu();
@@ -680,6 +690,8 @@ function showPanelContextMenu(metadb: IFbMetadb, x: number, y: number) {
 	let BaseID = 1000;
 	const metadbs = plman.GetPlaylistItems(-1);
 	metadb && metadbs.Add(metadb);
+	let artist_ = "";
+	let album = "";
 
 	if (!metadb) {
 		objMenu.AppendMenuItem(MenuFlag.GRAYED, 1, "Not playing");
@@ -687,8 +699,12 @@ function showPanelContextMenu(metadb: IFbMetadb, x: number, y: number) {
 		objMenu.AppendMenuItem(MenuFlag.STRING, 10, "Now playing: " + tf_title.EvalWithMetadb(metadb));
 		objMenu.AppendMenuSeparator();
 
-		objMenu.AppendMenuItem(MenuFlag.GRAYED, 11, "Go to album");
-		objMenu.AppendMenuItem(MenuFlag.GRAYED, 12, "Go to artist");
+		objMenu.AppendMenuItem(MenuFlag.STRING, 11, "Go to album");
+
+		artist_ = tf_artist_.EvalWithMetadb(metadb);
+		album = tf_album.EvalWithMetadb(metadb);
+
+		objMenu.AppendMenuItem(MenuFlag.STRING, 12, "Go to artist");
 		objMenu.AppendMenuSeparator();
 
 		// Add to playlist ... menu;
@@ -719,7 +735,6 @@ function showPanelContextMenu(metadb: IFbMetadb, x: number, y: number) {
 	menuMan.BuildMenu(playbackMenu, 9000, 300);
 
 	const ret = objMenu.TrackPopupMenu(x, y);
-	let inputOptions: IInputPopupOptions;
 
 	switch (true) {
 		case ret === 1:
@@ -727,6 +742,22 @@ function showPanelContextMenu(metadb: IFbMetadb, x: number, y: number) {
 			break;
 		case ret === 10:
 			// TODO: show now playing;
+			break;
+		case ret === 11:
+			// goto album
+			if (album && album !== "?") {
+				GoToAlbum(album);
+			}
+			break;
+		case ret === 12:
+			// for test only;
+			// console.log(extractArtists(artist_));
+
+			// console.log(artist_[0])
+			let artists = extractArtists(artist_);
+			if (artists[0]) {
+				GoToArtist(artists[0]);
+			}
 			break;
 		case ret >= BaseID && ret < 5000:
 			Context.ExecuteByID(ret - BaseID);
@@ -752,7 +783,7 @@ function showPanelContextMenu(metadb: IFbMetadb, x: number, y: number) {
 }
 
 
-function getShuffleOrder() {
+export function getShuffleOrder() {
 	let orderSetting = +window.GetProperty("Global.DefaultShuffle", 4);
 	if (!Number.isInteger(orderSetting) || orderSetting < PlaybackOrder.Random || orderSetting > PlaybackOrder.ShuffleFolders) {
 		window.SetProperty("Global.DefaultShuffle", "")
@@ -777,4 +808,17 @@ export function ToggleMood(metadb: IFbMetadb) {
 		// if (!metadb) console.log("toggle mood failed: NULL metadb!");
 		// if (!fb.IsMetadbInMediaLibrary(metadb)) console.log("toggle mood failed, metadb not in MediaLibrary!")
 	}
+}
+
+function extractArtists(str: string) {
+	let artists = str.replace(/\^\^/g, ",")
+		.split(",")
+		.map(a => a.trim())
+		.filter(a => a && (a !== "?"))
+	artists = uniq(artists)
+	return artists;
+}
+
+function uniq(array: string[]) {
+	return Array.from(new Set(array));
 }

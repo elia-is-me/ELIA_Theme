@@ -984,3 +984,24 @@ export class SearchResultView extends ScrollView implements ISearchPanelOptions,
 	}
 
 }
+
+
+export function SendToQueueListPlay(metadbs: IFbMetadbList, playingItemIndex?: number) {
+	if (!metadbs) {
+		throw new Error("Invalid metadbs");
+	}
+	// set queue playlist contents;
+	let queuePlaylist = plman.FindOrCreatePlaylist(lang("Queue"), true);
+	plman.UndoBackup(queuePlaylist);
+	plman.ClearPlaylist(queuePlaylist);
+	plman.InsertPlaylistItems(queuePlaylist, 0, metadbs, false);
+
+	// play;
+	let prevActivePlaylist = plman.ActivePlaylist;
+	plman.ActivePlaylist = queuePlaylist;
+	if (plman.PlaylistItemCount(plman.ActivePlaylist) > 0) {
+		plman.ExecutePlaylistDefaultAction(plman.ActivePlaylist,
+			playingItemIndex == null ? Math.floor(Math.random() * plman.PlaylistItemCount(plman.ActivePlaylist)) : playingItemIndex);
+	}
+	// plman.ActivePlaylist = prevActivePlaylist;
+}

@@ -7,6 +7,8 @@ import { PlaylistManagerView } from "./parts/PlaylistManagerView";
 import { SearchResultView } from "./parts/SearchResultView";
 import { SettingsView } from "./parts/SettingsView";
 import { lang } from "./parts/Lang";
+import { ArtistPageView } from "./parts/ArtistPage";
+import { AlbumPageView } from "./parts/AlbumPage";
 
 window.DefinePanel("ELIA THEME", {
 	features: { drag_n_drop: true },
@@ -16,16 +18,13 @@ window.DefinePanel("ELIA THEME", {
 window.DlgCode = 0x0004;
 
 const playbackControlBar = new PlaybackControlView();
-
 const topbar = new TopBar();
-
 const playlistView = new PlaylistView();
-
 const playlistManager = new PlaylistManagerView();
-
 const searchResult = new SearchResultView();
-
 const settingsView = new SettingsView();
+const artistPage = new ArtistPageView();
+const albumPage = new AlbumPageView();
 
 /**
  * Root part of this panel;
@@ -36,7 +35,9 @@ const root = new Layout({
 	playlistManager: playlistManager,
 	playlistView: playlistView,
 	searchResult: searchResult,
-	settingsView: settingsView
+	settingsView: settingsView,
+	artistPage: artistPage,
+	albumPage: albumPage,
 });
 
 

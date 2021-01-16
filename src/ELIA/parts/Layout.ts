@@ -10,6 +10,10 @@ import { AlertDialog, IAlertDialogOptions } from "./AlertDialog";
 import { SearchResultView } from "./SearchResultView";
 import { SettingsView } from "./SettingsView";
 import { lang } from "./Lang";
+import { PlaybackBarMenu } from "./PlaybackBarMenu";
+import { scrollbarWidth } from "./Theme";
+import { ArtistPageView } from "./ArtistPage";
+import { AlbumPageView } from "./AlbumPage";
 
 
 const CONTROL_BAR_HEIGHT = scale(76);
@@ -25,6 +29,8 @@ const enum ViewStates {
 	Default,
 	Search,
 	Settings,
+	Artist,
+	Album,
 }
 
 export class Layout extends Component {
@@ -37,6 +43,9 @@ export class Layout extends Component {
 	settingsView?: SettingsView;
 	inputPopupPanel?: InputPopupPanel;
 	alertDialog?: AlertDialog;
+	playbackBarMenu: PlaybackBarMenu;
+	artistPage: ArtistPageView;
+	albumPage: AlbumPageView;
 
 	viewState: ViewStates;
 
@@ -52,6 +61,8 @@ export class Layout extends Component {
 		addPlaylistPanel?: InputPopupPanel;
 		searchResult: SearchResultView;
 		settingsView: SettingsView;
+		artistPage: ArtistPageView;
+		albumPage: AlbumPageView;
 	}) {
 		super({});
 
@@ -74,10 +85,20 @@ export class Layout extends Component {
 		this.settingsView = options.settingsView;
 		this.addChild(this.settingsView);
 
+		this.artistPage = options.artistPage;
+		this.addChild(this.artistPage);
+
+		this.albumPage = options.albumPage;
+		this.addChild(this.albumPage);
+
+		this.playbackBarMenu = new PlaybackBarMenu();
+		this.addChild(this.playbackBarMenu);
+
 		// init view;
 		this.topbar.visible = true;
 		this.playbackControlBar.visible = true;
 		this.playlistManager.visible = true;
+		this.playbackBarMenu.visible = false;
 		this.setPartsVisibility(this.viewState);
 	}
 
@@ -89,22 +110,33 @@ export class Layout extends Component {
 			this.playlistManager.visible = false;
 		}
 
+		if (this.playbackBarMenu.visible) {
+			this.playbackBarMenu.visible = false;
+		}
+
 		this.updatePartsLayout();
 	}
 
 	setPartsVisibility(viewState: ViewStates) {
+		let all = [
+			this.playlistView,
+			this.searchResult,
+			this.settingsView,
+			this.artistPage,
+			this.albumPage,
+		];
+		all.forEach(p => p.visible = false);
+
 		if (viewState === ViewStates.Default) {
 			this.playlistView.visible = true;
-			this.searchResult.visible = false;
-			this.settingsView.visible = false;
 		} else if (viewState === ViewStates.Search) {
-			this.playlistView.visible = false;
 			this.searchResult.visible = true;
-			this.settingsView.visible = false;
 		} else if (viewState === ViewStates.Settings) {
-			this.playlistView.visible = false;
-			this.searchResult.visible = false;
 			this.settingsView.visible = true;
+		} else if (viewState === ViewStates.Artist) {
+			this.artistPage.visible = true;
+		} else if (viewState === ViewStates.Album) {
+			this.albumPage.visible = true;
 		}
 	}
 
@@ -126,7 +158,7 @@ export class Layout extends Component {
 		 * Set others;
 		 */
 		const { playlistView, playlistManager, settingsView } = this;
-		const { searchResult } = this;
+		const { searchResult, playbackControlBar, artistPage, albumPage } = this;
 		const listY = this.topbar.y + this.topbar.height;
 		const listHeight = this.height - this.topbar.height - this.playbackControlBar.height;
 
@@ -134,7 +166,7 @@ export class Layout extends Component {
 		playlistManager.visible && playlistManager.setBoundary(x, listY, PLMAN_MIN_WIDTH, listHeight);
 
 		// Get visible main view;
-		let mainView = [playlistView, searchResult, settingsView].find(p => p.visible);
+		let mainView = [playlistView, searchResult, settingsView, artistPage, albumPage].find(p => p.visible);
 		let mainViewX = (playlistManager.visible ? playlistManager.x + playlistManager.width : x);
 		if (this.width < MIN_TWO_COLUMN_WIDTH) {
 			mainViewX = x;
@@ -155,6 +187,15 @@ export class Layout extends Component {
 				this.x + (this.width - this.alertDialog.width) / 2,
 				this.y + (this.height - this.alertDialog.height) / 2
 			);
+		}
+
+		let menu_w = scale(164);
+		let menu_x = playbackControlBar.x + playbackControlBar.width - menu_w - scale(4) - scrollbarWidth;
+		let menu_y = playbackControlBar.y - this.playbackBarMenu.totalHeight - scale(2);
+		let menu_h = this.playbackBarMenu.totalHeight;
+
+		if (this.playbackBarMenu.visible) {
+			this.playbackBarMenu.setBoundary(menu_x, menu_y, menu_w, menu_h);
 		}
 	}
 
@@ -247,10 +288,31 @@ export class Layout extends Component {
 				this.viewState = ViewStates.Settings;
 				this.setPartsVisibility(this.viewState);
 				this.updatePartsLayout();
-				// this.on_size();
 				ui.updateParts();
 				this.repaint();
 				break;
+			case "Show.Playbackbar Menu":
+				this.playbackBarMenu.visible = !this.playbackBarMenu.visible;
+				this.updatePartsLayout();
+				ui.updateParts();
+				this.repaint();
+				break;
+			case "Show.ArtistPage":
+				this.viewState = ViewStates.Artist;
+				this.artistPage.setArtist(data as string);
+				this.setPartsVisibility(this.viewState);
+				this.updatePartsLayout();
+				ui.updateParts();
+				this.repaint();
+				break;
+
+			case "Show.AlbumPage":
+				this.viewState = ViewStates.Album;
+				this.albumPage.setAlbum(data as string);
+				this.setPartsVisibility(this.viewState);
+				this.updatePartsLayout();
+				ui.updateParts();
+				this.repaint();
 		}
 	}
 }
@@ -327,4 +389,23 @@ export function DeletePlaylistDialog(playlistIndex: number) {
 		}
 	}
 	notifyOthers("Show.AlertDialog", dlgOptions);
+}
+
+
+export function ShowPlaybackBarMenu() {
+	notifyOthers("Show.Playbackbar Menu")
+}
+
+/**
+ * Switch to artist page;
+ */
+export function GoToArtist(artistName: string) {
+	notifyOthers("Show.ArtistPage", artistName);
+}
+
+/**
+ * Switch to album page;
+ */
+export function GoToAlbum(albumName: string) {
+	notifyOthers("Show.AlbumPage", albumName);
 }

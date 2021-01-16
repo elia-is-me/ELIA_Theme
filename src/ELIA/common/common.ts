@@ -310,6 +310,9 @@ StringFormat.LeftTopNoTrim = StringFormat(
 	StringTrimming.None,
 	StringFormatFlags.NoWrap
 );
+StringFormat.RightCenter = StringFormat(
+	2, 1, StringTrimming.EllipsisCharacter, StringFormatFlags.NoWrap
+);
 
 export function debounce(fn: Function, delay: number) {
 	var timer: number = null;
@@ -600,3 +603,11 @@ function WrapLineRecur(str: string, font: IGdiFont, width: number, out: string[]
 
 }
 
+
+export function pos2vol(pos: number) {
+	return (50 * Math.log(0.99 * pos + 0.01)) / Math.LN10;
+}
+
+export function vol2pos(v: number) {
+	return (Math.pow(10, v / 50) - 0.01) / 0.99;
+}

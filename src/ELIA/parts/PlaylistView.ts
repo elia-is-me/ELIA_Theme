@@ -14,7 +14,7 @@ import { ToggleMood } from "./PlaybackControlView";
 import { ui } from "../common/UserInterface";
 import { Button } from "./Buttons";
 import { lang } from "./Lang";
-import { CreatePlaylistPopup, DeletePlaylistDialog, RenamePlaylist } from "./Layout";
+import { CreatePlaylistPopup, DeletePlaylistDialog, GoToAlbum, GoToArtist, RenamePlaylist } from "./Layout";
 
 const mouseCursor = {
 	x: -1,
@@ -165,7 +165,6 @@ class PlaylistHeaderView extends Component {
 	descriptionText: string = "";
 	parentOffsetY: number;
 	artworkHeight: number;
-	_stubImage: IGdiBitmap;
 	titleFont: IGdiFont;
 	descriptionFont: IGdiFont;
 	minHeight: number;
@@ -183,16 +182,6 @@ class PlaylistHeaderView extends Component {
 		// Set fonts;
 		this.titleFont = GdiFont("bold", scale(32));
 		this.descriptionFont = fonts.normal_14;
-
-		// Set stub image;
-		let stubImageWidth_ = 500;
-		this._stubImage = gdi.CreateImage(stubImageWidth_, stubImageWidth_);
-		let g_ = this._stubImage.GetGraphics();
-		g_.FillSolidRect(0, 0, stubImageWidth_, stubImageWidth_, 0x20ffffff & RGB(242, 242, 242));
-		g_.SetTextRenderingHint(TextRenderingHint.AntiAlias);
-		g_.DrawString("No Art", gdi.Font("Segoe UI", 102, 1), RGB(97, 97, 97), 0, 0, stubImageWidth_, stubImageWidth_, StringFormat.Center);
-		g_.SetTextRenderingHint(TextRenderingHint.SystemDefault);
-		this._stubImage.ReleaseGraphics(g_);
 
 		// Minimum height;
 		this.minHeight = scale(240);
@@ -1439,6 +1428,7 @@ export function showTrackContextMenu(playlistIndex: number, metadbs: IFbMetadbLi
 
 	const isPlaylistLocked = plman.IsPlaylistLocked(playlistIndex);
 	const rootMenu = window.CreatePopupMenu();
+	let albumName = "";
 
 	//
 	if (hasMetadbs) {
@@ -1481,10 +1471,15 @@ export function showTrackContextMenu(playlistIndex: number, metadbs: IFbMetadbLi
 	}
 
 	if (hasMetadbs) {
-		const artistMenu = window.CreatePopupMenu();
-		artistMenu.AppendTo(rootMenu, MenuFlag.GRAYED, lang("Go to artist"));
-		rootMenu.AppendMenuItem(MenuFlag.GRAYED, 20, lang("Go to album"));
+		let albumNames = uniq(tf_album.EvalWithMetadbs(metadbs));
+		if (albumNames.length === 1) {
+			albumName = albumNames[0];
+			const artistMenu = window.CreatePopupMenu();
+			artistMenu.AppendTo(rootMenu, MenuFlag.STRING, lang("Go to artist"));
+			rootMenu.AppendMenuItem(MenuFlag.STRING, 20, lang("Go to album"));
+
 		rootMenu.AppendMenuSeparator();
+		}
 	}
 
 	// Context menu;
@@ -1529,11 +1524,13 @@ export function showTrackContextMenu(playlistIndex: number, metadbs: IFbMetadbLi
 			break;
 
 		// "Go to Album"
-		case ret === 10:
+		case ret === 20:
+			if (albumName) GoToAlbum(albumName)
 			break;
 
 		// "Go to Artist";
 		case ret >= 3000 && ret < 3100:
+			GoToArtist("ASCA")
 			break;
 
 		// "Add to... (a newly created playlist)";
@@ -1671,4 +1668,21 @@ function showSortPlaylistMenu(playlistIndex: number, x: number, y: number, selec
 			break;
 	}
 
+}
+
+const tf_album = fb.TitleFormat("%album%");
+
+function isSameAlbum(metadbs: IFbMetadbList) {
+	if (metadbs && metadbs.Count === 1) return true;
+	let albumName: string = "";
+	// for (let i = 0; i < metadbs.Count; i++) {
+	// 	let _album_name = tf_album.EvalWithMetadbs(
+	// }
+	let albums = tf_album.EvalWithMetadbs(metadbs);
+
+
+}
+
+function uniq(array: string[]) {
+	return Array.from(new Set(array));
 }

@@ -1,4 +1,5 @@
 import { Component } from "./BasePart";
+import { scale } from "./common";
 
 export abstract class ScrollView extends Component {
 	className = "ScrollView";
@@ -71,4 +72,10 @@ export abstract class ScrollView extends Component {
 	pageUp() {
 		this.scrollTo(this.scroll + this.parent.height);
 	}
+
+	on_mouse_wheel(step: number) {
+		this.scrollTo(this.scroll - step * DEFAULT_SCROLL_STEP);
+	}
 }
+
+const DEFAULT_SCROLL_STEP = scale(100);
