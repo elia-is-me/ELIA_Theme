@@ -3,7 +3,7 @@
 //====================================
 
 import { TextRenderingHint, MenuFlag, VKeyCode, KMask, scale, RGB, deepClone, isEmptyString } from "../common/common";
-import { StringTrimming, StringFormatFlags, MeasureString, StringFormat } from "../common/String";
+import { StringTrimming, StringFormatFlags, MeasureString, StringFormat, spaceStart, spaceStartEnd } from "../common/String";
 import { ThrottledRepaint } from "../common/common";
 import { scrollbarWidth, themeColors, fonts, fontNameNormal, GdiFont } from "./Theme";
 import { Scrollbar } from "../common/Scrollbar";
@@ -102,7 +102,6 @@ class SelectionHelper {
 let selecting = new SelectionHelper();
 
 const tfTrackInfo = fb.TitleFormat("%tracknumber%^^[%artist%]^^%title%^^%length%^^%rating%^^[%album%]^^[%artist%]");
-
 const playlistFontProps = window.GetProperty("Playlist.Item Font", "normal,14").split(",");
 
 const PlaylistProperties = {
@@ -119,9 +118,6 @@ const playlistColors = {
 	highlight: themeColors.highlight,
 	HEART_RED: themeColors.mood,
 };
-
-const spaceStart = (str: string) => str.padStart(str.length + 1);
-const spaceStartEnd = (str: string) => spaceStart(str).padEnd(str.length + 2);
 
 export function formatPlaylistDuration(duration: number) {
 	let MINUTE = 60;
@@ -475,7 +471,7 @@ class PlaylistViewItem implements IBoxModel {
 }
 
 export function isValidPlaylist(playlistIndex: number) {
-	return playlistIndex >= 0 && playlistIndex < plman.PlaylistCount;
+	return Number.isFinite(playlistIndex) && playlistIndex >= 0 && playlistIndex < plman.PlaylistCount;
 }
 
 export class PlaylistView extends ScrollView {
@@ -1426,8 +1422,9 @@ export class PlaylistView extends ScrollView {
 export function showTrackContextMenu(playlistIndex: number, metadbs: IFbMetadbList, x: number, y: number) {
 	let nullMetadbs = !metadbs || metadbs.Count === 0;
 	let hasMetadbs = !nullMetadbs;
-
+	let _validPlaylist = isValidPlaylist(playlistIndex);
 	const isPlaylistLocked = plman.IsPlaylistLocked(playlistIndex);
+
 	const rootMenu = window.CreatePopupMenu();
 	let albumName = "";
 
@@ -1449,22 +1446,20 @@ export function showTrackContextMenu(playlistIndex: number, metadbs: IFbMetadbLi
 		}
 
 		//
-		rootMenu.AppendMenuItem(isPlaylistLocked ? MenuFlag.GRAYED : MenuFlag.STRING, 1, lang("Remove from playlist"));
+		if (_validPlaylist) {
+			rootMenu.AppendMenuItem(isPlaylistLocked ? MenuFlag.GRAYED : MenuFlag.STRING, 1, lang("Remove from playlist"));
+		}
 		rootMenu.AppendMenuSeparator();
 	}
 
-	//
+	// Cut/Copy/Paste;
 	if (hasMetadbs) {
-		rootMenu.AppendMenuItem(isPlaylistLocked ? MenuFlag.GRAYED : MenuFlag.STRING, 2, lang("Cut"));
+		_validPlaylist && rootMenu.AppendMenuItem(isPlaylistLocked ? MenuFlag.GRAYED : MenuFlag.STRING, 2, lang("Cut"));
 		rootMenu.AppendMenuItem(MenuFlag.STRING, 3, lang("Copy"));
 	}
 
-	if (nullMetadbs) {
-		// Undo & Redo menu;
-	}
-
 	if (fb.CheckClipboardContents()) {
-		rootMenu.AppendMenuItem(isPlaylistLocked ? MenuFlag.GRAYED : MenuFlag.STRING, 4, lang("Paste"));
+		_validPlaylist && rootMenu.AppendMenuItem(isPlaylistLocked ? MenuFlag.GRAYED : MenuFlag.STRING, 4, lang("Paste"));
 	}
 
 	if (hasMetadbs) {

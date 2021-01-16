@@ -33,7 +33,6 @@ const buttonColors = {
     onSecondary: themeColors.onSecondary,
 };
 
-
 const iconFont = GdiFont(MaterialFont, scale(18));
 const itemFont = GdiFont("normal, 14");
 const semiItemFont = GdiFont("semibold, 14");
