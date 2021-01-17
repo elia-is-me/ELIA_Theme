@@ -76,6 +76,8 @@ const Language = {
         "UNKNOWN ARTIST": "&#x672A;&#x77E5;&#x827A;&#x4EBA;",
         "View": "&#x89C6;&#x56FE;",
         "wk": "&#x661F;&#x671F;",
+        "Not playing": "&#x64AD;&#x653E;&#x505C;&#x6B62;",
+        "Show now playing": "&#x663E;&#x793A;&#x6B63;&#x5728;&#x64AD;&#x653E;&#x9879;&#x76EE;",
     },
 };
 

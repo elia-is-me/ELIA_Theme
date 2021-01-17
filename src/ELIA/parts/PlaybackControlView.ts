@@ -13,7 +13,6 @@ import { themeColors, fonts, GdiFont } from "./Theme";
 import { IconButton } from "./Buttons";
 import { lang, RunContextCommandWithMetadb } from "./Lang";
 import { CreatePlaylistPopup, GoToAlbum, GoToArtist, ShowPlaybackBarMenu } from "./Layout";
-import { ui } from "../common/UserInterface";
 import { MeasureString, StringFormat } from "../common/String";
 
 
@@ -695,23 +694,23 @@ function showPanelContextMenu(metadb: IFbMetadb, x: number, y: number) {
 	let album = "";
 
 	if (!metadb) {
-		objMenu.AppendMenuItem(MenuFlag.GRAYED, 1, "Not playing");
+		objMenu.AppendMenuItem(MenuFlag.GRAYED, 1, lang("Not playing"));
 	} else {
-		objMenu.AppendMenuItem(MenuFlag.STRING, 10, "Now playing: " + tf_title.EvalWithMetadb(metadb));
+		objMenu.AppendMenuItem(MenuFlag.STRING, 10, lang("Show now playing"));
 		objMenu.AppendMenuSeparator();
 
-		objMenu.AppendMenuItem(MenuFlag.STRING, 11, "Go to album");
+		objMenu.AppendMenuItem(MenuFlag.STRING, 11, lang("Go to album"));
 
 		artist_ = tf_artist_.EvalWithMetadb(metadb);
 		album = tf_album.EvalWithMetadb(metadb);
 
-		objMenu.AppendMenuItem(MenuFlag.STRING, 12, "Go to artist");
+		objMenu.AppendMenuItem(MenuFlag.STRING, 12, lang("Go to artist"));
 		objMenu.AppendMenuSeparator();
 
 		// Add to playlist ... menu;
 		const objAddTo = window.CreatePopupMenu();
-		objAddTo.AppendTo(objMenu, MenuFlag.STRING, "Add to playlist");
-		objAddTo.AppendMenuItem(MenuFlag.STRING, 5000, "New playlist...");
+		objAddTo.AppendTo(objMenu, MenuFlag.STRING, lang("Add to playlist"));
+		objAddTo.AppendMenuItem(MenuFlag.STRING, 5000, lang("Create playlist..."));
 
 		if (plman.PlaylistCount > 0) {
 			objAddTo.AppendMenuSeparator();
@@ -731,7 +730,7 @@ function showPanelContextMenu(metadb: IFbMetadb, x: number, y: number) {
 
 	const playbackMenu = window.CreatePopupMenu();
 	const menuMan = fb.CreateMainMenuManager();
-	playbackMenu.AppendTo(objMenu, MenuFlag.STRING, "Playback");
+	playbackMenu.AppendTo(objMenu, MenuFlag.STRING, lang("Playback"));
 	menuMan.Init("playback");
 	menuMan.BuildMenu(playbackMenu, 9000, 300);
 
