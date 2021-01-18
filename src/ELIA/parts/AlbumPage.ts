@@ -1,7 +1,7 @@
 import { MeasureString, StringFormat, spaceStartEnd, spaceEnd, spaceStart } from "../common/String";
 import { AlbumArtwork } from "../common/AlbumArt";
 import { Component } from "../common/BasePart";
-import { scale, TextRenderingHint } from "../common/common";
+import { scale, StopReason, TextRenderingHint } from "../common/common";
 import { Material, MaterialFont } from "../common/Icon";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
@@ -50,7 +50,7 @@ let paddingTB = scale(24);
 let artworkHeight = 0;
 let artworkMarginL = scale(24);
 let headerHeight = scale(250);
-let headbarHeight = scale(40);
+let listHeaderHeight = scale(40);
 let rowHeight = scale(52);
 let durationWidth = scale(16) + MeasureString("0:00:00", itemFont).Width;
 
@@ -229,6 +229,7 @@ export class AlbumPageView extends ScrollView {
     visibleItems: TrackItem[] = [];
     metadbs: IFbMetadbList;
     columns: Map<string, ColumnItem> = new Map();
+    playingIndex: number = -1;
 
     header: AlbumHeaderView;
     scrollbar: Scrollbar;
@@ -279,6 +280,9 @@ export class AlbumPageView extends ScrollView {
         this.header.artwork.image = null;
         this.header.artwork.getArtwork(metadb);
 
+        //
+        this.on_playback_new_track();
+
         this.repaint();
     }
 
@@ -320,7 +324,7 @@ export class AlbumPageView extends ScrollView {
         }
 
         this.itemsTotalHeight = rowHeight * (this.items.length + 1);
-        this.totalHeight = this.itemsTotalHeight + headerHeight;
+        this.totalHeight = this.itemsTotalHeight + headerHeight + listHeaderHeight;
         this.scroll = this.checkscroll(this.scroll);
     }
 
@@ -352,7 +356,16 @@ export class AlbumPageView extends ScrollView {
         whitespace -= reservedwidth;
         whitespace -= (tracknumber.width + duration.width + liked.width);
 
-        let titleWidth = (whitespace * .7) >> 0;
+        let ratio = 0.7;
+        if (this.width >= pageWidth.wide) {
+            ratio = 0.7;
+        } else if (this.width <= pageWidth.thin) {
+            ratio = 0.82;
+        } else {
+            ratio = 0.7 + 0.12 * easeOutCubic((pageWidth.wide - this.width) / (pageWidth.wide - pageWidth.thin));
+        }
+
+        let titleWidth = (whitespace * ratio) >> 0;
         let otherWidth = (whitespace - titleWidth);
 
         tracknumber.x = this.x + paddingLR;
@@ -397,7 +410,10 @@ export class AlbumPageView extends ScrollView {
         if (this.width < pageWidth.thin) {
             minHeight += this.header.buttons.get("shuffleall").height + paddingTB;
         }
+
         headerHeight = minHeight;
+        this.itemsTotalHeight = rowHeight * (this.items.length + 1);
+        this.totalHeight = this.itemsTotalHeight + headerHeight + listHeaderHeight;
 
         this.setColumns();
         this.scrollbar.setBoundary(this.x + this.width - scrollbarWidth, this.y, scrollbarWidth, this.height);
@@ -418,7 +434,7 @@ export class AlbumPageView extends ScrollView {
         let items = this.items;
         let rowX = this.x + paddingLR;
         let rowWidth = this.width - 2 * paddingLR;
-        let listOffsetToTop = headerHeight + headbarHeight;
+        let listOffsetToTop = headerHeight + listHeaderHeight;
         // let rowY: number;
         // let rowHeight = this.rowHeight;
 
@@ -430,27 +446,28 @@ export class AlbumPageView extends ScrollView {
 
         let textColor = pageColors.text;
         let secondaryText = pageColors.secondaryText;
+        let highlightColor = pageColors.highlight;
 
         // draw headbar;
         let headbarY = this.y + this.header.height - this.scroll;
-        let lineY = headbarY + headbarHeight - 1;
+        let lineY = headbarY + listHeaderHeight - 1;
         gr.DrawLine(rowX, lineY, rowX + rowWidth, lineY, 1, pageColors.splitLine);
 
         // track number;
         gr.DrawString("#", semiItemFont, secondaryText,
-            tracknumber.x, headbarY, tracknumber.width, headbarHeight, StringFormat.Center);
+            tracknumber.x, headbarY, tracknumber.width, listHeaderHeight, StringFormat.Center);
 
         // title/artist;
         gr.DrawString(lang("TITLE") + "/" + lang("ARTIST"), semiItemFont, secondaryText,
-            title.x, headbarY, title.width, headbarHeight, StringFormat.LeftCenter);
+            title.x, headbarY, title.width, listHeaderHeight, StringFormat.LeftCenter);
 
         // playcount;
         gr.DrawString(lang("PLAYS"), semiItemFont, secondaryText,
-            playcount.x, headbarY, playcount.width, headbarHeight, StringFormat.LeftCenter);
+            playcount.x, headbarY, playcount.width, listHeaderHeight, StringFormat.LeftCenter);
 
         // duration;
         gr.DrawString(Material.time, iconFont, secondaryText,
-            duration.x, headbarY, duration.width - scale(8), headbarHeight, StringFormat.RightCenter);
+            duration.x, headbarY, duration.width - scale(8), listHeaderHeight, StringFormat.RightCenter);
 
 
         for (let i = 0, len = items.length; i < len; i++) {
@@ -485,8 +502,13 @@ export class AlbumPageView extends ScrollView {
 
                 } else {
                     // tracknumber;
-                    gr.DrawString(row.trackNumber, itemFont, secondaryText,
-                        tracknumber.x, row.y, tracknumber.width, row.height, StringFormat.Center);
+                    if (this.playingIndex === i) {
+                        gr.DrawString(fb.IsPaused ? Material.volume_mute : Material.volume, iconFont, highlightColor,
+                            tracknumber.x, row.y, tracknumber.width, row.height, StringFormat.Center);
+                    } else {
+                        gr.DrawString(row.trackNumber, itemFont, secondaryText,
+                            tracknumber.x, row.y, tracknumber.width, row.height, StringFormat.Center);
+                    }
 
                     // liked;
                     let likedIcon = row.rating === 5 ? Material.heart : Material.heart_empty;
@@ -509,13 +531,39 @@ export class AlbumPageView extends ScrollView {
                     // duration;
                     gr.DrawString(row.duration, itemFont, secondaryText,
                         duration.x, row.y, duration.width - scale(8), row.height, StringFormat(2, 1));
+                    //gr.DrawRect(duration.x, row.y, duration.width - scale(8), row.height - 1, 1, 0xffaabbcc);
                 }
             }
         }
+    }
+
+    on_playback_new_track() {
+        let metadb = fb.GetNowPlaying();
+        if (metadb == null || this.metadbs == null) return;
+
+        this.playingIndex = this.items.findIndex(item => {
+            return item.metadb.Compare(metadb) && item.type === 0;
+        });
+        this.repaint();
+    }
+
+    on_playback_stop(reason: number) {
+        if (reason !== StopReason.StartingAnotherTrack) {
+            this.playingIndex = -1;
+            this.repaint();
+        }
+    }
+
+    on_playback_pause() {
+        this.repaint();
     }
 
 }
 
 function formatTrackCount(count: number) {
     return count + spaceStart((count > 1 ? lang("tracks") : lang("track")));
+}
+
+function easeOutCubic(x: number): number {
+    return 1 - Math.pow(1 - x, 3);
 }
