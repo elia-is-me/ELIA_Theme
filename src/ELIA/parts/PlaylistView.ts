@@ -2,14 +2,14 @@
 // Simple Playlist View
 //====================================
 
-import { TextRenderingHint, MenuFlag, VKeyCode, KMask, scale, RGB, deepClone } from "../common/common";
+import { TextRenderingHint, MenuFlag, VKeyCode, KMask, scale, RGB } from "../common/common";
 import { StringTrimming, StringFormatFlags, MeasureString, StringFormat, spaceStart, spaceStartEnd } from "../common/String";
 import { ThrottledRepaint } from "../common/common";
-import { scrollbarWidth, themeColors, fonts, fontNameNormal, GdiFont, fontNameSemibold } from "./Theme";
+import { scrollbarWidth, themeColors, GdiFont } from "./Theme";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
-import { Component, IBoxModel, IPaddings } from "../common/BasePart";
-import { Material, MaterialFont, IconObject } from "../common/Icon";
+import { Component, IBoxModel } from "../common/BasePart";
+import { Material, MaterialFont } from "../common/Icon";
 import { PlaylistArtwork } from "../common/AlbumArt";
 import { ToggleMood } from "./PlaybackControlView";
 import { mouseCursor, ui } from "../common/UserInterface";
@@ -41,15 +41,13 @@ const buttonColors = {
 	onSecondary: themeColors.onSecondary,
 };
 
-
 const ui_textRendering = ui.textRender;
 
 const TF_TRACK_INFO = fb.TitleFormat("%tracknumber%^^[%artist%]^^%title%^^%length%^^%rating%^^[%album%]^^[%artist%]");
-const playlistFontProperty = window.GetProperty("Playlist.Item Font", "normal,14");
 
 const iconFont_list = GdiFont(MaterialFont, scale(18));
 const iconFont_btn = GdiFont(MaterialFont, scale(20));
-const itemFont = GdiFont(playlistFontProperty);
+const itemFont = GdiFont(window.GetProperty("Playlist.Item Font", "normal,14"));
 const semiItemFont = GdiFont("semibold", itemFont.Size);
 const emptyInfoFont = GdiFont("normal, 16");
 const titleFont = GdiFont("bold, 32");
@@ -60,7 +58,7 @@ const descriptionLineHeight = descriptionFont.Height * 1.2;
 
 let paddingLR = scale(24);
 let paddingTB = scale(24);
-const rowHeight = scale(52);
+const rowHeight = scale(window.GetProperty("List.Row Height", 52));
 let artworkHeight = 0;
 let artworkMarginL = scale(24);
 let headerHeight = 0;
@@ -71,13 +69,6 @@ const pageWidth = {
 	wide: scale(920),
 	extraWide: scale(1120)
 }
-
-
-// const PlaylistProperties = {
-// 	rowHeight: scale(48),
-// 	itemFont: GdiFont(playlistFontProperty[0], scale(+playlistFontProperty[1] || 14)),
-// 	emptyFont: gdi.Font(fontNameNormal, scale(20)),
-// };
 
 /**
  * if not set, plman.SetPlaylistSelection... will not trigger
@@ -152,40 +143,6 @@ let selecting = new SelectionHelper();
 
 
 
-export function formatPlaylistDuration(duration: number) {
-	let MINUTE = 60;
-	let HOUR = 3600;
-	let DAY = 86400;
-	let WEEK = 604800;
-	let names = {
-		seconds: spaceStart(lang("sec")),
-		minutes: spaceStartEnd(lang("min")),
-		hour: spaceStartEnd(lang("hr")),
-		day: spaceStartEnd(lang("d")),
-		week: spaceStartEnd(lang("wk"))
-	};
-	let formated = '';
-
-	let weeks = (duration / WEEK) >> 0;
-	duration -= weeks * WEEK;
-	if (weeks > 0) formated += weeks + names.week;
-
-	let days = (duration / DAY) >> 0;
-	duration -= days * DAY;
-	if (days > 0) formated += days + names.day;
-
-	let hours = (duration / HOUR) >> 0;
-	duration -= hours * HOUR;
-	if (hours > 0) formated += hours + names.hour;
-
-	let minutes = (duration / MINUTE) >> 0;
-	if (weeks === 0 && days === 0 && minutes > 0) formated += minutes + names.minutes;
-
-	let seconds = (duration - minutes * MINUTE) >> 0;
-	if (weeks === 0 && days === 0 && hours === 0 && seconds > 0) formated += seconds + names.seconds;
-
-	return formated;
-}
 
 /**
  * Flow with list items;
@@ -322,7 +279,7 @@ class PlaylistHeaderView extends Component {
 		// Set btns position;
 		let btnY: number;
 		let btnX: number;
-		let btns = [this.shuffleBtn, this.sortBtn, /* this.editBtn, */this.contextBtn];
+		let btns = [this.shuffleBtn, this.sortBtn, this.contextBtn];
 		if (this.width < pageWidth.thin) {
 			btnX = this.x + paddingLR;
 			btnY = this.y + 2 * paddingTB + this.artwork.height;
@@ -364,19 +321,21 @@ class PlaylistHeaderView extends Component {
 		gr.SetTextRenderingHint(TextRenderingHint.AntiAlias);
 		const titleText_ = this.titleText;
 		if (titleFullWidth_ > textAreaWidth) {
-			// textY -= titleFont.Height;
 			let sf = StringFormat(0, 0, StringTrimming.EllipsisCharacter, StringFormatFlags.LineLimit);
-			gr.DrawString(titleText_, titleFont, textColor, textX, textY, textAreaWidth, 2.5 * titleFont.Height, sf);
+			gr.DrawString(titleText_, titleFont, textColor,
+				textX, textY, textAreaWidth, titleLineHeight + titleFont.Height, sf);
 			textY += titleLineHeight + titleFont.Height;
 		} else {
-			gr.DrawString(titleText_, titleFont, textColor, textX, textY, textAreaWidth, 2 * titleFont.Height, StringFormat.LeftTop);
+			gr.DrawString(titleText_, titleFont, textColor,
+				textX, textY, textAreaWidth, titleLineHeight, StringFormat.LeftTop);
 			textY += titleLineHeight;
 		}
 		gr.SetTextRenderingHint(ui_textRendering);
 
 		// Description;
 		if (this.descriptionText) {
-			gr.DrawString(this.descriptionText, descriptionFont, secondaryTextColor, textX, textY, textAreaWidth, 2 * descriptionFont.Height, StringFormat.LeftTop);
+			gr.DrawString(this.descriptionText, descriptionFont, secondaryTextColor,
+				textX, textY, textAreaWidth, descriptionLineHeight, StringFormat.LeftTop);
 		}
 	}
 
@@ -463,12 +422,7 @@ export class PlaylistView extends ScrollView {
 
 	header: PlaylistHeaderView;
 
-	playingIco: IconObject;
-	pauseIco: IconObject;
-	heartOnIco: IconObject;
-	heartOffIco: IconObject;
-
-	_columnsMap: Map<string, PlaylistColumn> = new Map();
+	_columns: Map<string, PlaylistColumn> = new Map();
 	clickOnSelection: boolean;
 	multiSelectionStartId = -1;
 	clickedMoodId: number = -1;
@@ -494,17 +448,6 @@ export class PlaylistView extends ScrollView {
 		this.addChild(this.header);
 		this.header.setPlaylistIndex(plman.ActivePlaylist);
 
-		/**
-		 * Create icons;
-		 */
-
-		this.playingIco = new IconObject(Material.volume, MaterialFont, scale(16));
-
-		this.pauseIco = new IconObject(Material.volume_mute, MaterialFont, scale(16));
-
-		this.heartOnIco = new IconObject(Material.heart, MaterialFont, scale(16));
-
-		this.heartOffIco = new IconObject(Material.heart_empty, MaterialFont, scale(16));
 
 		/**
 		 * Set getMoodId method;
@@ -513,7 +456,7 @@ export class PlaylistView extends ScrollView {
 		let moodHotWidth = this.rowHeight//heartIconHeight + scale(4);
 
 		this.getActiveMoodId = (x: number, y: number): number => {
-			let moodColumn = this._columnsMap.get("mood");
+			let moodColumn = this._columns.get("mood");
 			if (!moodColumn || moodColumn.width == 0) {
 				return -1;
 			}
@@ -532,12 +475,12 @@ export class PlaylistView extends ScrollView {
 		 *  Init columns;
 		 */
 
-		this._columnsMap.set("trackNumber", new PlaylistColumn());
-		this._columnsMap.set("title", new PlaylistColumn());
-		this._columnsMap.set("artist", new PlaylistColumn());
-		this._columnsMap.set("album", new PlaylistColumn());
-		this._columnsMap.set("mood", new PlaylistColumn());
-		this._columnsMap.set("time", new PlaylistColumn());
+		this._columns.set("trackNumber", new PlaylistColumn());
+		this._columns.set("title", new PlaylistColumn());
+		this._columns.set("artist", new PlaylistColumn());
+		this._columns.set("album", new PlaylistColumn());
+		this._columns.set("mood", new PlaylistColumn());
+		this._columns.set("time", new PlaylistColumn());
 	}
 
 	// Will be rewrite;
@@ -568,7 +511,7 @@ export class PlaylistView extends ScrollView {
 			this._selectedIndexes.push(rowIndex);
 
 			playlistItems.push(rowItem);
-			itemYOffset += rowHeight;
+			itemYOffset += rowItem.height;
 		}
 		this.items = playlistItems;
 		this._itemsTotalHeight = rowHeight * playlistItems.length + scale(32);
@@ -602,12 +545,12 @@ export class PlaylistView extends ScrollView {
 		// ---------------
 		// Columns;
 		// ---------------
-		const tracknumber = this._columnsMap.get("trackNumber");
-		const title = this._columnsMap.get("title");
-		const artist = this._columnsMap.get("artist");
-		const album = this._columnsMap.get("album");
-		const mood = this._columnsMap.get("mood");
-		const duration = this._columnsMap.get("time");
+		const tracknumber = this._columns.get("trackNumber");
+		const title = this._columns.get("title");
+		const artist = this._columns.get("artist");
+		const album = this._columns.get("album");
+		const mood = this._columns.get("mood");
+		const duration = this._columns.get("time");
 
 		// --------------
 		// Set visible
@@ -632,8 +575,8 @@ export class PlaylistView extends ScrollView {
 		let artistWidth_ = scale(200);
 		let albumWidth_ = scale(280);
 
-		let artistVis = artist.visible && this.width >= pageWidth.wide;//whitespace > titleWidth_;
-		let albumVis = album.visible && this.width >= pageWidth.thin;//whitespace > titleWidth_ + artistWidth_ + albumWidth_ / 2;
+		let albumVis = album.visible && this.width >= pageWidth.thin;
+		let artistVis = artist.visible && this.width >= pageWidth.wide;
 		let widthToAdd_ = whitespace - titleWidth_;
 		let floor = Math.floor;
 
@@ -719,7 +662,7 @@ export class PlaylistView extends ScrollView {
 	on_paint(gr: IGdiGraphics) {
 		let rowHeight = this.rowHeight;
 		let items = this.items;
-		let _columnsMap = this._columnsMap;
+		let _columnsMap = this._columns;
 		let textColor = playlistColors.text;
 		let secondaryTextColor = playlistColors.secondaryText;
 		let highlightColor = playlistColors.highlight;
@@ -771,8 +714,10 @@ export class PlaylistView extends ScrollView {
 		}
 
 		// duration;
+		gr.SetTextRenderingHint(TextRenderingHint.AntiAlias);
 		gr.DrawString(Material.time, iconFont_btn, secondaryTextColor,
 			time.x, listheaderY, time.width, listheaderHeight, StringFormat.RightCenter);
+		gr.SetTextRenderingHint(ui_textRendering);
 
 		// Clear visibleItems cache;
 		this.visibleItems.length = 0;
@@ -813,8 +758,11 @@ export class PlaylistView extends ScrollView {
 				 * Draw tracknumber | playing icon;
 				 */
 				if (this.playingItemIndex === itemIndex) {
-					(fb.IsPaused ? this.pauseIco : this.playingIco)
-						.draw(gr, highlightColor, tracknumber.x, row.y, tracknumber.width, rowHeight);
+					let iconCode = fb.IsPaused ? Material.volume : Material.volume_mute;
+					gr.SetTextRenderingHint(TextRenderingHint.AntiAlias);
+					gr.DrawString(iconCode, iconFont_list, highlightColor,
+						tracknumber.x, row.y, tracknumber.width, row.height, StringFormat.Center);
+					gr.SetTextRenderingHint(ui_textRendering);
 				} else {
 					tracknumber.draw(gr, row.playlistItemIndex + 1, itemFont, secondaryTextColor, row, StringFormat.Center);
 				}
@@ -828,16 +776,11 @@ export class PlaylistView extends ScrollView {
 				} else {
 					let artistY = row.y + row.height / 2;
 					let titleY = artistY - itemFont.Height;
+					let padright = scale(16);
 					gr.DrawString(row.title, itemFont, textColor,
-						title.x, titleY, title.width, row.height, StringFormat.LeftTop);
+						title.x, titleY, title.width - padright, row.height, StringFormat.LeftTop);
 					gr.DrawString(row.artist, itemFont, secondaryTextColor,
-						title.x, artistY, title.width, row.height, StringFormat.LeftTop);
-				}
-
-				/**
-				 * (Track )Artist;
-				 */
-				if (artist.visible && artist.width > 0) {
+						title.x, artistY, title.width - padright, row.height, StringFormat.LeftTop);
 				}
 
 				/**
@@ -1662,14 +1605,39 @@ function showSortPlaylistMenu(playlistIndex: number, x: number, y: number, selec
 			plman.SortByFormat(plman.ActivePlaylist, "%artist%^^%album%^^[%discnumber%^^]%tracknumber%", false);
 			break;
 		case ret === 102:
-			// plman.SortByFormat(plman.ActivePlaylist,)
+			plman.SortByFormat(plman.ActivePlaylist, "%path%", false);
 			break;
 		case ret === 103:
+			plman.SortByFormat(plman.ActivePlaylist, "%title%", false);
 			break;
 		case ret === 104:
+			plman.SortByFormat(plman.ActivePlaylist, "%album artist%^^%album%^^[%discnumber%^^]%tracknumber%", false);
 			break;
 		case ret === 20:
+			fb.RunMainMenuCommand("Edit/Selection/Sort/Sort by...");
 			break;
+		case ret === 21:
+			plman.SortByFormat(plman.ActivePlaylist, "", false);
+			break;
+		case ret === 22:
+			fb.RunMainMenuCommand("Edit/Selection/Sort/Reverse");
+			break;
+		case ret === 200:
+			plman.SortByFormat(plman.ActivePlaylist, "%album%^^[%discnumber%^^]%tracknumber%", true);
+			break;
+		case ret === 201:
+			plman.SortByFormat(plman.ActivePlaylist, "%artist%^^%album%^^[%discnumber%^^]%tracknumber%", true);
+			break;
+		case ret === 202:
+			plman.SortByFormat(plman.ActivePlaylist, "%path%", true);
+			break;
+		case ret === 203:
+			plman.SortByFormat(plman.ActivePlaylist, "%title%", true);
+			break;
+		case ret === 204:
+			plman.SortByFormat(plman.ActivePlaylist, "%album artist%^^%album%^^[%discnumber%^^]%tracknumber%", true);
+			break;
+
 	}
 
 }
@@ -1693,4 +1661,51 @@ function uniq(array: string[]) {
 
 export function isValidPlaylist(playlistIndex: number) {
 	return Number.isFinite(playlistIndex) && playlistIndex >= 0 && playlistIndex < plman.PlaylistCount;
+}
+
+const TF_ARTISTS = fb.TitleFormat("%artist%,%album artist%");
+const reArtistSplitter = /[\,\/\uFF0F\uFF0C]/g;
+
+let __test = "artist1,artist2/artist3\uFF0Cartist4\uFF0F";
+
+console.log(__test.split(reArtistSplitter));
+
+function extractArtists(metadb: IFbMetadb) {
+
+
+}
+
+export function formatPlaylistDuration(duration: number) {
+	let MINUTE = 60;
+	let HOUR = 3600;
+	let DAY = 86400;
+	let WEEK = 604800;
+	let names = {
+		seconds: spaceStart(lang("sec")),
+		minutes: spaceStartEnd(lang("min")),
+		hour: spaceStartEnd(lang("hr")),
+		day: spaceStartEnd(lang("d")),
+		week: spaceStartEnd(lang("wk"))
+	};
+	let formated = '';
+
+	let weeks = (duration / WEEK) >> 0;
+	duration -= weeks * WEEK;
+	if (weeks > 0) formated += weeks + names.week;
+
+	let days = (duration / DAY) >> 0;
+	duration -= days * DAY;
+	if (days > 0) formated += days + names.day;
+
+	let hours = (duration / HOUR) >> 0;
+	duration -= hours * HOUR;
+	if (hours > 0) formated += hours + names.hour;
+
+	let minutes = (duration / MINUTE) >> 0;
+	if (weeks === 0 && days === 0 && minutes > 0) formated += minutes + names.minutes;
+
+	let seconds = (duration - minutes * MINUTE) >> 0;
+	if (weeks === 0 && days === 0 && hours === 0 && seconds > 0) formated += seconds + names.seconds;
+
+	return formated;
 }

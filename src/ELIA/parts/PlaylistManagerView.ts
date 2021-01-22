@@ -1,11 +1,11 @@
 // Playlist Manager
 // -------------------------
 
-import { scale, RGB, RGBA, ThrottledRepaint, MenuFlag, setAlpha, SmoothingMode, CursorName } from "../common/common";
+import { scale, RGB, RGBA, ThrottledRepaint, MenuFlag, setAlpha, SmoothingMode, CursorName, TextRenderingHint } from "../common/common";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
 import { Component } from "../common/BasePart";
-import { Material, MaterialFont, IconObject } from "../common/Icon";
+import { Material, MaterialFont } from "../common/Icon";
 import { scrollbarWidth, themeColors, fonts, GdiFont } from "./Theme";
 import { Clickable } from "../common/Button";
 import { isValidPlaylist } from "./PlaylistView";
@@ -15,20 +15,24 @@ import { CreatePlaylistPopup, DeletePlaylistDialog, layout, RenamePlaylist } fro
 import { lang } from "./Lang";
 import { StringFormat, spaceStart } from "../common/String";
 
-type IconSets = "volume" | "gear" | "queue_music" | "playing" | "pause";
+const ui_textRendering = ui.textRender;
+let iconFont = gdi.Font(MaterialFont, scale(20));
+let smallIconFont = GdiFont(MaterialFont, scale(18));
 
-const icons: { [keys in IconSets]: IconObject } = {
-	volume: new IconObject(Material.volume, MaterialFont, scale(20)),
-	gear: new IconObject(Material.gear, MaterialFont, scale(20)),
-	queue_music: new IconObject(Material.queue_music, MaterialFont, scale(20)),
-	playing: new IconObject(Material.volume, MaterialFont, scale(16)),
-	pause: new IconObject(Material.volume_mute, MaterialFont, scale(16))
-};
+// type IconSets = "volume" | "gear" | "queue_music" | "playing" | "pause";
+
+// const icons: { [keys in IconSets]: IconObject } = {
+// 	volume: new IconObject(Material.volume, MaterialFont, scale(20)),
+// 	gear: new IconObject(Material.gear, MaterialFont, scale(20)),
+// 	queue_music: new IconObject(Material.queue_music, MaterialFont, scale(20)),
+// 	playing: new IconObject(Material.volume, MaterialFont, scale(16)),
+// 	pause: new IconObject(Material.volume_mute, MaterialFont, scale(16))
+// };
 
 interface IPlaylistManagerProps {
 	itemFont: IGdiFont;
 	rowHeight: number;
-	icons: { [keys in IconSets]: IconObject };
+	// icons: { [keys in IconSets]: IconObject };
 }
 
 export const PlmanProperties = {
@@ -36,12 +40,12 @@ export const PlmanProperties = {
 	rowHeight: scale(32),
 	itemFont: GdiFont(window.GetProperty("PlaylistManager.Item Font", "semibold,14")),
 	headerHeight: scale(80),
-	icons: icons,
+	// icons: icons,
 };
 
 class AddPlaylistButton extends Clickable {
 	private textFont = PlmanProperties.itemFont;
-	private addIcon = new IconObject(Material.circle_add, MaterialFont, scale(20))
+	// private addIcon = new IconObject(Material.circle_add, MaterialFont, scale(20))
 	private text = lang("Create Playlist");
 	private colors = [themeColors.sidebarInactiveText, themeColors.text, setAlpha(themeColors.text, 127)];
 
@@ -54,7 +58,11 @@ class AddPlaylistButton extends Clickable {
 		let iconWidth = scale(20);
 		let paddingL = scale(16);
 
-		this.addIcon.draw(gr, color, this.x + paddingL, this.y, iconWidth, this.height, StringFormat.Center);
+		// this.addIcon.draw(gr, color, this.x + paddingL, this.y, iconWidth, this.height, StringFormat.Center);
+		gr.SetTextRenderingHint(TextRenderingHint.AntiAlias);
+		gr.DrawString(Material.circle_add, iconFont, color,
+			this.x + paddingL, this.y, iconWidth, this.height, StringFormat.Center);
+		gr.SetTextRenderingHint(ui_textRendering);
 
 		let textX = this.x + paddingL + iconWidth + scale(8);
 		let textWidth = this.x + this.width - textX - scale(8);
@@ -123,13 +131,13 @@ class PlmanItem {
 export class PlaylistManagerView extends ScrollView implements IPlaylistManagerProps {
 	scrollbar: Scrollbar;
 	header: PlmanHeader;
-	icons: {
-		volume: IconObject;
-		gear: IconObject;
-		queue_music: IconObject;
-		playing: IconObject;
-		pause: IconObject;
-	};
+	// icons: {
+	// 	volume: IconObject;
+	// 	gear: IconObject;
+	// 	queue_music: IconObject;
+	// 	playing: IconObject;
+	// 	pause: IconObject;
+	// };
 
 	items: PlmanItem[] = [];
 	rowHeight: number;
@@ -159,7 +167,7 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 
 		this.rowHeight = attrs.rowHeight;
 		this.itemFont = attrs.itemFont;
-		this.icons = attrs.icons;
+		// this.icons = attrs.icons;
 
 		this.scrollbar = new Scrollbar({
 			cursorColor: themeColors.scrollbarCursor,
@@ -221,7 +229,6 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 		let headerHeight = this.header.height;
 		let paddingL = scale(16);
 		let paddingR = scale(8);
-		let icons = this.icons;
 		let iconWidth = scale(20);
 
 		// draw background
@@ -244,14 +251,16 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 				}
 
 				// draw icon;
-				let typeIcon = rowItem.isAuto ? icons.gear : icons.queue_music;
-				typeIcon.draw(gr, textColor, rowItem.x + paddingL, rowItem.y, iconWidth, rowItem.height);
+				let iconCode = rowItem.isAuto ? Material.gear : Material.queue_music;
+				gr.DrawString(iconCode, iconFont, textColor,
+					rowItem.x + paddingL, rowItem.y, iconWidth, rowItem.height, StringFormat.Center);
 
 				//
 				let iconX = this.x + this.width - iconWidth - this.scrollbar.width - scale(8);
 				if (fb.IsPlaying && rowItem.index === plman.PlayingPlaylist) {
-					let stateIcon = (fb.IsPaused ? this.icons.pause : this.icons.playing);
-					stateIcon.draw(gr, themeColors.highlight, iconX, rowItem.y, iconWidth, rowItem.height);
+					let stateIconCode = (fb.IsPaused ? Material.volume_mute : Material.volume);
+					gr.DrawString(stateIconCode, smallIconFont, themeColors.highlight,
+						iconX, rowItem.y, iconWidth, rowItem.height, StringFormat.Center);
 				}
 
 				let textWidth = rowItem.width - paddingL - paddingR - iconWidth - scale(4);
@@ -265,33 +274,10 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 			}
 		}
 
-		// draw drag target line;
-		// let { dragSourceId, dragTargetId } = this;
-		// if (dragTargetId > -1 && dragTargetId !== dragSourceId) {
-		// 	let lineWidth = scale(2);
-		// 	let lineY = this.y + this.header.height + this.items[dragTargetId].yOffset - this.scroll;
-		// 	if (dragTargetId > dragSourceId) {
-		// 		lineY += this.rowHeight;
-		// 	}
-		// 	if (lineY > this.y + this.height) {
-		// 		lineY -= this.rowHeight;
-		// 	}
-		// 	if (lineY < this.y) {
-		// 		lineY += this.rowHeight;
-		// 	}
-		// 	gr.DrawLine(this.x, lineY, this.x + this.width, lineY, lineWidth, themeColors.text);
-		// }
 		if (this.dragdrop.targetIndex > -1) {
 			let lineY = this.y + this.header.height + this.dragdrop.targetIndex * this.rowHeight - this.scroll;
 			gr.DrawLine(this.x, lineY, this.x + this.width, lineY, this.dragdrop.lineWidth, themeColors.highlight);
 		}
-
-		// if (this.drag_cursorImage) {
-		// 	gr.DrawImage(this.drag_cursorImage,
-		// 		mouseCursor.x, mouseCursor.y, this.drag_cursorImage.Width, this.drag_cursorImage.Height,
-		// 		0, 0, this.drag_cursorImage.Width, this.drag_cursorImage.Height,
-		// 		0, 250);
-		// }
 	}
 
 	createItemImage(itemIndex: number) {
@@ -313,8 +299,9 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 		tempGr.DrawRoundRect(0, 0, image.Width - 1, image.Height - 1, scale(2), scale(2), scale(1), RGB(180, 180, 180));
 
 		// icon;
-		let icon = rowItem.isAuto ? icons.gear : icons.queue_music;
-		icon.draw(tempGr, 0xff000000, scale(8), 0, scale(24), imageHeight);
+		let iconCode = rowItem.isAuto ? Material.gear : Material.queue_music;
+		tempGr.DrawString(iconCode, iconFont, 0xff000000,
+			scale(8), 0, scale(24), imageHeight, StringFormat.Center);
 
 		// text;
 		let textX = 2 * scale(8) + scale(24);

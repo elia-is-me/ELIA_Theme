@@ -3,7 +3,7 @@ import { StringFormat, MeasureString, spaceStart, spaceStartEnd } from "../commo
 import { Component } from "../common/BasePart";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
-import { MaterialFont, Material, IconObject } from "../common/Icon";
+import { MaterialFont, Material } from "../common/Icon";
 import { ToggleMood } from "./PlaybackControlView";
 import { notifyOthers, ui } from "../common/UserInterface";
 import { themeColors, GdiFont, scrollbarWidth } from "./Theme";
@@ -34,6 +34,7 @@ const buttonColors = {
 };
 
 const iconFont = GdiFont(MaterialFont, scale(18));
+const smallIconFont = GdiFont(MaterialFont, scale(16));
 const itemFont = GdiFont("normal, 14");
 const desciptionFont = itemFont;
 const semiItemFont = GdiFont("semibold, 14");
@@ -241,10 +242,6 @@ export class SearchResultView extends ScrollView {
 
 	scrollbar: Scrollbar;
 	headerView: SearchHeaderView;
-	heartOnIco: IconObject;
-	heartOffIco: IconObject;
-	playingIco: IconObject;
-	pauseIco: IconObject;
 	closeBtn: IconButton;
 
 	_columnsMap: Map<string, PlaylistColumn> = new Map();
@@ -276,10 +273,10 @@ export class SearchResultView extends ScrollView {
 		;[this.scrollbar, this.headerView, this.closeBtn]
 			.forEach(child => this.addChild(child));
 
-		this.heartOnIco = new IconObject(Material.heart, MaterialFont, scale(16));
-		this.heartOffIco = new IconObject(Material.heart_empty, MaterialFont, scale(16));
-		this.playingIco = new IconObject(Material.volume, MaterialFont, scale(16));
-		this.pauseIco = new IconObject(Material.volume_mute, MaterialFont, scale(16));
+		// this.heartOnIco = new IconObject(Material.heart, MaterialFont, scale(16));
+		// this.heartOffIco = new IconObject(Material.heart_empty, MaterialFont, scale(16));
+		// this.playingIco = new IconObject(Material.volume, MaterialFont, scale(16));
+		// this.pauseIco = new IconObject(Material.volume_mute, MaterialFont, scale(16));
 
 		let moodWidth = rowHeight;
 
@@ -692,7 +689,6 @@ export class SearchResultView extends ScrollView {
 			let metadbs = plman.GetPlaylistItems(queue);
 			let findResult = metadbs.Find(hoverItem.metadb);
 
-			// Or plman.ExecutePlaylistDefaultAction will not work as expected;
 			plman.ActivePlaylist = queue;
 
 			if (findResult > -1) {

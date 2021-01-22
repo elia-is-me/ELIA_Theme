@@ -52,7 +52,6 @@ export abstract class ScrollView extends Component {
 				window.ClearTimeout(this.timerId);
 				this.scrolling = false;
 			}
-			// Repaint();
 			this.repaint();
 		};
 		window.ClearTimeout(this.timerId);

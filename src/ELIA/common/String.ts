@@ -58,7 +58,7 @@ StringFormat.LeftTopNoTrim = StringFormat(
 	StringFormatFlags.NoWrap
 );
 StringFormat.RightCenter = StringFormat(
-	2, 1, StringTrimming.EllipsisCharacter, StringFormatFlags.NoWrap
+	2, 1, StringTrimming.EllipsisCharacter, StringFormatFlags.NoWrap 
 );
 
 let _temp_g = gdi.CreateImage(1, 1).GetGraphics();
