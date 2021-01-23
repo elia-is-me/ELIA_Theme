@@ -55,6 +55,7 @@ const descriptionFont = GdiFont("normal, 14");
 
 const titleLineHeight = titleFont.Height * 1.3;
 const descriptionLineHeight = descriptionFont.Height * 1.2;
+const moodIconWidth = MeasureString(Material.heart_empty, iconFont_list).Width;
 
 let paddingLR = scale(24);
 let paddingTB = scale(24);
@@ -209,14 +210,6 @@ class PlaylistHeaderView extends Component {
 			showSortPlaylistMenu(plman.ActivePlaylist, x, y);
 		}
 		this.addChild(this.sortBtn);
-	}
-
-	private getArtworkHeight_(paneWidth: number): number {
-		let thin = pageWidth.thin;
-		let wide = pageWidth.wide;
-		if (paneWidth < thin) return scale(140);
-		if (paneWidth < wide) return scale(200);
-		return scale(220);
 	}
 
 	/**
@@ -448,29 +441,6 @@ export class PlaylistView extends ScrollView {
 		this.addChild(this.header);
 		this.header.setPlaylistIndex(plman.ActivePlaylist);
 
-
-		/**
-		 * Set getMoodId method;
-		 */
-
-		let moodHotWidth = this.rowHeight//heartIconHeight + scale(4);
-
-		this.getActiveMoodId = (x: number, y: number): number => {
-			let moodColumn = this._columns.get("mood");
-			if (!moodColumn || moodColumn.width == 0) {
-				return -1;
-			}
-			let pad = (moodColumn.width - moodHotWidth) / 2;
-			let posLeft = moodColumn.x + pad;
-			let posRight = moodColumn.x + pad + moodHotWidth;
-			if (x > posLeft && x <= posRight) {
-				let hoverItem = this._findHoverItem(x, y);
-				return hoverItem ? hoverItem.rowIndex : -1;
-			} else {
-				return -1;
-			}
-		};
-
 		/**
 		 *  Init columns;
 		 */
@@ -483,16 +453,27 @@ export class PlaylistView extends ScrollView {
 		this._columns.set("time", new PlaylistColumn());
 	}
 
-	// Will be rewrite;
-	getActiveMoodId(x: number, y: number): number {
-		return -1;
+	private getActiveMoodId(x: number, y: number): number {
+		let moodcolumn = this._columns.get("mood");
+		if (!(moodcolumn && moodcolumn.visible && moodcolumn.width > 0)) {
+			return -1;
+		}
+		let pad = ((moodcolumn.width - moodIconWidth) / 2) >> 0;
+		let positionLeft = moodcolumn.x + pad;
+		let positionRight = moodcolumn.x + pad + moodIconWidth;
+		if (x > positionLeft && x <= positionRight) {
+			let hoverItem = this._findHoverItem(x, y);
+			return hoverItem ? hoverItem.rowIndex : -1;
+		} else {
+			return -1;
+		}
 	}
 
 	/**
 	 * Create playlist items and init it's items' state (selected, playing,
 	 * focused), etc;
 	 */
-	setList() {
+	private setList() {
 		const playlistMetadbs = plman.GetPlaylistItems(plman.ActivePlaylist);
 		const playlistItems: PlaylistViewItem[] = [];
 		const playlistItemCount = plman.PlaylistItemCount(plman.ActivePlaylist);
@@ -523,12 +504,17 @@ export class PlaylistView extends ScrollView {
 		plman.SetActivePlaylistContext();
 	}
 
-	setFocusItem() {
+	// 列表歌曲仅仅 tags 改变时，不用重建整个列表。
+	private resetAllTags() {
+		this.items.forEach(item => item.title = "");
+	}
+
+	private setFocusItem() {
 		let focusdPlaylistItemIndex = plman.GetPlaylistFocusItemIndex(plman.ActivePlaylist);
 		this.focusIndex = this.items.findIndex(item => item.playlistItemIndex === focusdPlaylistItemIndex);
 	}
 
-	setPlayingItem() {
+	private setPlayingItem() {
 		if (fb.IsPlaying) {
 			let ItemLocation = plman.GetPlayingItemLocation();
 			if (ItemLocation.IsValid && ItemLocation.PlaylistIndex === plman.ActivePlaylist) {
@@ -637,7 +623,6 @@ export class PlaylistView extends ScrollView {
 		};
 
 		// calculate header height;
-		// let headerHeight = 
 		headerHeight = this.header.getProperHeight(this.width);
 		this.header.setBoundary(this.x, this.y - this.scroll, this.width, headerHeight);
 
@@ -662,7 +647,8 @@ export class PlaylistView extends ScrollView {
 	on_paint(gr: IGdiGraphics) {
 		let rowHeight = this.rowHeight;
 		let items = this.items;
-		let _columnsMap = this._columns;
+
+		// colors;
 		let textColor = playlistColors.text;
 		let secondaryTextColor = playlistColors.secondaryText;
 		let highlightColor = playlistColors.highlight;
@@ -670,12 +656,14 @@ export class PlaylistView extends ScrollView {
 		let backgroundSelectionColor = playlistColors.backgroundSelection;
 		let lineColor = playlistColors.splitLine;
 
-		let tracknumber = _columnsMap.get("trackNumber");
-		let title = _columnsMap.get("title");
-		let artist = _columnsMap.get("artist");
-		let album = _columnsMap.get("album");
-		let mood = _columnsMap.get("mood");
-		let time = _columnsMap.get("time");
+		// columns;
+		let _columns = this._columns;
+		let tracknumber = _columns.get("trackNumber");
+		let title = _columns.get("title");
+		let artist = _columns.get("artist");
+		let album = _columns.get("album");
+		let mood = _columns.get("mood");
+		let time = _columns.get("time");
 
 		// Draw background;
 		gr.FillSolidRect(this.x, this.y, this.width, this.height, backgroundColor);
@@ -731,6 +719,7 @@ export class PlaylistView extends ScrollView {
 
 			// Visible items;
 			if (row.y + rowHeight >= this.y && row.y < this.y + this.height) {
+
 				// Put visible item to visibleItems cache;
 				this.visibleItems.push(row);
 
@@ -814,9 +803,6 @@ export class PlaylistView extends ScrollView {
 			}
 		}
 
-		// draw selection indication rectangle;
-		// TODO;
-
 		// draw when playlist is empty;
 		if (this.items.length === 0) {
 			const textY = this.y + this.header.height + listheaderHeight + scale(16);
@@ -873,7 +859,7 @@ export class PlaylistView extends ScrollView {
 		ThrottledRepaint();
 	}
 
-	getTrack(index: number) {
+	private getTrack(index: number) {
 		return this.items[index];
 	}
 
@@ -907,7 +893,7 @@ export class PlaylistView extends ScrollView {
 			return;
 		}
 
-		let listTopY = this.header.y + this.header.height;
+		let listTopY = this.header.y + this.header.height + listheaderHeight;
 		if (listTopY < this.y) {
 			listTopY = this.y;
 		}
@@ -922,14 +908,33 @@ export class PlaylistView extends ScrollView {
 		}
 	}
 
+	private showFocusItem() {
+		if (this.focusIndex === -1) {
+			if (this.visibleItems.length > 0) {
+				this.setFocusByIndex(this.visibleItems[0].rowIndex);
+			}
+			return;
+		}
+		let listtopY = this.header.y + this.header.height + listheaderHeight;
+		if (listtopY < this.y) listtopY = this.y;
+		let listbottomY = this.y + this.height;
+		let focusItem = this.items[this.focusIndex];
+		let focusItemVis = focusItem.y >= listtopY && focusItem.y + focusItem.height < listbottomY;
+		if (!focusItemVis) {
+			let targetscroll = this.header.height + focusItem.yOffset - (this.height - this.rowHeight) / 2;
+			this.scrollTo(targetscroll);
+		}
+	}
+
+
 	on_playback_new_track() {
 		this.setPlayingItem();
 		this.showNowPlaying();
 		ThrottledRepaint();
 	}
 
-	on_metadb_changed() {
-		this.setList();
+	on_metadb_changed(metadbs?: IFbMetadbList, fromhook?: boolean) {
+		this.resetAllTags();
 		ThrottledRepaint();
 	}
 
@@ -1332,6 +1337,57 @@ export class PlaylistView extends ScrollView {
 					break;
 				case VKeyCode.Escape:
 					this.setSelection();
+					break;
+				case VKeyCode.Return:
+					let focusItem = this.items[this.focusIndex];
+					if (focusItem) {
+						try {
+							plman.ExecutePlaylistDefaultAction(plman.ActivePlaylist, focusItem.playlistItemIndex);
+						} catch (e) { }
+					}
+					break;
+				case VKeyCode.Home:
+					if (this.items.length > 0) {
+						this.setSelection(0);
+						this.setFocusByIndex(0);
+						this.scroll = 0;
+					}
+					break;
+				case VKeyCode.End:
+					if (this.items.length > 0) {
+						this.setSelection(this.items.length - 1);
+						this.setFocusByIndex(this.items.length - 1);
+						this.scroll = this.totalHeight;
+					}
+					break;
+				case VKeyCode.PageUp:
+					let onpageupstop = (() => {
+						this.setFocusByIndex(this.visibleItems[0].rowIndex);
+						this.setSelection(this.focusIndex);
+						this.repaint();
+					}).bind(this);
+					if (this.items.length > 0) {
+						// let scrollstep =
+						this.scrollTo(this.scroll - this.height, onpageupstop);
+					}
+					break;
+				case VKeyCode.PageDown:
+					if (this.items.length > 0) {
+						this.scrollTo(this.scroll + this.height);
+					}
+					break;
+				case VKeyCode.Up:
+					this.setFocusByIndex(this.focusIndex - 1);
+					this.showFocusItem();
+					this.setSelection(this.focusIndex);
+					break;
+				case VKeyCode.Down:
+					this.setFocusByIndex(this.focusIndex + 1);
+					this.showFocusItem();
+					this.setSelection(this.focusIndex);
+					break;
+				case VKeyCode.F5:
+					// this.header.artwork.getArtwork();
 					break;
 			}
 		} else if (mask === KMask.ctrl) {

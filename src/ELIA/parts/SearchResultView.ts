@@ -343,34 +343,7 @@ export class SearchResultView extends ScrollView {
 		this.totalHeight = this.itemsTotalHeight + headerHeight + listheaderHeight;
 	}
 
-	// getPaddingOnWidth_(panelWidth: number): IPaddings {
-	// 	let thin = scale(750);
-	// 	let wide = scale(1150);
-	// 	let paddings: IPaddings = { top: 0, bottom: 0, right: 0, left: 0 };
-
-	// 	if (panelWidth < thin) {
-	// 		paddings.top = scale(16);
-	// 		paddings.bottom = scale(16);
-	// 		paddings.right = scale(24);
-	// 		paddings.left = scale(24);
-	// 	} else if (panelWidth < wide) {
-	// 		paddings.top = scale(24);
-	// 		paddings.bottom = scale(24);
-	// 		paddings.left = scale(40);
-	// 		paddings.right = scale(40);
-	// 	} else {
-	// 		paddings.top = scale(40);
-	// 		paddings.bottom = scale(40);
-	// 		paddings.right = scale(40);
-	// 		paddings.left = scale(40);
-	// 	}
-	// 	return paddings;
-	// }
-
 	setColumns() {
-		// const paddings = this.paddings;
-		// const padLeft = paddings.left;
-		// const padRight = paddings.right;
 
 		// ---------------
 		// Columns;
@@ -424,10 +397,6 @@ export class SearchResultView extends ScrollView {
 		if (artistVis) {
 			widthToAdd_ = floor((whitespace - titleWidth_ - artistWidth_) / 2);
 		}
-
-		// if (albumVis) {
-		// 	widthToAdd_ = floor((whitespace - titleWidth_ - artistWidth_ - albumWidth_) / 3);
-		// }
 
 		trackNumber.x = this.x + paddingLR;
 		mood.x = trackNumber.x + trackNumber.width;
@@ -606,13 +575,6 @@ export class SearchResultView extends ScrollView {
 				let iconColor = (rowItem.rating === 5 ? moodColor : secondaryTextColor);
 				gr.DrawString(icon, iconFont, iconColor,
 					mood.x, rowItem.y, mood.width, rowItem.height, StringFormat.Center);
-				// if (rowItem.rating === 5) {
-				// 	this.heartOnIco
-				// 		.draw(gr, moodColor, mood.x, rowItem.y, mood.width, rowHeight);
-				// } else {
-				// 	this.heartOffIco
-				// 		.draw(gr, secondaryTextColor, mood.x, rowItem.y, mood.width, rowHeight);
-				// }
 			}
 		}
 
@@ -915,6 +877,12 @@ export class SearchResultView extends ScrollView {
 			this.repaint();
 		}
 	}
+
+	on_library_items_removed() { }
+
+	on_library_items_added() { }
+
+	on_library_items_changed() { }
 
 }
 

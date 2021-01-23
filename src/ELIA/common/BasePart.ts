@@ -28,6 +28,9 @@ export interface ICallbacks {
 	on_focus?: (focus: boolean) => void;
 	on_key_down?: (vkey: number) => void;
 	on_key_up?: (vkey: number) => void;
+	on_library_items_changed?(metadbs?: IFbMetadbList): void;
+	on_library_items_added?(metadbs?: IFbMetadbList): void;
+	on_library_items_removed?(metadbs?: IFbMetadbList): void;
 }
 
 export interface IBoxModel {

@@ -1,4 +1,4 @@
-import { scale, ThrottledRepaint } from "../common/common";
+import { scale } from "../common/common";
 import { Component } from "../common/BasePart";
 import { notifyOthers, ui } from "../common/UserInterface";
 import { TopBar } from "./TopbarView";

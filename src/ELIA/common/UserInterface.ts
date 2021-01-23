@@ -144,9 +144,6 @@ export function notifyOthers(message: string, data?: any) {
 	});
 }
 
-let shouldUpdateVisbles = true;
-let shouldSortChildren = true;
-
 const useClearType = window.GetProperty("Global.Font Use ClearType", true);
 const useAntiAlias = window.GetProperty(
 	"Global.Font Antialias(Only when useClearType = false",
@@ -504,6 +501,20 @@ function on_load_image_done(cookie: number, image: IGdiBitmap | null, image_path
 	imageCache.on_load_image_done(cookie, image);
 }
 
+function on_library_items_added(metadbs?: IFbMetadbList) {
+	vis_parts.forEach(p => invoke(p, "on_library_items_added", metadbs));
+}
+
+function on_library_items_removed(metadbs?: IFbMetadbList) {
+	vis_parts.forEach(p => invoke(p, "on_library_items_removed", metadbs));
+}
+
+function on_library_items_changed(metadbs?: IFbMetadbList) {
+	vis_parts.forEach(p => invoke(p, "on_library_items_changed", metadbs));
+}
+
+
+
 
 /**
  * foo_spider_monkey_panel.dll does not provide a globalThis var and the
@@ -555,6 +566,9 @@ Object.assign(systemCallbacks, {
 	on_volume_change: on_volume_change,
 	on_load_image_done: on_load_image_done,
 	on_get_album_art_done: on_get_album_art_done,
+	on_library_items_added: on_library_items_added,
+	on_library_items_changed: on_library_items_changed,
+	on_library_items_removed: on_library_items_removed,
 });
 
 /**

@@ -32,7 +32,7 @@ export abstract class ScrollView extends Component {
 		}
 		return val;
 	}
-	scrollTo(scroll_: number = this.checkscroll(this.scroll)) {
+	scrollTo(scroll_: number = this.checkscroll(this.scroll), onStop?: Function) {
 		scroll_ = this.checkscroll(scroll_);
 		if (scroll_ === this.scroll) {
 			return;
@@ -47,6 +47,7 @@ export abstract class ScrollView extends Component {
 				window.ClearTimeout(this.timerId);
 				this.scroll = Math.round(this.scroll);
 				this.scrolling = false;
+				onStop && onStop();
 			}
 			if (!this.isVisible()) {
 				window.ClearTimeout(this.timerId);

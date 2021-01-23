@@ -360,9 +360,9 @@ export class AlbumPageView extends ScrollView {
         if (this.width >= pageWidth.wide) {
             ratio = 0.7;
         } else if (this.width <= pageWidth.thin) {
-            ratio = 0.82;
+            ratio = 0.9;
         } else {
-            ratio = 0.7 + 0.12 * easeOutCubic((pageWidth.wide - this.width) / (pageWidth.wide - pageWidth.thin));
+            ratio = 0.7 + 0.2 * easeOutCubic((pageWidth.wide - this.width) / (pageWidth.wide - pageWidth.thin));
         }
 
         let titleWidth = (whitespace * ratio) >> 0;
@@ -519,10 +519,10 @@ export class AlbumPageView extends ScrollView {
                     // title
                     let titleRowY = row.y + row.height / 2 - itemFont.Height;
                     gr.DrawString(row.trackTitle, itemFont, textColor,
-                        title.x, titleRowY, title.width - scale(4), row.height, StringFormat.LeftTop);
+                        title.x, titleRowY, title.width - scale(16), row.height, StringFormat.LeftTop);
                     let artist = row.trackArtist || row.albumArtist;
                     gr.DrawString(artist, smallItemFont, secondaryText,
-                        title.x, row.y + row.height / 2, title.width - scale(8), row.height, StringFormat.LeftTop);
+                        title.x, row.y + row.height / 2, title.width - scale(16), row.height, StringFormat.LeftTop);
 
                     // playcount;
                     gr.DrawString(row.playcount, itemFont, secondaryText,

@@ -462,6 +462,7 @@ export const enum VKeyCode {
 	End = 0x23,
 	Home = 0x24,
 	Left = 0x25,
+	Up = 0x26,
 	Right = 0x27,
 	Down = 0x28,
 	Insert = 0x2d,
