@@ -8,8 +8,13 @@ import { SearchBox } from "./SearchBox";
 import { lang } from "./Lang";
 import { StringFormat } from "../common/String";
 
-const iconSize = scale(20);
+const iconSize = scale(22);
 const textRenderingHint = ui.textRender;
+
+const searchboxProps = {
+	minWidth: scale(250),
+	maxWidth: scale(350),
+}
 
 const createIconButton = (code: string, fontSize: number, color: number) => {
 	return new IconButton({
@@ -35,8 +40,11 @@ export class TopBar extends Component {
 	buttons: Map<string, IconButton> = new Map();
 	mainBtn: IconButton;
 	settingsBtn: IconButton;
+
 	swithcBtn: IconButton;
+	searchBtn: IconButton;
 	searchBox: SearchBox;
+	closeSearchBtn: IconButton;
 
 	constructor() {
 		super({});
@@ -52,56 +60,103 @@ export class TopBar extends Component {
 		};
 
 		// button 'Settings';
-		this.settingsBtn = createIconButton(Material.gear, iconSize, this.foreColor);
-		// this.settingsIco.disable();
-		this.settingsBtn.on_click = () => {
-			notifyOthers("Show.Settings");
+		this.settingsBtn = createIconButton(Material.more_vert, iconSize, this.foreColor);
+		// this.settingsBtn.disable();
+		this.settingsBtn.on_click = (x: number, y: number) => {
+			// notifyOthers("Show.Settings");
+			showMainMenu(x, y);
 		}
 
 		// button 'Page Switch';
 		this.swithcBtn = createIconButton(Material.apps, iconSize, this.foreColor);
 		this.swithcBtn.disable();
 
-		// button 'main menu';
+		// button 'search';
+		this.searchBtn = createIconButton(Material.search, iconSize, this.foreColor);
+		this.searchBtn.on_click = () => {
+			this.searchBox.visible = true;
+			let searchboxX = this.x + scale(16);
+			let searchboxWidth = this.x + this.width - searchboxX - scale(56);
+			this.searchBox.setBoundary(searchboxX, this.y + scale(8), searchboxWidth, this.height - scale(16));
+			this.closeSearchBtn.visible = true;
+			this.closeSearchBtn.setBoundary(this.searchBox.x + this.searchBox.width, this.y, scale(56), this.height);
+			this.settingsBtn.visible = false;
+
+			ui.setFocusPart(this.searchBox.inputbox);
+			this.searchBox.inputbox.activeInput();
+			this.repaint();
+		}
+
+		this.closeSearchBtn = createIconButton(Material.arrow_right, iconSize, this.foreColor);
+		this.closeSearchBtn.on_click = () => {
+			this.on_size();
+			this.repaint();
+		}
 
 		this.searchBox = new SearchBox();
+		this.searchBox.z = 100;
 
-		[this.mainBtn, this.swithcBtn, this.searchBox, this.settingsBtn].forEach((child) =>
+		[this.mainBtn, this.swithcBtn, this.searchBtn, this.searchBox, this.settingsBtn, this.closeSearchBtn].forEach((child) =>
 			this.addChild(child)
 		);
 	}
 
-	on_init() { }
+	on_init() {
+	}
 
 	on_size() {
 		let icoOffsetTop = ((this.height - this._iconWidth) / 2) | 0;
 		let padLeft = scale(16);
 		let { _iconWidth } = this;
 
+		this.mainBtn.visible = true;
 		this.mainBtn.setBoundary(this.x + padLeft, this.y + icoOffsetTop, _iconWidth, _iconWidth);
+		this.settingsBtn.visible = true;
 		this.settingsBtn.setBoundary(
 			this.x + this.width - padLeft - _iconWidth,
 			this.y + icoOffsetTop,
 			_iconWidth,
 			_iconWidth
 		);
+		this.swithcBtn.visible = true;
 		this.swithcBtn.setBoundary(
-			this.settingsBtn.x - _iconWidth - scale(4),
+			this.settingsBtn.x - _iconWidth,
 			this.y + icoOffsetTop,
 			_iconWidth,
 			_iconWidth
 		);
 
-		this.searchBox.setBoundary(
-			this.x + scale(272),
-			this.y + scale(8),
-			scale(400),
-			this.height - scale(16)
-		);
+		let searchboxX = this.x + scale(272);
+		let searchboxWidth = this.swithcBtn.x - scale(8) - searchboxX;
+		if (searchboxWidth > searchboxProps.maxWidth) {
+			searchboxWidth = searchboxProps.maxWidth;
+		}
+		let searchboxVis = searchboxWidth >= searchboxProps.minWidth;
+
+		if (searchboxVis) {
+			this.searchBox.visible = true;
+			this.searchBtn.visible = false;
+			this.closeSearchBtn.visible = false;
+			this.searchBox.setBoundary(
+				searchboxX,
+				this.y + scale(8),
+				searchboxWidth,
+				this.height - scale(16)
+			);
+		} else {
+			this.searchBox.visible = false;
+			this.searchBtn.visible = true;
+			this.searchBtn.setBoundary(
+				this.swithcBtn.x - _iconWidth,
+				this.y + icoOffsetTop,
+				_iconWidth, _iconWidth
+			);
+			this.closeSearchBtn.visible = false;
+		}
 	}
 
 	on_paint(gr: IGdiGraphics) {
-		gr.FillSolidRect(this.x, this.y, this.width, this.height, themeColors.topbarBackground);
+		gr.FillSolidRect(this.x, this.y, this.width, this.height, topbarColors.backgroundColor);
 
 		const { _logoFont, _logoText, foreColor } = this;
 		const logoX = this.mainBtn.x + this.mainBtn.width + scale(16);
@@ -135,6 +190,9 @@ function showMainMenu(x: number, y: number) {
 	playbackMenu.AppendTo(objMenu, MenuFlag.STRING, lang("Playback"));
 	libraryMenu.AppendTo(objMenu, MenuFlag.STRING, lang("Library"));
 	helpMenu.AppendTo(objMenu, MenuFlag.STRING, lang("Help"));
+
+	objMenu.AppendMenuSeparator();
+	objMenu.AppendMenuItem(MenuFlag.GRAYED, 3000, lang("Settings"));
 
 	// Menu managers;
 	const fileMan = fb.CreateMainMenuManager();
@@ -177,6 +235,10 @@ function showMainMenu(x: number, y: number) {
 			break;
 		case ret >= 1201 && ret < 1301:
 			helpMan.ExecuteByID(ret - 1201);
+			break;
+
+		case ret === 3000: // show settings panel;
+			notifyOthers("Show.Settings");
 			break;
 	}
 

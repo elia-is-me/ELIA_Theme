@@ -45,7 +45,7 @@ const titleLineHeight = titleFont.Height * 1.2 >> 0;
 const descriptionHeight = desciptionFont.Height * 1.1 >> 0;
 
 const rowHeight = scale(52);
-const durationWidth = scale(16) + MeasureString("0:00:00", itemFont).Width;
+const durationWidth = scale(16) + MeasureString("00:00:00", itemFont).Width;
 const addtimeWidth = scale(16) + MeasureString("0000-00-00", itemFont).Width;
 let paddingLR = 0;
 let paddingTB = 0;
@@ -114,11 +114,9 @@ class PlaylistColumn {
 	visible: boolean = true;
 	x: number = 0;
 	width: number = 0;
-
-	primaryColor: number;
-	private _paddingLeft = 0;
-	private _paddingRight = 0;
-
+	// primaryColor: number;
+	// private _paddingLeft = 0;
+	// private _paddingRight = 0;
 }
 
 
@@ -272,11 +270,6 @@ export class SearchResultView extends ScrollView {
 
 		;[this.scrollbar, this.headerView, this.closeBtn]
 			.forEach(child => this.addChild(child));
-
-		// this.heartOnIco = new IconObject(Material.heart, MaterialFont, scale(16));
-		// this.heartOffIco = new IconObject(Material.heart_empty, MaterialFont, scale(16));
-		// this.playingIco = new IconObject(Material.volume, MaterialFont, scale(16));
-		// this.pauseIco = new IconObject(Material.volume_mute, MaterialFont, scale(16));
 
 		let moodWidth = rowHeight;
 
@@ -481,7 +474,7 @@ export class SearchResultView extends ScrollView {
 		gr.DrawString("#", semiItemFont, secondaryTextColor,
 			tracknumber.x, listHeaderY, tracknumber.width, listheaderHeight, StringFormat.Center);
 		// title/ artist;
-		gr.DrawString(lang("TITLE") + "/" + lang("ARTIST"), semiItemFont, secondaryTextColor,
+		gr.DrawString(lang("TITLE"), semiItemFont, secondaryTextColor,
 			title.x, listHeaderY, title.width, listheaderHeight, StringFormat.LeftCenter);
 
 		// album;
@@ -492,7 +485,7 @@ export class SearchResultView extends ScrollView {
 
 		// duration;
 		gr.DrawString(Material.time, iconFont, secondaryTextColor,
-			duration.x, listHeaderY, duration.width, listheaderHeight, StringFormat.RightCenter);
+			duration.x, listHeaderY, duration.width - scale(8), listheaderHeight, StringFormat.RightCenter);
 
 		// draw items;
 		for (let i = 0, items = this.items, len = this.items.length; i < len; i++) {
@@ -567,7 +560,7 @@ export class SearchResultView extends ScrollView {
 				// durationtime;
 
 				gr.DrawString(rowItem.time, itemFont, secondaryTextColor,
-					duration.x, rowItem.y, duration.width, rowItem.height, StringFormat.RightCenter);
+					duration.x, rowItem.y, duration.width - scale(8), rowItem.height, StringFormat.RightCenter);
 				// duration.draw(gr, rowItem.time, itemFont, secondaryTextColor, rowItem, StringFormat.Center);
 
 				// mood;
@@ -740,7 +733,6 @@ export class SearchResultView extends ScrollView {
 		let last = -1;
 		let padLeft = this.paddings.left;
 		let padRight = this.paddings.right;
-		// let rowHeight = rowHeight;
 		if (
 			!(
 				(selecting.pageX1 < padLeft && selecting.pageX2 < padLeft) ||

@@ -91,6 +91,7 @@ function setActive(x: number, y: number) {
 	}
 }
 
+
 function setFocus(x: number, y: number) {
 	let prev = focusPart;
 	let _hoverPart = _getHoverPart(rootPart, x, y);
@@ -113,6 +114,17 @@ function setFocusPart(part: Component) {
 	if (!compareParts(part, prev)) {
 		invoke(prev, "on_change_focus", false);
 		invoke(focusPart, "on_change_focus", true);
+	}
+}
+
+let draggedPart: Component = null;
+
+function setInternalDrag(x: number, y: number) {
+	let prev = draggedPart;
+	let hoverpart = _getHoverPart(rootPart, x, y);
+	if (!compareParts(prev, hoverpart)) {
+		invoke(prev, "on_internal_drag_leave");
+		invoke(hoverpart, "on_internal_drag_over", x, y);
 	}
 }
 
@@ -228,7 +240,7 @@ function on_paint(gr: IGdiGraphics) {
 	drawNode(rootPart, gr);
 
 	// if (isDrag) {
-	drawCursorImage(gr, cursorImage, mouseCursor.x, mouseCursor.y);
+	drawCursorImage(gr, cursorImage, mouseCursor.x + scale(20), mouseCursor.y);
 	// }
 
 	// draw dnd mask;
@@ -279,7 +291,9 @@ export const mouseCursor = {
 	y: -1,
 };
 
-let isDrag = false;
+let isInternalDrag = false;
+
+
 
 function on_mouse_move(x: number, y: number) {
 	if (x === mouseCursor.x && y === mouseCursor.y) {
@@ -288,14 +302,17 @@ function on_mouse_move(x: number, y: number) {
 	mouseCursor.x = x;
 	mouseCursor.y = y;
 
-	if (!isDrag) {
+	if (isInternalDrag) {
+		setInternalDrag(x, y);
+		invoke(draggedPart, "on_internal_drag_over", x, y);
+	} else {
 		setActive(x, y);
 	}
 	invoke(activePart, "on_mouse_move", x, y);
 }
 
 function on_mouse_lbtn_down(x: number, y: number) {
-	isDrag = true;
+	isInternalDrag = true;
 	setActive(x, y);
 	setFocus(x, y);
 	invoke(activePart, "on_mouse_lbtn_down", x, y);
@@ -307,8 +324,8 @@ function on_mouse_lbtn_dblclk(x: number, y: number) {
 
 function on_mouse_lbtn_up(x: number, y: number) {
 	invoke(activePart, "on_mouse_lbtn_up", x, y);
-	if (isDrag) {
-		isDrag = false;
+	if (isInternalDrag) {
+		isInternalDrag = false;
 		setActive(x, y);
 	}
 }
@@ -367,6 +384,7 @@ function on_key_down(vkey: number) {
 		}
 	}
 	invoke(focusPart, "on_key_down", vkey, mask);
+	// invoke(rootPart, "on_key_down", vkey, mask);
 }
 
 function on_key_up(vkey: number) { }
@@ -513,6 +531,25 @@ function on_library_items_changed(metadbs?: IFbMetadbList) {
 	vis_parts.forEach(p => invoke(p, "on_library_items_changed", metadbs));
 }
 
+function on_playlist_item_ensure_visible(playlistIndex: number, playlistItemIndex: number) {
+	invoke_recur(rootPart, "on_playlist_item_ensure_visible", playlistIndex, playlistItemIndex);
+}
+
+function invoke_recur(part: Component, method: string, ...args: any) {
+	if (part == null || !part.isVisible()) {
+		return;
+	}
+
+	let children = part.children;
+	for (let i = 0, len = children.length; i < len; i++) {
+		if (children[i].isVisible()) {
+			invoke_recur(children[i], method, ...args);
+		}
+	}
+
+	invoke(part, method, ...args);
+
+}
 
 
 
@@ -569,6 +606,7 @@ Object.assign(systemCallbacks, {
 	on_library_items_added: on_library_items_added,
 	on_library_items_changed: on_library_items_changed,
 	on_library_items_removed: on_library_items_removed,
+	on_playlist_item_ensure_visible: on_playlist_item_ensure_visible,
 });
 
 /**

@@ -1,15 +1,15 @@
 import { MeasureString, StringFormat, spaceStartEnd, spaceEnd, spaceStart } from "../common/String";
 import { AlbumArtwork } from "../common/AlbumArt";
 import { Component } from "../common/BasePart";
-import { scale, StopReason, TextRenderingHint } from "../common/common";
+import { clamp, KMask, lastIndex, RGB, scale, StopReason, TextRenderingHint, VKeyCode } from "../common/common";
 import { Material, MaterialFont } from "../common/Icon";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
 import { ui } from "../common/UserInterface";
 import { Button } from "./Buttons";
-import { lang } from "./Lang";
-import { getYear } from "./PlaybackControlView";
-import { formatPlaylistDuration } from "./PlaylistView";
+import { lang, RunContextCommandWithMetadb } from "./Lang";
+import { getYear, ToggleMood } from "./PlaybackControlView";
+import { formatPlaylistDuration, showTrackContextMenu } from "./PlaylistView";
 import { SendToQueueListPlay } from "./SearchResultView";
 import { GdiFont, scrollbarWidth, themeColors } from "./Theme";
 
@@ -44,6 +44,7 @@ const titleFont = GdiFont("bold, 32");
 let titleLineHeight = titleFont.Height * 1.1;
 let descriptionLineHeight = descriptionFont.Height * 1.1;
 let subtitleLineHeight = subtitleFont.Height * 1.2;
+let moodWidth = MeasureString(Material.heart, iconFont).Width;
 
 let paddingLR = scale(24);
 let paddingTB = scale(24);
@@ -76,6 +77,68 @@ const TF_ALBUM_ARTIST = fb.TitleFormat("%album artist%");
 const TF_ALBUM = fb.TitleFormat("%album%");
 const TF_DATE = fb.TitleFormat("%date%");
 const TF_DISCNUMBER = fb.TitleFormat("[%disc number%]");
+
+
+class DragDropHelper {
+    isActive: boolean = false;
+    dropTargetRowIndex: number = -1;
+    private _timerId: number = -1;
+
+    reset() {
+        this.isActive = false;
+        this.dropTargetRowIndex = -1;
+        this.clearInterval();
+    }
+
+    setInterval(func: () => void, interval: number, context?: Component) {
+        if (this._timerId == -1) {
+            if (context != null) {
+                func.bind(context);
+            }
+            this._timerId = window.SetInterval(func, interval);
+        }
+    }
+
+    clearInterval() {
+        this._timerId > -1 && window.ClearInterval(this._timerId);
+        this._timerId = -1;
+    }
+}
+
+let dnd = new DragDropHelper();
+
+/**
+ * @class
+ */
+class SelectionHelper {
+    isActive: boolean = false;
+    pageX1: number = -1;
+    pageX2: number = -1;
+    pageY1: number = -1;
+    pageY2: number = -1;
+    private _timerId: number = -1;
+
+    setInterval(func: () => void, interval: number, context?: Component) {
+        if (this._timerId == -1) {
+            if (context != null) {
+                func.bind(context);
+            }
+            this._timerId = window.SetInterval(func, interval);
+        }
+    }
+
+    clearInterval() {
+        this._timerId > -1 && window.ClearInterval(this._timerId);
+        this._timerId = -1;
+    }
+
+    reset() {
+        this.isActive = false;
+        this.clearInterval();
+    }
+}
+
+let selecting = new SelectionHelper();
 
 class AlbumHeaderView extends Component {
     artwork: AlbumArtwork;
@@ -183,6 +246,7 @@ class TrackItem extends Component {
     //
     metadb: IFbMetadb;
     rowIndex: number;
+    metadbIndex: number;
     trackTitle: string;
     trackArtist: string;
     albumArtist: string;
@@ -192,6 +256,18 @@ class TrackItem extends Component {
     playcount: string;
     addTime: string;
     rating: number;
+
+    private _isselect: boolean = false;
+
+    get isselect() {
+        return this._isselect;
+    }
+
+    set isselect(val: boolean) {
+        if (this.type === 0) {
+            this._isselect = val;
+        }
+    }
 
     constructor() {
         super({});
@@ -229,7 +305,15 @@ export class AlbumPageView extends ScrollView {
     visibleItems: TrackItem[] = [];
     metadbs: IFbMetadbList;
     columns: Map<string, ColumnItem> = new Map();
-    playingIndex: number = -1;
+
+    private playingIndex: number = -1;
+    private _selectedIndexes: number[] = [];
+    private hoverIndex: number = -1;
+    private focusIndex: number = -1;
+    private clickedMoodId: number = -1;
+    private mulselstartId: number = -1;
+    private clickonsel: boolean = false;
+
 
     header: AlbumHeaderView;
     scrollbar: Scrollbar;
@@ -295,32 +379,37 @@ export class AlbumPageView extends ScrollView {
             return;
         }
         let itemYOffset = 0;
-        let itemCount = this.metadbs.Count;
+        let metadbCount = this.metadbs.Count;
         let compare = "##@!"
+        let itemIndex = 0;
 
         this.metadbs.OrderByFormat(TF_SORT_ALBUM, 1);
 
-        for (let i = 0; i < itemCount; i++) {
+        for (let i = 0; i < metadbCount; i++) {
             let discnumber = TF_DISCNUMBER.EvalWithMetadb(this.metadbs[i]);
             if (discnumber && discnumber !== compare) {
                 let discitem = new TrackItem();
                 discitem.type = 1;
-                discitem.rowIndex = i;
+                discitem.rowIndex = itemIndex;
                 discitem.yOffset = itemYOffset;
                 discitem.height = rowHeight;
                 discitem.metadb = this.metadbs[i];
+                discitem.metadbIndex = i;
                 this.items.push(discitem);
                 itemYOffset += discitem.height;
+                itemIndex++;
                 compare = discnumber;
             }
             let rowitem = new TrackItem();
-            rowitem.rowIndex = i;
+            rowitem.rowIndex = itemIndex;
             rowitem.metadb = this.metadbs[i];
+            rowitem.metadbIndex = i;
             rowitem.yOffset = itemYOffset;
             rowitem.height = rowHeight;
             //
             this.items.push(rowitem);
             itemYOffset += rowHeight;
+            itemIndex++;
         }
 
         this.itemsTotalHeight = rowHeight * (this.items.length + 1);
@@ -435,8 +524,6 @@ export class AlbumPageView extends ScrollView {
         let rowX = this.x + paddingLR;
         let rowWidth = this.width - 2 * paddingLR;
         let listOffsetToTop = headerHeight + listHeaderHeight;
-        // let rowY: number;
-        // let rowHeight = this.rowHeight;
 
         let tracknumber = this.columns.get("tracknumber");
         let liked = this.columns.get("liked");
@@ -445,8 +532,10 @@ export class AlbumPageView extends ScrollView {
         let duration = this.columns.get("duration");
 
         let textColor = pageColors.text;
+        let textSelectionColor = pageColors.titleText;
         let secondaryText = pageColors.secondaryText;
         let highlightColor = pageColors.highlight;
+        let backgroundSelectionColor = pageColors.backgroundSelection;
 
         // draw headbar;
         let headbarY = this.y + this.header.height - this.scroll;
@@ -481,9 +570,21 @@ export class AlbumPageView extends ScrollView {
                 this.visibleItems.push(row);
                 row.getTags();
 
-                // selcted row;
+                let _textColor: number = textColor;
+                let _textSecondaryColor: number = secondaryText;
 
-                // focused row;
+                // selcted row;
+                if (row.isselect) {
+                    gr.FillSolidRect(row.x, row.y, row.width, row.height, backgroundSelectionColor);
+                    _textColor = textSelectionColor;
+                    _textSecondaryColor = textSelectionColor;
+                }
+
+                if (this.focusIndex === i) {
+                    gr.DrawRect(row.x, row.y, row.width - 1, row.height - 1, scale(1), RGB(127, 127, 127));
+                }
+
+
 
                 // split line;
                 let lineY = row.y + row.height - 1;
@@ -506,34 +607,364 @@ export class AlbumPageView extends ScrollView {
                         gr.DrawString(fb.IsPaused ? Material.volume_mute : Material.volume, iconFont, highlightColor,
                             tracknumber.x, row.y, tracknumber.width, row.height, StringFormat.Center);
                     } else {
-                        gr.DrawString(row.trackNumber, itemFont, secondaryText,
+                        gr.DrawString(row.trackNumber, itemFont, _textSecondaryColor,
                             tracknumber.x, row.y, tracknumber.width, row.height, StringFormat.Center);
                     }
 
                     // liked;
                     let likedIcon = row.rating === 5 ? Material.heart : Material.heart_empty;
-                    let iconColor = row.rating === 5 ? pageColors.moodRed : secondaryText;
+                    let iconColor = row.rating === 5 ? pageColors.moodRed : _textSecondaryColor;
                     gr.DrawString(likedIcon, iconFont, iconColor,
                         liked.x, row.y, liked.width, row.height, StringFormat.Center);
 
                     // title
                     let titleRowY = row.y + row.height / 2 - itemFont.Height;
-                    gr.DrawString(row.trackTitle, itemFont, textColor,
+                    gr.DrawString(row.trackTitle, itemFont, _textColor,
                         title.x, titleRowY, title.width - scale(16), row.height, StringFormat.LeftTop);
                     let artist = row.trackArtist || row.albumArtist;
-                    gr.DrawString(artist, smallItemFont, secondaryText,
+                    gr.DrawString(artist, smallItemFont, _textSecondaryColor,
                         title.x, row.y + row.height / 2, title.width - scale(16), row.height, StringFormat.LeftTop);
 
                     // playcount;
-                    gr.DrawString(row.playcount, itemFont, secondaryText,
+                    gr.DrawString(row.playcount, itemFont, _textSecondaryColor,
                         playcount.x, row.y, playcount.width - scale(4), row.height, StringFormat.LeftCenter);
 
                     // duration;
-                    gr.DrawString(row.duration, itemFont, secondaryText,
+                    gr.DrawString(row.duration, itemFont, _textSecondaryColor,
                         duration.x, row.y, duration.width - scale(8), row.height, StringFormat(2, 1));
                     //gr.DrawRect(duration.x, row.y, duration.width - scale(8), row.height - 1, 1, 0xffaabbcc);
                 }
             }
+        }
+    }
+
+    private findHoverItem(x: number, y: number) {
+        if (!this.trace(x, y)) {
+            return;
+        }
+        return this.visibleItems.find(item => item.trace(x, y));
+    }
+
+    private getActiveMoodId(x: number, y: number) {
+        let moodcolumn = this.columns.get("mood");
+        if (!moodcolumn || !moodcolumn.visible || moodcolumn.width === 0) {
+            return -1;
+        }
+        let pad = (moodcolumn.width - moodWidth) / 2;
+        let posLeft = moodcolumn.x + pad;
+        let posRight = moodcolumn.x + pad + moodWidth;
+        if (x > posLeft && x <= posRight) {
+            let hoveritem = this.findHoverItem(x, y);
+            return hoveritem ? hoveritem.rowIndex : -1;
+        } else {
+            return -1;
+        }
+    }
+
+    private setselection(from?: number, to?: number) {
+        if (from == null) {
+            this._selectedIndexes.length = 0;
+            this.applysel();
+            return;
+        }
+        else {
+            if (to == null) {
+                to = from;
+            }
+            let c = from;
+            if (from > to) {
+                from = to;
+                to = c;
+            }
+            this._selectedIndexes.length = 0;
+            for (let i = from; i <= to; i++) {
+                this.items[i] && this._selectedIndexes.push(i);
+            }
+            this.applysel();
+        }
+    }
+
+    private setfocus(id: number) {
+        this.focusIndex = clamp(id, 0, this.items.length - 1);
+    }
+
+    private getSelectedMetadbs() {
+        let metadbarray = this.items.filter(item => item.isselect).map(item => item.metadb);
+        return new FbMetadbHandleList(metadbarray);
+    }
+
+    private applysel() {
+        this.items.forEach(item => item.isselect = false);
+        for (let i = 0, len = this._selectedIndexes.length; i < len; i++) {
+            let item = this.items[this._selectedIndexes[i]];
+            item && (item.isselect = true);
+        }
+    }
+
+    private updatesel(x: number, y: number) {
+        if (this.items.length === 0) {
+            return;
+        }
+        let topY = Math.max(this.y, this.header.y + this.header.height + listHeaderHeight);
+        let bottomY = this.y + this.height - 1;
+        selecting.pageX2 = clamp(x, this.x, this.x + this.width - this.scrollbar.width);
+        selecting.pageY2 = clamp(y, topY, bottomY) - this.y + this.scroll;
+
+        let first = -1;
+        let last = -1;
+        if (!(
+            (selecting.pageX1 < paddingLR && selecting.pageX2 < paddingLR)
+            || (selecting.pageX1 > this.width - paddingLR && selecting.pageX2 > this.width - paddingLR)
+        )) {
+            let offsetTop = this.header.height + listHeaderHeight;
+            first = Math.floor((selecting.pageY1 - offsetTop) / rowHeight);
+            last = Math.floor((selecting.pageY2 - offsetTop) / rowHeight);
+        }
+        this.setselection(first, last);
+        this.repaint();
+    }
+
+    private showFocusItem() {
+        if (this.focusIndex === -1) {
+            return;
+        }
+        let listtopY = this.header.y + this.header.height + listHeaderHeight;
+        if (listtopY < this.y) listtopY = this.y;
+        let listbottomY = this.y + this.height;
+        let focusItem = this.items[this.focusIndex];
+        if (focusItem) {
+            let isFocusItemVis = focusItem.y >= listtopY && focusItem.y + focusItem.height < listbottomY;
+            if (!isFocusItemVis) {
+                let targetscroll = this.header.height + listHeaderHeight + focusItem.yOffset - (this.height - rowHeight) / 2;
+                this.scrollTo(targetscroll);
+            }
+        }
+    }
+
+    on_mouse_lbtn_dblclk(x: number, y: number) {
+        let hoveritem = this.findHoverItem(x, y);
+        let hoverMood = this.getActiveMoodId(x, y);
+
+        if (hoverMood > -1) {
+            return;
+        }
+
+        if (hoveritem) {
+            let queue = plman.FindOrCreatePlaylist(lang("Queue"), true);
+            let metadbs = plman.GetPlaylistItems(queue);
+            // let findresults = metadbs.Find(hoveritem.metadb)
+            plman.UndoBackup(queue);
+            plman.ClearPlaylist(queue);
+            plman.InsertPlaylistItems(queue, 0, metadbs);
+            plman.ExecutePlaylistDefaultAction(queue, 0);
+        }
+    }
+
+    on_mouse_lbtn_down(x: number, y: number) {
+        let hoveritem = this.findHoverItem(x, y);
+        this.clickedMoodId = this.getActiveMoodId(x, y);
+        if (this.clickedMoodId > -1) {
+            return;
+        }
+
+        if (hoveritem) {
+            this.setfocus(hoveritem.rowIndex);
+        } else { }
+
+        if (!hoveritem) {
+            if (utils.IsKeyPressed(VKeyCode.Control)) {
+                //
+            } else if (utils.IsKeyPressed(VKeyCode.Shift)) {
+                //
+            } else {
+                selecting.isActive = true;
+                selecting.pageX1 = selecting.pageX2 = x - this.x;
+                selecting.pageY1 = selecting.pageY2 = y - this.y + this.scroll;
+                this.setselection();
+            }
+            this.mulselstartId = -1;
+        } else if (hoveritem.isselect) {
+            if (utils.IsKeyPressed(VKeyCode.Shift)) {
+                this.setselection(this.mulselstartId, this.focusIndex);
+            } else if (utils.IsKeyPressed(VKeyCode.Control)) {
+                hoveritem.isselect = !hoveritem.isselect;
+                this._selectedIndexes = this.items
+                    .filter(item => item.isselect)
+                    .map(item => item.rowIndex);
+            } else {
+                this.clickonsel = true;
+            }
+        } else {
+            if (!utils.IsKeyPressed(VKeyCode.Shift)) {
+                this.mulselstartId = this.focusIndex;
+            }
+            if (utils.IsKeyPressed(VKeyCode.Shift)) {
+                this.setselection(this.mulselstartId, hoveritem.rowIndex);
+            } else if (utils.IsKeyPressed(VKeyCode.Control)) {
+                hoveritem.isselect = !hoveritem.isselect;
+                this._selectedIndexes = this.items.filter(item => item.isselect)
+                    .map(item => item.rowIndex);
+            } else {
+                if (hoveritem.isselect) {
+                    this.clickonsel = true;
+                } else {
+                    this.setselection(hoveritem.rowIndex);
+                }
+                selecting.isActive = true;
+                selecting.pageX1 = selecting.pageX2 = x - this.x;
+                selecting.pageY1 = selecting.pageY2 = y - this.y + this.scroll;
+            }
+        }
+        this.repaint();
+    }
+
+
+    on_mouse_move(x: number, y: number) {
+        if (this.clickedMoodId > -1) {
+            return;
+        }
+
+        if (selecting.isActive) {
+            this.updatesel(x, y);
+        } else if (dnd.isActive) {
+            //
+        } else {
+            if (this.clickonsel) {
+                dnd.isActive = true;
+            }
+        }
+    }
+
+    on_mouse_lbtn_up(x: number, y: number) {
+        let hoveritem = this.findHoverItem(x, y);
+
+        if (this.clickedMoodId > -1) {
+            if (this.getActiveMoodId(x, y) === this.clickedMoodId) {
+                ToggleMood(this.items[this.clickedMoodId].metadb);
+                this.items[this.clickedMoodId].trackTitle = undefined;
+                this.repaint();
+            }
+            return;
+        }
+
+        if (dnd.isActive) {
+            // 
+        } else if (selecting.isActive) {
+            // do nothing;
+        } else {
+            if (hoveritem) {
+                if (!utils.IsKeyPressed(VKeyCode.Control) && !utils.IsKeyPressed(VKeyCode.Shift)) {
+                    this.setselection(hoveritem.rowIndex);
+                }
+            }
+        }
+
+        selecting.clearInterval();
+        selecting.isActive = false;
+        selecting.pageX2 = selecting.pageX1 = -1;
+        selecting.pageY2 = selecting.pageY1 = -1;
+
+        this.clickonsel = false;
+
+        dnd.clearInterval();
+        dnd.isActive = false;
+        dnd.dropTargetRowIndex = -1;
+
+        this.repaint();
+    }
+
+    on_mouse_rbtn_down(x: number, y: number) {
+        let hoveritem = this.findHoverItem(x, y);
+        if (hoveritem == null) {
+            this.setselection();
+        } else {
+            if (!hoveritem.isselect) {
+                this.setselection(hoveritem.rowIndex);
+                this.setfocus(hoveritem.rowIndex);
+            }
+        }
+        this.repaint();
+    }
+
+    on_mouse_rbtn_up(x: number, y: number) {
+        try {
+            showTrackContextMenu(null, this.getSelectedMetadbs(), x, y);
+        } catch (e) { }
+    }
+
+    on_key_down(vkey: number, mask = KMask.none) {
+        if (selecting.isActive || dnd.isActive) {
+            return;
+        }
+
+        if (this.items.length === 0) {
+            return;
+        }
+
+        switch (vkey) {
+            case VKeyCode.Escape:
+                this.setselection();
+                this.repaint();
+                break;
+            case VKeyCode.Return:
+                let focusItem = this.items[this.focusIndex];
+                if (focusItem) {
+                    try {
+                        SendToQueueListPlay(this.metadbs, focusItem.metadbIndex);
+                    } catch (e) { }
+                }
+
+                break;
+            case VKeyCode.Home:
+                this.setselection(0);
+                this.setfocus(0);
+                this.scroll = 0;
+                this.repaint();
+                break;
+            case VKeyCode.End:
+                // if (this.items.length > 0) {
+                this.setselection(this.items.length - 1);
+                this.setfocus(this.items.length - 1);
+                this.scroll = this.totalHeight;
+                // }
+                this.repaint();
+                break;
+            case VKeyCode.PageUp:
+                // if (this.items.length > 0) {
+                this.scrollTo(this.scroll - this.height);
+                // }
+                this.repaint();
+                break;
+            case VKeyCode.PageDown:
+                this.scrollTo(this.scroll + this.height);
+                this.repaint();
+                break;
+            case VKeyCode.Up:
+                this.setfocus(this.focusIndex - 1);
+                this.showFocusItem();
+                this.setselection(this.focusIndex);
+                this.repaint();
+                break;
+            case VKeyCode.Down:
+                this.setfocus(this.focusIndex + 1);
+                this.showFocusItem();
+                this.setselection(this.focusIndex);
+                this.repaint();
+                break;
+
+            case 65: // A;
+                if (mask === KMask.ctrl) {
+                    this.setselection(0, this.items.length - 1);
+                    this.repaint();
+                }
+                break;
+            case 67: // C
+                if (mask === KMask.ctrl) {
+                    // this.setselection()
+                    let metadbs = this.getSelectedMetadbs();
+                    fb.CopyHandleListToClipboard(metadbs);
+                }
+                break;
         }
     }
 

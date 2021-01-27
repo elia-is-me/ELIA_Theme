@@ -27,7 +27,7 @@ export const themeColors = {
 
     // playlist,
     playlistBackground: RGB(24, 24, 24),
-    playlistBackgroundSelection: RGBA(255, 255, 255, 17),
+    playlistBackgroundSelection: RGBA(255, 255, 255, 52),
     playlistSplitLine: RGBA(255, 255, 255, 15),
 
     // scrollbar,

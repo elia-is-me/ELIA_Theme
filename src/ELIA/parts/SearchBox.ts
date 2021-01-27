@@ -5,7 +5,7 @@
 import { Component } from "../common/BasePart";
 import { InputBox } from "../common/Inputbox";
 import { IconButton } from "./Buttons";
-import { scale, RGB } from "../common/common";
+import { scale, RGB, setAlpha } from "../common/common";
 import { Material, } from "../common/Icon";
 import { GdiFont, themeColors } from "./Theme";
 import { notifyOthers } from "../common/UserInterface";
@@ -66,8 +66,8 @@ export class SearchBox extends Component {
 			font: GdiFont("normal,14"),
 			foreColor: themeColors.text,
 			backgroundColor: this.backgroundColor,
-			backgroundActiveColor: this.backgroundActiveColor,
-			backgroundSelectionColor: RGB(180, 180, 180),
+			backgroundActiveColor: this.backgroundColor,
+			backgroundSelectionColor: RGB(28, 98, 185),
 			empty_text: lang("Library Search"),
 			func: () => {
 				this.handleSearch();
@@ -112,32 +112,34 @@ export class SearchBox extends Component {
 	on_size() {
 		const { searchBtn, clearBtn, inputbox } = this;
 		const { iconHeight } = this;
+		const searchIconWidth = scale(56);
 
 		let btnY = this.y + this.height - iconHeight;
-		let marginLeft = scale(8);
 
-		searchBtn.setBoundary(this.x + marginLeft, btnY, iconHeight, iconHeight);
+		searchBtn.setBoundary(this.x, btnY, searchIconWidth, iconHeight);
 		clearBtn.setBoundary(
-			this.x + this.width - marginLeft - iconHeight,
+			this.x + this.width - iconHeight,
 			btnY,
 			iconHeight,
 			iconHeight
 		);
 
 		let inputboxY = this.y + (((this.height - this._inputboxHeight) / 2) | 0);
+		let inputboxWidth = this.width - searchIconWidth - iconHeight;
 		inputbox.setBoundary(
-			searchBtn.x + searchBtn.width,
+			this.x + searchIconWidth,
 			inputboxY,
-			clearBtn.x - searchBtn.x - searchBtn.width,
+			inputboxWidth,
 			this._inputboxHeight
 		);
+
 	}
 
 	on_paint(gr: IGdiGraphics) {
+		gr.FillSolidRect(this.x, this.y, this.width, this.height, this.backgroundColor);
+		gr.DrawRect(this.x, this.y, this.width - scale(1), this.height - scale(1), scale(1), themeColors.playlistSplitLine);
 		if (this.inputbox.edit) {
-			gr.FillSolidRect(this.x, this.y, this.width, this.height, this.backgroundActiveColor);
-		} else {
-			gr.FillSolidRect(this.x, this.y, this.width, this.height, this.backgroundColor);
+			gr.DrawRect(this.x, this.y, this.width, this.height - scale(1), scale(1), RGB(28, 98, 185));
 		}
 
 		let prevState = this.clearBtn.visible;

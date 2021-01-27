@@ -2,7 +2,7 @@
 // Simple Playlist View
 //====================================
 
-import { TextRenderingHint, MenuFlag, VKeyCode, KMask, scale, RGB } from "../common/common";
+import { TextRenderingHint, MenuFlag, VKeyCode, KMask, scale, RGB, SmoothingMode, CursorName } from "../common/common";
 import { StringTrimming, StringFormatFlags, MeasureString, StringFormat, spaceStart, spaceStartEnd } from "../common/String";
 import { ThrottledRepaint } from "../common/common";
 import { scrollbarWidth, themeColors, GdiFont } from "./Theme";
@@ -747,7 +747,7 @@ export class PlaylistView extends ScrollView {
 				 * Draw tracknumber | playing icon;
 				 */
 				if (this.playingItemIndex === itemIndex) {
-					let iconCode = fb.IsPaused ? Material.volume : Material.volume_mute;
+					let iconCode = fb.IsPaused ? Material.volume_mute : Material.volume;
 					gr.SetTextRenderingHint(TextRenderingHint.AntiAlias);
 					gr.DrawString(iconCode, iconFont_list, highlightColor,
 						tracknumber.x, row.y, tracknumber.width, row.height, StringFormat.Center);
@@ -798,7 +798,7 @@ export class PlaylistView extends ScrollView {
 		// draw drag insert position indication line;
 		if (this.trace(mouseCursor.x, mouseCursor.y) && mouseCursor.y >= this.y && mouseCursor.y <= this.y + this.height) {
 			if (dnd.isActive && dnd.dropTargetRowIndex > -1) {
-				const lineY = this.y + this.header.height + dnd.dropTargetRowIndex * rowHeight - this.scroll;
+				const lineY = this.y + this.header.height + listheaderHeight + dnd.dropTargetRowIndex * rowHeight - this.scroll;
 				gr.DrawLine(this.x + paddingLR, lineY, this.x + this.width - paddingLR, lineY, scale(2), RGB(127, 127, 127));
 			}
 		}
@@ -818,6 +818,37 @@ export class PlaylistView extends ScrollView {
 		}
 
 		gr.FillGradRect(this.x, this.y, this.width, scale(40), 90, themeColors.topbarBackground, 0, 1.0);
+	}
+
+	drawTooltipImage() {
+		let selectedItems = this.items.filter(i => i.isselect);
+		if (selectedItems.length === 0) {
+			return;
+		}
+		let text = "";
+		if (selectedItems.length === 1) {
+			let item = selectedItems[0];
+			text = `${item.rowIndex + 1}. ${item.title}`
+			if (item.artist) {
+				text += ` \u2022 ${item.artist}`;
+			}
+		} else {
+			text = selectedItems.length + spaceStart(lang("tracks"));
+		}
+		let font = semiItemFont;
+		let imgwidth = Math.min(scale(200), MeasureString(text, font).Width + scale(16));
+		let imgheight = scale(36);
+		let img = gdi.CreateImage(imgwidth, imgheight);
+		let g = img.GetGraphics();
+
+		g.SetSmoothingMode(SmoothingMode.AntiAlias);
+		g.FillRoundRect(0, 0, img.Width - scale(1), img.Height - scale(1), scale(2), scale(2), 0xf0ffffff);
+		g.SetTextRenderingHint(TextRenderingHint.AntiAlias);
+		g.DrawString(text, font, 0xff000000, scale(8), 0, img.Width, img.Height, StringFormat.LeftCenter);
+
+		img.ReleaseGraphics(g);
+
+		return img;
 	}
 
 	on_playlists_changed() {
@@ -1107,7 +1138,7 @@ export class PlaylistView extends ScrollView {
 				const padRight = paddingLR;
 				const rowHeigt = this.rowHeight;
 				if (!((selecting.pageX1 < padLeft && selecting.pageX2 < padLeft) || (selecting.pageX1 > this.width - padRight && selecting.pageX2 > this.width - padRight))) {
-					let topOffset = headerHeight + listheaderHeight;
+					let topOffset = this.header.height + listheaderHeight;
 					first = Math.floor((selecting.pageY1 - topOffset) / rowHeigt);
 					last = Math.floor((selecting.pageY2 - topOffset) / rowHeigt);
 				}
@@ -1208,6 +1239,10 @@ export class PlaylistView extends ScrollView {
 			if (this.clickOnSelection) {
 				//
 				dnd.isActive = true;
+				let cursorimg = this.drawTooltipImage();
+				ui.setCursorImage(cursorimg);
+				window.SetCursor(this.trace(x, y) ? CursorName.IDC_HELP : CursorName.IDC_NO);
+				this.repaint();
 			}
 		}
 
@@ -1292,6 +1327,9 @@ export class PlaylistView extends ScrollView {
 		dnd.isActive = false;
 		dnd.dropTargetRowIndex = -1;
 
+		ui.setCursorImage(null);
+		window.SetCursor(CursorName.IDC_ARROW);
+
 		this.repaint();
 	}
 
@@ -1367,7 +1405,9 @@ export class PlaylistView extends ScrollView {
 						this.repaint();
 					}).bind(this);
 					if (this.items.length > 0) {
-						// let scrollstep =
+						// // let scrollstep =
+						// let _itemCount = ((this.scroll - this.height - headerHeight - listheaderHeight) / rowHeight) >> 0;
+						// let _scrollpos = (this.y)
 						this.scrollTo(this.scroll - this.height, onpageupstop);
 					}
 					break;
@@ -1424,6 +1464,12 @@ export class PlaylistView extends ScrollView {
 	}
 
 	on_key_up(vkey?: number) { }
+
+	on_playlist_item_ensure_visible(playlistIndex: number, playlistItemIndex: number) {
+		// if (playlistIndex === plman.ActivePlaylist) {
+		// 	this.showNowPlaying();
+		// }
+	}
 }
 
 export function showTrackContextMenu(playlistIndex: number, metadbs: IFbMetadbList, x: number, y: number) {

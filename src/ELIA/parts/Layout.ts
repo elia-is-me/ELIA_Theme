@@ -219,6 +219,14 @@ export class Layout extends Component {
 
 	on_paint(gr: IGdiGraphics) { }
 
+	on_key_down(vkey: number, mask?: number) {
+		// if (this.topbar.searchBox.inputbox.edit || this.inputPopupPanel.inputbox.edit) {
+		// } else {
+
+
+		// }
+	}
+
 	onNotifyData(message: string, data?: any) {
 		switch (message) {
 			case "Toggle.PlaylistManager":
