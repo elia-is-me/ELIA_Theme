@@ -229,14 +229,17 @@ export class SearchResultView extends ScrollView {
 	titleText: string = "";
 	metadbs: IFbMetadbList;
 	items: PlaylistViewItem[] = [];
-	visibleItems: PlaylistViewItem[] = [];
-	itemsTotalHeight: number;
-	_selectedIndexes: number[] = [];
+	private visibleItems: PlaylistViewItem[] = [];
+	private itemsTotalHeight: number;
+	private _selectedIndexes: number[] = [];
 
-	hoverIndex: number = -1;
-	focusIndex: number = -1;
-	playingIndex: number = -1;
-	selectedIndexes: number[] = [];
+	private hoverIndex: number = -1;
+	private focusIndex: number = -1;
+	private playingIndex: number = -1;
+	private selectedIndexes: number[] = [];
+	private clickedMoodId: number = -1;
+	private multiSelStartId: number = -1;
+	private clickSel: boolean = false;
 
 	scrollbar: Scrollbar;
 	headerView: SearchHeaderView;
@@ -313,7 +316,6 @@ export class SearchResultView extends ScrollView {
 		// ----
 		let resultItems: PlaylistViewItem[] = [];
 		let resultCount = metadbs.Count;
-		// let rowHeight = rowHeight;
 		let itemYOffset = 0;
 		this._selectedIndexes = [];
 
@@ -450,6 +452,8 @@ export class SearchResultView extends ScrollView {
 		let mood = _columnsMap.get("mood");
 		let duration = _columnsMap.get("time");
 
+		let isfocuspart = ui.isFocusPart(this);
+
 		// headerView;
 		this.headerView.setPosition(null, this.y - this.scroll);
 
@@ -512,7 +516,7 @@ export class SearchResultView extends ScrollView {
 				}
 
 				// focused rectangle;
-				if (this.focusIndex === i) {
+				if (isfocuspart && this.focusIndex === i) {
 					gr.DrawRect(rowItem.x, rowItem.y, rowItem.width - 1, rowItem.height - 1, scale(1), RGB(127, 127, 127));
 				}
 
@@ -641,8 +645,7 @@ export class SearchResultView extends ScrollView {
 
 		if (hoverItem != null) {
 			let queue = plman.FindOrCreatePlaylist(lang("Queue"), true);
-			let metadbs = this.metadbs;//plman.GetPlaylistItems(queue);
-			// let findResult = metadbs.Find(hoverItem.metadb);
+			let metadbs = this.metadbs;
 
 			plman.ActivePlaylist = queue;
 
@@ -650,20 +653,9 @@ export class SearchResultView extends ScrollView {
 			plman.ClearPlaylist(queue);
 			plman.InsertPlaylistItems(queue, 0, metadbs);
 			plman.ExecutePlaylistDefaultAction(queue, hoverItem.rowIndex);
-
-			// if (findResult > -1) {
-			// 	plman.ExecutePlaylistDefaultAction(queue, findResult);
-			// } else {
-			// 	let prevCount = plman.PlaylistItemCount(queue);
-			// 	plman.InsertPlaylistItems(queue, prevCount, new FbMetadbHandleList(hoverItem.metadb));
-			// 	plman.ExecutePlaylistDefaultAction(queue, prevCount);
-			// }
 		}
 	}
 
-	clickedMoodId: number = -1;
-	multiSelStartId: number = -1;
-	clickSel: boolean = false;
 
 	on_mouse_lbtn_down(x: number, y: number) {
 		let hoverItem = this.findHoverItem(x, y);
@@ -880,6 +872,14 @@ export class SearchResultView extends ScrollView {
 	on_library_items_added() { }
 
 	on_library_items_changed() { }
+
+	on_focus(is_focused?: boolean) {
+		this.repaint();
+	}
+
+	on_change_focus() {
+		this.repaint();
+	}
 
 }
 

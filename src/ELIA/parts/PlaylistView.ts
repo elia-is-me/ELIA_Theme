@@ -2,7 +2,7 @@
 // Simple Playlist View
 //====================================
 
-import { TextRenderingHint, MenuFlag, VKeyCode, KMask, scale, RGB, SmoothingMode, CursorName } from "../common/common";
+import { TextRenderingHint, MenuFlag, VKeyCode, KMask, scale, RGB, SmoothingMode, CursorName, throttle } from "../common/common";
 import { StringTrimming, StringFormatFlags, MeasureString, StringFormat, spaceStart, spaceStartEnd } from "../common/String";
 import { ThrottledRepaint } from "../common/common";
 import { scrollbarWidth, themeColors, GdiFont } from "./Theme";
@@ -210,6 +210,7 @@ class PlaylistHeaderView extends Component {
 			showSortPlaylistMenu(plman.ActivePlaylist, x, y);
 		}
 		this.addChild(this.sortBtn);
+
 	}
 
 	/**
@@ -384,6 +385,7 @@ class PlaylistViewItem extends Component {
 	// state
 	isselect: boolean = false;
 
+
 	constructor() { super({}) };
 
 	getTags() {
@@ -420,6 +422,7 @@ export class PlaylistView extends ScrollView {
 	multiSelectionStartId = -1;
 	clickedMoodId: number = -1;
 	rowHeight: number = rowHeight;
+	droprect: Component;
 
 	constructor() {
 		super({});
@@ -451,6 +454,15 @@ export class PlaylistView extends ScrollView {
 		this._columns.set("album", new PlaylistColumn());
 		this._columns.set("mood", new PlaylistColumn());
 		this._columns.set("time", new PlaylistColumn());
+
+		this.droprect = new Component({})
+		this.droprect.on_paint = (gr: IGdiGraphics) => {
+			gr.DrawRect(this.x, this.y, this.width - scale(2), this.height - scale(2), scale(2), playlistColors.highlight & 0xa0ffffff);
+		}
+
+		this.droprect.z = 1000;
+		this.droprect.visible = false;
+		this.addChild(this.droprect);
 	}
 
 	private getActiveMoodId(x: number, y: number): number {
@@ -495,7 +507,7 @@ export class PlaylistView extends ScrollView {
 			itemYOffset += rowItem.height;
 		}
 		this.items = playlistItems;
-		this._itemsTotalHeight = rowHeight * playlistItems.length + scale(32);
+		this._itemsTotalHeight = rowHeight * playlistItems.length + rowHeight;
 		this.totalHeight = this._itemsTotalHeight + this.header.height + listheaderHeight;
 		this.scroll = this.checkscroll(this.scroll);
 
@@ -1354,6 +1366,49 @@ export class PlaylistView extends ScrollView {
 		}
 	}
 
+	on_drag_over(action: IDropTargetAction, x: number, y: number) {
+		if (this.trace(x, y)) {
+			if (!plman.IsPlaylistLocked(plman.ActivePlaylist)) {
+				this.droprect.visible = true;
+				this.droprect.setBoundary(this.x, this.y, this.width, this.height);
+				action.Effect = 1;
+			} else {
+				this.droprect.visible = false;
+				action.Effect = 0;
+			}
+		} else {
+			this.droprect.visible = false;
+		}
+		ThrottledRepaint();
+	}
+
+	on_drag_drop(action: IDropTargetAction, x: number, y: number) {
+		if (this.trace(x, y)) {
+			if (!plman.IsPlaylistLocked(plman.ActivePlaylist)) {
+				plman.ClearPlaylistSelection(plman.ActivePlaylist);
+				action.Playlist = plman.ActivePlaylist;
+				action.Base = plman.PlaylistItemCount(plman.ActivePlaylist);
+				action.ToSelect = true;
+				action.Effect = 1;
+			} else {
+				action.Effect = 0;
+			}
+		} else {
+			//
+		}
+		setTimeout(() => {
+			this.scrollTo(this.totalHeight);
+		}, 1);
+		this.droprect.visible = false;
+		this.repaint();
+	}
+
+	on_drag_leave() {
+		this.droprect.visible = false;
+		this.repaint();
+	}
+
+
 	on_mouse_rbtn_up(x: number, y: number) {
 		try {
 			showTrackContextMenu(plman.ActivePlaylist, plman.GetPlaylistSelectedItems(plman.ActivePlaylist), x, y);
@@ -1480,6 +1535,14 @@ export class PlaylistView extends ScrollView {
 		// if (playlistIndex === plman.ActivePlaylist) {
 		// 	this.showNowPlaying();
 		// }
+	}
+
+	onNotifyData(message: string, data: any) {
+		switch (message) {
+			case "Playlist.Scroll End":
+				this.scrollTo(this.totalHeight);
+				break;
+		}
 	}
 }
 

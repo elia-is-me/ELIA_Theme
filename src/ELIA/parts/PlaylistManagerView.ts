@@ -10,8 +10,8 @@ import { scrollbarWidth, themeColors, fonts, GdiFont } from "./Theme";
 import { Clickable } from "../common/Button";
 import { isValidPlaylist } from "./PlaylistView";
 import { IInputPopupOptions } from "./InputPopupPanel";
-import { dndMask, mouseCursor, notifyOthers, ui } from "../common/UserInterface";
-import { CreatePlaylistPopup, DeletePlaylistDialog, layout, RenamePlaylist } from "./Layout";
+import { mouseCursor, notifyOthers, ui } from "../common/UserInterface";
+import { CreatePlaylistPopup, DeletePlaylistDialog, GotoPlaylist, layout, RenamePlaylist } from "./Layout";
 import { lang } from "./Lang";
 import { StringFormat, spaceStart } from "../common/String";
 import { root } from "../main";
@@ -20,20 +20,16 @@ const ui_textRendering = ui.textRender;
 let iconFont = gdi.Font(MaterialFont, scale(20));
 let smallIconFont = GdiFont(MaterialFont, scale(18));
 
-// type IconSets = "volume" | "gear" | "queue_music" | "playing" | "pause";
+let droprectangle = new Component({});
+droprectangle.visible = false;
+droprectangle.on_paint = function (gr: IGdiGraphics) {
+	gr.DrawRect(this.x, this.y, this.width - scale(2), this.height - scale(2), scale(2), themeColors.highlight & 0xa0ffffff);
+}
 
-// const icons: { [keys in IconSets]: IconObject } = {
-// 	volume: new IconObject(Material.volume, MaterialFont, scale(20)),
-// 	gear: new IconObject(Material.gear, MaterialFont, scale(20)),
-// 	queue_music: new IconObject(Material.queue_music, MaterialFont, scale(20)),
-// 	playing: new IconObject(Material.volume, MaterialFont, scale(16)),
-// 	pause: new IconObject(Material.volume_mute, MaterialFont, scale(16))
-// };
 
 interface IPlaylistManagerProps {
 	itemFont: IGdiFont;
 	rowHeight: number;
-	// icons: { [keys in IconSets]: IconObject };
 }
 
 export const PlmanProperties = {
@@ -46,7 +42,6 @@ export const PlmanProperties = {
 
 class AddPlaylistButton extends Clickable {
 	private textFont = PlmanProperties.itemFont;
-	// private addIcon = new IconObject(Material.circle_add, MaterialFont, scale(20))
 	private text = lang("Create Playlist");
 	private colors = [themeColors.sidebarInactiveText, themeColors.text, setAlpha(themeColors.text, 127)];
 
@@ -59,7 +54,6 @@ class AddPlaylistButton extends Clickable {
 		let iconWidth = scale(20);
 		let paddingL = scale(16);
 
-		// this.addIcon.draw(gr, color, this.x + paddingL, this.y, iconWidth, this.height, StringFormat.Center);
 		gr.SetTextRenderingHint(TextRenderingHint.AntiAlias);
 		gr.DrawString(Material.circle_add, iconFont, color,
 			this.x + paddingL, this.y, iconWidth, this.height, StringFormat.Center);
@@ -72,15 +66,6 @@ class AddPlaylistButton extends Clickable {
 	}
 
 	on_click() {
-		// notifyOthers("Popup.InputPopupPanel", {
-		// 	title: lang("Create playlist"),
-		// 	onSuccess(text: string) {
-		// 		let playlistIndex = plman.CreatePlaylist(plman.PlaylistCount, text);
-		// 		if (isValidPlaylist(playlistIndex)) {
-		// 			plman.ActivePlaylist = playlistIndex;
-		// 		}
-		// 	}
-		// })
 		CreatePlaylistPopup();
 	}
 }
@@ -132,15 +117,9 @@ class PlmanItem {
 export class PlaylistManagerView extends ScrollView implements IPlaylistManagerProps {
 	scrollbar: Scrollbar;
 	header: PlmanHeader;
-	// icons: {
-	// 	volume: IconObject;
-	// 	gear: IconObject;
-	// 	queue_music: IconObject;
-	// 	playing: IconObject;
-	// 	pause: IconObject;
-	// };
 
 	items: PlmanItem[] = [];
+	visibleItems: PlmanItem[] = [];
 	rowHeight: number;
 	itemFont: IGdiFont;
 	minWidth: number = scale(256);
@@ -178,6 +157,9 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 
 		this.header = new PlmanHeader();
 		this.addChild(this.header);
+
+		this.addChild(droprectangle);
+		droprectangle.z = 10;
 	}
 
 	initList() {
@@ -236,6 +218,8 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 		// draw background
 		gr.FillSolidRect(this.x, this.y, this.width, this.height, themeColors.sidebarBackground);
 
+		this.visibleItems.length = 0;
+
 		// draw items;
 		for (let i = 0, len = items_.length; i < len; i++) {
 			let rowItem = items_[i];
@@ -245,6 +229,9 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 
 			// items in visible area;
 			if (rowItem.y + rowHeight >= this.y + headerHeight && rowItem.y < this.y + this.height) {
+
+				this.visibleItems.push(rowItem);
+
 				let isActive = rowItem.index === plman.ActivePlaylist && playlistVisible;
 				let textColor = (((i === this.hoverIndex) || isActive) ? themeColors.text : themeColors.sidebarInactiveText);
 
@@ -280,6 +267,7 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 			let lineY = this.y + this.header.height + this.dragdrop.targetIndex * this.rowHeight - this.scroll;
 			gr.DrawLine(this.x, lineY, this.x + this.width, lineY, this.dragdrop.lineWidth, themeColors.highlight);
 		}
+
 	}
 
 	createItemImage(itemIndex: number) {
@@ -437,12 +425,6 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 	}
 
 	on_mouse_rbtn_down(x: number, y: number) {
-		// this.dragSourceId = -1;
-		// this.dragTargetId = -1;
-		// if (this.dragTimer > -1) {
-		// 	window.ClearInterval(this.dragTimer);
-		// 	this.dragTimer = -1;
-		// }
 		if (!this.dragdrop.isDrag) {
 			let hoverId_ = this.getHoverId(x, y);
 
@@ -454,15 +436,6 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 	}
 
 	on_mouse_rbtn_up(x: number, y: number) {
-		// this.hoverIndex = this.getHoverId(x, y);
-
-		// // handle right click;
-		// if (isValidPlaylist(this.hoverIndex)) {
-		// 	this.showContextMenu(this.hoverIndex, x, y);
-		// } else {
-		// }
-
-		// this.repaint();
 		if (!this.dragdrop.isDrag) {
 			this.hoverIndex = this.getHoverId(x, y);
 
@@ -481,57 +454,97 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 	}
 
 	on_drag_enter(action: IDropTargetAction, x: number, y: number) {
-		// dndMask.visible = true;
-
-		// let hoverIndex = this.getHoverId(x, y);
-		// let hoverItem = this.items[hoverIndex];
-		// let addBtn = this.header.addPlaylistBtn;
-
-		// if (hoverIndex > -1) {
-		// 	dndMask.setBoundary(hoverItem.x, hoverItem.y, hoverItem.width, hoverItem.height);
-		// } else if (addBtn.trace(x, y)) {
-		// 	dndMask.setBoundary(addBtn.x, addBtn.y, addBtn.width, addBtn.height);
-		// } else {
-		// 	dndMask.setBoundary(this.x, this.y, this.width, this.height);
-		// }
-		// window.Repaint();
 	}
 
 	on_drag_over(action: IDropTargetAction, x: number, y: number) {
-		// // action.Effect = DropEffect.;
-		// action.Text = "TEST ING";
-		// let hoverIndex = this.getHoverId(x, y);
-		// let hoverItem = this.items[hoverIndex];
-		// let addBtn = this.header.addPlaylistBtn;
-
-		// if (hoverIndex > -1) {
-		// 	dndMask.setBoundary(hoverItem.x, hoverItem.y, hoverItem.width, hoverItem.height);
-		// } else if (addBtn.trace(x, y)) {
-		// 	dndMask.setBoundary(addBtn.x, addBtn.y, addBtn.width, addBtn.height);
-		// } else {
-		// 	dndMask.setBoundary(this.x, this.y, this.width, this.height);
-		// }
-		// window.Repaint();
+		// drag over crate playlist btn;
+		if (this.header.addPlaylistBtn.trace(x, y)) {
+			droprectangle.visible = true;
+			let addPlaylistBtn = this.header.addPlaylistBtn;
+			droprectangle.setBoundary(addPlaylistBtn.x, addPlaylistBtn.y, addPlaylistBtn.width, addPlaylistBtn.height);
+			action.Effect = 1;
+		} else if (this.trace(x, y)) {
+			let hoveritem = this.items.find(item => item.trace(x, y) && item.y >= this.header.y + this.header.height && item.y + item.height < this.y + this.height);
+			if (this.totalHeight > this.height) {
+				if (y < this.header.y + this.header.height + this.rowHeight * 1) {
+					this.scroll -= this.rowHeight;
+					this.repaint();
+				} else if (y > this.y + this.height - this.rowHeight) {
+					this.scroll += this.rowHeight;
+					this.repaint();
+				}
+			}
+			if (hoveritem) {
+				let playlistIndex = hoveritem.index;
+				if (!plman.IsPlaylistLocked(playlistIndex)) {
+					droprectangle.visible = true;
+					droprectangle.setBoundary(hoveritem.x, hoveritem.y, hoveritem.width, hoveritem.height);
+					action.Effect = 1;
+				} else {
+					droprectangle.visible = false;
+					action.Effect = 0;
+				};
+			} else {
+				droprectangle.visible = false;
+				action.Effect = 0;
+			}
+		} else {
+			droprectangle.visible = false;
+		}
+		ThrottledRepaint();
 	}
 
 	on_drag_leave() {
-		dndMask.visible = false;
+		// dndMask.visible = false;
+		droprectangle.visible = false;
 		window.Repaint();
-
 	}
 
 	on_drag_drop(action: IDropTargetAction, x: number, y: number) {
-		console.log("handle on_drag_drop()")
+		let { addPlaylistBtn } = this.header;
 
-		// let currentPlaylist = plman.ActivePlaylist;
-
-		// let playlistIndex = plman.CreatePlaylist(plman.PlaylistCount, "");
-		// plman.ActivePlaylist = playlistIndex;
-
-		// action.Playlist = playlistIndex;
-		// action.Base = 0;
-		// action.ToSelect = false;
-		// window.Repaint();
+		if (addPlaylistBtn.trace(x, y)) {
+			let created = plman.CreatePlaylist(plman.PlaylistCount, "");
+			plman.ActivePlaylist = created;
+			action.Playlist = created;
+			action.Base = 0;
+			action.ToSelect = true;
+			action.Effect = 1;
+			GotoPlaylist();
+			RenamePlaylist(created);
+			// droprectangle.visible = false;
+			// this.repaint();
+		} else if (this.trace(x, y)) {
+			let hoveritem = this.items.find(item => item.trace(x, y) && item.y >= this.header.y + this.header.height && item.y + item.height < this.y + this.height);
+			if (hoveritem) {
+				let playlistIndex = hoveritem.index;
+				if (!plman.IsPlaylistLocked(playlistIndex)) {
+					plman.ClearPlaylistSelection(playlistIndex);
+					action.Playlist = playlistIndex;
+					action.Base = plman.PlaylistItemCount(playlistIndex);
+					action.ToSelect = true;
+					action.Effect = 1;
+					// droprectangle.visible = false;
+					GotoPlaylist();
+					setTimeout(() => {
+						notifyOthers("Playlist.Scroll End");
+					}, 5);
+					// this.repaint();
+				} else {
+					// droprectangle.visible = false;
+					// this.repaint();
+				}
+			} else {
+				// droprectangle.visible = false;
+				action.Effect = 0;
+				// this.repaint();
+			}
+		} else {
+			// droprectangle.visible = false;
+			// this.repaint();
+		}
+		droprectangle.visible = false;
+		this.repaint();
 	}
 
 

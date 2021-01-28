@@ -63,7 +63,7 @@ export interface IInjectableCallbacks {
 	[ke: string]: Function
 }
 
-export abstract class Component implements IBoxModel, ICallbacks {
+export class Component implements IBoxModel, ICallbacks {
 	readonly cid: number = getCid();
 	readonly __is_component__ = "__is_component__";
 	private _visible: boolean = true;

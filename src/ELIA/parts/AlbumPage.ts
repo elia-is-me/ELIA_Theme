@@ -527,6 +527,8 @@ export class AlbumPageView extends ScrollView {
         let rowX = this.x + paddingLR;
         let rowWidth = this.width - 2 * paddingLR;
         let listOffsetToTop = headerHeight + listHeaderHeight;
+        let isfocuspart = ui.isFocusPart(this);
+        console.log(isfocuspart);
 
         let tracknumber = this.columns.get("tracknumber");
         let liked = this.columns.get("liked");
@@ -583,11 +585,9 @@ export class AlbumPageView extends ScrollView {
                     _textSecondaryColor = textSelectionColor;
                 }
 
-                if (this.focusIndex === i) {
+                if (isfocuspart && this.focusIndex === i) {
                     gr.DrawRect(row.x, row.y, row.width - 1, row.height - 1, scale(1), RGB(127, 127, 127));
                 }
-
-
 
                 // split line;
                 let lineY = row.y + row.height - 1;
@@ -996,6 +996,14 @@ export class AlbumPageView extends ScrollView {
     }
 
     on_playback_pause() {
+        this.repaint();
+    }
+
+    on_focus(is_focused: boolean) {
+        this.repaint();
+    }
+
+    on_change_focus() {
         this.repaint();
     }
 

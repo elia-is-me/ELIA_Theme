@@ -1,5 +1,7 @@
 import { GetKeyboardMask, isFunction, KMask, lastIndex, RGBA, scale, TextRenderingHint, VKeyCode } from "./common";
 import { Component, IBoxModel } from "./BasePart";
+import { root } from "../main";
+// import { root } from "../main";
 
 let partlist: Component[] = [];
 let vis_parts: Component[] = [];
@@ -63,7 +65,7 @@ function _getHoverPart(root: Component, x: number, y: number): Component {
 	return visibleParts[resultIndex];
 }
 
-function invoke(part: Component, method: string, ...args: any) {
+export function invoke(part: Component, method: string, ...args: any) {
 	if (!part) return;
 	let func = (part as any)[method];
 	if (func == null) {
@@ -435,37 +437,41 @@ function findDropTargetPart(x: number, y: number) {
 let dropTargetPart: Component = null;
 
 function on_drag_enter(action: IDropTargetAction, x: number, y: number) {
-	console.log("on_drag_enter, ", new Date());
-	dropTargetPart = findDropTargetPart(x, y);
-	if (dropTargetPart) {
-		invoke(dropTargetPart, "on_drag_enter", action, x, y);
-	}
+	// console.log("on_drag_enter, ", new Date());
+	// dropTargetPart = findDropTargetPart(x, y);
+	// if (dropTargetPart) {
+	// 	invoke(dropTargetPart, "on_drag_enter", action, x, y);
+	// }
+	invoke(rootPart, "on_drag_enter", action, x, y);
 }
 
 function on_drag_leave() {
-	console.log("on_drag_leave", new Date());
-	if (dropTargetPart) {
-		invoke(dropTargetPart, "on_drag_leave");
-	}
-	dropTargetPart = undefined;
+	// console.log("on_drag_leave", new Date());
+	// if (dropTargetPart) {
+	// 	invoke(dropTargetPart, "on_drag_leave");
+	// }
+	// dropTargetPart = undefined;
+	invoke(rootPart, "on_drag_leave");
 }
 
 function on_drag_over(action: IDropTargetAction, x: number, y: number) {
-	let prevDropTargetPart = dropTargetPart;
-	dropTargetPart = findDropTargetPart(x, y);
-	if (!compareParts(prevDropTargetPart, dropTargetPart)) {
-		invoke(prevDropTargetPart, "on_drag_leave");
-		invoke(dropTargetPart, "on_drag_enter", action, x, y);
-	}
-	invoke(dropTargetPart, "on_drag_over", action, x, y);
+	// let prevDropTargetPart = dropTargetPart;
+	// dropTargetPart = findDropTargetPart(x, y);
+	// if (!compareParts(prevDropTargetPart, dropTargetPart)) {
+	// 	invoke(prevDropTargetPart, "on_drag_leave");
+	// 	invoke(dropTargetPart, "on_drag_enter", action, x, y);
+	// }
+	// invoke(dropTargetPart, "on_drag_over", action, x, y);
+	invoke(rootPart, "on_drag_over", action, x, y);
 }
 
 function on_drag_drop(action: IDropTargetAction, x: number, y: number) {
-	dropTargetPart = findDropTargetPart(x, y);
-	if (dropTargetPart) {
-		invoke(dropTargetPart, "on_drag_drop", action, x, y);
-		dropTargetPart = undefined;
-	}
+	// dropTargetPart = findDropTargetPart(x, y);
+	// if (dropTargetPart) {
+	// 	invoke(dropTargetPart, "on_drag_drop", action, x, y);
+	// 	dropTargetPart = undefined;
+	// }
+	invoke(rootPart, "on_drag_drop", action, x, y);
 }
 
 function on_playback_order_changed(newOrder: number) {
@@ -567,7 +573,6 @@ function invoke_recur(part: Component, method: string, ...args: any) {
 	}
 
 	invoke(part, method, ...args);
-
 }
 
 

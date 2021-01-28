@@ -13,6 +13,7 @@ export const enum ButtonStates {
 
 export class Clickable extends Component {
 	state: ButtonStates = ButtonStates.Normal;
+	grabFocus = false;
 
 	/**
 	 * changeState(state) will not change a disabled button's state;

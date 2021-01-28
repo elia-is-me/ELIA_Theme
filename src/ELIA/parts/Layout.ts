@@ -11,7 +11,7 @@ import { SearchResultView } from "./SearchResultView";
 import { SettingsView } from "./SettingsView";
 import { lang } from "./Lang";
 import { PlaybackBarMenu } from "./PlaybackBarMenu";
-import { scrollbarWidth } from "./Theme";
+import { fontNameNormal, scrollbarWidth } from "./Theme";
 import { ArtistPageView } from "./ArtistPage";
 import { AlbumPageView } from "./AlbumPage";
 
@@ -221,12 +221,42 @@ export class Layout extends Component {
 
 	on_paint(gr: IGdiGraphics) { }
 
-	on_key_down(vkey: number, mask?: number) {
-		// if (this.topbar.searchBox.inputbox.edit || this.inputPopupPanel.inputbox.edit) {
-		// } else {
+	on_key_down(vkey: number, mask?: number) { }
 
+	on_drag_enter(action: IDropTargetAction, x: number, y: number) {
 
-		// }
+	}
+
+	on_drag_leave() {
+		this.playlistManager.on_drag_leave();
+		this.playlistView.on_drag_leave();
+	}
+
+	on_drag_over(action: IDropTargetAction, x: number, y: number) {
+		let { playlistView, playlistManager } = this;
+
+		if (playlistView.trace(x, y)) {
+			playlistManager.on_drag_leave();
+			playlistView.on_drag_over(action, x, y);
+		} else if (playlistManager.trace(x, y)) {
+			playlistView.on_drag_leave();
+			playlistManager.on_drag_over(action, x, y);
+		} else {
+			action.Effect = 0;
+			playlistManager.on_drag_leave();
+			playlistView.on_drag_leave();
+		}
+	}
+
+	on_drag_drop(action: IDropTargetAction, x: number, y: number) {
+		let { playlistView, playlistManager } = this;
+		if (playlistManager.trace(x, y)) {
+			playlistManager["on_drag_drop"] && playlistManager.on_drag_drop(action, x, y);
+		} else if (playlistView.trace(x, y)) {
+			playlistView["on_drag_drop"] && playlistView.on_drag_drop(action, x, y);
+		} else {
+			action.Effect = 0;
+		}
 	}
 
 	onNotifyData(message: string, data?: any) {
@@ -420,4 +450,11 @@ export function GoToArtist(artistName: string) {
  */
 export function GoToAlbum(albumName: string) {
 	notifyOthers("Show.AlbumPage", albumName);
+}
+
+export function GotoPlaylist(playlistIndex?: number) {
+	if (isValidPlaylist(playlistIndex)) {
+		plman.ActivePlaylist = playlistIndex;
+	}
+	notifyOthers("Show.Playlist")
 }
