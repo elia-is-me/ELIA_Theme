@@ -178,7 +178,7 @@ class AlbumHeaderView extends Component {
         });
         sort.on_click = (x: number, y: number) => { }
         this.buttons.set("sort", sort);
-        this.addChild(sort);
+        // this.addChild(sort);
 
         let context = new Button({
             style: "text",
@@ -187,7 +187,7 @@ class AlbumHeaderView extends Component {
             foreColor: buttonColors.secondary
         });
         this.buttons.set("context", context);
-        this.addChild(context);
+        // this.addChild(context);
     }
 
     on_size() {
@@ -449,9 +449,9 @@ export class AlbumPageView extends ScrollView {
         if (this.width >= pageWidth.wide) {
             ratio = 0.7;
         } else if (this.width <= pageWidth.thin) {
-            ratio = 0.9;
+            ratio = 0.87;
         } else {
-            ratio = 0.7 + 0.2 * easeOutCubic((pageWidth.wide - this.width) / (pageWidth.wide - pageWidth.thin));
+            ratio = 0.7 + 0.13 * easeOutCubic((pageWidth.wide - this.width) / (pageWidth.wide - pageWidth.thin));
         }
 
         let titleWidth = (whitespace * ratio) >> 0;
@@ -474,6 +474,9 @@ export class AlbumPageView extends ScrollView {
         if (!this.metadbs) {
             return;
         }
+
+        this.on_playback_new_track();
+
     }
 
     on_size() {
@@ -707,7 +710,7 @@ export class AlbumPageView extends ScrollView {
         }
         let topY = Math.max(this.y, this.header.y + this.header.height + listHeaderHeight);
         let bottomY = this.y + this.height - 1;
-        selecting.pageX2 = clamp(x, this.x, this.x + this.width - this.scrollbar.width);
+        selecting.pageX2 = clamp(x, this.x, this.x + this.width - this.scrollbar.width) - this.x;
         selecting.pageY2 = clamp(y, topY, bottomY) - this.y + this.scroll;
 
         let first = -1;
@@ -717,8 +720,8 @@ export class AlbumPageView extends ScrollView {
             || (selecting.pageX1 > this.width - paddingLR && selecting.pageX2 > this.width - paddingLR)
         )) {
             let offsetTop = this.header.height + listHeaderHeight;
-            first = Math.floor((selecting.pageY1 - offsetTop) / rowHeight);
-            last = Math.floor((selecting.pageY2 - offsetTop) / rowHeight);
+            first = this.traceItem(selecting.pageY1);//Math.floor((selecting.pageY1 - offsetTop) / rowHeight);
+            last = this.traceItem(selecting.pageY2);//Math.floor((selecting.pageY2 - offsetTop) / rowHeight);
         }
         this.setselection(first, last);
         this.repaint();
@@ -751,12 +754,12 @@ export class AlbumPageView extends ScrollView {
 
         if (hoveritem) {
             let queue = plman.FindOrCreatePlaylist(lang("Queue"), true);
-            let metadbs = plman.GetPlaylistItems(queue);
-            // let findresults = metadbs.Find(hoveritem.metadb)
+            let metadbs = this.metadbs;
+            plman.ActivePlaylist = queue;
             plman.UndoBackup(queue);
             plman.ClearPlaylist(queue);
             plman.InsertPlaylistItems(queue, 0, metadbs);
-            plman.ExecutePlaylistDefaultAction(queue, 0);
+            plman.ExecutePlaylistDefaultAction(queue, hoveritem.metadbIndex);
         }
     }
 
@@ -887,9 +890,9 @@ export class AlbumPageView extends ScrollView {
     }
 
     on_mouse_rbtn_up(x: number, y: number) {
-        try {
-            showTrackContextMenu(null, this.getSelectedMetadbs(), x, y);
-        } catch (e) { }
+        // try {
+        showTrackContextMenu(-5, this.getSelectedMetadbs(), x, y);
+        // } catch (e) { }
     }
 
     on_key_down(vkey: number, mask = KMask.none) {
@@ -973,8 +976,15 @@ export class AlbumPageView extends ScrollView {
         if (metadb == null || this.metadbs == null) return;
 
         this.playingIndex = this.items.findIndex(item => {
-            return item.metadb.Compare(metadb) && item.type === 0;
+            // return item.metadb.Compare(metadb) && item.type === 0;
+            return item.metadb.RawPath === metadb.RawPath && item.type === 0;
         });
+
+        if (this.playingIndex > -1) {
+            this.setfocus(this.playingIndex);
+            this.setselection(this.playingIndex);
+            this.showFocusItem();
+        }
         this.repaint();
     }
 
@@ -987,6 +997,13 @@ export class AlbumPageView extends ScrollView {
 
     on_playback_pause() {
         this.repaint();
+    }
+
+    private traceItem(y: number) {
+        let offsetToTop = headerHeight + listHeaderHeight;
+        return this.items.findIndex(item => {
+            return y > item.yOffset + offsetToTop && y <= item.yOffset + offsetToTop + item.height;
+        })
     }
 
 }

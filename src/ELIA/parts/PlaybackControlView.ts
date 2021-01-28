@@ -704,7 +704,7 @@ function showPanelContextMenu(metadb: IFbMetadb, x: number, y: number) {
 		artist_ = tf_artist_.EvalWithMetadb(metadb);
 		album = tf_album.EvalWithMetadb(metadb);
 
-		objMenu.AppendMenuItem(MenuFlag.STRING, 12, lang("Go to artist"));
+		// objMenu.AppendMenuItem(MenuFlag.STRING, 12, lang("Go to artist"));
 		objMenu.AppendMenuSeparator();
 
 		// Add to playlist ... menu;

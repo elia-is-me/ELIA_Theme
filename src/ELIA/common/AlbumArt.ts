@@ -163,7 +163,7 @@ class ImageCache {
 	}
 }
 
-export const imageCache = new ImageCache();
+const imageCache = new ImageCache();
 
 // -----
 

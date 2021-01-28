@@ -106,8 +106,10 @@ export class Layout extends Component {
 
 		if (this.width >= MIN_TWO_COLUMN_WIDTH) {
 			this.playlistManager.visible = !this.hidePlman;
+			this.playlistManager.type = 0;
 		} else {
 			this.playlistManager.visible = false;
+			this.playlistManager.type = 1;
 		}
 
 		if (this.playbackBarMenu.visible) {
@@ -236,6 +238,7 @@ export class Layout extends Component {
 				let options = data as IInputPopupOptions;
 				if (options == null) break;
 				this.inputPopupPanel = new InputPopupPanel(options);
+				this.inputPopupPanel.z = 1000;
 				this.addChild(this.inputPopupPanel);
 				// this.on_size();
 				this.updatePartsLayout();
@@ -258,6 +261,7 @@ export class Layout extends Component {
 				let alertOptions = data as IAlertDialogOptions;
 				if (alertOptions == null) break;
 				this.alertDialog = new AlertDialog(alertOptions);
+				this.alertDialog.z = 1000;
 				this.alertDialog.visible = true;
 				this.addChild(this.alertDialog);
 				// this.on_size();

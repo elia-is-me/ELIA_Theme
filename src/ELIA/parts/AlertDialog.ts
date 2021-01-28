@@ -1,5 +1,5 @@
 import { scale, RGB, isFunction, setAlpha } from "../common/common";
-import { StringTrimming, StringFormatFlags, StringFormat } from "../common/String";
+import { StringFormat } from "../common/String";
 import { Component } from "../common/BasePart";
 import { Button } from "./Buttons";
 import { GdiFont, themeColors } from "./Theme";
@@ -34,7 +34,8 @@ const defaultOptions: IDefaultOptions = {
 
 export class AlertDialog extends Component implements IAlertDialogOptions, IDefaultOptions {
 	className = "AlertDialog";
-	readonly modal: boolean = true;
+	type = 1;
+	grabFocus = false;
 
 	titleFont: IGdiFont;
 	textFont: IGdiFont;

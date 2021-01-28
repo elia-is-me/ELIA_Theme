@@ -192,7 +192,7 @@ function showMainMenu(x: number, y: number) {
 	helpMenu.AppendTo(objMenu, MenuFlag.STRING, lang("Help"));
 
 	objMenu.AppendMenuSeparator();
-	objMenu.AppendMenuItem(MenuFlag.GRAYED, 3000, lang("Settings"));
+	objMenu.AppendMenuItem(MenuFlag.GRAYED, 3000, lang("Theme settings"));
 
 	// Menu managers;
 	const fileMan = fb.CreateMainMenuManager();

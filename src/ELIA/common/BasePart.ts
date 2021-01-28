@@ -74,6 +74,8 @@ export abstract class Component implements IBoxModel, ICallbacks {
 	className: string = "Component";
 	grabFocus: boolean = true;
 
+	type: number = 0;
+
 	// offset to smp_panel's left;
 	x: number = 0;
 

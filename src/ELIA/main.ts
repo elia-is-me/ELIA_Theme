@@ -37,7 +37,7 @@ const albumPage = new AlbumPageView();
 /**
  * Root part of this panel;
  */
-const root = new Layout({
+export const root = new Layout({
 	topbar: topbar,
 	playbackControlBar: playbackControlBar,
 	playlistManager: playlistManager,

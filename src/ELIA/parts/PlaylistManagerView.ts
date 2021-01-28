@@ -14,6 +14,7 @@ import { dndMask, mouseCursor, notifyOthers, ui } from "../common/UserInterface"
 import { CreatePlaylistPopup, DeletePlaylistDialog, layout, RenamePlaylist } from "./Layout";
 import { lang } from "./Lang";
 import { StringFormat, spaceStart } from "../common/String";
+import { root } from "../main";
 
 const ui_textRendering = ui.textRender;
 let iconFont = gdi.Font(MaterialFont, scale(20));
@@ -230,6 +231,7 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 		let paddingL = scale(16);
 		let paddingR = scale(8);
 		let iconWidth = scale(20);
+		let playlistVisible = root.playlistView.isVisible();
 
 		// draw background
 		gr.FillSolidRect(this.x, this.y, this.width, this.height, themeColors.sidebarBackground);
@@ -243,7 +245,7 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 
 			// items in visible area;
 			if (rowItem.y + rowHeight >= this.y + headerHeight && rowItem.y < this.y + this.height) {
-				let isActive = rowItem.index === plman.ActivePlaylist;
+				let isActive = rowItem.index === plman.ActivePlaylist && playlistVisible;
 				let textColor = (((i === this.hoverIndex) || isActive) ? themeColors.text : themeColors.sidebarInactiveText);
 
 				if (isActive) {
@@ -397,6 +399,13 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 	}
 
 	on_mouse_lbtn_up(x: number, y: number) {
+
+		if (this.type === 1 && !this.trace(x, y)) {
+			notifyOthers("Toggle.PlaylistManager")
+			return;
+		}
+
+
 		this.hoverIndex = this.getHoverId(x, y);
 
 		if (this.clickedIndex === this.hoverIndex && isValidPlaylist(this.hoverIndex) && !this.dragdrop.isDrag) {

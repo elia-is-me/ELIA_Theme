@@ -4,7 +4,7 @@ import { Material, MaterialFont } from "../common/Icon";
 import { IconButton } from "./Buttons";
 import { Slider } from "../common/Slider";
 import { GdiFont, themeColors } from "./Theme";
-import { ui } from "../common/UserInterface";
+import { notifyOthers, ui } from "../common/UserInterface";
 import { lang } from "./Lang";
 import { ButtonStates, Clickable } from "../common/Button";
 import { getShuffleOrder } from "./PlaybackControlView";
@@ -175,6 +175,7 @@ class VolumeMenuItem extends MenuItem {
 
 
 export class PlaybackBarMenu extends Component {
+    type = 2;
     textFont: IGdiFont = MENU_FONT;
     textColor: number = menuColors.text;
     backgroundColor: number = menuColors.background;
@@ -297,5 +298,11 @@ export class PlaybackBarMenu extends Component {
         gr.SetTextRenderingHint(SmoothingMode.AntiAlias);
         gr.FillRoundRect(this.x, this.y, this.width, this.height, r, r, this.backgroundColor);
         gr.SetTextRenderingHint(SmoothingMode.Default);
+    }
+
+    on_mouse_lbtn_up(x: number, y: number) {
+        if (!this.trace(x, y)) {
+            notifyOthers("Show.Playbackbar Menu");
+        }
     }
 }

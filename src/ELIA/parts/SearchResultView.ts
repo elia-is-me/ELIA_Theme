@@ -641,18 +641,23 @@ export class SearchResultView extends ScrollView {
 
 		if (hoverItem != null) {
 			let queue = plman.FindOrCreatePlaylist(lang("Queue"), true);
-			let metadbs = plman.GetPlaylistItems(queue);
-			let findResult = metadbs.Find(hoverItem.metadb);
+			let metadbs = this.metadbs;//plman.GetPlaylistItems(queue);
+			// let findResult = metadbs.Find(hoverItem.metadb);
 
 			plman.ActivePlaylist = queue;
 
-			if (findResult > -1) {
-				plman.ExecutePlaylistDefaultAction(queue, findResult);
-			} else {
-				let prevCount = plman.PlaylistItemCount(queue);
-				plman.InsertPlaylistItems(queue, prevCount, new FbMetadbHandleList(hoverItem.metadb));
-				plman.ExecutePlaylistDefaultAction(queue, prevCount);
-			}
+			plman.UndoBackup(queue);
+			plman.ClearPlaylist(queue);
+			plman.InsertPlaylistItems(queue, 0, metadbs);
+			plman.ExecutePlaylistDefaultAction(queue, hoverItem.rowIndex);
+
+			// if (findResult > -1) {
+			// 	plman.ExecutePlaylistDefaultAction(queue, findResult);
+			// } else {
+			// 	let prevCount = plman.PlaylistItemCount(queue);
+			// 	plman.InsertPlaylistItems(queue, prevCount, new FbMetadbHandleList(hoverItem.metadb));
+			// 	plman.ExecutePlaylistDefaultAction(queue, prevCount);
+			// }
 		}
 	}
 
@@ -727,12 +732,12 @@ export class SearchResultView extends ScrollView {
 		}
 		let topY = Math.max(this.y, this.headerView.y + this.headerView.height);
 		let bottomY = this.y + this.height - 1;
-		selecting.pageX2 = clamp(x, this.x, this.x + this.width - this.scrollbar.width);
+		selecting.pageX2 = clamp(x, this.x, this.x + this.width - this.scrollbar.width) - this.x;
 		selecting.pageY2 = clamp(y, topY, bottomY) - this.y + this.scroll;
 		let first = -1;
 		let last = -1;
-		let padLeft = this.paddings.left;
-		let padRight = this.paddings.right;
+		let padLeft = paddingLR;
+		let padRight = paddingLR;
 		if (
 			!(
 				(selecting.pageX1 < padLeft && selecting.pageX2 < padLeft) ||

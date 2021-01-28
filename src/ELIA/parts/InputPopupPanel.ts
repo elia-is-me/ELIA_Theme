@@ -41,6 +41,8 @@ export class InputPopupPanel
 	extends Component
 	implements IInputPopupOptions, IInputPopupDefaultOptions {
 	readonly modal = true;
+	type = 1;
+	grabFocus = false;
 
 	titleFont: IGdiFont;
 	textFont: IGdiFont;

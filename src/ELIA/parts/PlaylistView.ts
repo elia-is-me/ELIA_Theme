@@ -710,6 +710,8 @@ export class PlaylistView extends ScrollView {
 		// Clear visibleItems cache;
 		this.visibleItems.length = 0;
 
+		let isfocuspart = ui.isFocusPart(this);
+
 		// Draw Items;
 		for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
 			let row = items[itemIndex];
@@ -734,7 +736,7 @@ export class PlaylistView extends ScrollView {
 					gr.FillSolidRect(row.x, row.y, row.width, rowHeight, backgroundSelectionColor);
 				}
 
-				if (this.focusIndex === itemIndex) {
+				if (isfocuspart && this.focusIndex === itemIndex) {
 					gr.DrawRect(row.x, row.y, row.width - 1, rowHeight - 1, scale(1), RGB(127, 127, 127));
 				}
 
@@ -768,7 +770,12 @@ export class PlaylistView extends ScrollView {
 					let padright = scale(16);
 					gr.DrawString(row.title, itemFont, textColor,
 						title.x, titleY, title.width - padright, row.height, StringFormat.LeftTop);
-					gr.DrawString(row.artist, itemFont, secondaryTextColor,
+
+					let subtitleText = row.artist;
+					if (!(album.visible && album.width)) {
+						subtitleText += spaceStartEnd("\u2022") + row.album;
+					}
+					gr.DrawString(subtitleText, itemFont, secondaryTextColor,
 						title.x, artistY, title.width - padright, row.height, StringFormat.LeftTop);
 				}
 
@@ -1360,6 +1367,10 @@ export class PlaylistView extends ScrollView {
 		}
 	}
 
+	on_change_focus() {
+		this.repaint();
+	}
+
 	on_key_down(vkey: number, mask = KMask.none) {
 		if (selecting.isActive || dnd.isActive) {
 			return;
@@ -1475,8 +1486,9 @@ export class PlaylistView extends ScrollView {
 export function showTrackContextMenu(playlistIndex: number, metadbs: IFbMetadbList, x: number, y: number) {
 	let nullMetadbs = !metadbs || metadbs.Count === 0;
 	let hasMetadbs = !nullMetadbs;
-	let _validPlaylist = isValidPlaylist(playlistIndex);
-	const isPlaylistLocked = plman.IsPlaylistLocked(playlistIndex);
+	let isPlaylist = isValidPlaylist(playlistIndex);
+	const isPlaylistLocked = isPlaylist && plman.IsPlaylistLocked(playlistIndex);
+	let isAlbumlist = playlistIndex === -5;
 
 	const rootMenu = window.CreatePopupMenu();
 	let albumName = "";
@@ -1499,7 +1511,7 @@ export function showTrackContextMenu(playlistIndex: number, metadbs: IFbMetadbLi
 		}
 
 		//
-		if (_validPlaylist) {
+		if (isPlaylist) {
 			rootMenu.AppendMenuItem(isPlaylistLocked ? MenuFlag.GRAYED : MenuFlag.STRING, 1, lang("Remove from playlist"));
 		}
 		rootMenu.AppendMenuSeparator();
@@ -1507,12 +1519,12 @@ export function showTrackContextMenu(playlistIndex: number, metadbs: IFbMetadbLi
 
 	// Cut/Copy/Paste;
 	if (hasMetadbs) {
-		_validPlaylist && rootMenu.AppendMenuItem(isPlaylistLocked ? MenuFlag.GRAYED : MenuFlag.STRING, 2, lang("Cut"));
+		isPlaylist && rootMenu.AppendMenuItem(isPlaylistLocked ? MenuFlag.GRAYED : MenuFlag.STRING, 2, lang("Cut"));
 		rootMenu.AppendMenuItem(MenuFlag.STRING, 3, lang("Copy"));
 	}
 
 	if (fb.CheckClipboardContents()) {
-		_validPlaylist && rootMenu.AppendMenuItem(isPlaylistLocked ? MenuFlag.GRAYED : MenuFlag.STRING, 4, lang("Paste"));
+		isPlaylist && rootMenu.AppendMenuItem(isPlaylistLocked ? MenuFlag.GRAYED : MenuFlag.STRING, 4, lang("Paste"));
 	}
 
 	if (hasMetadbs) {
@@ -1520,15 +1532,20 @@ export function showTrackContextMenu(playlistIndex: number, metadbs: IFbMetadbLi
 	}
 
 	if (hasMetadbs) {
-		let albumNames = uniq(tf_album.EvalWithMetadbs(metadbs));
-		if (albumNames.length === 1) {
-			albumName = albumNames[0];
-			const artistMenu = window.CreatePopupMenu();
-			artistMenu.AppendTo(rootMenu, MenuFlag.STRING, lang("Go to artist"));
-			rootMenu.AppendMenuItem(MenuFlag.STRING, 20, lang("Go to album"));
+		let albumMenu = false;
+		let artistMenu = false;
 
-			rootMenu.AppendMenuSeparator();
+		if (!isAlbumlist) {
+			let albumNames = uniq(tf_album.EvalWithMetadbs(metadbs));
+			if (albumNames.length === 1) {
+				albumName = albumNames[0];
+				const artistMenu = window.CreatePopupMenu();
+				// artistMenu.AppendTo(rootMenu, MenuFlag.STRING, lang("Go to artist"));
+				rootMenu.AppendMenuItem(MenuFlag.STRING, 20, lang("Go to album"));
+				albumMenu = true;
+			}
 		}
+		(albumMenu || artistMenu) && rootMenu.AppendMenuSeparator();
 	}
 
 	// Context menu;
@@ -1612,11 +1629,12 @@ function showHeaderContextMenu(playlistIndex: number, x: number, y: number) {
 	}
 	menu.AppendMenuSeparator();
 
-	menu.AppendMenuItem(hasTracks ? MenuFlag.STRING : MenuFlag.GRAYED, 20, lang("Play"));
-	menu.AppendMenuItem(hasTracks ? MenuFlag.STRING : MenuFlag.GRAYED, 21, lang("Play next"));
-	menu.AppendMenuItem(hasTracks ? MenuFlag.STRING : MenuFlag.GRAYED, 22, lang("Add to queue"));
+	// TODO;
+	// menu.AppendMenuItem(hasTracks ? MenuFlag.STRING : MenuFlag.GRAYED, 20, lang("Play"));
+	// menu.AppendMenuItem(hasTracks ? MenuFlag.STRING : MenuFlag.GRAYED, 21, lang("Play next"));
+	// menu.AppendMenuItem(hasTracks ? MenuFlag.STRING : MenuFlag.GRAYED, 22, lang("Add to queue"));
 
-	menu.AppendMenuSeparator();
+	// menu.AppendMenuSeparator();
 
 	menu.AppendMenuItem(MenuFlag.STRING, 30, lang("Delete"));
 
@@ -1746,35 +1764,12 @@ function showSortPlaylistMenu(playlistIndex: number, x: number, y: number, selec
 
 const tf_album = fb.TitleFormat("%album%");
 
-function isSameAlbum(metadbs: IFbMetadbList) {
-	if (metadbs && metadbs.Count === 1) return true;
-	let albumName: string = "";
-	// for (let i = 0; i < metadbs.Count; i++) {
-	// 	let _album_name = tf_album.EvalWithMetadbs(
-	// }
-	let albums = tf_album.EvalWithMetadbs(metadbs);
-
-
-}
-
 function uniq(array: string[]) {
 	return Array.from(new Set(array));
 }
 
 export function isValidPlaylist(playlistIndex: number) {
 	return Number.isFinite(playlistIndex) && playlistIndex >= 0 && playlistIndex < plman.PlaylistCount;
-}
-
-const TF_ARTISTS = fb.TitleFormat("%artist%,%album artist%");
-const reArtistSplitter = /[\,\/\uFF0F\uFF0C]/g;
-
-let __test = "artist1,artist2/artist3\uFF0Cartist4\uFF0F";
-
-console.log(__test.split(reArtistSplitter));
-
-function extractArtists(metadb: IFbMetadb) {
-
-
 }
 
 export function formatPlaylistDuration(duration: number) {

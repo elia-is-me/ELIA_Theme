@@ -1,12 +1,16 @@
 import { GetKeyboardMask, isFunction, KMask, lastIndex, RGBA, scale, TextRenderingHint, VKeyCode } from "./common";
 import { Component, IBoxModel } from "./BasePart";
-import { imageCache } from "./AlbumArt";
 
 let partlist: Component[] = [];
 let vis_parts: Component[] = [];
 let rootPart: Component;
 let activePart: Component;
 let focusPart: Component;
+let modalPart: Component;
+
+function isFocusPart(part: Component) {
+	return part && compareParts(part, focusPart);
+}
 
 const flatternParts = (part: Component): Component[] => {
 	if (part == null) {
@@ -47,13 +51,16 @@ function _getHoverPart(root: Component, x: number, y: number): Component {
 	if (!root || !root.trace(x, y)) {
 		return;
 	}
-	const children = root.children;
-	const resultIndex = lastIndex(children, n => n.trace(x, y));
-	if (resultIndex > -1) {
-		return _getHoverPart(children[resultIndex], x, y);
-	} else {
-		return root;
-	}
+	// const children = root.children;
+	// const resultIndex = lastIndex(children, n => n.trace(x, y));
+	// if (resultIndex > -1) {
+	// 	return _getHoverPart(children[resultIndex], x, y);
+	// } else {
+	// 	return root;
+	// }
+	let visibleParts = findVisibleParts(root);
+	let resultIndex = lastIndex(visibleParts, part => part.isVisible() && (part.trace(x, y) || part.type !== 0));
+	return visibleParts[resultIndex];
 }
 
 function invoke(part: Component, method: string, ...args: any) {
@@ -95,7 +102,7 @@ function setActive(x: number, y: number) {
 function setFocus(x: number, y: number) {
 	let prev = focusPart;
 	let _hoverPart = _getHoverPart(rootPart, x, y);
-	if (_hoverPart && !_hoverPart.grabFocus) {
+	if (!_hoverPart || !_hoverPart.grabFocus) {
 		return;
 	}
 	focusPart = _hoverPart;
@@ -208,6 +215,11 @@ function drawNode(node: Component, gr: IGdiGraphics) {
 		return;
 	}
 
+	if (node.type === 1) {
+		// modalPart = node;
+		gr.FillSolidRect(0, 0, window.Width, window.Height, 0xaf000000);
+	}
+
 	node.on_paint(gr);
 
 	for (let i = 0, len = node.children.length; i < len; i++) {
@@ -237,11 +249,10 @@ function on_paint(gr: IGdiGraphics) {
 
 
 	// Draw visible parts;
+	modalPart = null;
 	drawNode(rootPart, gr);
 
-	// if (isDrag) {
 	drawCursorImage(gr, cursorImage, mouseCursor.x + scale(20), mouseCursor.y);
-	// }
 
 	// draw dnd mask;
 	if (dropTargetPart && dndMask.visible) {
@@ -316,6 +327,10 @@ function on_mouse_lbtn_down(x: number, y: number) {
 	setActive(x, y);
 	setFocus(x, y);
 	invoke(activePart, "on_mouse_lbtn_down", x, y);
+
+	// if (modalPart && !modalPart.trace(x, y) && !compareParts(modalPart, activePart)) {
+	// 	invoke(modalPart, "on_mouse_lbtn_down", x, y);
+	// }
 }
 
 function on_mouse_lbtn_dblclk(x: number, y: number) {
@@ -328,6 +343,10 @@ function on_mouse_lbtn_up(x: number, y: number) {
 		isInternalDrag = false;
 		setActive(x, y);
 	}
+
+	// if (modalPart && !modalPart.trace(x, y) && !compareParts(modalPart, activePart)) {
+	// 	invoke(modalPart, "on_mouse_lbtn_up", x, y);
+	// }
 }
 
 function on_mouse_leave() {
@@ -512,11 +531,11 @@ function on_volume_change(val: number) {
 
 
 function on_get_album_art_done(metadb: IFbMetadb | null, art_id: number, image: IGdiBitmap | null, image_path: string) {
-	imageCache.on_get_album_art_done(metadb, art_id, image, image_path);
+	// imageCache.on_get_album_art_done(metadb, art_id, image, image_path);
 }
 
 function on_load_image_done(cookie: number, image: IGdiBitmap | null, image_path: string) {
-	imageCache.on_load_image_done(cookie, image);
+	// imageCache.on_load_image_done(cookie, image);
 }
 
 function on_library_items_added(metadbs?: IFbMetadbList) {
@@ -621,5 +640,7 @@ export const ui = {
 	compareParts: compareParts,
 	monitor: monitor,
 	setFocusPart: setFocusPart,
+	isFocusPart: isFocusPart,
 	setCursorImage: setCursorImage,
+	layout: rootPart,
 };

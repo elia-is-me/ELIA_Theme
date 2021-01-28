@@ -78,6 +78,8 @@ const Language = {
         "wk": "&#x661F;&#x671F;",
         "Not playing": "&#x64AD;&#x653E;&#x505C;&#x6B62;",
         "Show now playing": "&#x663E;&#x793A;&#x6B63;&#x5728;&#x64AD;&#x653E;&#x9879;&#x76EE;",
+        "Settings": "&#x8BBE;&#x7F6E;",
+        "Theme settings": "&#x4E3B;&#x9898;&#x8BBE;&#x7F6E;",
     },
 };
 
@@ -93,7 +95,7 @@ const Commands: { [propName: string]: { [propName: string]: string } } = {
 
 // foobar2000 binary exectuable language;
 const fbLangCode = (fb.TitleFormat("$meta()").Eval(true) == UTFTranslate.toHanzi(Language["zh-cn"]["[UNKNOWN FUNCTION]"]) ? "zh-cn" : "en");
-const langCode = window.GetProperty("Global.GUI Language", "<auto>").toLowerCase();
+const langCode = window.GetProperty("Global.GUI Language(en,zh-cn,<auto>)", "<auto>").toLowerCase();
 let langPack = (<any>Language)[langCode] || (<any>Language)[fbLangCode];
 
 if (langPack == null) {
