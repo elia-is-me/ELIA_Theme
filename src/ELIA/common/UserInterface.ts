@@ -1,4 +1,4 @@
-import { GetKeyboardMask, isFunction, KMask, lastIndex, RGBA, scale, TextRenderingHint, VKeyCode } from "./common";
+import { GetKeyboardMask, isFunction, KMask, lastIndex, RGBA, scale, TextRenderingHint, VKeyCode } from "./Common";
 import { Component, IBoxModel } from "./BasePart";
 import { root } from "../main";
 // import { root } from "../main";

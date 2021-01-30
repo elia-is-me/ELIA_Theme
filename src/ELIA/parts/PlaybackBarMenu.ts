@@ -1,4 +1,4 @@
-import { PlaybackOrder, pos2vol, RGB, RGBA, scale, setAlpha, SmoothingMode, TextRenderingHint, vol2pos } from "../common/common";
+import { PlaybackOrder, pos2vol, RGB, RGBA, scale, setAlpha, SmoothingMode, TextRenderingHint, vol2pos } from "../common/Common";
 import { Component } from "../common/BasePart";
 import { Material, MaterialFont } from "../common/Icon";
 import { IconButton } from "./Buttons";

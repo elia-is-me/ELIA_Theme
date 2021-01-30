@@ -1,13 +1,13 @@
 import { MeasureString, StringFormat, spaceStartEnd, spaceEnd, spaceStart } from "../common/String";
 import { AlbumArtwork } from "../common/AlbumArt";
 import { Component } from "../common/BasePart";
-import { clamp, KMask, lastIndex, RGB, scale, StopReason, TextRenderingHint, VKeyCode } from "../common/common";
+import { clamp, CursorName, KMask, RGB, scale, StopReason, TextRenderingHint, VKeyCode } from "../common/Common";
 import { Material, MaterialFont } from "../common/Icon";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
 import { ui } from "../common/UserInterface";
 import { Button } from "./Buttons";
-import { lang, RunContextCommandWithMetadb } from "./Lang";
+import { lang } from "./Lang";
 import { getYear, ToggleMood } from "./PlaybackControlView";
 import { formatPlaylistDuration, showTrackContextMenu } from "./PlaylistView";
 import { SendToQueueListPlay } from "./SearchResultView";
@@ -38,8 +38,8 @@ const itemFont = GdiFont("normal, 14");
 const semiItemFont = GdiFont("semibold, 14");
 const smallItemFont = GdiFont("normal, 13");
 const descriptionFont = GdiFont("normal, 14");
-let subtitleFont = GdiFont("normal, 32");
-const titleFont = GdiFont("bold, 32");
+let subtitleFont = GdiFont("normal, 24");
+const titleFont = GdiFont("bold, 24");
 
 let titleLineHeight = titleFont.Height * 1.1;
 let descriptionLineHeight = descriptionFont.Height * 1.1;
@@ -510,6 +510,8 @@ export class AlbumPageView extends ScrollView {
         this.setColumns();
         this.scrollbar.setBoundary(this.x + this.width - scrollbarWidth, this.y, scrollbarWidth, this.height);
         this.header.setBoundary(this.x, this.y - this.scroll, this.width, headerHeight);
+
+        this.scrollTo();
     }
 
     on_paint(gr: IGdiGraphics) {
@@ -720,8 +722,8 @@ export class AlbumPageView extends ScrollView {
             || (selecting.pageX1 > this.width - paddingLR && selecting.pageX2 > this.width - paddingLR)
         )) {
             let offsetTop = this.header.height + listHeaderHeight;
-            first = this.traceItem(selecting.pageY1);//Math.floor((selecting.pageY1 - offsetTop) / rowHeight);
-            last = this.traceItem(selecting.pageY2);//Math.floor((selecting.pageY2 - offsetTop) / rowHeight);
+            first = this.traceItemLineIndex(selecting.pageY1);//Math.floor((selecting.pageY1 - offsetTop) / rowHeight);
+            last = this.traceItemLineIndex(selecting.pageY2);//Math.floor((selecting.pageY2 - offsetTop) / rowHeight);
         }
         this.setselection(first, last);
         this.repaint();
@@ -828,9 +830,14 @@ export class AlbumPageView extends ScrollView {
         }
 
         if (selecting.isActive) {
+            if (y < this.y + rowHeight) {
+                this.scroll -= rowHeight / 3;
+            } else if (y > this.y + this.height - rowHeight) {
+                this.scroll += rowHeight / 3;
+            }
             this.updatesel(x, y);
         } else if (dnd.isActive) {
-            //
+            window.SetCursor(CursorName.IDC_NO);
         } else {
             if (this.clickonsel) {
                 dnd.isActive = true;
@@ -872,6 +879,8 @@ export class AlbumPageView extends ScrollView {
         dnd.clearInterval();
         dnd.isActive = false;
         dnd.dropTargetRowIndex = -1;
+
+        window.SetCursor(CursorName.IDC_ARROW);
 
         this.repaint();
     }
@@ -1007,11 +1016,21 @@ export class AlbumPageView extends ScrollView {
         this.repaint();
     }
 
-    private traceItem(y: number) {
+    protected traceItemLineIndex(y: number) {
         let offsetToTop = headerHeight + listHeaderHeight;
-        return this.items.findIndex(item => {
-            return y > item.yOffset + offsetToTop && y <= item.yOffset + offsetToTop + item.height;
-        })
+        let lastItem = this.items[this.items.length - 1];
+        let firstItem = this.items[0];
+        let resultIndex = this.items.findIndex(item => {
+            return y > item.yOffset + offsetToTop && y <= item.yOffset + item.height + offsetToTop;
+        });
+        if (resultIndex === -1) {
+            if (lastItem && y > lastItem.yOffset + lastItem.height + offsetToTop) {
+                resultIndex = this.items.length;
+            } else if (firstItem && y < firstItem.yOffset + offsetToTop) {
+                resultIndex = -1;
+            }
+        }
+        return resultIndex;
     }
 
 }

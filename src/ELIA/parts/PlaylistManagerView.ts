@@ -1,7 +1,7 @@
 // Playlist Manager
 // -------------------------
 
-import { scale, RGB, RGBA, ThrottledRepaint, MenuFlag, setAlpha, SmoothingMode, CursorName, TextRenderingHint } from "../common/common";
+import { scale, RGB, RGBA, ThrottledRepaint, MenuFlag, setAlpha, SmoothingMode, CursorName, TextRenderingHint } from "../common/Common";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
 import { Component } from "../common/BasePart";
@@ -203,6 +203,9 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 		this.scrollbar.setBoundary(this.x + this.width - scrollbarWidth, this.y + PlmanProperties.headerHeight, scrollbarWidth, this.height - PlmanProperties.headerHeight);
 
 		this.header.setBoundary(this.x, this.y, this.width, PlmanProperties.headerHeight);
+
+		// this.scroll = this.checkscroll(this.scroll);
+		this.scrollTo();
 	}
 
 	on_paint(gr: IGdiGraphics) {

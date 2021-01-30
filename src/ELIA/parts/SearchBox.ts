@@ -5,7 +5,7 @@
 import { Component } from "../common/BasePart";
 import { InputBox } from "../common/Inputbox";
 import { IconButton } from "./Buttons";
-import { scale, RGB, setAlpha } from "../common/common";
+import { scale, RGB, setAlpha } from "../common/Common";
 import { Material, } from "../common/Icon";
 import { GdiFont, themeColors } from "./Theme";
 import { notifyOthers } from "../common/UserInterface";

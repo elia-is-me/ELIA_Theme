@@ -1,6 +1,6 @@
 import { NowplayingArtwork, PlaylistArtwork } from "../common/AlbumArt";
 import { Component } from "../common/BasePart";
-import { scale, TextRenderingHint } from "../common/common";
+import { scale, TextRenderingHint } from "../common/Common";
 import { Material, MaterialFont } from "../common/Icon";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";

@@ -1,5 +1,5 @@
 import { Component } from "../common/BasePart";
-import { RGB, scale, isEmptyString, isFunction, setAlpha } from "../common/common";
+import { RGB, scale, isEmptyString, isFunction, setAlpha } from "../common/Common";
 import { Button } from "./Buttons";
 import { InputBox } from "../common/Inputbox";
 import { notifyOthers } from "../common/UserInterface";

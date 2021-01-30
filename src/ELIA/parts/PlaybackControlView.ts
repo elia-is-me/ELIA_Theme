@@ -2,18 +2,19 @@
 // Playback control bar;
 // ---------------------
 
-import { MenuFlag, Repaint, setAlpha, StopReason } from "../common/common";
+import { clamp, MenuFlag, Repaint, setAlpha, StopReason } from "../common/Common";
 import { TextLink } from "../common/TextLink";
 import { NowplayingArtwork } from "../common/AlbumArt";
 import { Slider, SliderThumbImage } from "../common/Slider";
 import { Component } from "../common/BasePart";
 import { Material, MaterialFont } from "../common/Icon"
-import { scale, PlaybackOrder, SmoothingMode } from "../common/common";
+import { scale, PlaybackOrder, SmoothingMode } from "../common/Common";
 import { themeColors, fonts, GdiFont } from "./Theme";
 import { IconButton } from "./Buttons";
 import { lang, RunContextCommandWithMetadb } from "./Lang";
 import { CreatePlaylistPopup, GoToAlbum, GoToArtist, ShowPlaybackBarMenu } from "./Layout";
 import { MeasureString, StringFormat } from "../common/String";
+import { mouseCursor, notifyOthers } from "../common/UserInterface";
 
 
 function pos2vol(pos: number) {
@@ -667,6 +668,27 @@ export class PlaybackControlView extends Component {
 
 	on_mouse_leave() {
 		this._rightDown = false;
+	}
+
+	on_mouse_wheel(step: number) {
+		if (this.volume.trace(mouseCursor.x, mouseCursor.y) || this.buttons.volume.trace(mouseCursor.x, mouseCursor.y)) {
+			let pos_p = vol2pos(fb.Volume);
+			pos_p += step / 20;
+			pos_p = clamp(pos_p, 0, 1);
+			fb.Volume = pos2vol(pos_p);
+		}
+	}
+
+	on_mouse_lbtn_dblclk(x: number, y: number) {
+		if (!fb.IsPlaying) {
+			return;
+		}
+		if (plman.PlayingPlaylist === plman.ActivePlaylist) {
+			notifyOthers("playlist-show-now-playing-in-playlist");
+		} else {
+			plman.ActivePlaylist = plman.PlayingPlaylist;
+			// will trigger showNowPlaying on playlistView.on_init();
+		}
 	}
 
 	// Sync default order property to foobar's shuffle order (when sometimes

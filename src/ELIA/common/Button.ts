@@ -1,4 +1,4 @@
-import { CursorName } from "./common";
+import { CursorName } from "./Common";
 import { Component } from "./BasePart";
 import { ui } from "./UserInterface";
 

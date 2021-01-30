@@ -37,6 +37,8 @@ export const Material = {
     volume: '\ue050',
     time: '\ue192',
     arrow_right: '\ue5c8',
+    star: '\ue838',
+    star_empty: '\ue83a',
 };
 
 export const MaterialFont = "Material Icons";

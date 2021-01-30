@@ -1,4 +1,4 @@
-import { scale, Repaint, SmoothingMode } from "./common";
+import { scale, Repaint, SmoothingMode } from "./Common";
 import { Component, ICallbacks } from "./BasePart";
 import { ButtonStates } from "./Button";
 import { ScrollView } from "./ScrollView";

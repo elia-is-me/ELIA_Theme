@@ -1,4 +1,4 @@
-import { scale, TextRenderingHint, MenuFlag } from "../common/common";
+import { scale, TextRenderingHint, MenuFlag } from "../common/Common";
 import { Component } from "../common/BasePart";
 import { IconButton } from "./Buttons";
 import { Material, MaterialFont } from "../common/Icon";

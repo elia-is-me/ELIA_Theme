@@ -1,4 +1,4 @@
-import { isNumber, RGB, RGBA, scale } from "../common/common"
+import { isNumber, RGB, RGBA, scale } from "../common/Common"
 import { MaterialFont } from "../common/Icon"
 
 // Custom colors;

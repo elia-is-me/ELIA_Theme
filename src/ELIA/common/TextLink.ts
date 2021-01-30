@@ -1,4 +1,4 @@
-import { scale } from "./common";
+import { scale } from "./Common";
 import { ButtonStates, Clickable } from "./Button";
 import { IInjectableCallbacks } from "./BasePart";
 import { MeasureString, StringFormat } from "./String";

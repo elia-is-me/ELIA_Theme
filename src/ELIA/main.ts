@@ -10,7 +10,7 @@ import { lang } from "./parts/Lang";
 import { ArtistPageView } from "./parts/ArtistPage";
 import { AlbumPageView } from "./parts/AlbumPage";
 import { Component } from "./common/BasePart";
-import { GetKeyboardMask, isFunction, KMask, lastIndex, VKeyCode } from "./common/common";
+import { GetKeyboardMask, isFunction, KMask, lastIndex, VKeyCode } from "./common/Common";
 
 window.DefinePanel(
 	"ELIA THEME",

@@ -2,9 +2,9 @@
 // Simple Playlist View
 //====================================
 
-import { TextRenderingHint, MenuFlag, VKeyCode, KMask, scale, RGB, SmoothingMode, CursorName, throttle } from "../common/common";
+import { TextRenderingHint, MenuFlag, VKeyCode, KMask, scale, RGB, SmoothingMode, CursorName, throttle } from "../common/Common";
 import { StringTrimming, StringFormatFlags, MeasureString, StringFormat, spaceStart, spaceStartEnd } from "../common/String";
-import { ThrottledRepaint } from "../common/common";
+import { ThrottledRepaint } from "../common/Common";
 import { scrollbarWidth, themeColors, GdiFont } from "./Theme";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
@@ -16,6 +16,7 @@ import { mouseCursor, ui } from "../common/UserInterface";
 import { Button } from "./Buttons";
 import { lang } from "./Lang";
 import { CreatePlaylistPopup, DeletePlaylistDialog, GoToAlbum, GoToArtist, RenamePlaylist } from "./Layout";
+import { RatingBar } from "./Rating";
 
 
 const playlistColors = {
@@ -50,12 +51,12 @@ const iconFont_btn = GdiFont(MaterialFont, scale(20));
 const itemFont = GdiFont(window.GetProperty("Playlist.Item Font", "normal,14"));
 const semiItemFont = GdiFont("semibold", itemFont.Size);
 const emptyInfoFont = GdiFont("normal, 16");
-const titleFont = GdiFont("bold, 32");
+const titleFont = GdiFont("bold, 24");
 const descriptionFont = GdiFont("normal, 14");
 
-const titleLineHeight = titleFont.Height * 1.3;
 const descriptionLineHeight = descriptionFont.Height * 1.2;
 const moodIconWidth = MeasureString(Material.heart_empty, iconFont_list).Width;
+let titleLineHeight = titleFont.Height * 1.3;
 
 let paddingLR = scale(24);
 let paddingTB = scale(24);
@@ -69,6 +70,18 @@ const pageWidth = {
 	thin: scale(600),
 	wide: scale(920),
 	extraWide: scale(1120)
+}
+
+let listheader = new Component({});
+listheader.height = scale(36);
+
+// init columns visibility;
+let columnsVisbility = window.GetProperty("Playlist.Columns Visibility", "1,1,1,1,1,0,1");
+let columnsVis = columnsVisbility.split(",");
+if (columnsVis.length !== 7) {
+	let vis = "1,1,1,1,1,0,1";
+	columnsVis = vis.split(",")
+	window.SetProperty("Playlist.Columns Visibility", vis);
 }
 
 /**
@@ -382,6 +395,8 @@ class PlaylistViewItem extends Component {
 	album: string;
 	time: string;
 
+	ratingbar = new RatingBar();
+
 	// state
 	isselect: boolean = false;
 
@@ -399,6 +414,7 @@ class PlaylistViewItem extends Component {
 		this.album = rawInfo[5];
 		this.time = rawInfo[3];
 		this.rating = Number(rawInfo[4]);
+		this.ratingbar.setMetadb(this.metadb);
 	}
 }
 
@@ -454,6 +470,7 @@ export class PlaylistView extends ScrollView {
 		this._columns.set("album", new PlaylistColumn());
 		this._columns.set("mood", new PlaylistColumn());
 		this._columns.set("time", new PlaylistColumn());
+		this._columns.set("rating", new PlaylistColumn());
 
 		this.droprect = new Component({})
 		this.droprect.on_paint = (gr: IGdiGraphics) => {
@@ -544,10 +561,11 @@ export class PlaylistView extends ScrollView {
 		// Columns;
 		// ---------------
 		const tracknumber = this._columns.get("trackNumber");
+		const mood = this._columns.get("mood");
 		const title = this._columns.get("title");
 		const artist = this._columns.get("artist");
 		const album = this._columns.get("album");
-		const mood = this._columns.get("mood");
+		const rating = this._columns.get("rating");
 		const duration = this._columns.get("time");
 
 		// --------------
@@ -558,20 +576,25 @@ export class PlaylistView extends ScrollView {
 		// ------------------
 		// Set columns' size;
 		// ------------------
+		tracknumber.visible = columnsVis[0] == "1";
 		tracknumber.width = scale(40);
 		duration.width = durationWidth;
+		mood.visible = columnsVis[1] == "1";
 		mood.width = scale(36);
+		rating.visible = columnsVis[5] == "1";
+		rating.width = RatingBar.Width + scale(8);
 
 		let whitespace = this.width - paddingLR - paddingLR;
 		let reservedWidth = 0;//scale(40);
 		whitespace -= reservedWidth;
 		mood.visible && (whitespace -= mood.width);
 		whitespace -= duration.width;
-		whitespace -= tracknumber.width;
+		tracknumber.visible && (whitespace -= tracknumber.width);
+		rating.visible && (whitespace -= rating.width);
 
 		let titleWidth_ = scale(280);
 		let artistWidth_ = scale(200);
-		let albumWidth_ = scale(280);
+		let albumWidth_ = scale(220);
 
 		let albumVis = album.visible && this.width >= pageWidth.thin;
 		let artistVis = artist.visible && this.width >= pageWidth.wide;
@@ -598,7 +621,10 @@ export class PlaylistView extends ScrollView {
 		album.x = artist.x + artist.width;
 		album.width = albumVis ? albumWidth_ + widthToAdd_ : 0;
 
-		duration.x = album.x + album.width + reservedWidth;
+		rating.x = album.x + album.width;
+		let ratingwidth = rating.visible ? rating.width : 0;
+
+		duration.x = rating.x + ratingwidth;
 		duration.width -= scale(8);
 
 		// ----------------------
@@ -653,6 +679,8 @@ export class PlaylistView extends ScrollView {
 
 		// scrollbar;
 		this.scrollbar.setBoundary(this.x + this.width - scrollbarWidth, this.y, scrollbarWidth, this.height);
+
+		this.scrollTo();
 	}
 
 	// playlist view;
@@ -676,6 +704,7 @@ export class PlaylistView extends ScrollView {
 		let album = _columns.get("album");
 		let mood = _columns.get("mood");
 		let time = _columns.get("time");
+		let rating = _columns.get("rating");
 
 		// Draw background;
 		gr.FillSolidRect(this.x, this.y, this.width, this.height, backgroundColor);
@@ -687,36 +716,44 @@ export class PlaylistView extends ScrollView {
 		let rowWidth = this.width - 2 * paddingLR;
 
 		// draw list header;
-		let listheaderY = this.y + this.header.height - this.scroll;
-		let lineY = listheaderY + listheaderHeight - 1;
+		listheader.x = rowX;
+		listheader.width = rowWidth;
+		listheader.y = this.y + this.header.height - this.scroll;
+		listheader.height = listheaderHeight;
+		let lineY = listheader.y + listheaderHeight - 1;
 		gr.DrawLine(rowX, lineY, rowX + rowWidth, lineY, scale(1), lineColor);
 
 		// track numr;
 		if (tracknumber.visible && tracknumber.width > 0) {
 			gr.DrawString("#", semiItemFont, secondaryTextColor,
-				tracknumber.x, listheaderY, tracknumber.width, listheaderHeight, StringFormat.Center);
+				tracknumber.x, listheader.y, tracknumber.width, listheaderHeight, StringFormat.Center);
 		}
 
 		// title /artist;
 		gr.DrawString(lang("TITLE"), semiItemFont, secondaryTextColor,
-			title.x, listheaderY, title.width, listheaderHeight, StringFormat.LeftCenter);
+			title.x, listheader.y, title.width, listheaderHeight, StringFormat.LeftCenter);
 
 		// artist;
 		if (artist.visible && artist.width > 0) {
 			gr.DrawString(lang("ARTIST"), semiItemFont, secondaryTextColor,
-				artist.x, listheaderY, artist.width, listheaderHeight, StringFormat.LeftCenter);
+				artist.x, listheader.y, artist.width, listheaderHeight, StringFormat.LeftCenter);
 		}
 
 		// album;
 		if (album.visible && album.width > 0) {
 			gr.DrawString(lang("ALBUM"), semiItemFont, secondaryTextColor,
-				album.x, listheaderY, album.width, listheaderHeight, StringFormat.LeftCenter);
+				album.x, listheader.y, album.width, listheaderHeight, StringFormat.LeftCenter);
+		}
+
+		if (rating.visible && rating.width > 0) {
+			gr.DrawString(lang("RATING"), semiItemFont, secondaryTextColor,
+				rating.x + scale(4), listheader.y, rating.width, listheaderHeight, StringFormat.LeftCenter);
 		}
 
 		// duration;
 		gr.SetTextRenderingHint(TextRenderingHint.AntiAlias);
 		gr.DrawString(Material.time, iconFont_btn, secondaryTextColor,
-			time.x, listheaderY, time.width, listheaderHeight, StringFormat.RightCenter);
+			time.x, listheader.y, time.width, listheaderHeight, StringFormat.RightCenter);
 		gr.SetTextRenderingHint(ui_textRendering);
 
 		// Clear visibleItems cache;
@@ -811,6 +848,12 @@ export class PlaylistView extends ScrollView {
 				let iconCode = liked ? Material.heart : Material.heart_empty;
 				gr.DrawString(iconCode, iconFont_list, iconColor,
 					mood.x, row.y, mood.width, row.height, StringFormat.Center);
+
+				if (rating.visible && rating.width > 0) {
+					row.ratingbar.x = rating.x + scale(4);
+					row.ratingbar.y = row.y + (row.height - row.ratingbar.height) / 2;
+					row.ratingbar.on_paint(gr);
+				}
 			}
 		}
 
@@ -839,7 +882,7 @@ export class PlaylistView extends ScrollView {
 		gr.FillGradRect(this.x, this.y, this.width, scale(40), 90, themeColors.topbarBackground, 0, 1.0);
 	}
 
-	drawTooltipImage() {
+	private drawTooltipImage() {
 		let selectedItems = this.items.filter(i => i.isselect);
 		if (selectedItems.length === 0) {
 			return;
@@ -909,11 +952,7 @@ export class PlaylistView extends ScrollView {
 		ThrottledRepaint();
 	}
 
-	private getTrack(index: number) {
-		return this.items[index];
-	}
-
-	on_item_focus_change(playlistIndex: number) {
+	on_item_focus_change(playlistIndex?: number) {
 		if (this.focusIndex !== plman.GetPlaylistFocusItemIndex(plman.ActivePlaylist)) {
 			this.focusIndex = plman.GetPlaylistFocusItemIndex(plman.ActivePlaylist);
 		}
@@ -940,6 +979,10 @@ export class PlaylistView extends ScrollView {
 
 	showNowPlaying() {
 		if (this.playingItemIndex === -1) {
+			return;
+		}
+
+		if (dnd.isActive || selecting.isActive) {
 			return;
 		}
 
@@ -1122,14 +1165,14 @@ export class PlaylistView extends ScrollView {
 				this._selectedIndexes = this.items.filter(item => item.isselect).map(item => item.playlistItemIndex);
 			} else {
 				/** NO MASKKEY */
-				if (hoverItem.isselect) {
-					this.clickOnSelection = true;
-				} else {
-					this.setSelection(hoverItem.playlistItemIndex);
-					selecting.isActive = true;
-					selecting.pageX1 = selecting.pageX2 = x - this.x;
-					selecting.pageY1 = selecting.pageY2 = y - this.y + this.scroll;
-				}
+				// if (hoverItem.isselect) {
+				// this.clickOnSelection = true;
+				// } else {
+				this.setSelection(hoverItem.playlistItemIndex);
+				selecting.isActive = true;
+				selecting.pageX1 = selecting.pageX2 = x - this.x;
+				selecting.pageY1 = selecting.pageY2 = y - this.y + this.scroll;
+				// }
 			}
 		}
 	}
@@ -1413,6 +1456,9 @@ export class PlaylistView extends ScrollView {
 		try {
 			showTrackContextMenu(plman.ActivePlaylist, plman.GetPlaylistSelectedItems(plman.ActivePlaylist), x, y);
 		} catch (e) { }
+		if (listheader.trace(x, y)) {
+			showlistHeaderMenu(x, y);
+		}
 	}
 
 	on_focus(isFocused: boolean) {
@@ -1441,6 +1487,15 @@ export class PlaylistView extends ScrollView {
 					break;
 				case VKeyCode.Escape:
 					this.setSelection();
+					// TODO: ESC 键取消拖选或拖动的鼠标动作。
+					// ----
+					// selecting.isActive = false;
+					// selecting.pageX1 = selecting.pageX2 = -1;
+					// selecting.pageY1 = selecting.pageY2 = -1;
+					// dnd.isActive = false;
+					// ui.setCursorImage(null);
+					// window.SetCursor(CursorName.IDC_ARROW);
+					// this.repaint();
 					break;
 				case VKeyCode.Return:
 					let focusItem = this.items[this.focusIndex];
@@ -1531,16 +1586,16 @@ export class PlaylistView extends ScrollView {
 
 	on_key_up(vkey?: number) { }
 
-	on_playlist_item_ensure_visible(playlistIndex: number, playlistItemIndex: number) {
-		// if (playlistIndex === plman.ActivePlaylist) {
-		// 	this.showNowPlaying();
-		// }
-	}
+	// on_playlist_item_ensure_visible(playlistIndex: number, playlistItemIndex: number) {
+	// }
 
 	onNotifyData(message: string, data: any) {
 		switch (message) {
 			case "Playlist.Scroll End":
 				this.scrollTo(this.totalHeight);
+				break;
+			case "playlist-show-now-playing-in-playlist":
+				this.showNowPlaying();
 				break;
 		}
 	}
@@ -1868,4 +1923,8 @@ export function formatPlaylistDuration(duration: number) {
 	if (weeks === 0 && days === 0 && hours === 0 && seconds > 0) formated += seconds + names.seconds;
 
 	return formated;
+}
+
+function showlistHeaderMenu(x: number, y: number) {
+
 }

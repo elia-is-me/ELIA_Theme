@@ -1,4 +1,4 @@
-import { findLastIndex, isObject } from "./common";
+import { findLastIndex, isObject } from "./Common";
 
 /**
  * A too simple way to generate component id;

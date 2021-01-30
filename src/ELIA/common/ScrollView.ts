@@ -1,5 +1,5 @@
 import { Component } from "./BasePart";
-import { scale } from "./common";
+import { scale } from "./Common";
 
 export abstract class ScrollView extends Component {
 	className = "ScrollView";

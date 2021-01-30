@@ -1,4 +1,4 @@
-import { scale } from "../common/common";
+import { scale } from "../common/Common";
 import { Material, MaterialFont } from "../common/Icon";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";

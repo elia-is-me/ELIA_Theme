@@ -1,5 +1,5 @@
 import { Component } from "./BasePart";
-import { Repaint, SmoothingMode } from "./common";
+import { Repaint, SmoothingMode } from "./Common";
 
 export interface ISliderOptions {
 	progressHeight: number;
@@ -73,7 +73,9 @@ export class Slider extends Component implements ISliderOptions {
 		let radius = (this.progressHeight / 2) >> 0;
 		//
 		gr.SetSmoothingMode(SmoothingMode.AntiAlias);
-		gr.FillRoundRect(this.x, p_y, this.width, this.progressHeight, radius, radius, this.secondaryColor);
+		if (this.width > 2 * radius + 1) {
+			gr.FillRoundRect(this.x, p_y, this.width, this.progressHeight, radius, radius, this.secondaryColor);
+		}
 		//
 		if (this.progress * this.width > this.progressHeight) {
 			gr.FillRoundRect(this.x, p_y, this.width * this.progress, this.progressHeight, radius, radius, this.progressColor);

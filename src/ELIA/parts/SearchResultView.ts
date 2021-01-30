@@ -1,4 +1,4 @@
-import { RGB, scale, TextRenderingHint, StopReason, VKeyCode, clamp, KMask, } from "../common/common";
+import { RGB, scale, TextRenderingHint, StopReason, VKeyCode, clamp, KMask, } from "../common/Common";
 import { StringFormat, MeasureString, spaceStart, spaceStartEnd } from "../common/String";
 import { Component } from "../common/BasePart";
 import { Scrollbar } from "../common/Scrollbar";
@@ -431,6 +431,8 @@ export class SearchResultView extends ScrollView {
 		// Re-calc totalHeight;
 		this.itemsTotalHeight = rowHeight * this.items.length + rowHeight;
 		this.totalHeight = this.itemsTotalHeight + this.headerView.height;
+
+		this.scrollTo();
 	}
 
 	on_paint(gr: IGdiGraphics) {

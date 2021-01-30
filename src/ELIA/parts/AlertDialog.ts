@@ -1,4 +1,4 @@
-import { scale, RGB, isFunction, setAlpha } from "../common/common";
+import { scale, RGB, isFunction, setAlpha } from "../common/Common";
 import { StringFormat } from "../common/String";
 import { Component } from "../common/BasePart";
 import { Button } from "./Buttons";

@@ -1,5 +1,5 @@
 ﻿import { Component } from "./BasePart";
-import { blendColors } from "./common";
+import { blendColors } from "./Common";
 import { lang2 } from "./Lang";
 
 const IDC_ARROW = 32512;
