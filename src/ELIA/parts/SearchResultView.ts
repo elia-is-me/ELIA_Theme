@@ -1,4 +1,4 @@
-import { RGB, scale, TextRenderingHint, StopReason, VKeyCode, clamp, KMask, } from "../common/Common";
+import { RGB, scale, TextRenderingHint, StopReason, VKeyCode, clamp, KMask, CursorName, } from "../common/Common";
 import { StringFormat, MeasureString, spaceStart, spaceStartEnd } from "../common/String";
 import { Component } from "../common/BasePart";
 import { Scrollbar } from "../common/Scrollbar";
@@ -578,7 +578,7 @@ export class SearchResultView extends ScrollView {
 		}
 
 		// Shadow top cover;
-		gr.FillGradRect(this.x, this.y, this.width, scale(40), 90, themeColors.topbarBackground, 0, 1.0);
+		// gr.FillGradRect(this.x, this.y, this.width, scale(40), 90, themeColors.topbarBackground, 0, 1.0);
 	}
 
 	private findHoverItem(x: number, y: number) {
@@ -738,12 +738,27 @@ export class SearchResultView extends ScrollView {
 				(selecting.pageX1 > this.width - padRight && selecting.pageX2 > this.width - padRight)
 			)
 		) {
-			let topOffset = this.headerView.height;
-			first = Math.floor((selecting.pageY1 - topOffset) / rowHeight);
-			last = Math.floor((selecting.pageY2 - topOffset) / rowHeight);
+			// let topOffset = this.headerView.height;
+			first = this.traceItemLineIndex(selecting.pageY1);//Math.floor((selecting.pageY1 - topOffset) / rowHeight);
+			last = this.traceItemLineIndex(selecting.pageY2);//Math.floor((selecting.pageY2 - topOffset) / rowHeight);
 		}
 		this.setSel(first, last);
 		this.repaint();
+	}
+
+	protected traceItemLineIndex(y: number) {
+		let offsetTop = headerHeight + listheaderHeight;
+		let lastItem = this.items[this.items.length - 1];
+		let firstItem = this.items[0];
+		let resultIndex = this.items.findIndex(item => {
+			return y > offsetTop + item.yOffset && y <= offsetTop + item.yOffset + item.height;
+		});
+		if (resultIndex === -1) {
+			if (lastItem && y > lastItem.yOffset + lastItem.height + offsetTop) {
+				resultIndex = this.items.length;
+			};
+		}
+		return resultIndex;
 	}
 
 	on_mouse_move(x: number, y: number) {
@@ -752,10 +767,14 @@ export class SearchResultView extends ScrollView {
 		}
 
 		if (selecting.isActive) {
+			if (y < this.y + rowHeight) {
+				this.scrollTo(this.scroll - rowHeight);
+			} else if (y > this.y + this.height - rowHeight) {
+				this.scrollTo(this.scroll + rowHeight);
+			}
 			this.updateSel(x, y);
 		} else if (dnd.isActive) {
-			// todo
-			// do nothing now;
+			window.SetCursor(CursorName.IDC_NO);
 		} else {
 			// nt selecting | dragging;
 			if (this.clickSel) {
@@ -805,6 +824,8 @@ export class SearchResultView extends ScrollView {
 		dnd.clearInterval();
 		dnd.isActive = false;
 		dnd.dropTargetRowIndex = -1;
+
+		window.SetCursor(CursorName.IDC_ARROW);
 
 		this.repaint();
 	}

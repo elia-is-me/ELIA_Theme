@@ -14,9 +14,9 @@ const MENU_ITEM_HEIGHT = scale(40);
 const MENU_WIDTH = scale(164);
 const MENU_FONT = GdiFont("semi,14");
 const menuColors = {
-    text: RGB(200, 200, 200),
-    background: RGB(40, 40, 40),
-    backgroundHover: RGB(62, 62, 62),
+    text: themeColors.secondaryText,
+    background: themeColors.panelBackground,
+    backgroundHover: themeColors.playlistBackgroundSelection,
     highlight: themeColors.highlight,
     progress: themeColors.text,
     progressSecondary: setAlpha(themeColors.text, 76),
@@ -168,7 +168,7 @@ class VolumeMenuItem extends MenuItem {
 
         let barH = scale(20);
         let barY = this.y + (this.height - barH) / 2;
-        this.volumnBar.setBoundary(this.x + scale(40), barY, this.width - scale(40) - scale(8), barH);
+        this.volumnBar.setBoundary(this.x + scale(40), barY, this.width - scale(40) - scale(16), barH);
     }
     on_paint(gr: IGdiGraphics) { }
 }

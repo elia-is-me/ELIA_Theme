@@ -12,6 +12,7 @@ import { getYear, ToggleMood } from "./PlaybackControlView";
 import { formatPlaylistDuration, showTrackContextMenu } from "./PlaylistView";
 import { SendToQueueListPlay } from "./SearchResultView";
 import { GdiFont, scrollbarWidth, themeColors } from "./Theme";
+import { GotoPlaylist } from "./Layout";
 
 const pageColors = {
     text: themeColors.text,
@@ -195,6 +196,9 @@ class AlbumHeaderView extends Component {
             fontSize: scale(28),
             colors: [buttonColors.secondary],
         });
+        closeBtn.on_click = () => {
+            GotoPlaylist();
+        }
         this.addChild(closeBtn);
         closeBtn.setSize(scale(48), scale(48));
         this.buttons.set("close", closeBtn);
