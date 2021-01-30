@@ -1,5 +1,5 @@
 import { Component } from "../common/BasePart";
-import { RGB, scale, isEmptyString, isFunction, setAlpha } from "../common/Common";
+import { RGB, scale, isEmptyString, isFunction, setAlpha, blendColors, SmoothingMode } from "../common/Common";
 import { Button } from "./Buttons";
 import { InputBox } from "../common/Inputbox";
 import { notifyOthers } from "../common/UserInterface";
@@ -32,7 +32,7 @@ const defaultOptions: IInputPopupDefaultOptions = {
 	panelWidth: scale(450),
 	panelHeight: scale(225),
 	textColor: themeColors.titleText,
-	backgroundColor: RGB(33, 33, 33),
+	backgroundColor: themeColors.panelBackground,
 	highlightColor: themeColors.highlight,
 }
 
@@ -104,7 +104,7 @@ export class InputPopupPanel
 			font_italic: fonts.normal_14,
 			foreColor: RGB(0, 0, 0),
 			backgroundActiveColor: RGB(255, 255, 255),
-			backgroundSelectionColor: RGB(33, 136, 255),
+			backgroundSelectionColor: RGB(66, 133, 244),
 			empty_text: isEmptyString(this.emptyText) ? "" : this.emptyText,
 			default_text: isEmptyString(this.defaultText) ? "" : this.defaultText,
 			func: () => {
@@ -159,21 +159,23 @@ export class InputPopupPanel
 
 		// background;
 		gr.FillSolidRect(this.x, this.y, this.width, this.height, backgroundColor);
+		gr.SetSmoothingMode(SmoothingMode.HighQuality);
 		gr.DrawRoundRect(this.x, this.y, this.width - scale(1), this.height - scale(1), scale(2), scale(2), scale(1), setAlpha(textColor, 50));
+		gr.SetSmoothingMode(SmoothingMode.Default);
 
 		// title;
 		gr.DrawString(this.title, titleFont, textColor, this.x + left, this.y + top, this.width - 2 * left, scale(26), StringFormat.LeftTop);
 
 		// draw inputbox background;
 		let offset = (scale(36) - this.inputbox.height) / 2;
-		gr.FillSolidRect(
-			this.x + left,
-			this.inputbox.y - offset,
-			this.width - 2 * left,
-			scale(36),
-			this.inputbox.edit
-				? this.inputbox.backgroundActiveColor
-				: RGB(100, 100, 100)
-		);
+		let boxX = this.x + left;
+		let boxWidth = this.width - 2 * left;
+		let boxY = this.inputbox.y - offset;
+		let boxHeight = scale(36);
+		gr.FillSolidRect(boxX, boxY, boxWidth, boxHeight, this.inputbox.backgroundActiveColor);
+		if (!this.inputbox.edit) {
+			gr.FillSolidRect(boxX, boxY, boxWidth, boxHeight, setAlpha(this.inputbox.foreColor, 0x25));
+		}
+		gr.DrawRect(boxX, boxY, boxWidth, boxHeight, scale(1), setAlpha(this.inputbox.foreColor, 0x50));
 	}
 }

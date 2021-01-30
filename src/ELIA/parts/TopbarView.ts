@@ -3,7 +3,7 @@ import { Component } from "../common/BasePart";
 import { IconButton } from "./Buttons";
 import { Material, MaterialFont } from "../common/Icon";
 import { notifyOthers, ui } from "../common/UserInterface";
-import { themeColors } from "./Theme";
+import { themeColors, ToggleDarkmode } from "./Theme";
 import { SearchBox } from "./SearchBox";
 import { lang } from "./Lang";
 import { StringFormat } from "../common/String";
@@ -40,6 +40,7 @@ export class TopBar extends Component {
 	buttons: Map<string, IconButton> = new Map();
 	mainBtn: IconButton;
 	settingsBtn: IconButton;
+	darkmodeBtn: IconButton;
 
 	swithcBtn: IconButton;
 	searchBtn: IconButton;
@@ -65,6 +66,11 @@ export class TopBar extends Component {
 		this.settingsBtn.on_click = (x: number, y: number) => {
 			// notifyOthers("Show.Settings");
 			showMainMenu(x, y);
+		}
+
+		this.darkmodeBtn = createIconButton(Material.toggle_dark, iconSize, this.foreColor);
+		this.darkmodeBtn.on_click = () => {
+			ToggleDarkmode();
 		}
 
 		// button 'Page Switch';
@@ -96,7 +102,7 @@ export class TopBar extends Component {
 		this.searchBox = new SearchBox();
 		this.searchBox.z = 100;
 
-		[this.mainBtn, this.swithcBtn, this.searchBtn, this.searchBox, this.settingsBtn, this.closeSearchBtn].forEach((child) =>
+		[this.mainBtn, this.swithcBtn, this.searchBtn, this.searchBox, this.settingsBtn, this.closeSearchBtn, this.darkmodeBtn].forEach((child) =>
 			this.addChild(child)
 		);
 	}
@@ -118,13 +124,20 @@ export class TopBar extends Component {
 			_iconWidth,
 			_iconWidth
 		);
-		this.swithcBtn.visible = true;
+		this.swithcBtn.visible = false;
 		this.swithcBtn.setBoundary(
 			this.settingsBtn.x - _iconWidth,
 			this.y + icoOffsetTop,
 			_iconWidth,
 			_iconWidth
 		);
+
+		this.darkmodeBtn.visible = true;
+		this.darkmodeBtn.setBoundary(
+			this.settingsBtn.x - _iconWidth,
+			this.y + icoOffsetTop,
+			_iconWidth, _iconWidth
+		)
 
 		let searchboxX = this.x + scale(272);
 		let searchboxWidth = this.swithcBtn.x - scale(8) - searchboxX;

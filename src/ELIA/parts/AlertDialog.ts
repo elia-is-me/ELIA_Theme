@@ -1,4 +1,4 @@
-import { scale, RGB, isFunction, setAlpha } from "../common/Common";
+import { scale, RGB, isFunction, setAlpha, SmoothingMode } from "../common/Common";
 import { StringFormat } from "../common/String";
 import { Component } from "../common/BasePart";
 import { Button } from "./Buttons";
@@ -28,7 +28,7 @@ const defaultOptions: IDefaultOptions = {
 	panelWidth: scale(400),
 	panelHeight: scale(225),
 	textColor: themeColors.titleText,
-	backgroundColor: RGB(33, 33, 33),
+	backgroundColor: themeColors.panelBackground,
 	highlightColor: themeColors.highlight,
 };
 
@@ -99,7 +99,7 @@ export class AlertDialog extends Component implements IAlertDialogOptions, IDefa
 		}
 		temp_image.ReleaseGraphics(temp_gr);
 		// then set panel size;
-		this.setSize(panel_width, panel_height);
+		this.setSize(panel_width >> 0, panel_height >> 0);
 	}
 
 	on_size() {
@@ -120,7 +120,9 @@ export class AlertDialog extends Component implements IAlertDialogOptions, IDefa
 
 		// background;
 		gr.FillSolidRect(this.x, this.y, this.width, this.height, backgroundColor);
+		gr.SetSmoothingMode(SmoothingMode.HighQuality);
 		gr.DrawRoundRect(this.x, this.y, this.width - scale(1), this.height - scale(1), scale(2), scale(2), scale(1), setAlpha(textColor, 50));
+		gr.SetSmoothingMode(SmoothingMode.Default);
 
 		// title;
 		gr.DrawString(this.title, titleFont, textColor, this.x + left, this.y + top, this.width - 2 * left, this.titleFont.Height, StringFormat.LeftTop);

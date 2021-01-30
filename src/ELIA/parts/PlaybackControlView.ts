@@ -609,6 +609,7 @@ export class PlaybackControlView extends Component {
 	on_paint(gr: IGdiGraphics) {
 		// bg
 		gr.FillSolidRect(this.x, this.y, this.width, this.height, themeColors.playbackBarBackground);
+		gr.FillSolidRect(this.x, this.y >> 0, this.width, scale(1), themeColors.splitLine);
 
 		// playback time;
 		let pb_time_x = seekbar.x - this.timeWidth - scale(4);

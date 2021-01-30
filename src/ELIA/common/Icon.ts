@@ -39,6 +39,14 @@ export const Material = {
     arrow_right: '\ue5c8',
     star: '\ue838',
     star_empty: '\ue83a',
+    favorite_border: '\ue87e',
+    library: '\ue030',
+    playlist_play: '\ue05f',
+    queue: '\ue02e',
+    playlist_add: '\ue03b',
+    never_played: '\ue426',
+    newly_added: '\ue3bb',
+    toggle_dark: '\ue3aB',
 };
 
 export const MaterialFont = "Material Icons";

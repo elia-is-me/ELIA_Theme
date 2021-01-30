@@ -6,7 +6,7 @@ import { Material, MaterialFont } from "../common/Icon";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
 import { ui } from "../common/UserInterface";
-import { Button } from "./Buttons";
+import { Button, IconButton } from "./Buttons";
 import { lang } from "./Lang";
 import { getYear, ToggleMood } from "./PlaybackControlView";
 import { formatPlaylistDuration, showTrackContextMenu } from "./PlaylistView";
@@ -142,7 +142,7 @@ let selecting = new SelectionHelper();
 
 class AlbumHeaderView extends Component {
     artwork: AlbumArtwork;
-    buttons: Map<string, Button> = new Map;
+    buttons: Map<string, Button | IconButton> = new Map;
 
     //
     albumArtistText: string = "";
@@ -188,6 +188,16 @@ class AlbumHeaderView extends Component {
         });
         this.buttons.set("context", context);
         // this.addChild(context);
+
+        let closeBtn = new IconButton({
+            icon: Material.close,
+            fontName: MaterialFont,
+            fontSize: scale(28),
+            colors: [buttonColors.secondary],
+        });
+        this.addChild(closeBtn);
+        closeBtn.setSize(scale(48), scale(48));
+        this.buttons.set("close", closeBtn);
     }
 
     on_size() {
@@ -198,6 +208,7 @@ class AlbumHeaderView extends Component {
         let shuffleall = this.buttons.get("shuffleall");
         let sort = this.buttons.get("sort");
         let context = this.buttons.get("context");
+        let close = this.buttons.get("close");
         if (this.width < pageWidth.thin) {
             btnX = this.x + paddingLR;
             btnY = this.y + 2 * paddingTB + this.artwork.height;
@@ -208,6 +219,8 @@ class AlbumHeaderView extends Component {
         shuffleall.setPosition(btnX, btnY);
         sort.setPosition(shuffleall.x + shuffleall.width + scale(8), btnY);
         context.setPosition(sort.x + sort.width + scale(4), btnY);
+
+        close.setPosition(this.x + this.width - scale(64), this.y + scale(16));
     }
 
     on_paint(gr: IGdiGraphics) {
@@ -530,7 +543,6 @@ export class AlbumPageView extends ScrollView {
         let rowWidth = this.width - 2 * paddingLR;
         let listOffsetToTop = headerHeight + listHeaderHeight;
         let isfocuspart = ui.isFocusPart(this);
-        console.log(isfocuspart);
 
         let tracknumber = this.columns.get("tracknumber");
         let liked = this.columns.get("liked");
@@ -721,7 +733,6 @@ export class AlbumPageView extends ScrollView {
             (selecting.pageX1 < paddingLR && selecting.pageX2 < paddingLR)
             || (selecting.pageX1 > this.width - paddingLR && selecting.pageX2 > this.width - paddingLR)
         )) {
-            let offsetTop = this.header.height + listHeaderHeight;
             first = this.traceItemLineIndex(selecting.pageY1);//Math.floor((selecting.pageY1 - offsetTop) / rowHeight);
             last = this.traceItemLineIndex(selecting.pageY2);//Math.floor((selecting.pageY2 - offsetTop) / rowHeight);
         }

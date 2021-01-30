@@ -17,11 +17,11 @@ export class SearchBox extends Component {
 	searchBtn: IconButton;
 	clearBtn: IconButton;
 
-	backgroundColor: number = RGB(33, 33, 33);
+	backgroundColor: number = themeColors.topbarBackground//RGB(33, 33, 33);
 	foreColor: number = themeColors.text;
 	borderColor: number;
 	borderActiveColor: number;
-	backgroundActiveColor: number = RGB(77, 77, 77);
+	backgroundActiveColor: number = themeColors.topbarBackground//RGB(77, 77, 77);
 
 	private iconSize = scale(20);
 	private iconHeight = scale(32);

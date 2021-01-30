@@ -6,7 +6,7 @@ import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
 import { Component } from "../common/BasePart";
 import { Material, MaterialFont } from "../common/Icon";
-import { scrollbarWidth, themeColors, fonts, GdiFont } from "./Theme";
+import { scrollbarWidth, themeColors, GdiFont } from "./Theme";
 import { Clickable } from "../common/Button";
 import { isValidPlaylist } from "./PlaylistView";
 import { IInputPopupOptions } from "./InputPopupPanel";
@@ -15,6 +15,15 @@ import { CreatePlaylistPopup, DeletePlaylistDialog, GotoPlaylist, layout, Rename
 import { lang } from "./Lang";
 import { StringFormat, spaceStart } from "../common/String";
 import { root } from "../main";
+
+// Playlist names;
+let presetNames = {
+	library: lang(window.GetProperty("PLMAN.Media Library Name", "Media Library")),
+	never_played: lang(window.GetProperty("PLMAN.Never Played Name", "Never Played")),
+	liked: lang(window.GetProperty("PLMAN.Liked Songs Name", "Liked Songs")),
+	newly_added: lang(window.GetProperty("PLMAN.Newly Added Name", "Newly Added")),
+	queue: lang(window.GetProperty("PLMAN.Queue Name", "Queue")),
+}
 
 const ui_textRendering = ui.textRender;
 let iconFont = gdi.Font(MaterialFont, scale(20));
@@ -34,7 +43,7 @@ interface IPlaylistManagerProps {
 
 export const PlmanProperties = {
 	minWidth: layout.plmanMinWidth,
-	rowHeight: scale(32),
+	rowHeight: scale(36),
 	itemFont: GdiFont(window.GetProperty("PlaylistManager.Item Font", "semibold,14")),
 	headerHeight: scale(80),
 	// icons: icons,
@@ -96,21 +105,62 @@ class PlmanHeader extends Component {
 	}
 }
 
-class PlmanItem {
-	metadb: IFbMetadb; // First track in playlist;
-	index: number;
-	x: number = 0;
-	y: number = 0;
-	width: number = 0;
-	height: number = 0;
-	yOffset: number = 0;
-	//
-	listName: string = "";
-	isSelect: boolean = false;
-	isAuto: boolean = false;
+// class PlmanItem {
+// 	metadb: IFbMetadb; // First track in playlist;
+// 	index: number;
+// 	x: number = 0;
+// 	y: number = 0;
+// 	width: number = 0;
+// 	height: number = 0;
+// 	yOffset: number = 0;
+// 	//
+// 	listName: string = "";
+// 	isSelect: boolean = false;
+// 	isAuto: boolean = false;
 
-	trace(x: number, y: number) {
-		return x > this.x && x <= this.x + this.width && y > this.y && y <= this.y + this.height;
+// 	trace(x: number, y: number) {
+// 		return x > this.x && x <= this.x + this.width && y > this.y && y <= this.y + this.height;
+// 	}
+// }
+
+class PlmanItem extends Component {
+	metadb: IFbMetadb;
+	index: number;
+	listName: string = "";
+	icon: string = "";
+	isAuto: boolean = false;
+	isSelect: boolean = false;
+	yOffset: number = 0;
+	constructor(index: number) {
+		super({})
+		this.index = index;
+		this.listName = plman.GetPlaylistName(index);
+		this.isAuto = plman.IsAutoPlaylist(index);
+		this.getIconByName(this.listName);
+	}
+
+	private getIconByName(name: string) {
+		name = lang(name);
+		switch (name) {
+			case presetNames.library:
+				this.icon = Material.library;
+				break;
+			case presetNames.liked:
+				this.icon = Material.heart;
+				break;
+			case presetNames.never_played:
+				this.icon = Material.never_played;
+				break;
+			case presetNames.newly_added:
+				this.icon = Material.newly_added;
+				break;
+			case presetNames.queue:
+				this.icon = Material.music_note;
+				break;
+			default:
+				this.icon = this.isAuto ? Material.gear : Material.queue_music;
+				break;
+		}
 	}
 }
 
@@ -169,14 +219,14 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 		let itemYOffset = 0;
 
 		for (let playlistIndex = 0; playlistIndex < itemCount; playlistIndex++) {
-			let rowItem = new PlmanItem();
-			let playlistMetadbs = plman.GetPlaylistItems(playlistIndex);
+			let rowItem = new PlmanItem(playlistIndex);
+			// let playlistMetadbs = plman.GetPlaylistItems(playlistIndex);
 			items.push(rowItem);
-			rowItem.index = playlistIndex;
+			// rowItem.index = playlistIndex;
 			rowItem.height = rowHeight;
-			rowItem.metadb = playlistMetadbs.Count === 0 ? null : playlistMetadbs[0];
-			rowItem.listName = plman.GetPlaylistName(playlistIndex);
-			rowItem.isAuto = plman.IsAutoPlaylist(playlistIndex);
+			// rowItem.metadb = playlistMetadbs.Count === 0 ? null : playlistMetadbs[0];
+			// rowItem.listName = plman.GetPlaylistName(playlistIndex);
+			// rowItem.isAuto = plman.IsAutoPlaylist(playlistIndex);
 			rowItem.yOffset = itemYOffset;
 			itemYOffset += rowHeight;
 		}
@@ -243,8 +293,8 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 				}
 
 				// draw icon;
-				let iconCode = rowItem.isAuto ? Material.gear : Material.queue_music;
-				gr.DrawString(iconCode, iconFont, textColor,
+				// let iconCode = rowItem.isAuto ? Material.gear : Material.queue_music;
+				gr.DrawString(rowItem.icon, iconFont, textColor,
 					rowItem.x + paddingL, rowItem.y, iconWidth, rowItem.height, StringFormat.Center);
 
 				//

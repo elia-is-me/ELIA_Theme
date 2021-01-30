@@ -3,6 +3,7 @@
 import { CropImage, TextRenderingHint, drawImage, SmoothingMode, debounce, StopReason, BuildFullPath, fso, scale, InterpolationMode, isNumber, ScaleImage, DrawImageScale } from "./Common";
 import { Component } from "./BasePart";
 import { StringFormat } from "./String";
+import { themeColors } from "../parts/Theme";
 
 // image cache;
 // ---- 
@@ -140,23 +141,24 @@ class ImageCache {
 		let stubImages: IGdiBitmap[] = [];
 		let font1 = gdi.Font("Segoe UI", 230, 1);
 		let font2 = gdi.Font("Segoe UI", 120, 1);
+		let foreColor = themeColors.titleText;
 		for (let i = 0; i < 3; i++) {
 			stubImages[i] = drawImage(500, 500, true, g => {
 				g.SetSmoothingMode(SmoothingMode.HighQuality);
-				g.FillRoundRect(0, 0, 500, 500, 8, 8, 0x0fffffff);
+				g.FillRoundRect(0, 0, 500, 500, 8, 8, foreColor & 0x0fffffff);
 				g.SetTextRenderingHint(TextRenderingHint.AntiAlias);
-				g.DrawString("NO", font1, 0x25ffffff, 0, 0, 500, 275, StringFormat.Center);
+				g.DrawString("NO", font1, 0x25ffffff & foreColor, 0, 0, 500, 275, StringFormat.Center);
 				g.DrawString(
 					["COVER", "PHOTO", "ART"][i],
 					font2,
-					0x20ffffff,
+					0x20ffffff & foreColor,
 					2.5,
 					175,
 					500,
 					275,
 					StringFormat.Center
 				);
-				g.FillSolidRect(60, 400, 380, 20, 0x15fffffff);
+				g.FillSolidRect(60, 400, 380, 20, 0x15fffffff & foreColor);
 			});
 		}
 		this._stubImages = stubImages;

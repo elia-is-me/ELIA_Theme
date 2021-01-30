@@ -179,15 +179,15 @@ export class Layout extends Component {
 
 		if (this.inputPopupPanel && this.inputPopupPanel.visible) {
 			this.inputPopupPanel.setPosition(
-				this.x + (this.width - this.inputPopupPanel.width) / 2,
-				this.y + (this.height - this.inputPopupPanel.height) / 2
+				(this.x + (this.width - this.inputPopupPanel.width) / 2) >> 0,
+				(this.y + (this.height - this.inputPopupPanel.height) / 2) >> 0,
 			);
 		}
 
 		if (this.alertDialog && this.alertDialog.visible) {
 			this.alertDialog.setPosition(
-				this.x + (this.width - this.alertDialog.width) / 2,
-				this.y + (this.height - this.alertDialog.height) / 2
+				(this.x + (this.width - this.alertDialog.width) / 2) >> 0,
+				(this.y + (this.height - this.alertDialog.height) / 2) >> 0
 			);
 		}
 

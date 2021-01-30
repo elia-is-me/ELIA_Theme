@@ -1,15 +1,54 @@
 import { isNumber, RGB, RGBA, scale } from "../common/Common"
 import { MaterialFont } from "../common/Icon"
+import { mouseCursor } from "../common/UserInterface";
+
+export let isDarkMode = window.GetProperty("Global.Is Dark Mode", false);
 
 // Custom colors;
 // --------------
 
-export const themeColors = {
+const themeColorsLight = {
+    titleText: RGB(0, 0, 0),
+    text: RGBA(0, 0, 0, 245),
+    secondaryText: RGBA(0, 0, 0, 170),
+    // highlight: RGB(251, 114, 153),
+    highlight: RGB(234, 67, 53),
+
+    mood: RGBA(221, 0, 27, 220),
+
+    topbarBackground: RGB(255, 255, 255),
+
+    playbackBarBackground: RGB(255, 255, 255),
+    splitLine: RGBA(0, 0, 0, 25),
+
+    sidebarInactiveText: RGBA(0, 0, 0, 170),
+    sidebarBackground: RGB(255, 255, 255),
+    sidebarSplitLine: RGBA(0, 0, 0, 118),
+
+    playlistBackground: RGB(249, 249, 249),
+    playlistBackgroundSelection: RGBA(0, 0, 0, 52),
+    playlistSplitLine: RGBA(0, 0, 0, 15),
+
+    scrollbarCursor: RGBA(0, 0, 0, 80),
+    scrollbarBackground: 0,
+
+    panelText: RGB(0, 0, 0),
+    panelBackground: RGB(255, 255, 255),
+
+    // primary: RGB(0, 0, 0),
+    primary: RGB(52, 168, 83),
+    onPrimary: RGBA(255, 255, 255, 245),
+    secondary: RGB(0, 0, 0),
+    onSecondary: RGBA(255, 255, 255, 245),
+}
+
+const themeColorsDark = {
     // 
     titleText: RGB(255, 255, 255),
     text: RGBA(255, 255, 255, 245),
     secondaryText: RGBA(255, 255, 255, 100),
-    highlight: RGB(251, 114, 153),
+    // highlight: RGB(251, 114, 153),
+    highlight: RGB(234, 67, 53),
 
     // loved,
     mood: RGBA(221, 0, 27, 220),
@@ -19,6 +58,8 @@ export const themeColors = {
 
     // playback control bar,
     playbackBarBackground: RGB(40, 40, 40),
+
+    splitLine: RGBA(255, 255, 255, 25),
 
     // siderbar,
     sidebarInactiveText: RGBA(255, 255, 255, 120),
@@ -34,12 +75,34 @@ export const themeColors = {
     scrollbarCursor: RGBA(255, 255, 255, 80),
     scrollbarBackground: 0, // opacity,
 
+    //
+    panelText: RGB(255, 255, 255),
+    panelBackground: RGB(33, 33, 33),
+
+    // inputbox;
+    inputboxText: RGB(255, 255, 255),
+    inputboxSecondaryText: RGBA(255, 255, 255, 120),
+    // inputboxActiveBackground: RGB()
+    inputboxBorder: RGBA(255, 255, 255, 118),
+    // inputboxBorderActive: RGB()
+
     // buttons,
-    primary: RGB(255, 255, 255),
-    onPrimary: RGBA(0, 0, 0, 245),
+
+    primary: RGB(52, 168, 83),
+    onPrimary: RGBA(255, 255, 255, 245),
+    // primary: RGB(255, 255, 255),
+    // onPrimary: RGBA(0, 0, 0, 245),
     secondary: RGB(255, 255, 255),
     onSecondary: RGBA(0, 0, 0, 245),
 };
+
+export let themeColors = isDarkMode ? themeColorsDark : themeColorsLight;
+
+export function ToggleDarkmode() {
+    let mode = !isDarkMode;
+    window.SetProperty("Global.Is Dark Mode", mode);
+    window.Reload();
+}
 
 // Font names that may used;
 // -------------------------
