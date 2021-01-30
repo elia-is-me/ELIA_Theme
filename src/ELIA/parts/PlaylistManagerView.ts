@@ -44,7 +44,7 @@ interface IPlaylistManagerProps {
 export const PlmanProperties = {
 	minWidth: layout.plmanMinWidth,
 	rowHeight: scale(36),
-	itemFont: GdiFont(window.GetProperty("PlaylistManager.Item Font", "semibold,14")),
+	itemFont: GdiFont(window.GetProperty("PLMAN.Item Font", "semibold,14")),
 	headerHeight: scale(80),
 	// icons: icons,
 };

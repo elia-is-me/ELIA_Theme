@@ -531,3 +531,27 @@ export function pos2vol(pos: number) {
 export function vol2pos(v: number) {
 	return (Math.pow(10, v / 50) - 0.01) / 0.99;
 }
+
+export function getTimestamp() {
+	var d,
+		s1,
+		s2,
+		s3,
+		hh,
+		min,
+		sec,
+		timestamp;
+	d = new Date();
+	s1 = d.getFullYear();
+	s2 = (d.getMonth() + 1);
+	s3 = d.getDate();
+	hh = d.getHours();
+	min = d.getMinutes();
+	sec = d.getSeconds();
+	if (s3.toString().length == 1)
+		s3 = "0" + s3;
+	timestamp = s1 + ((s2 < 10) ? "-0" : "-") + s2 + ((s3 < 10) ? "-0" : "-") + s3 + ((hh < 10) ? " 0" : " ") + hh + ((min < 10) ? ":0" : ":") + min + ((sec < 10) ? ":0" : ":") + sec;
+	return timestamp;
+};
+
+export const foo_playcount = utils.CheckComponent("foo_playcount", true);

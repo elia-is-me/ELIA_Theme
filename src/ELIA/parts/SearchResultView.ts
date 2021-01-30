@@ -4,7 +4,7 @@ import { Component } from "../common/BasePart";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
 import { MaterialFont, Material } from "../common/Icon";
-import { ToggleMood } from "./PlaybackControlView";
+import { ReadMood, ToggleMood } from "./PlaybackControlView";
 import { notifyOthers, ui } from "../common/UserInterface";
 import { themeColors, GdiFont, scrollbarWidth } from "./Theme";
 import { lang } from "./Lang";
@@ -200,6 +200,7 @@ class PlaylistViewItem extends Component {
 	album: string;
 	time: string;
 	addedTime: string;
+	mood: number;
 
 	// state
 	isSelect: boolean = false;
@@ -220,6 +221,7 @@ class PlaylistViewItem extends Component {
 		this.time = infoArray[3];
 		this.rating = Number(infoArray[4]);
 		this.addedTime = infoArray[7];
+		this.mood = ReadMood(this.metadb);
 	}
 }
 
@@ -570,8 +572,8 @@ export class SearchResultView extends ScrollView {
 				// duration.draw(gr, rowItem.time, itemFont, secondaryTextColor, rowItem, StringFormat.Center);
 
 				// mood;
-				let icon = (rowItem.rating === 5 ? Material.heart : Material.heart_empty);
-				let iconColor = (rowItem.rating === 5 ? moodColor : secondaryTextColor);
+				let icon = (rowItem.mood > 0 ? Material.heart : Material.heart_empty);
+				let iconColor = (rowItem.mood > 0 ? moodColor : secondaryTextColor);
 				gr.DrawString(icon, iconFont, iconColor,
 					mood.x, rowItem.y, mood.width, rowItem.height, StringFormat.Center);
 			}
@@ -658,6 +660,10 @@ export class SearchResultView extends ScrollView {
 		}
 	}
 
+	on_metadb_changed() {
+		this.items.forEach(item => item.title = "");
+		this.repaint();
+	}
 
 	on_mouse_lbtn_down(x: number, y: number) {
 		let hoverItem = this.findHoverItem(x, y);

@@ -1,18 +1,19 @@
 import { MeasureString, StringFormat, spaceStartEnd, spaceEnd, spaceStart } from "../common/String";
 import { AlbumArtwork } from "../common/AlbumArt";
 import { Component } from "../common/BasePart";
-import { clamp, CursorName, KMask, RGB, scale, StopReason, TextRenderingHint, VKeyCode } from "../common/Common";
+import { clamp, CursorName, foo_playcount, isEmptyString, KMask, MenuFlag, RGB, scale, StopReason, TextRenderingHint, VKeyCode } from "../common/Common";
 import { Material, MaterialFont } from "../common/Icon";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
 import { ui } from "../common/UserInterface";
 import { Button, IconButton } from "./Buttons";
 import { lang } from "./Lang";
-import { getYear, ToggleMood } from "./PlaybackControlView";
+import { getYear, ReadMood, ToggleMood } from "./PlaybackControlView";
 import { formatPlaylistDuration, showTrackContextMenu } from "./PlaylistView";
 import { SendToQueueListPlay } from "./SearchResultView";
 import { GdiFont, scrollbarWidth, themeColors } from "./Theme";
 import { GotoPlaylist } from "./Layout";
+import { RatingBar } from "./Rating";
 
 const pageColors = {
     text: themeColors.text,
@@ -52,8 +53,8 @@ let paddingTB = scale(24);
 let artworkHeight = 0;
 let artworkMarginL = scale(24);
 let headerHeight = scale(250);
-let listHeaderHeight = scale(40);
-let rowHeight = scale(52);
+let listHeaderHeight = scale(36);
+let rowHeight = scale(48);
 let durationWidth = scale(16) + MeasureString("0:00:00", itemFont).Width;
 
 const pageWidth = {
@@ -71,13 +72,15 @@ const TF_TRACK_INFO = fb.TitleFormat([
     "%length%", //4
     "%track number%", //5
     "%disc number%", //6
-    "%play_count%",//7
+    "[%play_count%]",//7
     "$date(%added%)",// 8
 ].join("^^"));
 const TF_ALBUM_ARTIST = fb.TitleFormat("%album artist%");
 const TF_ALBUM = fb.TitleFormat("%album%");
 const TF_DATE = fb.TitleFormat("%date%");
 const TF_DISCNUMBER = fb.TitleFormat("[%disc number%]");
+
+// const foo_playcount = utils.CheckComponent("foo_playcount", true);
 
 
 class DragDropHelper {
@@ -273,6 +276,14 @@ class TrackItem extends Component {
     playcount: string;
     addTime: string;
     rating: number;
+    mood: number;
+    ratingbar: RatingBar = new RatingBar();
+    moodbtn = new IconButton({
+        icon: "",
+        fontName: iconFont.Name,
+        fontSize: iconFont.Size,
+        colors: [0]
+    });
 
     private _isselect: boolean = false;
 
@@ -288,6 +299,15 @@ class TrackItem extends Component {
 
     constructor() {
         super({});
+        this.moodbtn.on_init = () => {
+            if (this.mood > 0) {
+                this.moodbtn.setColors(pageColors.moodRed);
+                this.moodbtn.setIcon(Material.heart);
+            } else {
+                this.moodbtn.setColors(pageColors.secondaryText);
+                this.moodbtn.setIcon(Material.heart_empty);
+            }
+        }
     }
 
     getTags() {
@@ -306,6 +326,15 @@ class TrackItem extends Component {
         this.playcount = infoArray[7];
         this.rating = +infoArray[3];
         this.addTime = infoArray[8];
+        this.mood = ReadMood(this.metadb);
+
+        // init ratingbar;
+        this.ratingbar.setMetadb(this.metadb);
+
+        // init mood btn;
+        // this.moodbtn.setColors(this.mood > 0 ? pageColors.moodRed : pageColors.secondaryText);
+        // this.moodbtn.setIcon(this.mood > 0 ? Material.heart : Material.heart_empty);
+        this.moodbtn.on_init();
     }
 }
 
@@ -435,55 +464,102 @@ export class AlbumPageView extends ScrollView {
     }
 
 
-    private initColumns() {
-        let columns = ["tracknumber", "title", "trackartist", "playcount", "addedtime", "liked", "duration"];
-        columns.forEach(i => this.columns.set(i, new ColumnItem()));
+    initColumns() {
+        // let columns = ["tracknumber", "title", "trackartist", "playcount", "addedtime", "liked", "duration"];
+        // columns.forEach(i => this.columns.set(i, new ColumnItem()));
+        let columns = ["TrackNumber", "Mood", "Title", "Artist", "Playcount", "Rating", "Duration"];
+        let columnsVis = window.GetProperty("Album.Columns.Visible", "1,1,1,1,1,1,1").split(",");
+        if (columnsVis.length !== columns.length) {
+            columnsVis = columns.map(i => "1");
+            window.SetProperty("Album.Columns.Visible", columnsVis.join(","));
+        }
+        columns.forEach((col, i) => {
+            let obj = new ColumnItem();
+            obj.visible = columnsVis[i] != "0";
+            this.columns.set(col, obj);
+        })
     }
 
     setColumns() {
         let columns = this.columns;
-        let tracknumber = columns.get("tracknumber");
-        let title = columns.get("title");
-        let trackartist = columns.get("trackartist");
-        let playcount = columns.get("playcount");
-        let addedtime = columns.get("addedtime");
-        let liked = columns.get("liked");
-        let duration = columns.get("duration");
+        let tracknumber = columns.get("TrackNumber");
+        let title = columns.get("Title");
+        let trackartist = columns.get("Artist");
+        let playcount = columns.get("Playcount");
+        // let addedtime = columns.get("Addtime");
+        let liked = columns.get("Mood");
+        let duration = columns.get("Duration");
+        let rating = columns.get("Rating");
 
-        tracknumber.visible = true;
+
+        // tracknumber.visible = true;
         tracknumber.width = scale(40);
-        duration.visible = true;
+        // duration.visible = true;
         duration.width = durationWidth;
-        liked.visible = true;
+        // liked.visible = true;
         liked.width = scale(36);
+        // playcount.visible = foo_playcount;
+        let playcountVis = playcount.visible && foo_playcount;
+        playcount.width = MeasureString("0,000", itemFont).Width + scale(16);
+        rating.width = RatingBar.Width + scale(16);
 
         let whitespace = this.width - 2 * paddingLR;
-        let reservedwidth = scale(16);
+        let reservedwidth = 0;
         whitespace -= reservedwidth;
-        whitespace -= (tracknumber.width + duration.width + liked.width);
+        tracknumber.visible && (whitespace -= tracknumber.width);
+        liked.visible && (whitespace -= liked.width);
+        playcountVis && (whitespace -= playcount.width);
+        rating.visible && (whitespace -= rating.width);
+        duration.visible && (whitespace -= duration.width);
 
-        let ratio = 0.7;
-        if (this.width >= pageWidth.wide) {
-            ratio = 0.7;
-        } else if (this.width <= pageWidth.thin) {
-            ratio = 0.87;
-        } else {
-            ratio = 0.7 + 0.13 * easeOutCubic((pageWidth.wide - this.width) / (pageWidth.wide - pageWidth.thin));
+
+        // let ratio = 0.7;
+        // if (this.width >= pageWidth.wide) {
+        //     ratio = 0.7;
+        // } else if (this.width <= pageWidth.thin) {
+        //     ratio = 0.87;
+        // } else {
+        //     ratio = 0.7 + 0.13 * easeOutCubic((pageWidth.wide - this.width) / (pageWidth.wide - pageWidth.thin));
+        // }
+        let titleWidth_ = scale(280);
+        let artistWidth_ = scale(250);
+        let artistVis = trackartist.visible && whitespace > (titleWidth_ + artistWidth_);
+        let widthToAdd = whitespace - titleWidth_;
+        let count = 1;
+        // playcountVis && (count++);
+        // rating.visible && (count++);
+        if (artistVis) {
+            count++;
+            widthToAdd -= artistWidth_;
         }
+        // if (artistVis && playcount.visible) {
+        //     widthToAdd = Math.floor((whitespace - titleWidth_ - playcountWidth_) / 3);
+        // }
+        // } else if (artist)
+        // if (!playcount.visible) {
+        //     ratio = 1;
+        // }
+        widthToAdd = widthToAdd / count;
 
-        let titleWidth = (whitespace * ratio) >> 0;
-        let otherWidth = (whitespace - titleWidth);
+        // let titleWidth = (whitespace * ratio) >> 0;
+        // let otherWidth = (whitespace - titleWidth);
 
         tracknumber.x = this.x + paddingLR;
-        liked.x = tracknumber.x + tracknumber.width;
+        liked.x = tracknumber.x + (tracknumber.visible ? tracknumber.width : 0);
 
-        title.x = liked.x + liked.width;
-        title.width = titleWidth;
+        title.x = liked.x + (liked.visible ? liked.width : 0);
+        title.width = titleWidth_ + widthToAdd;
 
-        playcount.x = title.x + title.width;
-        playcount.width = otherWidth;
+        trackartist.x = title.x + title.width;
+        trackartist.width = (artistVis ? artistWidth_ + widthToAdd : 0);
 
-        duration.x = playcount.x + playcount.width;
+        playcount.x = trackartist.x + trackartist.width;
+        playcount.width = (playcountVis ? playcount.width : 0);
+
+        rating.x = playcount.x + playcount.width;
+        rating.width = (rating.visible ? rating.width : 0);
+
+        duration.x = rating.x + rating.width;
     }
 
     on_init() {
@@ -548,11 +624,13 @@ export class AlbumPageView extends ScrollView {
         let listOffsetToTop = headerHeight + listHeaderHeight;
         let isfocuspart = ui.isFocusPart(this);
 
-        let tracknumber = this.columns.get("tracknumber");
-        let liked = this.columns.get("liked");
-        let title = this.columns.get("title");
-        let playcount = this.columns.get("playcount");
-        let duration = this.columns.get("duration");
+        let tracknumber = this.columns.get("TrackNumber");
+        let liked = this.columns.get("Mood");
+        let title = this.columns.get("Title");
+        let playcount = this.columns.get("Playcount");
+        let duration = this.columns.get("Duration");
+        let rating = this.columns.get("Rating");
+        let artist = this.columns.get("Artist");
 
         let textColor = pageColors.text;
         let textSelectionColor = pageColors.titleText;
@@ -570,12 +648,26 @@ export class AlbumPageView extends ScrollView {
             tracknumber.x, headbarY, tracknumber.width, listHeaderHeight, StringFormat.Center);
 
         // title/artist;
-        gr.DrawString(lang("TITLE") + "/" + lang("ARTIST"), semiItemFont, secondaryText,
+        gr.DrawString(lang("TITLE"), semiItemFont, secondaryText,
             title.x, headbarY, title.width, listHeaderHeight, StringFormat.LeftCenter);
 
+        // artist;
+        if (artist.visible && artist.width > 0) {
+            gr.DrawString(lang("ARTIST"), semiItemFont, secondaryText,
+                artist.x, headbarY, artist.width, listHeaderHeight, StringFormat.LeftCenter);
+        }
+
         // playcount;
-        gr.DrawString(lang("PLAYS"), semiItemFont, secondaryText,
-            playcount.x, headbarY, playcount.width, listHeaderHeight, StringFormat.LeftCenter);
+        if (playcount.visible && playcount.width > 0) {
+            gr.DrawString(lang("PLAYS"), semiItemFont, secondaryText,
+                playcount.x, headbarY, playcount.width, listHeaderHeight, StringFormat.LeftCenter);
+        }
+
+        // rating;
+        if (rating.visible) {
+            gr.DrawString(lang("RATING"), semiItemFont, secondaryText,
+                rating.x + scale(4), headbarY, rating.width, listHeaderHeight, StringFormat.LeftCenter);
+        }
 
         // duration;
         gr.DrawString(Material.time, iconFont, secondaryText,
@@ -624,35 +716,64 @@ export class AlbumPageView extends ScrollView {
 
                 } else {
                     // tracknumber;
-                    if (this.playingIndex === i) {
-                        gr.DrawString(fb.IsPaused ? Material.volume_mute : Material.volume, iconFont, highlightColor,
-                            tracknumber.x, row.y, tracknumber.width, row.height, StringFormat.Center);
-                    } else {
-                        gr.DrawString(row.trackNumber, itemFont, _textSecondaryColor,
-                            tracknumber.x, row.y, tracknumber.width, row.height, StringFormat.Center);
+                    if (tracknumber.visible) {
+                        if (this.playingIndex === i) {
+                            gr.DrawString(fb.IsPaused ? Material.volume_mute : Material.volume, iconFont, highlightColor,
+                                tracknumber.x, row.y, tracknumber.width, row.height, StringFormat.Center);
+                        } else {
+                            gr.DrawString(row.trackNumber, itemFont, _textSecondaryColor,
+                                tracknumber.x, row.y, tracknumber.width, row.height, StringFormat.Center);
+                        }
                     }
 
                     // liked;
-                    let likedIcon = row.rating === 5 ? Material.heart : Material.heart_empty;
-                    let iconColor = row.rating === 5 ? pageColors.moodRed : _textSecondaryColor;
-                    gr.DrawString(likedIcon, iconFont, iconColor,
-                        liked.x, row.y, liked.width, row.height, StringFormat.Center);
+                    if (liked.visible) {
+                        // let moodOn = row.mood > 0;
+                        // let likedIcon = moodOn ? Material.heart : Material.heart_empty;
+                        // let iconColor = moodOn ? pageColors.moodRed : _textSecondaryColor;
+                        // gr.DrawString(likedIcon, iconFont, iconColor,
+                        //     liked.x, row.y, liked.width, row.height, StringFormat.Center);
+                        row.moodbtn.setBoundary(liked.x, row.y, liked.width, row.height);
+                        row.moodbtn.on_paint(gr);
+                    }
 
                     // title
-                    let titleRowY = row.y + row.height / 2 - itemFont.Height;
-                    gr.DrawString(row.trackTitle, itemFont, _textColor,
-                        title.x, titleRowY, title.width - scale(16), row.height, StringFormat.LeftTop);
-                    let artist = row.trackArtist || row.albumArtist;
-                    gr.DrawString(artist, smallItemFont, _textSecondaryColor,
-                        title.x, row.y + row.height / 2, title.width - scale(16), row.height, StringFormat.LeftTop);
+                    if (artist.visible && artist.width == 0) {
+                        let titleRowY = row.y + row.height / 2 - itemFont.Height;
+                        gr.DrawString(row.trackTitle, itemFont, _textColor,
+                            title.x + scale(8), titleRowY, title.width - scale(24), row.height, StringFormat.LeftTop);
+                        let artistText = row.trackArtist || row.albumArtist;
+                        gr.DrawString(artistText, smallItemFont, _textSecondaryColor,
+                            title.x + scale(8), row.y + row.height / 2, title.width - scale(24), row.height, StringFormat.LeftTop);
+                    } else {
+                        gr.DrawString(row.trackTitle, itemFont, _textColor,
+                            title.x + scale(8), row.y, title.width - scale(24), row.height, StringFormat.LeftCenter);
+                    }
+
+                    if (artist.visible && artist.width > 0) {
+                        gr.DrawString(row.trackArtist || row.albumArtist, itemFont, _textSecondaryColor,
+                            artist.x, row.y, artist.width - scale(16), row.height, StringFormat.LeftCenter);
+                    }
+
 
                     // playcount;
-                    gr.DrawString(row.playcount, itemFont, _textSecondaryColor,
-                        playcount.x, row.y, playcount.width - scale(4), row.height, StringFormat.LeftCenter);
+                    if (playcount.visible && playcount.width > 0) {
+                        gr.DrawString(row.playcount, itemFont, _textSecondaryColor,
+                            playcount.x, row.y, playcount.width - scale(4), row.height, StringFormat.LeftCenter);
+                    }
+
+                    // rating;
+                    if (rating.visible && rating.width > 0) {
+                        row.ratingbar.x = rating.x + scale(4);
+                        row.ratingbar.y = row.y + (row.height - row.ratingbar.height) / 2;
+                        row.ratingbar.on_paint(gr);
+                    }
 
                     // duration;
-                    gr.DrawString(row.duration, itemFont, _textSecondaryColor,
-                        duration.x, row.y, duration.width - scale(8), row.height, StringFormat(2, 1));
+                    if (duration.visible) {
+                        gr.DrawString(row.duration, itemFont, _textSecondaryColor,
+                            duration.x, row.y, duration.width - scale(8), row.height, StringFormat(2, 1));
+                    }
                     //gr.DrawRect(duration.x, row.y, duration.width - scale(8), row.height - 1, 1, 0xffaabbcc);
                 }
             }
@@ -667,7 +788,7 @@ export class AlbumPageView extends ScrollView {
     }
 
     private getActiveMoodId(x: number, y: number) {
-        let moodcolumn = this.columns.get("mood");
+        let moodcolumn = this.columns.get("Mood");
         if (!moodcolumn || !moodcolumn.visible || moodcolumn.width === 0) {
             return -1;
         }
@@ -676,7 +797,7 @@ export class AlbumPageView extends ScrollView {
         let posRight = moodcolumn.x + pad + moodWidth;
         if (x > posLeft && x <= posRight) {
             let hoveritem = this.findHoverItem(x, y);
-            return hoveritem ? hoveritem.rowIndex : -1;
+            return hoveritem && hoveritem.type == 0 ? hoveritem.rowIndex : -1;
         } else {
             return -1;
         }
@@ -703,6 +824,7 @@ export class AlbumPageView extends ScrollView {
             }
             this.applysel();
         }
+        // console.log("setsel")
     }
 
     private setfocus(id: number) {
@@ -765,7 +887,12 @@ export class AlbumPageView extends ScrollView {
         let hoveritem = this.findHoverItem(x, y);
         let hoverMood = this.getActiveMoodId(x, y);
 
-        if (hoverMood > -1) {
+        if (hoveritem && hoveritem.moodbtn.trace(x, y)) {
+            return;
+        }
+
+        if (hoveritem && hoveritem.ratingbar.trace(x, y)) {
+            this.ratingID = hoveritem.rowIndex;
             return;
         }
 
@@ -780,12 +907,26 @@ export class AlbumPageView extends ScrollView {
         }
     }
 
+    private ratingID = -1;
+
     on_mouse_lbtn_down(x: number, y: number) {
         let hoveritem = this.findHoverItem(x, y);
         this.clickedMoodId = this.getActiveMoodId(x, y);
         if (this.clickedMoodId > -1) {
+            // this.clickedMoodId = hoveritem.rowIndex;
             return;
         }
+
+        this.ratingID = -1;
+        if (hoveritem && hoveritem.ratingbar.trace(x, y)) {
+            hoveritem.ratingbar.on_mouse_lbtn_down(x, y);
+            // hoveritem.trackTitle = "";
+            this.ratingID = hoveritem.rowIndex;
+            // this.repaint();
+            return;
+        }
+        // console.log("click not on rating");
+
 
         if (hoveritem) {
             this.setfocus(hoveritem.rowIndex);
@@ -801,11 +942,13 @@ export class AlbumPageView extends ScrollView {
                 selecting.pageX1 = selecting.pageX2 = x - this.x;
                 selecting.pageY1 = selecting.pageY2 = y - this.y + this.scroll;
                 this.setselection();
+                // console.log("sel 1");
             }
             this.mulselstartId = -1;
         } else if (hoveritem.isselect) {
             if (utils.IsKeyPressed(VKeyCode.Shift)) {
                 this.setselection(this.mulselstartId, this.focusIndex);
+                // console.log("sel 2");
             } else if (utils.IsKeyPressed(VKeyCode.Control)) {
                 hoveritem.isselect = !hoveritem.isselect;
                 this._selectedIndexes = this.items
@@ -820,6 +963,7 @@ export class AlbumPageView extends ScrollView {
             }
             if (utils.IsKeyPressed(VKeyCode.Shift)) {
                 this.setselection(this.mulselstartId, hoveritem.rowIndex);
+                // console.log("sel 3");
             } else if (utils.IsKeyPressed(VKeyCode.Control)) {
                 hoveritem.isselect = !hoveritem.isselect;
                 this._selectedIndexes = this.items.filter(item => item.isselect)
@@ -829,6 +973,7 @@ export class AlbumPageView extends ScrollView {
                     this.clickonsel = true;
                 } else {
                     this.setselection(hoveritem.rowIndex);
+                    // console.log("sel 4");
                 }
                 selecting.isActive = true;
                 selecting.pageX1 = selecting.pageX2 = x - this.x;
@@ -844,6 +989,10 @@ export class AlbumPageView extends ScrollView {
             return;
         }
 
+        if (this.ratingID > -1) {
+            return;
+        }
+
         if (selecting.isActive) {
             if (y < this.y + rowHeight) {
                 this.scroll -= rowHeight / 3;
@@ -851,6 +1000,7 @@ export class AlbumPageView extends ScrollView {
                 this.scroll += rowHeight / 3;
             }
             this.updatesel(x, y);
+            // console.log("upate sele");
         } else if (dnd.isActive) {
             window.SetCursor(CursorName.IDC_NO);
         } else {
@@ -860,15 +1010,26 @@ export class AlbumPageView extends ScrollView {
         }
     }
 
+    on_metadb_changed() {
+        this.items.forEach(item => item.trackTitle = "");
+        this.repaint();
+    }
+
     on_mouse_lbtn_up(x: number, y: number) {
         let hoveritem = this.findHoverItem(x, y);
 
         if (this.clickedMoodId > -1) {
             if (this.getActiveMoodId(x, y) === this.clickedMoodId) {
                 ToggleMood(this.items[this.clickedMoodId].metadb);
-                this.items[this.clickedMoodId].trackTitle = undefined;
-                this.repaint();
+                // this.items[this.clickedMoodId].trackTitle = undefined;
+                // this.repaint();
             }
+            return;
+        }
+
+        // console.log("ratid: ", this.ratingID)
+        if (this.ratingID > -1) {
+            this.ratingID = -1;
             return;
         }
 
@@ -880,6 +1041,7 @@ export class AlbumPageView extends ScrollView {
             if (hoveritem) {
                 if (!utils.IsKeyPressed(VKeyCode.Control) && !utils.IsKeyPressed(VKeyCode.Shift)) {
                     this.setselection(hoveritem.rowIndex);
+                    // console.log("sel up");
                 }
             }
         }
@@ -915,7 +1077,12 @@ export class AlbumPageView extends ScrollView {
 
     on_mouse_rbtn_up(x: number, y: number) {
         // try {
-        showTrackContextMenu(-5, this.getSelectedMetadbs(), x, y);
+        if (x > this.x + paddingLR && x <= this.x + this.width - paddingLR && y > this.header.y + this.header.height && y < this.header.y + this.header.height + listHeaderHeight) {
+            showlistheadermenu(x, y, this);
+
+        } else {
+            showTrackContextMenu(-5, this.getSelectedMetadbs(), x, y);
+        }
         // } catch (e) { }
     }
 
@@ -1056,4 +1223,37 @@ function formatTrackCount(count: number) {
 
 function easeOutCubic(x: number): number {
     return 1 - Math.pow(1 - x, 3);
+}
+
+
+function showlistheadermenu(x: number, y: number, pl: AlbumPageView) {
+    let menu = window.CreatePopupMenu();
+    let cols = window.CreatePopupMenu();
+
+    cols.AppendTo(menu, MenuFlag.STRING, lang("Columns"));
+    cols.AppendMenuItem(MenuFlag.STRING, 100, lang("Track number"));
+    cols.AppendMenuItem(MenuFlag.STRING, 101, lang("Mood"));
+    cols.AppendMenuItem(MenuFlag.GRAYED, 102, lang("Title"));
+    cols.AppendMenuItem(MenuFlag.STRING, 103, lang("Artist"));
+    cols.AppendMenuItem(MenuFlag.STRING, 104, lang("Play count"));
+    cols.AppendMenuItem(MenuFlag.STRING, 105, lang("Rating"));
+    cols.AppendMenuItem(MenuFlag.STRING, 106, lang("Duration"));
+
+    let columnsVis = window.GetProperty("Album.Columns.Visible", "1,1,1,1,1,1,1").split(",");
+    let columns = ["TrackNumber", "Mood", "Title", "Artist", "Playcount", "Rating", "Duration"];
+    if (columnsVis.length !== columns.length) {
+        columnsVis = columns.map(i => "1");
+        window.SetProperty("Album.Columns.Visible", columnsVis);
+    }
+
+    for (let i = 0; i < columnsVis.length; i++) {
+        cols.CheckMenuItem(100 + i, columnsVis[i] != "0");
+    }
+
+    const ret = menu.TrackPopupMenu(x, y);
+    let col = ret - 100;
+    columnsVis[col] = (columnsVis[col] == "0" ? "1" : "0");
+    window.SetProperty("Album.Columns.Visible", columnsVis.join(","));
+    pl.initColumns();
+    pl.on_size();
 }

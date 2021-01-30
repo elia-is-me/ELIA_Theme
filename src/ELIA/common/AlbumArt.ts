@@ -323,6 +323,8 @@ export class PlaylistArtwork extends Component {
 	}
 
 	on_size = debounce(() => {
+		// this.image = null;
+		this._cache.clear();
 		this.getArtwork();
 	}, 100);
 }
@@ -403,6 +405,7 @@ export class NowplayingArtwork extends Component {
 	}
 
 	on_size = debounce(() => {
+		// this.image
 		this.getArtwork(fb.GetNowPlaying());
 	}, 100);
 }

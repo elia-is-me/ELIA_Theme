@@ -2,7 +2,7 @@
 // Playback control bar;
 // ---------------------
 
-import { clamp, MenuFlag, Repaint, setAlpha, StopReason } from "../common/Common";
+import { clamp, getTimestamp, MenuFlag, Repaint, setAlpha, StopReason } from "../common/Common";
 import { TextLink } from "../common/TextLink";
 import { NowplayingArtwork } from "../common/AlbumArt";
 import { Slider, SliderThumbImage } from "../common/Slider";
@@ -12,7 +12,7 @@ import { scale, PlaybackOrder, SmoothingMode } from "../common/Common";
 import { themeColors, fonts, GdiFont } from "./Theme";
 import { IconButton } from "./Buttons";
 import { lang, RunContextCommandWithMetadb } from "./Lang";
-import { CreatePlaylistPopup, GoToAlbum, GoToArtist, ShowPlaybackBarMenu } from "./Layout";
+import { CreatePlaylistPopup, GoToAlbum, GoToArtist, GotoPlaylist, ShowPlaybackBarMenu } from "./Layout";
 import { MeasureString, StringFormat } from "../common/String";
 import { mouseCursor, notifyOthers } from "../common/UserInterface";
 
@@ -126,15 +126,15 @@ const createBottomButtons = () => {
 	Object.assign(buttons.love, {
 		on_init: function () {
 			let metadb = fb.GetNowPlaying();
-			if (!metadb || !fb.IsMetadbInMediaLibrary(metadb)) {
+			if (!metadb) {
 				buttons.love.setIcon(Material.heart_empty);
 				buttons.love.setColors(defaultColor);
 			} else {
-				let loved = +TF_RATING.EvalWithMetadb(metadb) === 5;
+				let loved = ReadMood(metadb) > 0;
 				buttons.love.setIcon(loved ? Material.heart : Material.heart_empty);
 				buttons.love.setColors(loved ? themeColors.mood : defaultColor);
 			}
-			if (!metadb || !fb.IsPlaying! || !fb.IsMetadbInMediaLibrary(metadb)) {
+			if (!metadb || !fb.IsPlaying!) {
 				this.disable();
 			} else {
 				this.enable();
@@ -548,7 +548,7 @@ export class PlaybackControlView extends Component {
 		buttons.shuffle.setPosition(bx_5, by_2);
 
 		// volume bar;
-		let vol_h = scale(18);
+		let vol_h = scale(40);
 		let vol_w = scale(80);
 		let vol_y = top + (height - vol_h) / 2;
 		let vol_x = left + width - vol_w - scale(24);
@@ -685,8 +685,10 @@ export class PlaybackControlView extends Component {
 			return;
 		}
 		if (plman.PlayingPlaylist === plman.ActivePlaylist) {
+			GotoPlaylist();
 			notifyOthers("playlist-show-now-playing-in-playlist");
 		} else {
+			GotoPlaylist();
 			plman.ActivePlaylist = plman.PlayingPlaylist;
 			// will trigger showNowPlaying on playlistView.on_init();
 		}
@@ -764,7 +766,19 @@ function showPanelContextMenu(metadb: IFbMetadb, x: number, y: number) {
 			// "Not playing" grey;
 			break;
 		case ret === 10:
-			// TODO: show now playing;
+			// show now playing;
+			// ----
+			if (!fb.IsPlaying) {
+				return;
+			}
+			if (plman.PlayingPlaylist === plman.ActivePlaylist) {
+				GotoPlaylist();
+				notifyOthers("playlist-show-now-playing-in-playlist");
+			} else {
+				GotoPlaylist();
+				plman.ActivePlaylist = plman.PlayingPlaylist;
+				// will trigger showNowPlaying on playlistView.on_init();
+			}
 			break;
 		case ret === 11:
 			// goto album
@@ -823,14 +837,43 @@ function setShuffleOrder(order: number) {
 	return order;
 }
 
-export function ToggleMood(metadb: IFbMetadb) {
-	if (metadb && fb.IsMetadbInMediaLibrary(metadb)) {
-		let liked = +TF_RATING.EvalWithMetadb(metadb) === 5;
-		RunContextCommandWithMetadb(liked ? CMD_UNLOVE : CMD_LOVE, metadb, 8);
-	} else {
-		// if (!metadb) console.log("toggle mood failed: NULL metadb!");
-		// if (!fb.IsMetadbInMediaLibrary(metadb)) console.log("toggle mood failed, metadb not in MediaLibrary!")
+export const TF_MOOD = fb.TitleFormat("[%mood%]");
+let reSpace = /\s+/g;
+
+export function ReadMood(metadb: IFbMetadb) {
+	if (!metadb) return;
+	let moodRaw = TF_MOOD.EvalWithMetadb(metadb).replace(reSpace, "");
+	return moodRaw ? 1 : 0;
+}
+
+export function ToggleMood(metadb: IFbMetadb, mood?: number) {
+	if (!metadb) {
+		console.log("EliaTheme Warning: NULL metadb!")
+		return;
 	}
+
+	try {
+		if (mood == null) {
+			mood = ReadMood(metadb);//+TF_MOOD.EvalWithMetadb(metadb);
+		}
+		let metadbs = new FbMetadbHandleList(metadb);
+		// console.log("mood: ", mood);
+
+		if (mood == 0) {
+			metadbs.UpdateFileInfoFromJSON(JSON.stringify({ "MOOD": getTimestamp() }));
+		} else {
+			metadbs.UpdateFileInfoFromJSON(JSON.stringify({ "MOOD": "" }))
+		}
+	} catch (e) {
+		console.log("EliaTheme Warning: ", "Fail to update mood!", e);
+	}
+	// if (metadb && fb.IsMetadbInMediaLibrary(metadb)) {
+	// 	let liked = +TF_RATING.EvalWithMetadb(metadb) === 5;
+	// 	RunContextCommandWithMetadb(liked ? CMD_UNLOVE : CMD_LOVE, metadb, 8);
+	// } else {
+	// 	// if (!metadb) console.log("toggle mood failed: NULL metadb!");
+	// 	// if (!fb.IsMetadbInMediaLibrary(metadb)) console.log("toggle mood failed, metadb not in MediaLibrary!")
+	// }
 }
 
 function extractArtists(str: string) {

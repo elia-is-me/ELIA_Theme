@@ -2,7 +2,7 @@
 // Simple Playlist View
 //====================================
 
-import { TextRenderingHint, MenuFlag, VKeyCode, KMask, scale, RGB, SmoothingMode, CursorName, throttle, clamp } from "../common/Common";
+import { TextRenderingHint, MenuFlag, VKeyCode, KMask, scale, RGB, SmoothingMode, CursorName, throttle, clamp, foo_playcount } from "../common/Common";
 import { StringTrimming, StringFormatFlags, MeasureString, StringFormat, spaceStart, spaceStartEnd } from "../common/String";
 import { ThrottledRepaint } from "../common/Common";
 import { scrollbarWidth, themeColors, GdiFont } from "./Theme";
@@ -11,13 +11,12 @@ import { ScrollView } from "../common/ScrollView";
 import { Component, IBoxModel } from "../common/BasePart";
 import { Material, MaterialFont } from "../common/Icon";
 import { PlaylistArtwork } from "../common/AlbumArt";
-import { ToggleMood } from "./PlaybackControlView";
+import { PlaybackControlView, ReadMood, TF_MOOD, ToggleMood } from "./PlaybackControlView";
 import { mouseCursor, ui } from "../common/UserInterface";
 import { Button } from "./Buttons";
 import { lang } from "./Lang";
 import { CreatePlaylistPopup, DeletePlaylistDialog, GoToAlbum, GoToArtist, RenamePlaylist } from "./Layout";
 import { RatingBar } from "./Rating";
-import { SendToQueueListPlay } from "./SearchResultView";
 
 
 const playlistColors = {
@@ -46,11 +45,12 @@ const buttonColors = {
 const ui_textRendering = ui.textRender;
 
 const TF_TRACK_INFO = fb.TitleFormat("%tracknumber%^^[%artist%]^^%title%^^%length%^^%rating%^^[%album%]^^[%artist%]");
+const TF_PLAYCOUNT = fb.TitleFormat("[%play_count%]");
 
 const iconFont_list = GdiFont(MaterialFont, scale(18));
 const iconFont_btn = GdiFont(MaterialFont, scale(20));
-const itemFont = GdiFont(window.GetProperty("Playlist.Item Font", "normal,14"));
-const semiItemFont = GdiFont("semibold", itemFont.Size);
+let itemFont = GdiFont(window.GetProperty("Playlist.Item Font", "normal,14"));
+let semiItemFont = GdiFont("semibold", itemFont.Size);
 const emptyInfoFont = GdiFont("normal, 16");
 const titleFont = GdiFont("bold, 24");
 const descriptionFont = GdiFont("normal, 14");
@@ -61,7 +61,7 @@ let titleLineHeight = titleFont.Height * 1.3;
 
 let paddingLR = scale(24);
 let paddingTB = scale(24);
-const rowHeight = scale(window.GetProperty("List.Row Height", 52));
+const rowHeight = scale(window.GetProperty("List.Row Height", 48));
 let artworkHeight = 0;
 let artworkMarginL = scale(24);
 let headerHeight = 0;
@@ -73,15 +73,21 @@ const pageWidth = {
 	extraWide: scale(1120)
 }
 
+if (rowHeight < scale(48)) {
+	itemFont = GdiFont("normal,12");
+}
+semiItemFont = GdiFont("semibold", itemFont.Size);
+let timeFont = GdiFont("Trebuchet MS", itemFont.Size);
+
 
 // init columns visibility;
-let columnsVisbility = window.GetProperty("Playlist.Columns Visibility", "1,1,1,1,1,0,1");
-let columnsVis = columnsVisbility.split(",");
-if (columnsVis.length !== 7) {
-	let vis = "1,1,1,1,1,0,1";
-	columnsVis = vis.split(",")
-	window.SetProperty("Playlist.Columns Visibility", vis);
-}
+// let columnsVisbility = window.GetProperty("Playlist.Columns Visibility", "1,1,1,1,1,0,1");
+// let columnsVis = columnsVisbility.split(",");
+// if (columnsVis.length !== 7) {
+// 	let vis = "1,1,1,1,1,0,1";
+// 	columnsVis = vis.split(",")
+// 	window.SetProperty("Playlist.Columns Visibility", vis);
+// }
 
 /**
  * if not set, plman.SetPlaylistSelection... will not trigger
@@ -348,9 +354,16 @@ class PlaylistHeaderView extends Component {
 			gr.DrawString(this.descriptionText, descriptionFont, secondaryTextColor,
 				textX, textY, textAreaWidth, descriptionLineHeight, StringFormat.LeftTop);
 		}
+
+		// gr.FillSolidRect(this.x, this.y, scale(200), scale(100), 0xff000000);
 	}
 
 	on_mouse_rbtn_up(x: number, y: number) {
+		// if (columnHeader.trace(x, y)) {
+		// 	try {
+		// 		// showlistHeaderMenu(x, y, this.parent);
+		// 	} catch (e) { }
+		// } else {
 		try {
 			showHeaderContextMenu(this.playlistIndex, x, y);
 		} catch (e) { }
@@ -393,11 +406,13 @@ class PlaylistViewItem extends Component {
 	playlistIndex: number;
 	playlistItemIndex: number;
 	rating: number;
+	mood: number;
 	trackNumber: string;
 	title: string;
 	artist: string;
 	album: string;
 	time: string;
+	playcount: string;
 
 	ratingbar = new RatingBar();
 
@@ -418,7 +433,9 @@ class PlaylistViewItem extends Component {
 		this.album = rawInfo[5];
 		this.time = rawInfo[3];
 		this.rating = Number(rawInfo[4]);
+		this.mood = ReadMood(this.metadb);
 		this.ratingbar.setMetadb(this.metadb);
+		this.playcount = TF_PLAYCOUNT.EvalWithMetadb(this.metadb);
 	}
 }
 
@@ -468,13 +485,14 @@ export class PlaylistView extends ScrollView {
 		 *  Init columns;
 		 */
 
-		this._columns.set("trackNumber", new PlaylistColumn());
-		this._columns.set("title", new PlaylistColumn());
-		this._columns.set("artist", new PlaylistColumn());
-		this._columns.set("album", new PlaylistColumn());
-		this._columns.set("mood", new PlaylistColumn());
-		this._columns.set("time", new PlaylistColumn());
-		this._columns.set("rating", new PlaylistColumn());
+		// this._columns.set("trackNumber", new PlaylistColumn());
+		// this._columns.set("title", new PlaylistColumn());
+		// this._columns.set("artist", new PlaylistColumn());
+		// this._columns.set("album", new PlaylistColumn());
+		// this._columns.set("mood", new PlaylistColumn());
+		// this._columns.set("time", new PlaylistColumn());
+		// this._columns.set("rating", new PlaylistColumn());
+		this.initColumns();
 
 		this.droprect = new Component({})
 		this.droprect.on_paint = (gr: IGdiGraphics) => {
@@ -487,7 +505,7 @@ export class PlaylistView extends ScrollView {
 	}
 
 	private getActiveMoodId(x: number, y: number): number {
-		let moodcolumn = this._columns.get("mood");
+		let moodcolumn = this._columns.get("Mood");
 		if (!(moodcolumn && moodcolumn.visible && moodcolumn.width > 0)) {
 			return -1;
 		}
@@ -560,63 +578,83 @@ export class PlaylistView extends ScrollView {
 		}
 	}
 
+	initColumns() {
+		let columns = ["Index", "Mood", "Title", "Artist", "Album", "Playcount", "Rating", "Duration"];
+		let columnsVis = window.GetProperty("Playlist.Columns.Visible", "1,1,1,1,1,0,1,1").split(",");
+		if (columnsVis.length !== 8) {
+			columnsVis = "1,1,1,1,1,0,1,1".split(",");
+			window.SetProperty("Playlist.Columns.Visible", columnsVis.join(","));
+		}
+		columns.forEach((col, i) => {
+			let obj = new PlaylistColumn();
+			obj.visible = columnsVis[i] != "0";
+			this._columns.set(col, obj);
+		});
+	}
+
 	setColumns() {
 		// ---------------
 		// Columns;
 		// ---------------
-		const tracknumber = this._columns.get("trackNumber");
-		const mood = this._columns.get("mood");
-		const title = this._columns.get("title");
-		const artist = this._columns.get("artist");
-		const album = this._columns.get("album");
-		const rating = this._columns.get("rating");
-		const duration = this._columns.get("time");
-
-		// --------------
-		// Set visible
-		// -------------
-		album.setVisible(true);
+		const Index = this._columns.get("Index");
+		const mood = this._columns.get("Mood");
+		const title = this._columns.get("Title");
+		const artist = this._columns.get("Artist");
+		const album = this._columns.get("Album");
+		const rating = this._columns.get("Rating");
+		const plays = this._columns.get("Playcount");
+		const duration = this._columns.get("Duration");
 
 		// ------------------
 		// Set columns' size;
 		// ------------------
-		tracknumber.visible = columnsVis[0] == "1";
-		tracknumber.width = scale(40);
-		duration.width = durationWidth;
-		mood.visible = columnsVis[1] == "1";
+		Index.width = MeasureString(plman.GetPlaylistItems(plman.ActivePlaylist).Count, itemFont).Width + scale(8);//scale(40);
 		mood.width = scale(36);
-		rating.visible = columnsVis[5] == "1";
 		rating.width = RatingBar.Width + scale(8);
+		duration.width = durationWidth;
+		plays.width = MeasureString("0,000", itemFont).Width + scale(16);
+		let playcountVis = foo_playcount && plays.visible;
 
 		let whitespace = this.width - paddingLR - paddingLR;
-		let reservedWidth = 0;//scale(40);
-		whitespace -= reservedWidth;
+		// let reservedWidth = 0;//scale(40);
+		// whitespace -= reservedWidth;
 		mood.visible && (whitespace -= mood.width);
-		whitespace -= duration.width;
-		tracknumber.visible && (whitespace -= tracknumber.width);
+		duration.visible && (whitespace -= duration.width);
+		Index.visible && (whitespace -= Index.width);
 		rating.visible && (whitespace -= rating.width);
+		playcountVis && (whitespace -= plays.width);
 
 		let titleWidth_ = scale(280);
-		let artistWidth_ = scale(200);
-		let albumWidth_ = scale(220);
+		let artistWidth_ = (artist.visible ? scale(200) : 0);
+		let albumWidth_ = (album.visible ? scale(220) : 0);
 
-		let albumVis = album.visible && this.width >= pageWidth.thin;
-		let artistVis = artist.visible && this.width >= pageWidth.wide;
+		let albumVis = album.visible && whitespace > titleWidth_ + albumWidth_;//this.width >= pageWidth.thin;
+		let artistVis = artist.visible && whitespace > titleWidth_ + artistWidth_ + albumWidth_//this.width >= pageWidth.wide;
 		let widthToAdd_ = whitespace - titleWidth_;
+		let count = 1;
 		let floor = Math.floor;
-
-		if (albumVis) {
-			widthToAdd_ = floor((whitespace - titleWidth_ - albumWidth_) / 2);
-		}
-
 		if (artistVis) {
-			widthToAdd_ = floor((whitespace - titleWidth_ - artistWidth_ - albumWidth_) / 3);
+			count++;
+			widthToAdd_ -= artistWidth_;
 		}
+		if (albumVis) {
+			count++;
+			widthToAdd_ -= albumWidth_;
+		}
+		widthToAdd_ = widthToAdd_ / count;
 
-		tracknumber.x = this.x + paddingLR;
-		mood.x = tracknumber.x + tracknumber.width;
+		// if (artistVis && albumVis) {
+		// 	widthToAdd_ = floor((whitespace - titleWidth_ - albumWidth_ - artistWidth_) / 3);
+		// } if (artistVis || albumVis) {
 
-		title.x = mood.x + mood.width;
+		// 	// if (albumVis) {
+		// 	widthToAdd_ = floor((whitespace - titleWidth_ - albumWidth_) / 2);
+		// }
+
+		Index.x = this.x + paddingLR;
+		mood.x = Index.x + (Index.visible ? Index.width : 0);
+
+		title.x = mood.x + (mood.visible ? mood.width : 0);
 		title.width = titleWidth_ + widthToAdd_;
 
 		artist.x = title.x + title.width;
@@ -625,11 +663,15 @@ export class PlaylistView extends ScrollView {
 		album.x = artist.x + artist.width;
 		album.width = albumVis ? albumWidth_ + widthToAdd_ : 0;
 
-		rating.x = album.x + album.width;
-		let ratingwidth = rating.visible ? rating.width : 0;
+		plays.x = album.x + (albumVis ? album.width : 0);
+		rating.x = plays.x + (playcountVis ? plays.width : 0);
+		duration.x = rating.x + (rating.visible ? rating.width : 0);
 
-		duration.x = rating.x + ratingwidth;
-		duration.width -= scale(8);
+		// rating.x = album.x + album.width;
+		// let ratingwidth = rating.visible ? rating.width : 0;
+
+		// duration.x = rating.x + ratingwidth;
+		// duration.width -= scale(8);
 
 		// ----------------------
 		// Set columns' paddings
@@ -702,13 +744,14 @@ export class PlaylistView extends ScrollView {
 
 		// columns;
 		let _columns = this._columns;
-		let tracknumber = _columns.get("trackNumber");
-		let title = _columns.get("title");
-		let artist = _columns.get("artist");
-		let album = _columns.get("album");
-		let mood = _columns.get("mood");
-		let time = _columns.get("time");
-		let rating = _columns.get("rating");
+		let trackIndex = _columns.get("Index");
+		let title = _columns.get("Title");
+		let artist = _columns.get("Artist");
+		let album = _columns.get("Album");
+		let mood = _columns.get("Mood");
+		let time = _columns.get("Duration");
+		let rating = _columns.get("Rating");
+		let playcount = _columns.get("Playcount");
 
 		// Draw background;
 		gr.FillSolidRect(this.x, this.y, this.width, this.height, backgroundColor);
@@ -728,14 +771,14 @@ export class PlaylistView extends ScrollView {
 		gr.DrawLine(rowX, lineY, rowX + rowWidth, lineY, scale(1), lineColor);
 
 		// track numr;
-		if (tracknumber.visible && tracknumber.width > 0) {
+		if (trackIndex.visible && trackIndex.width > 0) {
 			gr.DrawString("#", semiItemFont, secondaryTextColor,
-				tracknumber.x, columnHeader.y, tracknumber.width, columnHeaderHeight, StringFormat.Center);
+				trackIndex.x, columnHeader.y, trackIndex.width, columnHeaderHeight, StringFormat.Center);
 		}
 
 		// title /artist;
 		gr.DrawString(lang("TITLE"), semiItemFont, secondaryTextColor,
-			title.x, columnHeader.y, title.width, columnHeaderHeight, StringFormat.LeftCenter);
+			title.x + scale(8), columnHeader.y, title.width, columnHeaderHeight, StringFormat.LeftCenter);
 
 		// artist;
 		if (artist.visible && artist.width > 0) {
@@ -749,6 +792,11 @@ export class PlaylistView extends ScrollView {
 				album.x, columnHeader.y, album.width, columnHeaderHeight, StringFormat.LeftCenter);
 		}
 
+		if (playcount.visible && foo_playcount) {
+			gr.DrawString(lang("Plays"), semiItemFont, secondaryTextColor,
+				playcount.x, columnHeader.y, playcount.width - scale(16), columnHeaderHeight, StringFormat.RightCenter);
+		}
+
 		if (rating.visible && rating.width > 0) {
 			gr.DrawString(lang("RATING"), semiItemFont, secondaryTextColor,
 				rating.x + scale(4), columnHeader.y, rating.width, columnHeaderHeight, StringFormat.LeftCenter);
@@ -757,7 +805,7 @@ export class PlaylistView extends ScrollView {
 		// duration;
 		gr.SetTextRenderingHint(TextRenderingHint.AntiAlias);
 		gr.DrawString(Material.time, iconFont_btn, secondaryTextColor,
-			time.x, columnHeader.y, time.width, columnHeaderHeight, StringFormat.RightCenter);
+			time.x, columnHeader.y, time.width - scale(8), columnHeaderHeight, StringFormat.RightCenter);
 		gr.SetTextRenderingHint(ui_textRendering);
 
 		// Clear visibleItems cache;
@@ -801,35 +849,65 @@ export class PlaylistView extends ScrollView {
 				/**
 				 * Draw tracknumber | playing icon;
 				 */
-				if (this.playingItemIndex === itemIndex) {
-					let iconCode = fb.IsPaused ? Material.volume_mute : Material.volume;
-					gr.SetTextRenderingHint(TextRenderingHint.AntiAlias);
-					gr.DrawString(iconCode, iconFont_list, highlightColor,
-						tracknumber.x, row.y, tracknumber.width, row.height, StringFormat.Center);
-					gr.SetTextRenderingHint(ui_textRendering);
-				} else {
-					tracknumber.draw(gr, row.playlistItemIndex + 1, itemFont, secondaryTextColor, row, StringFormat.Center);
+				if (trackIndex.visible) {
+					if (this.playingItemIndex === itemIndex) {
+						let iconCode = fb.IsPaused ? Material.volume_mute : Material.volume;
+						gr.SetTextRenderingHint(TextRenderingHint.AntiAlias);
+						gr.DrawString(iconCode, iconFont_list, highlightColor,
+							trackIndex.x, row.y, trackIndex.width, row.height, StringFormat.Center);
+						gr.SetTextRenderingHint(ui_textRendering);
+					} else {
+						trackIndex.draw(gr, row.playlistItemIndex + 1, itemFont, secondaryTextColor, row, StringFormat.Center);
+					}
 				}
 
 				/**
 				 * Title;
 				 */
-				if (artist.visible && artist.width > 0) {
-					title.draw(gr, row.title, itemFont, textColor, row);
-					artist.draw(gr, row.artist, itemFont, secondaryTextColor, row);
-				} else {
+				// if (artist.visible && artist.width > 0) {
+				// 	title.draw(gr, row.title, itemFont, textColor, row);
+				// 	artist.draw(gr, row.artist, itemFont, secondaryTextColor, row);
+				// }
+				// // if (album.visible && album.width > 0);
+				// else {
+				// 	let artistY = row.y + row.height / 2;
+				// 	let titleY = artistY - itemFont.Height;
+				// 	let padright = scale(16);
+				// 	gr.DrawString(row.title, itemFont, textColor,
+				// 		title.x, titleY, title.width - padright, row.height, StringFormat.LeftTop);
+
+				// 	let subtitleText = row.artist;
+				// 	if (!(album.visible && album.width)) {
+				// 		subtitleText += spaceStartEnd("\u2022") + row.album;
+				// 	}
+				// 	gr.DrawString(subtitleText, itemFont, secondaryTextColor,
+				// 		title.x, artistY, title.width - padright, row.height, StringFormat.LeftTop);
+				// }
+
+				if ((artist.visible && artist.width == 0 || album.visible && album.width == 0) && this.rowHeight > scale(35)) {
 					let artistY = row.y + row.height / 2;
 					let titleY = artistY - itemFont.Height;
 					let padright = scale(16);
 					gr.DrawString(row.title, itemFont, textColor,
-						title.x, titleY, title.width - padright, row.height, StringFormat.LeftTop);
-
-					let subtitleText = row.artist;
-					if (!(album.visible && album.width)) {
-						subtitleText += spaceStartEnd("\u2022") + row.album;
+						title.x + scale(8), titleY, title.width - padright, row.height, StringFormat.LeftTop);
+					let subtitleText = "";
+					if (artist.visible && artist.width == 0) {
+						subtitleText += row.artist;
+					}
+					if (album.visible && album.width == 0) {
+						subtitleText += (subtitleText ? spaceStartEnd("\u2022") : "") + row.album;
 					}
 					gr.DrawString(subtitleText, itemFont, secondaryTextColor,
-						title.x, artistY, title.width - padright, row.height, StringFormat.LeftTop);
+						title.x + scale(8), artistY, title.width - padright, row.height, StringFormat.LeftTop);
+				} else {
+					// title.draw(gr, row.title, itemFont, textColor, row);
+					gr.DrawString(row.title, itemFont, textColor,
+						title.x + scale(8), row.y, title.width - scale(24), row.height, StringFormat.LeftCenter);
+				}
+
+
+				if (artist.visible && artist.width > 0) {
+					artist.draw(gr, row.artist, itemFont, secondaryTextColor, row);
 				}
 
 				/**
@@ -840,19 +918,35 @@ export class PlaylistView extends ScrollView {
 				}
 
 				/**
+				 * Playcount;
+				 */
+				if (playcount.visible && foo_playcount) {
+					gr.DrawString(row.playcount, itemFont, secondaryTextColor,
+						playcount.x, row.y, playcount.width - scale(16), row.height, StringFormat.RightCenter);
+				}
+
+				/**
 				 * Time(PlaybackLength);
 				 */
-				time.draw(gr, row.time, itemFont, secondaryTextColor, row, StringFormat.RightCenter);
+				if (time.visible) {
+					gr.DrawString(row.time, timeFont, secondaryTextColor,
+						time.x, row.y, time.width - scale(8), row.height, StringFormat.RightCenter);
+				}
 
 				/**
 				 * Mood(if Rating == 5)
 				 */
-				let liked = row.rating === 5;
-				let iconColor = liked ? playlistColors.HEART_RED : secondaryTextColor;
-				let iconCode = liked ? Material.heart : Material.heart_empty;
-				gr.DrawString(iconCode, iconFont_list, iconColor,
-					mood.x, row.y, mood.width, row.height, StringFormat.Center);
+				if (mood.visible) {
+					let liked = row.mood != 0;//row.rating === 5;
+					let iconColor = liked ? playlistColors.HEART_RED : secondaryTextColor;
+					let iconCode = liked ? Material.heart : Material.heart_empty;
+					gr.DrawString(iconCode, iconFont_list, iconColor,
+						mood.x, row.y, mood.width, row.height, StringFormat.Center);
+				}
 
+			/**
+			 * Ratings;
+			 */
 				if (rating.visible && rating.width > 0) {
 					row.ratingbar.x = rating.x + scale(4);
 					row.ratingbar.y = row.y + (row.height - row.ratingbar.height) / 2;
@@ -883,7 +977,7 @@ export class PlaylistView extends ScrollView {
 			}
 		}
 
-		gr.FillGradRect(this.x, this.y, this.width, scale(40), 90, themeColors.topbarBackground, 0, 1.0);
+		// gr.FillGradRect(this.x, this.y, this.width, scale(40), 90, themeColors.topbarBackground, 0, 1.0);
 	}
 
 	private drawTooltipImage() {
@@ -1122,6 +1216,10 @@ export class PlaylistView extends ScrollView {
 		if (hoverMoodId > -1) {
 			return;
 		}
+		if (hoverRowItem && hoverRowItem.ratingbar.trace(x, y)) {
+			this.ratingID = hoverRowItem.rowIndex;
+			return;
+		}
 		if (hoverRowItem != null) {
 			plman.ExecutePlaylistDefaultAction(plman.ActivePlaylist, hoverRowItem.playlistItemIndex);
 		}
@@ -1137,6 +1235,14 @@ export class PlaylistView extends ScrollView {
 		this.clickedMoodId = hoverMoodId;
 
 		if (hoverMoodId > -1) {
+			return;
+		}
+
+		// --> click on rating;
+		this.ratingID = -1;
+		if (hoverItem && hoverItem.ratingbar.trace(x, y)) {
+			hoverItem.ratingbar.on_mouse_lbtn_down(x, y);
+			this.ratingID = hoverItem.rowIndex;
 			return;
 		}
 
@@ -1184,7 +1290,7 @@ export class PlaylistView extends ScrollView {
 				plman.SetPlaylistSelectionSingle(plman.ActivePlaylist, hoverItem.playlistItemIndex, !hoverItem.isselect); // toggle;
 				this._selectedIndexes = this.items.filter(item => item.isselect).map(item => item.playlistItemIndex);
 			} else {
-			/** NO MASKKEY */
+				/** NO MASKKEY */
 				this.setSelection(hoverItem.playlistItemIndex);
 				selecting.isActive = true;
 				selecting.pageX1 = selecting.pageX2 = x - this.x;
@@ -1231,6 +1337,8 @@ export class PlaylistView extends ScrollView {
 		return resultIndex;
 	}
 
+	ratingID: number = -1;
+
 	on_mouse_move(x: number, y: number) {
 		let listTopY = this.y + this.rowHeight;
 		let listBottomY = this.y + this.height - this.rowHeight;
@@ -1240,12 +1348,18 @@ export class PlaylistView extends ScrollView {
 			return;
 		}
 
+		if (this.ratingID > -1) {
+			return;
+		}
+
 		//
 		if (selecting.isActive) {
 			if (y < this.y + rowHeight) {
-				this.scroll -= rowHeight / 3;
+				// this.scroll -= rowHeight / 3;
+				this.scrollTo(this.scroll - rowHeight);
 			} else if (y > this.y + this.height - rowHeight) {
-				this.scroll += rowHeight / 3;
+				// this.scroll += rowHeight / 3;
+				this.scrollTo(this.scroll + rowHeight);
 			} else {
 			}
 			this.updateselection(x, y);
@@ -1386,6 +1500,11 @@ export class PlaylistView extends ScrollView {
 			return;
 		}
 
+		if (this.ratingID > -1) {
+			this.ratingID = -1;
+			return;
+		}
+
 		if (dnd.isActive) {
 			if (this.trace(x, y) && y >= this.y && y <= this.y + this.height) {
 				this.dragInsert(this._getDragInsertPosition());
@@ -1480,11 +1599,15 @@ export class PlaylistView extends ScrollView {
 
 
 	on_mouse_rbtn_up(x: number, y: number) {
-		try {
-			showTrackContextMenu(plman.ActivePlaylist, plman.GetPlaylistSelectedItems(plman.ActivePlaylist), x, y);
-		} catch (e) { }
 		if (columnHeader.trace(x, y)) {
-			showlistHeaderMenu(x, y);
+			try {
+				showlistHeaderMenu(x, y, this);
+			} catch (e) { }
+		} else {
+			try {
+				showTrackContextMenu(plman.ActivePlaylist, plman.GetPlaylistSelectedItems(plman.ActivePlaylist), x, y);
+			} catch (e) { }
+
 		}
 	}
 
@@ -1561,7 +1684,12 @@ export class PlaylistView extends ScrollView {
 					break;
 				case VKeyCode.PageDown:
 					if (this.items.length > 0) {
-						this.scrollTo(this.scroll + this.height);
+						let onpagedownstop = (() => {
+							this.setFocusByIndex(this.visibleItems[this.visibleItems.length - 1].rowIndex);
+							this.setSelection(this.focusIndex);
+							this.repaint();
+						})
+						this.scrollTo(this.scroll + this.height, onpagedownstop);
 					}
 					break;
 				case VKeyCode.Up:
@@ -1952,6 +2080,37 @@ export function formatPlaylistDuration(duration: number) {
 	return formated;
 }
 
-function showlistHeaderMenu(x: number, y: number) {
+function showlistHeaderMenu(x: number, y: number, pl: PlaylistView) {
+	let menu = window.CreatePopupMenu();
+	let columns = window.CreatePopupMenu();
+
+	// let columnNames = ["Index", "Mood", "Title", "Artist", "Album", "Playcount", "Rating", "Duration"];
+	let columnsVis = window.GetProperty("Playlist.Columns.Visible", "1,1,1,1,1,0,1,1").split(",");
+	if (columnsVis.length !== 8) {
+		columnsVis = "1,1,1,1,1,0,1,1".split(",");
+		window.SetProperty("Playlist.Columns.Visible", columnsVis.join(","));
+	}
+
+	columns.AppendTo(menu, MenuFlag.STRING, lang("Columns"));
+	columns.AppendMenuItem(MenuFlag.STRING, 100, lang("Index"));
+	columns.AppendMenuItem(MenuFlag.STRING, 101, lang("Mood"));
+	columns.AppendMenuItem(MenuFlag.GRAYED, 102, lang("Title"));
+	columns.AppendMenuItem(MenuFlag.STRING, 103, lang("Artist"));
+	columns.AppendMenuItem(MenuFlag.STRING, 104, lang("Album"));
+	columns.AppendMenuItem(MenuFlag.STRING, 105, lang("Play count"));
+	columns.AppendMenuItem(MenuFlag.STRING, 106, lang("Rating"));
+	columns.AppendMenuItem(MenuFlag.STRING, 107, lang("Duration"));
+
+	for (let i = 0; i < columnsVis.length; i++) {
+		columns.CheckMenuItem(100 + i, columnsVis[i] != "0");
+	}
+
+	const ret = menu.TrackPopupMenu(x, y);
+
+	let col = ret - 100;
+	columnsVis[col] = (columnsVis[col] == "0" ? "1" : "0");
+	window.SetProperty("Playlist.Columns.Visible", columnsVis.join(","));
+	pl.initColumns();
+	pl.on_size();
 
 }
