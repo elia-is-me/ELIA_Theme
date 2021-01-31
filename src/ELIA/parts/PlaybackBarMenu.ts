@@ -3,7 +3,7 @@ import { Component } from "../common/BasePart";
 import { Material, MaterialFont } from "../common/Icon";
 import { IconButton } from "./Buttons";
 import { Slider } from "../common/Slider";
-import { GdiFont, themeColors } from "./Theme";
+import { GdiFont, themeColors } from "../common/Theme";
 import { notifyOthers, ui } from "../common/UserInterface";
 import { TXT } from "../common/Lang";
 import { ButtonStates, Clickable } from "../common/Button";

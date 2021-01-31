@@ -1,6 +1,5 @@
-import { isNumber, RGB, RGBA, scale } from "../common/Common"
-import { MaterialFont } from "../common/Icon"
-import { mouseCursor } from "../common/UserInterface";
+import { isNumber, RGB, RGBA, scale } from "./Common"
+import { MaterialFont } from "./Icon"
 
 export let isDarkMode = window.GetProperty("Global.Is Dark Mode", false);
 

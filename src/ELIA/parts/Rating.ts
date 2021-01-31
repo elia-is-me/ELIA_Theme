@@ -8,7 +8,7 @@ import { Material, MaterialFont } from "../common/Icon";
 import { RunContextCommandWithMetadb } from "../common/Lang";
 import { MeasureString, StringFormat } from "../common/String";
 import { ui } from "../common/UserInterface";
-import { GdiFont, themeColors } from "./Theme";
+import { GdiFont, themeColors } from "../common/Theme";
 
 const ratingColors = {
     disabled: setAlpha(themeColors.text, 50),

@@ -7,7 +7,7 @@ import { InputBox } from "../common/Inputbox";
 import { IconButton } from "./Buttons";
 import { scale, RGB } from "../common/Common";
 import { Material, } from "../common/Icon";
-import { GdiFont, themeColors } from "./Theme";
+import { GdiFont, themeColors } from "../common/Theme";
 import { notifyOthers } from "../common/UserInterface";
 import { TXT } from "../common/Lang";
 import { MeasureString } from "../common/String";

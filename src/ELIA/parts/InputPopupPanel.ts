@@ -3,7 +3,7 @@ import { RGB, scale, isEmptyString, isFunction, setAlpha, blendColors, Smoothing
 import { Button } from "./Buttons";
 import { InputBox } from "../common/Inputbox";
 import { notifyOthers } from "../common/UserInterface";
-import { themeColors, fonts, GdiFont } from "./Theme";
+import { themeColors, fonts, GdiFont } from "../common/Theme";
 import { TXT } from "../common/Lang";
 import { MeasureString, StringFormat } from "../common/String";
 

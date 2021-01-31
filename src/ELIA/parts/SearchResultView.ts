@@ -6,7 +6,7 @@ import { ScrollView } from "../common/ScrollView";
 import { MaterialFont, Material } from "../common/Icon";
 import { ReadMood, ToggleMood } from "./PlaybackControlView";
 import { notifyOthers, ui } from "../common/UserInterface";
-import { themeColors, GdiFont, scrollbarWidth } from "./Theme";
+import { themeColors, GdiFont, scrollbarWidth } from "../common/Theme";
 import { TXT } from "../common/Lang";
 import { IconButton } from "./Buttons";
 import { formatPlaylistDuration, showTrackContextMenu } from "./PlaylistView";

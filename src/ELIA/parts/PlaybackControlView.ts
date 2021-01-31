@@ -9,7 +9,7 @@ import { Slider, SliderThumbImage } from "../common/Slider";
 import { Component } from "../common/BasePart";
 import { Material, MaterialFont } from "../common/Icon"
 import { scale, PlaybackOrder, SmoothingMode } from "../common/Common";
-import { themeColors, fonts, GdiFont } from "./Theme";
+import { themeColors, fonts, GdiFont } from "../common/Theme";
 import { IconButton } from "./Buttons";
 import { TXT, RunContextCommandWithMetadb } from "../common/Lang";
 import { CreatePlaylistPopup, GoToAlbum, GoToArtist, GotoPlaylist, ShowPlaybackBarMenu } from "./Layout";

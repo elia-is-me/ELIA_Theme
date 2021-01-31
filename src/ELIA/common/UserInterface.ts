@@ -1,7 +1,7 @@
 import { GetKeyboardMask, isFunction, KMask, lastIndex, RGBA, scale, setAlpha, TextRenderingHint, VKeyCode } from "./Common";
 import { Component, IBoxModel } from "./BasePart";
 import { root } from "../main";
-import { themeColors } from "../parts/Theme";
+import { themeColors } from "./Theme";
 // import { root } from "../main";
 
 let partlist: Component[] = [];

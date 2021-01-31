@@ -111,6 +111,9 @@ class Bezier {
 
 let ease = new Bezier();
 
+/**
+ * reference: Library Tree(https://hydrogenaud.io/index.php?topic=110938.0) by Wilb;
+ */
 export abstract class ScrollView extends Component {
 	className = "ScrollView";
 	totalHeight: number;
@@ -146,6 +149,8 @@ export abstract class ScrollView extends Component {
 	private draw_timer: number | null;
 	private start: number;
 	private delta: number;
+	private elap: number;
+	private clock: number;
 
 	private scroll_timer = () =>
 		(this.draw_timer = window.SetInterval(() => {
@@ -174,8 +179,6 @@ export abstract class ScrollView extends Component {
 		if (Math.abs(this.scroll - this.delta) > 0.5) this.repaint();
 		else this.scroll_finish();
 	}
-	private elap: number;
-	private clock: number;
 
 	scrollTo(new_scroll: number = this.scroll, onscroll?: Function) {
 		const scroll__ = this.checkscroll(new_scroll);

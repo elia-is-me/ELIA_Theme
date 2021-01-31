@@ -11,7 +11,7 @@ import { TXT } from "../common/Lang";
 import { getYear, ReadMood, ToggleMood } from "./PlaybackControlView";
 import { formatPlaylistDuration, showTrackContextMenu } from "./PlaylistView";
 import { SendToQueueListPlay } from "./SearchResultView";
-import { GdiFont, scrollbarWidth, themeColors } from "./Theme";
+import { GdiFont, scrollbarWidth, themeColors } from "../common/Theme";
 import { GotoPlaylist } from "./Layout";
 import { RatingBar } from "./Rating";
 

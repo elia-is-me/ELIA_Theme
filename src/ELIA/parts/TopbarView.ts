@@ -3,7 +3,7 @@ import { Component } from "../common/BasePart";
 import { IconButton } from "./Buttons";
 import { Material, MaterialFont } from "../common/Icon";
 import { notifyOthers, ui } from "../common/UserInterface";
-import { themeColors, ToggleDarkmode } from "./Theme";
+import { themeColors, ToggleDarkmode } from "../common/Theme";
 import { SearchBox } from "./SearchBox";
 import { TXT } from "../common/Lang";
 import { StringFormat } from "../common/String";

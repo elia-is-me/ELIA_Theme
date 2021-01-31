@@ -2,7 +2,7 @@ import { scale, RGB, isFunction, setAlpha, SmoothingMode } from "../common/Commo
 import { StringFormat } from "../common/String";
 import { Component } from "../common/BasePart";
 import { Button } from "./Buttons";
-import { GdiFont, themeColors } from "./Theme";
+import { GdiFont, themeColors } from "../common/Theme";
 import { notifyOthers } from "../common/UserInterface";
 import { TXT } from "../common/Lang";
 

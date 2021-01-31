@@ -3,7 +3,7 @@
 import { CropImage, TextRenderingHint, drawImage, SmoothingMode, debounce, StopReason, BuildFullPath, fso, scale, InterpolationMode, isNumber, ScaleImage, DrawImageScale } from "./Common";
 import { Component } from "./BasePart";
 import { StringFormat } from "./String";
-import { themeColors } from "../parts/Theme";
+import { themeColors } from "./Theme";
 
 // image cache;
 // ---- 
@@ -27,11 +27,11 @@ class ImageCache {
 	private coverDone: number | null;
 
 	constructor() {
-		BuildFullPath(this._cacheFolder);
-		if (!isNumber(this._imageSize)) {
-			this._imageSize = 500;
-			window.SetProperty("ImageCache.Image Size", this._imageSize);
-		}
+		// BuildFullPath(this._cacheFolder);
+		// if (!isNumber(this._imageSize)) {
+		// 	this._imageSize = 500;
+		// 	window.SetProperty("ImageCache.Image Size", this._imageSize);
+		// }
 		this._createStubImages();
 		this.noCover = this._stubImages[0];
 		this.noArt = this._stubImages[2];

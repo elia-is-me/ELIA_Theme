@@ -6,7 +6,7 @@ import { StringFormat } from "../common/String";
 import { notifyOthers } from "../common/UserInterface";
 import { IconButton } from "./Buttons";
 import { TXT } from "../common/Lang";
-import { GdiFont, themeColors } from "./Theme";
+import { GdiFont, themeColors } from "../common/Theme";
 
 const settingsColors = {
     titleText: themeColors.titleText,

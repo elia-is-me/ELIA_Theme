@@ -1,7 +1,7 @@
 import { scale, TextRenderingHint, setAlpha, SmoothingMode } from "../common/Common";
 import { StringFormat, MeasureString } from "../common/String"
 import { MaterialFont } from "../common/Icon";
-import { GdiFont } from "./Theme";
+import { GdiFont } from "../common/Theme";
 import { Clickable, textRenderingHint } from "../common/Button";
 
 /**

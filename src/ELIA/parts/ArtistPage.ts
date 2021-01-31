@@ -9,7 +9,7 @@ import { ui } from "../common/UserInterface";
 import { Button } from "./Buttons";
 import { TXT } from "../common/Lang";
 import { formatPlaylistDuration } from "./PlaylistView";
-import { GdiFont, scrollbarWidth, themeColors } from "./Theme";
+import { GdiFont, scrollbarWidth, themeColors } from "../common/Theme";
 
 const pageColors = {
     text: themeColors.text,

@@ -6,7 +6,7 @@ import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
 import { Component } from "../common/BasePart";
 import { Material, MaterialFont } from "../common/Icon";
-import { scrollbarWidth, themeColors, GdiFont } from "./Theme";
+import { scrollbarWidth, themeColors, GdiFont } from "../common/Theme";
 import { Clickable } from "../common/Button";
 import { isValidPlaylist } from "./PlaylistView";
 import { IInputPopupOptions } from "./InputPopupPanel";

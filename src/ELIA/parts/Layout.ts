@@ -11,7 +11,7 @@ import { SearchResultView } from "./SearchResultView";
 import { SettingsView } from "./SettingsView";
 import { TXT } from "../common/Lang";
 import { PlaybackBarMenu } from "./PlaybackBarMenu";
-import { fontNameNormal, scrollbarWidth } from "./Theme";
+import { scrollbarWidth } from "../common/Theme";
 import { ArtistPageView } from "./ArtistPage";
 import { AlbumPageView } from "./AlbumPage";
 
@@ -31,21 +31,30 @@ const enum ViewStates {
 	Settings,
 	Artist,
 	Album,
+	LibBrower,
 }
 
 export class Layout extends Component {
 	className = "Layout";
+
+	//
 	topbar: TopBar;
 	playbackControlBar: PlaybackControlView;
+
+	// 
 	playlistManager: PlaylistManagerView;
 	playlistView: PlaylistView;
-	searchResult: SearchResultView;
-	settingsView?: SettingsView;
-	inputPopupPanel?: InputPopupPanel;
-	alertDialog?: AlertDialog;
-	playbackBarMenu: PlaybackBarMenu;
 	artistPage: ArtistPageView;
 	albumPage: AlbumPageView;
+	searchResult: SearchResultView;
+	settingsView?: SettingsView;
+
+	//
+	inputPopupPanel?: InputPopupPanel;
+	alertDialog?: AlertDialog;
+
+	//
+	playbackBarMenu: PlaybackBarMenu;
 
 	viewState: ViewStates;
 
