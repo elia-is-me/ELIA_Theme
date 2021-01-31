@@ -40,6 +40,7 @@ const desciptionFont = itemFont;
 const semiItemFont = GdiFont("semibold, 14");
 const smallItemFont = GdiFont("normal,13");
 const titleFont = GdiFont("bold, 24");
+let timeFont = GdiFont("Trebuchet MS", itemFont.Size);
 
 const titleLineHeight = titleFont.Height * 1.2 >> 0;
 const descriptionHeight = desciptionFont.Height * 1.1 >> 0;
@@ -90,6 +91,7 @@ class SearchHeaderView extends Component {
 		}
 	}
 
+	// header;
 	on_paint(gr: IGdiGraphics) {
 		let textY = this.y + paddingTB;
 		let textX = this.x + paddingLR + scale(8);
@@ -437,6 +439,7 @@ export class SearchResultView extends ScrollView {
 		this.scrollTo();
 	}
 
+	// res list;
 	on_paint(gr: IGdiGraphics) {
 		let backgroundColor = pageColors.background;
 		let backgroundSelectionColor = pageColors.backgroundSelection;
@@ -566,10 +569,8 @@ export class SearchResultView extends ScrollView {
 				}
 
 				// durationtime;
-
-				gr.DrawString(rowItem.time, itemFont, secondaryTextColor,
+				gr.DrawString(rowItem.time, timeFont, secondaryTextColor,
 					duration.x, rowItem.y, duration.width - scale(8), rowItem.height, StringFormat.RightCenter);
-				// duration.draw(gr, rowItem.time, itemFont, secondaryTextColor, rowItem, StringFormat.Center);
 
 				// mood;
 				let icon = (rowItem.mood > 0 ? Material.heart : Material.heart_empty);
@@ -579,8 +580,6 @@ export class SearchResultView extends ScrollView {
 			}
 		}
 
-		// Shadow top cover;
-		// gr.FillGradRect(this.x, this.y, this.width, scale(40), 90, themeColors.topbarBackground, 0, 1.0);
 	}
 
 	private findHoverItem(x: number, y: number) {

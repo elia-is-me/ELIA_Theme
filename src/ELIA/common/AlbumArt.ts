@@ -326,7 +326,7 @@ export class PlaylistArtwork extends Component {
 		// this.image = null;
 		this._cache.clear();
 		this.getArtwork();
-	}, 100);
+	}, 200);
 }
 
 export class NowplayingArtwork extends Component {
@@ -407,7 +407,7 @@ export class NowplayingArtwork extends Component {
 	on_size = debounce(() => {
 		// this.image
 		this.getArtwork(fb.GetNowPlaying());
-	}, 100);
+	}, 200);
 }
 
 export class AlbumArtwork extends Component {
@@ -472,6 +472,6 @@ export class AlbumArtwork extends Component {
 
 	on_size = debounce(() => {
 		this.getArtwork(this.metadb);
-	}, 100);
+	}, 200);
 
 }

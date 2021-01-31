@@ -181,10 +181,16 @@ export function GdiFont(infoOrName: string, size?: number, style?: number): IGdi
         let fontName = infoOrName.trim().toLowerCase();
         if (fontName === "semibold" || fontName === "semi") {
             fontName = fontNames.semibold;
+            return gdi.Font(fontName, size, style);
         } else if (fontName === "normal") {
             fontName = fontNames.normal;
+            return gdi.Font(fontName, size, style);
         } else if (fontName === "bold") {
             fontName = fontNames.bold;
+            if (fontName === fontNames.normal && style == null) {
+                style = 1;
+            }
+            return gdi.Font(fontName, size, style);
         } else { }
         return gdi.Font(fontName, size, style);
     } else {

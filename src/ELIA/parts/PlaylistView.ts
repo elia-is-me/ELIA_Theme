@@ -51,6 +51,7 @@ const iconFont_list = GdiFont(MaterialFont, scale(18));
 const iconFont_btn = GdiFont(MaterialFont, scale(20));
 const iconFont_inline = GdiFont(MaterialFont, scale(16));
 let itemFont = GdiFont(window.GetProperty("Playlist.Item Font", "normal,14"));
+let smallItemFont = GdiFont(window.GetProperty("Playlist.Item Font Small", "normal,12"));
 let semiItemFont = GdiFont("semibold", itemFont.Size);
 const emptyInfoFont = GdiFont("normal, 16");
 const titleFont = GdiFont("bold, 24");
@@ -839,9 +840,8 @@ export class PlaylistView extends ScrollView {
 				 * Title;
 				 */
 				if ((artist.visible && artist.width == 0 || album.visible && album.width == 0) && this.rowHeight > scale(35)) {
-					let artistY = row.y + row.height / 2;
+					let artistY = row.y + row.height / 2 + scale(2);
 					let titleY = artistY - itemFont.Height;
-					let padright = scale(16);
 					let titleX = title.x;
 					let titleWidth = title.width - scale(16);
 					if (!trackIndex.visible && !mood.visible) {
@@ -867,8 +867,8 @@ export class PlaylistView extends ScrollView {
 					if (album.visible && album.width == 0) {
 						subtitleText += (subtitleText ? spaceStartEnd("\u2022") : "") + row.album;
 					}
-					gr.DrawString(subtitleText, itemFont, secondaryTextColor,
-						title.x + scale(8), artistY, title.width - padright, row.height, StringFormat.LeftTop);
+					gr.DrawString(subtitleText, smallItemFont, secondaryTextColor,
+						titleX, artistY, title.width, row.height, StringFormat.LeftTop);
 				} else {
 					let titleX = title.x;
 					let titleWidth = title.width - scale(16);
@@ -880,9 +880,10 @@ export class PlaylistView extends ScrollView {
 						let iconCode = fb.IsPaused ? Material.volume_mute : Material.volume;
 						gr.SetTextRenderingHint(TextRenderingHint.AntiAlias);
 						gr.DrawString(iconCode, iconFont_inline, highlightColor,
-							title.x, row.y, scale(32), row.height, StringFormat.Center);
+							title.x, row.y, scale(28), row.height, StringFormat.Center);
 						gr.SetTextRenderingHint(ui_textRendering);
-					} if (!trackIndex.visible && !mood.visible) {
+					}
+					if (!trackIndex.visible && !mood.visible) {
 						titleX += scale(8);
 						titleWidth -= scale(8);
 					}
@@ -962,7 +963,6 @@ export class PlaylistView extends ScrollView {
 			}
 		}
 
-		// gr.FillGradRect(this.x, this.y, this.width, scale(40), 90, themeColors.topbarBackground, 0, 1.0);
 	}
 
 	repaint() {

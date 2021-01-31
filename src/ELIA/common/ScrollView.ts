@@ -158,7 +158,6 @@ export abstract class ScrollView extends Component {
 		this.scroll = this.delta;
 		clearInterval(this.draw_timer);
 		this.draw_timer = null;
-		// window.Repaint();
 		this.repaint();
 
 	}
@@ -169,11 +168,10 @@ export abstract class ScrollView extends Component {
 			this.start,
 			this.delta,
 			Date.now() - this.clock + this.elap,
-			// duration[]
 			duration,
 			"scroll"
 		);
-		if (Math.abs(this.scroll - this.delta) > 0.5) this.repaint();//window.Repaint();
+		if (Math.abs(this.scroll - this.delta) > 0.5) this.repaint();
 		else this.scroll_finish();
 	}
 	private elap: number;
@@ -196,7 +194,7 @@ export abstract class ScrollView extends Component {
 		if (Elapsed > Duration) return End;
 		if (Event == "drag") return;
 		const n = Elapsed / Duration;
-		return Start + (End - Start) * /*easeOutCubic(n)*/ease.scroll(n);
+		return Start + (End - Start) * ease.scroll(n);
 	}
 
 	// scrollTo(scroll_: number = this.checkscroll(this.scroll), onStop?: Function) {
@@ -246,8 +244,4 @@ export abstract class ScrollView extends Component {
 	}
 }
 
-const DEFAULT_SCROLL_STEP = scale(100);
-
-function easeOutCubic(x: number): number {
-	return 1 - Math.pow(1 - x, 3);
-}
+const DEFAULT_SCROLL_STEP = 3 * scale(48);
