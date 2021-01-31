@@ -12,17 +12,17 @@ import { isValidPlaylist } from "./PlaylistView";
 import { IInputPopupOptions } from "./InputPopupPanel";
 import { mouseCursor, notifyOthers, ui } from "../common/UserInterface";
 import { CreatePlaylistPopup, DeletePlaylistDialog, GotoPlaylist, layout, RenamePlaylist } from "./Layout";
-import { lang } from "./Lang";
+import { TXT } from "../common/Lang";
 import { StringFormat, spaceStart } from "../common/String";
 import { root } from "../main";
 
 // Playlist names;
 let presetNames = {
-	library: lang(window.GetProperty("PLMAN.Media Library Name", "Media Library")),
-	never_played: lang(window.GetProperty("PLMAN.Never Played Name", "Never Played")),
-	liked: lang(window.GetProperty("PLMAN.Liked Songs Name", "Liked Songs")),
-	newly_added: lang(window.GetProperty("PLMAN.Newly Added Name", "Newly Added")),
-	queue: lang(window.GetProperty("PLMAN.Queue Name", "Queue")),
+	library: TXT(window.GetProperty("PLMAN.Media Library Name", "Media Library")),
+	never_played: TXT(window.GetProperty("PLMAN.Never Played Name", "Never Played")),
+	liked: TXT(window.GetProperty("PLMAN.Liked Songs Name", "Liked Songs")),
+	newly_added: TXT(window.GetProperty("PLMAN.Newly Added Name", "Newly Added")),
+	queue: TXT(window.GetProperty("PLMAN.Queue Name", "Queue")),
 }
 
 const ui_textRendering = ui.textRender;
@@ -51,7 +51,7 @@ export const PlmanProperties = {
 
 class AddPlaylistButton extends Clickable {
 	private textFont = PlmanProperties.itemFont;
-	private text = lang("Create Playlist");
+	private text = TXT("Create Playlist");
 	private colors = [themeColors.sidebarInactiveText, themeColors.text, setAlpha(themeColors.text, 127)];
 
 	constructor() {
@@ -140,7 +140,7 @@ class PlmanItem extends Component {
 	}
 
 	private getIconByName(name: string) {
-		name = lang(name);
+		name = TXT(name);
 		switch (name) {
 			case presetNames.library:
 				this.icon = Material.library;
@@ -273,6 +273,9 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 
 		this.visibleItems.length = 0;
 
+		let activePlaylist = plman.ActivePlaylist;
+		let playingPlaylist = plman.PlayingPlaylist;
+
 		// draw items;
 		for (let i = 0, len = items_.length; i < len; i++) {
 			let rowItem = items_[i];
@@ -285,7 +288,7 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 
 				this.visibleItems.push(rowItem);
 
-				let isActive = rowItem.index === plman.ActivePlaylist && playlistVisible;
+				let isActive = rowItem.index === activePlaylist && playlistVisible;
 				let textColor = (((i === this.hoverIndex) || isActive) ? themeColors.text : themeColors.sidebarInactiveText);
 
 				if (isActive) {
@@ -299,7 +302,7 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 
 				//
 				let iconX = this.x + this.width - iconWidth - this.scrollbar.width - scale(8);
-				if (fb.IsPlaying && rowItem.index === plman.PlayingPlaylist) {
+				if (fb.IsPlaying && rowItem.index === playingPlaylist) {
 					let stateIconCode = (fb.IsPaused ? Material.volume_mute : Material.volume);
 					gr.DrawString(stateIconCode, smallIconFont, themeColors.highlight,
 						iconX, rowItem.y, iconWidth, rowItem.height, StringFormat.Center);
@@ -321,6 +324,10 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 			gr.DrawLine(this.x, lineY, this.x + this.width, lineY, this.dragdrop.lineWidth, themeColors.highlight);
 		}
 
+	}
+
+	repaint() {
+		window.RepaintRect(this.x, this.y, this.width, this.height);
 	}
 
 	createItemImage(itemIndex: number) {
@@ -612,14 +619,14 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 		const hasContents = metadbs.Count > 0;
 		const rootMenu = window.CreatePopupMenu();
 
-		rootMenu.AppendMenuItem(!hasContents ? MenuFlag.GRAYED : MenuFlag.STRING, 1, lang("Play"));
-		rootMenu.AppendMenuItem(MenuFlag.STRING, 2, lang("Rename"));
-		rootMenu.AppendMenuItem(MenuFlag.STRING, 3, lang("Delete"));
-		rootMenu.AppendMenuItem(MenuFlag.STRING, 4, lang("Create playlist"));
+		rootMenu.AppendMenuItem(!hasContents ? MenuFlag.GRAYED : MenuFlag.STRING, 1, TXT("Play"));
+		rootMenu.AppendMenuItem(MenuFlag.STRING, 2, TXT("Rename"));
+		rootMenu.AppendMenuItem(MenuFlag.STRING, 3, TXT("Delete"));
+		rootMenu.AppendMenuItem(MenuFlag.STRING, 4, TXT("Create playlist"));
 
 		if (plman.IsAutoPlaylist(playlistIndex)) {
 			rootMenu.AppendMenuSeparator();
-			rootMenu.AppendMenuItem(MenuFlag.STRING, 5, lang("Edit autoplaylist..."));
+			rootMenu.AppendMenuItem(MenuFlag.STRING, 5, TXT("Edit autoplaylist..."));
 		}
 
 		const contents = window.CreatePopupMenu();
@@ -631,7 +638,7 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 			Context.BuildMenu(contents, idOffset, -1);
 			// ---
 			rootMenu.AppendMenuSeparator();
-			contents.AppendTo(rootMenu, hasContents ? MenuFlag.STRING : MenuFlag.GRAYED, metadbs.Count + spaceStart(metadbs.Count > 1 ? lang("tracks") : lang("track")));
+			contents.AppendTo(rootMenu, hasContents ? MenuFlag.STRING : MenuFlag.GRAYED, metadbs.Count + spaceStart(metadbs.Count > 1 ? TXT("tracks") : TXT("track")));
 		}
 
 		const id = rootMenu.TrackPopupMenu(x, y);

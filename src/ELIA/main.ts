@@ -6,7 +6,7 @@ import { isValidPlaylist, PlaylistView } from "./parts/PlaylistView";
 import { PlaylistManagerView } from "./parts/PlaylistManagerView";
 import { SearchResultView } from "./parts/SearchResultView";
 import { SettingsView } from "./parts/SettingsView";
-import { lang } from "./parts/Lang";
+import { TXT } from "./common/Lang";
 import { ArtistPageView } from "./parts/ArtistPage";
 import { AlbumPageView } from "./parts/AlbumPage";
 import { Component } from "./common/BasePart";
@@ -33,6 +33,9 @@ const searchResult = new SearchResultView();
 const settingsView = new SettingsView();
 const artistPage = new ArtistPageView();
 const albumPage = new AlbumPageView();
+
+ui.monitor(playlistView);
+ui.monitor(playlistManager);
 
 /**
  * Root part of this panel;
@@ -68,7 +71,7 @@ function checkActivePlaylist() {
 }
 
 function checkDefautPlaylist() {
-	const defaultPlaylistName = lang("Default");
+	const defaultPlaylistName = TXT("Default");
 	const compareName = defaultPlaylistName.toLowerCase();
 	const playlistCount = plman.PlaylistCount;
 

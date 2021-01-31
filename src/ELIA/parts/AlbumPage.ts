@@ -1,13 +1,13 @@
 import { MeasureString, StringFormat, spaceStartEnd, spaceEnd, spaceStart } from "../common/String";
 import { AlbumArtwork } from "../common/AlbumArt";
 import { Component } from "../common/BasePart";
-import { clamp, CursorName, foo_playcount, isEmptyString, KMask, MenuFlag, RGB, scale, StopReason, TextRenderingHint, VKeyCode } from "../common/Common";
+import { clamp, CursorName, foo_playcount, KMask, MenuFlag, RGB, scale, StopReason, TextRenderingHint, VKeyCode } from "../common/Common";
 import { Material, MaterialFont } from "../common/Icon";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
 import { ui } from "../common/UserInterface";
 import { Button, IconButton } from "./Buttons";
-import { lang } from "./Lang";
+import { TXT } from "../common/Lang";
 import { getYear, ReadMood, ToggleMood } from "./PlaybackControlView";
 import { formatPlaylistDuration, showTrackContextMenu } from "./PlaylistView";
 import { SendToQueueListPlay } from "./SearchResultView";
@@ -35,6 +35,7 @@ const buttonColors = {
     onSecondary: themeColors.onSecondary,
 };
 
+let rowHeight = scale(48);
 const iconFont = GdiFont(MaterialFont, scale(18));
 const itemFont = GdiFont("normal, 14");
 const semiItemFont = GdiFont("semibold, 14");
@@ -42,6 +43,7 @@ const smallItemFont = GdiFont("normal, 13");
 const descriptionFont = GdiFont("normal, 14");
 let subtitleFont = GdiFont("normal, 24");
 const titleFont = GdiFont("bold, 24");
+let timeFont = GdiFont("Trebuchet MS", itemFont.Size);
 
 let titleLineHeight = titleFont.Height * 1.1;
 let descriptionLineHeight = descriptionFont.Height * 1.1;
@@ -54,7 +56,6 @@ let artworkHeight = 0;
 let artworkMarginL = scale(24);
 let headerHeight = scale(250);
 let listHeaderHeight = scale(36);
-let rowHeight = scale(48);
 let durationWidth = scale(16) + MeasureString("0:00:00", itemFont).Width;
 
 const pageWidth = {
@@ -162,7 +163,7 @@ class AlbumHeaderView extends Component {
 
         let shuffleall = new Button({
             style: "contained",
-            text: lang("Shuffle All"),
+            text: TXT("Shuffle All"),
             icon: Material.shuffle,
             foreColor: buttonColors.onPrimary,
             backgroundColor: buttonColors.primary
@@ -176,7 +177,7 @@ class AlbumHeaderView extends Component {
 
         let sort = new Button({
             style: "text",
-            text: lang("Sort"),
+            text: TXT("Sort"),
             icon: Material.sort,
             foreColor: buttonColors.secondary
         });
@@ -187,7 +188,7 @@ class AlbumHeaderView extends Component {
         let context = new Button({
             style: "text",
             icon: Material.more_vert,
-            text: lang("More"),
+            text: TXT("More"),
             foreColor: buttonColors.secondary
         });
         this.buttons.set("context", context);
@@ -230,6 +231,7 @@ class AlbumHeaderView extends Component {
         close.setPosition(this.x + this.width - scale(64), this.y + scale(16));
     }
 
+    // header;
     on_paint(gr: IGdiGraphics) {
         // background;;
         gr.FillSolidRect(this.x, this.y, this.width, this.height, pageColors.background);
@@ -398,7 +400,7 @@ export class AlbumPageView extends ScrollView {
         //  change header;
         this.header.metadbs = metadbs;
         this.header.albumText = albumName;
-        this.header.albumTracksInfo = lang("Album")
+        this.header.albumTracksInfo = TXT("Album")
             + spaceStartEnd("\u2022") + formatTrackCount(metadbs.Count)
             + spaceStartEnd("\u2022") + formatPlaylistDuration(this.metadbs.CalcTotalDuration());
         this.header.albumArtistText = TF_ALBUM_ARTIST.EvalWithMetadb(metadb);
@@ -465,8 +467,6 @@ export class AlbumPageView extends ScrollView {
 
 
     initColumns() {
-        // let columns = ["tracknumber", "title", "trackartist", "playcount", "addedtime", "liked", "duration"];
-        // columns.forEach(i => this.columns.set(i, new ColumnItem()));
         let columns = ["TrackNumber", "Mood", "Title", "Artist", "Playcount", "Rating", "Duration"];
         let columnsVis = window.GetProperty("Album.Columns.Visible", "1,1,1,1,1,1,1").split(",");
         if (columnsVis.length !== columns.length) {
@@ -607,6 +607,7 @@ export class AlbumPageView extends ScrollView {
         this.scrollTo();
     }
 
+    // track list;
     on_paint(gr: IGdiGraphics) {
         // update header position;
         this.header.setPosition(null, this.y - this.scroll);
@@ -648,24 +649,24 @@ export class AlbumPageView extends ScrollView {
             tracknumber.x, headbarY, tracknumber.width, listHeaderHeight, StringFormat.Center);
 
         // title/artist;
-        gr.DrawString(lang("TITLE"), semiItemFont, secondaryText,
+        gr.DrawString(TXT("TITLE"), semiItemFont, secondaryText,
             title.x, headbarY, title.width, listHeaderHeight, StringFormat.LeftCenter);
 
         // artist;
         if (artist.visible && artist.width > 0) {
-            gr.DrawString(lang("ARTIST"), semiItemFont, secondaryText,
+            gr.DrawString(TXT("ARTIST"), semiItemFont, secondaryText,
                 artist.x, headbarY, artist.width, listHeaderHeight, StringFormat.LeftCenter);
         }
 
         // playcount;
         if (playcount.visible && playcount.width > 0) {
-            gr.DrawString(lang("PLAYS"), semiItemFont, secondaryText,
+            gr.DrawString(TXT("PLAYS"), semiItemFont, secondaryText,
                 playcount.x, headbarY, playcount.width, listHeaderHeight, StringFormat.LeftCenter);
         }
 
         // rating;
         if (rating.visible) {
-            gr.DrawString(lang("RATING"), semiItemFont, secondaryText,
+            gr.DrawString(TXT("RATING"), semiItemFont, secondaryText,
                 rating.x + scale(4), headbarY, rating.width, listHeaderHeight, StringFormat.LeftCenter);
         }
 
@@ -709,7 +710,7 @@ export class AlbumPageView extends ScrollView {
                         tracknumber.x, row.y, tracknumber.width, row.height, StringFormat.Center);
 
                     // disc number
-                    let discText = spaceEnd(lang("Disc")) + row.discNumber;
+                    let discText = spaceEnd(TXT("Disc")) + row.discNumber;
                     let discTextX = tracknumber.x + tracknumber.width;
                     gr.DrawString(discText, semiItemFont, secondaryText,
                         discTextX, row.y, this.width, row.height, StringFormat.LeftCenter);
@@ -738,7 +739,7 @@ export class AlbumPageView extends ScrollView {
                     }
 
                     // title
-                    if (artist.visible && artist.width == 0) {
+                    if (rowHeight > scale(35) && artist.visible && artist.width == 0) {
                         let titleRowY = row.y + row.height / 2 - itemFont.Height;
                         gr.DrawString(row.trackTitle, itemFont, _textColor,
                             title.x + scale(8), titleRowY, title.width - scale(24), row.height, StringFormat.LeftTop);
@@ -771,8 +772,8 @@ export class AlbumPageView extends ScrollView {
 
                     // duration;
                     if (duration.visible) {
-                        gr.DrawString(row.duration, itemFont, _textSecondaryColor,
-                            duration.x, row.y, duration.width - scale(8), row.height, StringFormat(2, 1));
+                        gr.DrawString(row.duration, timeFont, _textSecondaryColor,
+                            duration.x, row.y, duration.width - scale(8), row.height, StringFormat.RightCenter);
                     }
                     //gr.DrawRect(duration.x, row.y, duration.width - scale(8), row.height - 1, 1, 0xffaabbcc);
                 }
@@ -897,7 +898,7 @@ export class AlbumPageView extends ScrollView {
         }
 
         if (hoveritem) {
-            let queue = plman.FindOrCreatePlaylist(lang("Queue"), true);
+            let queue = plman.FindOrCreatePlaylist(TXT("Queue"), true);
             let metadbs = this.metadbs;
             plman.ActivePlaylist = queue;
             plman.UndoBackup(queue);
@@ -1218,7 +1219,7 @@ export class AlbumPageView extends ScrollView {
 }
 
 function formatTrackCount(count: number) {
-    return count + spaceStart((count > 1 ? lang("tracks") : lang("track")));
+    return count + spaceStart((count > 1 ? TXT("tracks") : TXT("track")));
 }
 
 function easeOutCubic(x: number): number {
@@ -1230,14 +1231,14 @@ function showlistheadermenu(x: number, y: number, pl: AlbumPageView) {
     let menu = window.CreatePopupMenu();
     let cols = window.CreatePopupMenu();
 
-    cols.AppendTo(menu, MenuFlag.STRING, lang("Columns"));
-    cols.AppendMenuItem(MenuFlag.STRING, 100, lang("Track number"));
-    cols.AppendMenuItem(MenuFlag.STRING, 101, lang("Mood"));
-    cols.AppendMenuItem(MenuFlag.GRAYED, 102, lang("Title"));
-    cols.AppendMenuItem(MenuFlag.STRING, 103, lang("Artist"));
-    cols.AppendMenuItem(MenuFlag.STRING, 104, lang("Play count"));
-    cols.AppendMenuItem(MenuFlag.STRING, 105, lang("Rating"));
-    cols.AppendMenuItem(MenuFlag.STRING, 106, lang("Duration"));
+    cols.AppendTo(menu, MenuFlag.STRING, TXT("Columns"));
+    cols.AppendMenuItem(MenuFlag.STRING, 100, TXT("Track number"));
+    cols.AppendMenuItem(MenuFlag.STRING, 101, TXT("Mood"));
+    cols.AppendMenuItem(MenuFlag.GRAYED, 102, TXT("Title"));
+    cols.AppendMenuItem(MenuFlag.STRING, 103, TXT("Artist"));
+    cols.AppendMenuItem(MenuFlag.STRING, 104, TXT("Play count"));
+    cols.AppendMenuItem(MenuFlag.STRING, 105, TXT("Rating"));
+    cols.AppendMenuItem(MenuFlag.STRING, 106, TXT("Duration"));
 
     let columnsVis = window.GetProperty("Album.Columns.Visible", "1,1,1,1,1,1,1").split(",");
     let columns = ["TrackNumber", "Mood", "Title", "Artist", "Playcount", "Rating", "Duration"];
@@ -1256,4 +1257,5 @@ function showlistheadermenu(x: number, y: number, pl: AlbumPageView) {
     window.SetProperty("Album.Columns.Visible", columnsVis.join(","));
     pl.initColumns();
     pl.on_size();
+    pl.repaint();
 }

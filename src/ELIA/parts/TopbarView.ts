@@ -5,7 +5,7 @@ import { Material, MaterialFont } from "../common/Icon";
 import { notifyOthers, ui } from "../common/UserInterface";
 import { themeColors, ToggleDarkmode } from "./Theme";
 import { SearchBox } from "./SearchBox";
-import { lang } from "./Lang";
+import { TXT } from "../common/Lang";
 import { StringFormat } from "../common/String";
 
 const iconSize = scale(22);
@@ -197,15 +197,15 @@ function showMainMenu(x: number, y: number) {
 	const libraryMenu = window.CreatePopupMenu();
 	const helpMenu = window.CreatePopupMenu();
 
-	fileMenu.AppendTo(objMenu, MenuFlag.STRING, lang("File"));
-	editMenu.AppendTo(objMenu, MenuFlag.STRING, lang("Edit"));
-	viewMenu.AppendTo(objMenu, MenuFlag.STRING, lang("View"));
-	playbackMenu.AppendTo(objMenu, MenuFlag.STRING, lang("Playback"));
-	libraryMenu.AppendTo(objMenu, MenuFlag.STRING, lang("Library"));
-	helpMenu.AppendTo(objMenu, MenuFlag.STRING, lang("Help"));
+	fileMenu.AppendTo(objMenu, MenuFlag.STRING, TXT("File"));
+	editMenu.AppendTo(objMenu, MenuFlag.STRING, TXT("Edit"));
+	viewMenu.AppendTo(objMenu, MenuFlag.STRING, TXT("View"));
+	playbackMenu.AppendTo(objMenu, MenuFlag.STRING, TXT("Playback"));
+	libraryMenu.AppendTo(objMenu, MenuFlag.STRING, TXT("Library"));
+	helpMenu.AppendTo(objMenu, MenuFlag.STRING, TXT("Help"));
 
 	objMenu.AppendMenuSeparator();
-	objMenu.AppendMenuItem(MenuFlag.GRAYED, 3000, lang("Theme settings"));
+	objMenu.AppendMenuItem(MenuFlag.GRAYED, 3000, TXT("Theme settings"));
 
 	// Menu managers;
 	const fileMan = fb.CreateMainMenuManager();

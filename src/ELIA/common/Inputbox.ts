@@ -1,6 +1,6 @@
 ﻿import { Component } from "./BasePart";
 import { blendColors } from "./Common";
-import { lang2 } from "./Lang";
+import { TXT } from "./Lang";
 
 const IDC_ARROW = 32512;
 const IDC_IBEAM = 32513;
@@ -403,10 +403,10 @@ export class InputBox extends Component implements IInputBoxOptions {
         var idx;
         var _menu = window.CreatePopupMenu();
         cInputbox.clipboard = cInputbox.doc.parentWindow.clipboardData.getData("Text");
-        _menu.AppendMenuItem(this.select ? MF_STRING : MF_GRAYED | MF_DISABLED, 1, lang2("Copy"));
-        _menu.AppendMenuItem(this.select ? MF_STRING : MF_GRAYED | MF_DISABLED, 2, lang2("Cut"));
+        _menu.AppendMenuItem(this.select ? MF_STRING : MF_GRAYED | MF_DISABLED, 1, TXT("Copy"));
+        _menu.AppendMenuItem(this.select ? MF_STRING : MF_GRAYED | MF_DISABLED, 2, TXT("Cut"));
         _menu.AppendMenuSeparator();
-        _menu.AppendMenuItem(cInputbox.clipboard ? MF_STRING : MF_GRAYED | MF_DISABLED, 3, lang2("Paste"));
+        _menu.AppendMenuItem(cInputbox.clipboard ? MF_STRING : MF_GRAYED | MF_DISABLED, 3, TXT("Paste"));
         // if (utils.IsKeyPressed(VK_SHIFT)) {
         //     _menu.AppendMenuSeparator();
         //     _menu.AppendMenuItem(MF_STRING, 20, "Properties");

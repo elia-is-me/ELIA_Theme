@@ -7,7 +7,7 @@ import { ScrollView } from "../common/ScrollView";
 import { StringFormat } from "../common/String";
 import { ui } from "../common/UserInterface";
 import { Button } from "./Buttons";
-import { lang } from "./Lang";
+import { TXT } from "../common/Lang";
 import { formatPlaylistDuration } from "./PlaylistView";
 import { GdiFont, scrollbarWidth, themeColors } from "./Theme";
 
@@ -100,7 +100,7 @@ class ArtistPageHeader extends Component {
 
         let shuffleall = new Button({
             style: "contained",
-            text: lang("Shuffle All"),
+            text: TXT("Shuffle All"),
             icon: Material.shuffle,
             foreColor: buttonColors.onPrimary,
             backgroundColor: buttonColors.primary
@@ -113,7 +113,7 @@ class ArtistPageHeader extends Component {
 
         let sort = new Button({
             style: "text",
-            text: lang("Sort"),
+            text: TXT("Sort"),
             icon: Material.sort,
             foreColor: buttonColors.secondary
         });
@@ -124,7 +124,7 @@ class ArtistPageHeader extends Component {
         let context = new Button({
             style: "text",
             icon: Material.more_vert,
-            text: lang("More"),
+            text: TXT("More"),
             foreColor: buttonColors.secondary
         });
         this.buttons.set("context", context);
@@ -208,7 +208,7 @@ class ArtistPageHeader extends Component {
 class GridView extends Component {
     scrollview: ScrollView;
 
-    titleText: string = lang("Discography");
+    titleText: string = TXT("Discography");
     items: ThumbItem[] = []
 
     constructor() {
@@ -310,7 +310,7 @@ export class ArtistPageView extends ScrollView {
         // draw group header;
         let groupheaderY = itemY + scale(24);
         let groupheaderHeight = Math.ceil(groupheaderFont.Height);
-        gr.DrawString(lang("Dicography"), groupheaderFont, colors.titleText, this.x + paddingLR, groupheaderY, this.width - 2 * paddingLR, groupheaderHeight, StringFormat.LeftTop);
+        gr.DrawString(TXT("Dicography"), groupheaderFont, colors.titleText, this.x + paddingLR, groupheaderY, this.width - 2 * paddingLR, groupheaderHeight, StringFormat.LeftTop);
 
         // draw thumbs;
         let firstY = groupheaderY + groupheaderHeight + scale(16);

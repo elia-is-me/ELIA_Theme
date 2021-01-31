@@ -5,11 +5,11 @@
 import { Component } from "../common/BasePart";
 import { InputBox } from "../common/Inputbox";
 import { IconButton } from "./Buttons";
-import { scale, RGB, setAlpha } from "../common/Common";
+import { scale, RGB } from "../common/Common";
 import { Material, } from "../common/Icon";
 import { GdiFont, themeColors } from "./Theme";
 import { notifyOthers } from "../common/UserInterface";
-import { lang } from "./Lang";
+import { TXT } from "../common/Lang";
 import { MeasureString } from "../common/String";
 
 export class SearchBox extends Component {
@@ -68,13 +68,13 @@ export class SearchBox extends Component {
 			backgroundColor: this.backgroundColor,
 			backgroundActiveColor: this.backgroundColor,
 			backgroundSelectionColor: RGB(28, 98, 185),
-			empty_text: lang("Library Search"),
+			empty_text: TXT("Library Search"),
 			func: () => {
 				this.handleSearch();
 			},
 		});
 
-		this._inputboxHeight = MeasureString("ABCDgl" + lang("Library Search"), this.inputbox.font).Height + scale(4);
+		this._inputboxHeight = MeasureString("ABCDgl" + TXT("Library Search"), this.inputbox.font).Height + scale(4);
 
 		[this.searchBtn, this.clearBtn, this.inputbox].forEach((btn) =>
 			this.addChild(btn)
@@ -146,5 +146,9 @@ export class SearchBox extends Component {
 		this.clearBtn.visible = (this.inputbox.edit && this.inputbox.text.length > 0);
 		if (prevState !== this.clearBtn.visible) {
 		}
+	}
+
+	repaint() {
+		this.parent.repaint();
 	}
 }

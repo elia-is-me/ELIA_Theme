@@ -5,6 +5,7 @@
 import { Component } from "../common/BasePart";
 import { foo_playcount, RGB, scale, setAlpha, TextRenderingHint } from "../common/Common";
 import { Material, MaterialFont } from "../common/Icon";
+import { RunContextCommandWithMetadb } from "../common/Lang";
 import { MeasureString, StringFormat } from "../common/String";
 import { ui } from "../common/UserInterface";
 import { GdiFont, themeColors } from "./Theme";
@@ -120,10 +121,10 @@ export class RatingBar extends Component {
         try {
             if (foo_playcount) {
                 if (this.l_rating !== this.rating) {
-                    fb.RunContextCommandWithMetadb("Playback Statistics/Rating/" +
+                    RunContextCommandWithMetadb("Playback Statistics/Rating/" +
                         ((this.l_rating == 0) ? "<not set>" : this.l_rating), this.metadb);
                 } else {
-                    fb.RunContextCommandWithMetadb("Playback Statistics/Rating/<not set>", this.metadb);
+                    RunContextCommandWithMetadb("Playback Statistics/Rating/<not set>", this.metadb);
                 }
             } else {
                 let metadbs = new FbMetadbHandleList(this.metadb);

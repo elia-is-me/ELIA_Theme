@@ -11,7 +11,7 @@ import { Material, MaterialFont } from "../common/Icon"
 import { scale, PlaybackOrder, SmoothingMode } from "../common/Common";
 import { themeColors, fonts, GdiFont } from "./Theme";
 import { IconButton } from "./Buttons";
-import { lang, RunContextCommandWithMetadb } from "./Lang";
+import { TXT, RunContextCommandWithMetadb } from "../common/Lang";
 import { CreatePlaylistPopup, GoToAlbum, GoToArtist, GotoPlaylist, ShowPlaybackBarMenu } from "./Layout";
 import { MeasureString, StringFormat } from "../common/String";
 import { mouseCursor, notifyOthers } from "../common/UserInterface";
@@ -301,13 +301,18 @@ const volumebar = new Slider({
 	},
 	setProgress(val: number) {
 		fb.Volume = pos2vol(val);
+	},
+});
+Object.assign(volumebar, {
+	on_volume_change() {
+		this.parent.repaint();
 	}
 });
 
 const TF_TRACK_TITLE = fb.TitleFormat("%title%");
-const TF_ARTIST = fb.TitleFormat("$if2([$trim(%artist%)]," + lang("UNKNOWN ARTIST") + ")");
+const TF_ARTIST = fb.TitleFormat("$if2([$trim(%artist%)]," + TXT("UNKNOWN ARTIST") + ")");
 const TF_DATE = fb.TitleFormat("%date%");
-const defaultArtistName = lang("ARTIST");
+const defaultArtistName = TXT("ARTIST");
 
 /**
  * yyyy-mm-dd or yyyy/mm/dd or yyyy.mm.dd => yyyy
@@ -409,7 +414,7 @@ export class PlaybackControlView extends Component {
 		onPlaybackTimer_();
 
 		let npMetadb = fb.GetNowPlaying();
-		this.trackTitle = npMetadb == null ? lang("NOT PLAYING") : TF_TRACK_TITLE.EvalWithMetadb(npMetadb);
+		this.trackTitle = npMetadb == null ? TXT("NOT PLAYING") : TF_TRACK_TITLE.EvalWithMetadb(npMetadb);
 		if (fb.IsPlaying) {
 			this.playbackTime = formatPlaybackTime(fb.PlaybackTime);
 			this.playbackLength = formatPlaybackTime(fb.PlaybackLength);
@@ -719,12 +724,12 @@ function showPanelContextMenu(metadb: IFbMetadb, x: number, y: number) {
 	let album = "";
 
 	if (!metadb) {
-		objMenu.AppendMenuItem(MenuFlag.GRAYED, 1, lang("Not playing"));
+		objMenu.AppendMenuItem(MenuFlag.GRAYED, 1, TXT("Not playing"));
 	} else {
-		objMenu.AppendMenuItem(MenuFlag.STRING, 10, lang("Show now playing"));
+		objMenu.AppendMenuItem(MenuFlag.STRING, 10, TXT("Show now playing"));
 		objMenu.AppendMenuSeparator();
 
-		objMenu.AppendMenuItem(MenuFlag.STRING, 11, lang("Go to album"));
+		objMenu.AppendMenuItem(MenuFlag.STRING, 11, TXT("Go to album"));
 
 		artist_ = tf_artist_.EvalWithMetadb(metadb);
 		album = tf_album.EvalWithMetadb(metadb);
@@ -734,8 +739,8 @@ function showPanelContextMenu(metadb: IFbMetadb, x: number, y: number) {
 
 		// Add to playlist ... menu;
 		const objAddTo = window.CreatePopupMenu();
-		objAddTo.AppendTo(objMenu, MenuFlag.STRING, lang("Add to playlist"));
-		objAddTo.AppendMenuItem(MenuFlag.STRING, 5000, lang("Create playlist..."));
+		objAddTo.AppendTo(objMenu, MenuFlag.STRING, TXT("Add to playlist"));
+		objAddTo.AppendMenuItem(MenuFlag.STRING, 5000, TXT("Create playlist..."));
 
 		if (plman.PlaylistCount > 0) {
 			objAddTo.AppendMenuSeparator();
@@ -755,7 +760,7 @@ function showPanelContextMenu(metadb: IFbMetadb, x: number, y: number) {
 
 	const playbackMenu = window.CreatePopupMenu();
 	const menuMan = fb.CreateMainMenuManager();
-	playbackMenu.AppendTo(objMenu, MenuFlag.STRING, lang("Playback"));
+	playbackMenu.AppendTo(objMenu, MenuFlag.STRING, TXT("Playback"));
 	menuMan.Init("playback");
 	menuMan.BuildMenu(playbackMenu, 9000, 300);
 

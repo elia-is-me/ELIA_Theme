@@ -1,11 +1,11 @@
-import { PlaybackOrder, pos2vol, RGB, RGBA, scale, setAlpha, SmoothingMode, TextRenderingHint, vol2pos } from "../common/Common";
+import { clamp, PlaybackOrder, pos2vol, RGB, RGBA, scale, setAlpha, SmoothingMode, TextRenderingHint, vol2pos } from "../common/Common";
 import { Component } from "../common/BasePart";
 import { Material, MaterialFont } from "../common/Icon";
 import { IconButton } from "./Buttons";
 import { Slider } from "../common/Slider";
 import { GdiFont, themeColors } from "./Theme";
 import { notifyOthers, ui } from "../common/UserInterface";
-import { lang } from "./Lang";
+import { TXT } from "../common/Lang";
 import { ButtonStates, Clickable } from "../common/Button";
 import { getShuffleOrder } from "./PlaybackControlView";
 import { StringFormat } from "../common/String";
@@ -80,6 +80,10 @@ class MenuItem extends Clickable {
         gr.FillRoundRect(this.x, this.y, this.width, this.height, r, r, backgroundColor);
         gr.DrawString(text, textFont, textColor, textX, this.y, textW, this.height, sf);
         gr.SetSmoothingMode(SmoothingMode.Default);
+    }
+
+    repaint() {
+        this.parent.repaint();
     }
 }
 
@@ -171,6 +175,17 @@ class VolumeMenuItem extends MenuItem {
         this.volumnBar.setBoundary(this.x + scale(40), barY, this.width - scale(40) - scale(16), barH);
     }
     on_paint(gr: IGdiGraphics) { }
+
+    on_mouse_wheel(step: number) {
+        let pos_p = vol2pos(fb.Volume);
+        pos_p += step / 20;
+        pos_p = clamp(pos_p, 0, 1);
+        fb.Volume = pos2vol(pos_p);
+    }
+
+    on_volume_change() {
+        this.parent.repaint();
+    }
 }
 
 
@@ -198,11 +213,11 @@ export class PlaybackBarMenu extends Component {
         let repeat_on = new Icon(Material.repeat, iconFont, menuColors.highlight);
         let repeat_track = new Icon(Material.repeat1, iconFont, menuColors.highlight);
 
-        let repeat_off_cp: [Icon, string] = [repeat_off, lang("Repeat off")];
-        let repeat_playlist_cp: [Icon, string] = [repeat_on, lang("Repeat playlist")]
-        let repeat_track_cp: [Icon, string] = [repeat_track, lang("Repeat track")]
-        let shuffle_off_cp: [Icon, string] = [shuffle_off, lang("Shuffle off")];
-        let shuffle_on_cp: [Icon, string] = [shuffle_on, lang("Shuffle on")];
+        let repeat_off_cp: [Icon, string] = [repeat_off, TXT("Repeat off")];
+        let repeat_playlist_cp: [Icon, string] = [repeat_on, TXT("Repeat playlist")]
+        let repeat_track_cp: [Icon, string] = [repeat_track, TXT("Repeat track")]
+        let shuffle_off_cp: [Icon, string] = [shuffle_off, TXT("Shuffle off")];
+        let shuffle_on_cp: [Icon, string] = [shuffle_on, TXT("Shuffle on")];
 
         let repeat_menu_item = new MenuItem(repeat_off, "");
         Object.assign(repeat_menu_item, {
@@ -297,6 +312,7 @@ export class PlaybackBarMenu extends Component {
         let r = scale(2);
         gr.SetTextRenderingHint(SmoothingMode.AntiAlias);
         gr.FillRoundRect(this.x, this.y, this.width, this.height, r, r, this.backgroundColor);
+        gr.DrawRoundRect(this.x, this.y, this.width, this.height, scale(1), r, r, this.textColor & 0x60ffffff);
         gr.SetTextRenderingHint(SmoothingMode.Default);
     }
 

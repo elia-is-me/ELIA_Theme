@@ -1,4 +1,4 @@
-import { scale, Repaint, SmoothingMode } from "./Common";
+import { scale, SmoothingMode } from "./Common";
 import { Component, ICallbacks } from "./BasePart";
 import { ButtonStates } from "./Button";
 import { ScrollView } from "./ScrollView";
@@ -57,7 +57,7 @@ export class Scrollbar extends Component implements ICallbacks {
 	changeState(newstate: number) {
 		if (this.state !== newstate) {
 			this.state = newstate;
-			Repaint();
+			this.repaint();
 		}
 	}
 	on_mouse_move(x: number, y: number) {
@@ -66,7 +66,8 @@ export class Scrollbar extends Component implements ICallbacks {
 			let ratio = (cursorY - this.y) / (this.height - this.cursorHeight);
 			let offset = Math.round((this.parent.totalHeight - this.parent.height) * ratio);
 			this.parent.scroll = offset;
-			Repaint();
+			this.repaint();
+			// this.parent.scrollTo(offset);
 		} else {
 			this.changeState(this.traceCursor(x, y) ? ButtonStates.Hover : ButtonStates.Normal);
 		}
@@ -74,7 +75,7 @@ export class Scrollbar extends Component implements ICallbacks {
 		if (this.trace(x, y) || this.state === ButtonStates.Down) {
 			if (this.narrow) {
 				this.narrow = false;
-				Repaint();
+				this.repaint();
 			}
 		}
 	}
@@ -99,6 +100,9 @@ export class Scrollbar extends Component implements ICallbacks {
 			this.narrow = true;
 			this.repaint();
 		}
+	}
+	repaint() {
+		this.parent.repaint();
 	}
 }
 

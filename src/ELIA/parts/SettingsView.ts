@@ -5,7 +5,7 @@ import { ScrollView } from "../common/ScrollView";
 import { StringFormat } from "../common/String";
 import { notifyOthers } from "../common/UserInterface";
 import { IconButton } from "./Buttons";
-import { lang } from "./Lang";
+import { TXT } from "../common/Lang";
 import { GdiFont, themeColors } from "./Theme";
 
 const settingsColors = {
@@ -57,7 +57,7 @@ export class SettingsView extends ScrollView {
         gr.FillSolidRect(this.x, this.y, this.width, this.height, this.colors.background);
 
         // Title 1;
-        gr.DrawString(lang("Settings"), titleFont, colors.titleText,
+        gr.DrawString(TXT("Settings"), titleFont, colors.titleText,
             this.x + paddingL, this.y + scale(40) - this.scroll, 0.5 * (this.width - 2 * paddingL), titleFont.Height, StringFormat.LeftTop);
     }
 };

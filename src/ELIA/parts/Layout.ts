@@ -9,7 +9,7 @@ import { InputPopupPanel, IInputPopupOptions } from "./InputPopupPanel";
 import { AlertDialog, IAlertDialogOptions } from "./AlertDialog";
 import { SearchResultView } from "./SearchResultView";
 import { SettingsView } from "./SettingsView";
-import { lang } from "./Lang";
+import { TXT } from "../common/Lang";
 import { PlaybackBarMenu } from "./PlaybackBarMenu";
 import { fontNameNormal, scrollbarWidth } from "./Theme";
 import { ArtistPageView } from "./ArtistPage";
@@ -384,7 +384,7 @@ export function CreatePlaylistPopup(metadbs?: IFbMetadbList) {
 		defaultName += ` (${num + 1})`;
 	}
 	let options = {
-		title: lang("Create playlist"),
+		title: TXT("Create playlist"),
 		defaultText: defaultName,
 		onSuccess(playlistName: string) {
 			let playlistIndex = plman.CreatePlaylist(plman.PlaylistCount, playlistName);
@@ -402,7 +402,7 @@ export function CreatePlaylistPopup(metadbs?: IFbMetadbList) {
  */
 export function RenamePlaylist(playlistIndex: number) {
 	let options = {
-		title: lang("Rename playlist"),
+		title: TXT("Rename playlist"),
 		defaultText: plman.GetPlaylistName(playlistIndex),
 		onSuccess(playlistName: string) {
 			plman.RenamePlaylist(playlistIndex, playlistName);
@@ -420,7 +420,7 @@ export function DeletePlaylistDialog(playlistIndex: number) {
 		return;
 	}
 	let dlgOptions: IAlertDialogOptions = {
-		title: lang("Delete playlist") + "?",
+		title: TXT("Delete playlist") + "?",
 		text: plman.GetPlaylistName(playlistIndex),
 		onSuccess() {
 			let isActivePlaylist = (playlistIndex === plman.ActivePlaylist);

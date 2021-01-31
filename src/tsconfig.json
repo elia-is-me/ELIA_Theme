@@ -6,6 +6,7 @@
         "pretty": true,
         "sourceMap": false,
         "rootDir": "./",
+        "allowJs": true,
         // "baseUrl": "./"
     },
     "include": [

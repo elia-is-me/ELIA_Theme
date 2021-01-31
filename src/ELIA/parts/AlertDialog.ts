@@ -4,7 +4,7 @@ import { Component } from "../common/BasePart";
 import { Button } from "./Buttons";
 import { GdiFont, themeColors } from "./Theme";
 import { notifyOthers } from "../common/UserInterface";
-import { lang } from "./Lang";
+import { TXT } from "../common/Lang";
 
 export interface IAlertDialogOptions {
 	title: string;
@@ -61,7 +61,7 @@ export class AlertDialog extends Component implements IAlertDialogOptions, IDefa
 
 		this.okBtn = new Button({
 			style: "contained",
-			text: lang("OK"),
+			text: TXT("OK"),
 			foreColor: themeColors.onPrimary,
 			backgroundColor: themeColors.primary
 
@@ -75,7 +75,7 @@ export class AlertDialog extends Component implements IAlertDialogOptions, IDefa
 
 		this.cancelBtn = new Button({
 			style: "text",
-			text: lang("Cancel"),
+			text: TXT("Cancel"),
 			foreColor: themeColors.secondary
 		});
 		this.cancelBtn.on_click = () => {

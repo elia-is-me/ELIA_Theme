@@ -267,6 +267,6 @@ export class Component implements IBoxModel, ICallbacks {
 	onNotifyData?(message: string, data?: any) { }
 
 	repaint() {
-		window.Repaint();
+		window.RepaintRect(this.x, this.y, this.width + 1, this.height + 1);
 	}
 }

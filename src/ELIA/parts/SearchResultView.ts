@@ -7,7 +7,7 @@ import { MaterialFont, Material } from "../common/Icon";
 import { ReadMood, ToggleMood } from "./PlaybackControlView";
 import { notifyOthers, ui } from "../common/UserInterface";
 import { themeColors, GdiFont, scrollbarWidth } from "./Theme";
-import { lang } from "./Lang";
+import { TXT } from "../common/Lang";
 import { IconButton } from "./Buttons";
 import { formatPlaylistDuration, showTrackContextMenu } from "./PlaylistView";
 
@@ -84,7 +84,7 @@ class SearchHeaderView extends Component {
 		this.metadbs = metadbs;
 		if (this.metadbs != null) {
 			this.desciptionText = this.metadbs.Count
-				+ spaceStart(lang("tracks"))
+				+ spaceStart(TXT("tracks"))
 				+ spaceStartEnd("\u2022")
 				+ formatPlaylistDuration(this.metadbs.CalcTotalDuration());
 		}
@@ -97,7 +97,7 @@ class SearchHeaderView extends Component {
 
 		// title;
 		gr.SetTextRenderingHint(TextRenderingHint.AntiAlias);
-		gr.DrawString(`${lang("Search:")} ${this.titleText}`, titleFont, pageColors.titleText,
+		gr.DrawString(`${TXT("Search:")} ${this.titleText}`, titleFont, pageColors.titleText,
 			textX, textY, textW, titleLineHeight, StringFormat.LeftTop);
 		gr.SetTextRenderingHint(ui_textRender);
 
@@ -482,12 +482,12 @@ export class SearchResultView extends ScrollView {
 		gr.DrawString("#", semiItemFont, secondaryTextColor,
 			tracknumber.x, listHeaderY, tracknumber.width, listheaderHeight, StringFormat.Center);
 		// title/ artist;
-		gr.DrawString(lang("TITLE"), semiItemFont, secondaryTextColor,
+		gr.DrawString(TXT("TITLE"), semiItemFont, secondaryTextColor,
 			title.x, listHeaderY, title.width, listheaderHeight, StringFormat.LeftCenter);
 
 		// album;
 		if (artist.visible && artist.width > 0) {
-			gr.DrawString(lang("ALBUM"), semiItemFont, secondaryTextColor,
+			gr.DrawString(TXT("ALBUM"), semiItemFont, secondaryTextColor,
 				artist.x, listHeaderY, artist.width, listheaderHeight, StringFormat.LeftCenter);
 		}
 
@@ -648,7 +648,7 @@ export class SearchResultView extends ScrollView {
 		}
 
 		if (hoverItem != null) {
-			let queue = plman.FindOrCreatePlaylist(lang("Queue"), true);
+			let queue = plman.FindOrCreatePlaylist(TXT("Queue"), true);
 			let metadbs = this.metadbs;
 
 			plman.ActivePlaylist = queue;
@@ -918,7 +918,7 @@ export function SendToQueueListPlay(metadbs: IFbMetadbList, playingItemIndex?: n
 		throw new Error("Invalid metadbs");
 	}
 	// set queue playlist contents;
-	let queuePlaylist = plman.FindOrCreatePlaylist(lang("Queue"), true);
+	let queuePlaylist = plman.FindOrCreatePlaylist(TXT("Queue"), true);
 	plman.UndoBackup(queuePlaylist);
 	plman.ClearPlaylist(queuePlaylist);
 	plman.InsertPlaylistItems(queuePlaylist, 0, metadbs, false);
