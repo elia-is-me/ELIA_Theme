@@ -7,6 +7,7 @@ import { themeColors, ToggleDarkmode } from "../common/Theme";
 import { SearchBox } from "./SearchBox";
 import { TXT } from "../common/Lang";
 import { StringFormat } from "../common/String";
+import { ShowBrowser } from "./Layout";
 
 const iconSize = scale(22);
 const textRenderingHint = ui.textRender;
@@ -39,10 +40,10 @@ export class TopBar extends Component {
 
 	buttons: Map<string, IconButton> = new Map();
 	mainBtn: IconButton;
-	settingsBtn: IconButton;
+	moreBtn: IconButton;
 	darkmodeBtn: IconButton;
 
-	swithcBtn: IconButton;
+	switchBtn: IconButton;
 	searchBtn: IconButton;
 	searchBox: SearchBox;
 	closeSearchBtn: IconButton;
@@ -61,9 +62,9 @@ export class TopBar extends Component {
 		};
 
 		// button 'Settings';
-		this.settingsBtn = createIconButton(Material.more_vert, iconSize, this.foreColor);
+		this.moreBtn = createIconButton(Material.more_vert, iconSize, this.foreColor);
 		// this.settingsBtn.disable();
-		this.settingsBtn.on_click = (x: number, y: number) => {
+		this.moreBtn.on_click = (x: number, y: number) => {
 			// notifyOthers("Show.Settings");
 			showMainMenu(x, y);
 		}
@@ -74,8 +75,12 @@ export class TopBar extends Component {
 		}
 
 		// button 'Page Switch';
-		this.swithcBtn = createIconButton(Material.apps, iconSize, this.foreColor);
-		this.swithcBtn.disable();
+		this.switchBtn = createIconButton(Material.apps, iconSize, this.foreColor);
+		this.switchBtn.on_click = () => {
+			ShowBrowser();
+		}
+		// this.swithcBtn.disable();
+		// this.swithcBtn.a
 
 		// button 'search';
 		this.searchBtn = createIconButton(Material.search, iconSize, this.foreColor);
@@ -86,7 +91,7 @@ export class TopBar extends Component {
 			this.searchBox.setBoundary(searchboxX, this.y + scale(8), searchboxWidth, this.height - scale(16));
 			this.closeSearchBtn.visible = true;
 			this.closeSearchBtn.setBoundary(this.searchBox.x + this.searchBox.width, this.y, scale(56), this.height);
-			this.settingsBtn.visible = false;
+			this.moreBtn.visible = false;
 
 			ui.setFocusPart(this.searchBox.inputbox);
 			this.searchBox.inputbox.activeInput();
@@ -102,7 +107,7 @@ export class TopBar extends Component {
 		this.searchBox = new SearchBox();
 		this.searchBox.z = 100;
 
-		[this.mainBtn, this.swithcBtn, this.searchBtn, this.searchBox, this.settingsBtn, this.closeSearchBtn, this.darkmodeBtn].forEach((child) =>
+		[this.mainBtn, this.switchBtn, this.searchBtn, this.searchBox, this.moreBtn, this.closeSearchBtn, this.darkmodeBtn].forEach((child) =>
 			this.addChild(child)
 		);
 	}
@@ -117,16 +122,16 @@ export class TopBar extends Component {
 
 		this.mainBtn.visible = true;
 		this.mainBtn.setBoundary(this.x + padLeft, this.y + icoOffsetTop, _iconWidth, _iconWidth);
-		this.settingsBtn.visible = true;
-		this.settingsBtn.setBoundary(
+		this.moreBtn.visible = true;
+		this.moreBtn.setBoundary(
 			this.x + this.width - padLeft - _iconWidth,
 			this.y + icoOffsetTop,
 			_iconWidth,
 			_iconWidth
 		);
-		this.swithcBtn.visible = false;
-		this.swithcBtn.setBoundary(
-			this.settingsBtn.x - _iconWidth,
+		this.switchBtn.visible = true;
+		this.switchBtn.setBoundary(
+			this.moreBtn.x - _iconWidth,
 			this.y + icoOffsetTop,
 			_iconWidth,
 			_iconWidth
@@ -134,13 +139,13 @@ export class TopBar extends Component {
 
 		this.darkmodeBtn.visible = true;
 		this.darkmodeBtn.setBoundary(
-			this.settingsBtn.x - _iconWidth,
+			this.switchBtn.x - _iconWidth,
 			this.y + icoOffsetTop,
 			_iconWidth, _iconWidth
 		)
 
 		let searchboxX = this.x + scale(272);
-		let searchboxWidth = this.swithcBtn.x - scale(8) - searchboxX;
+		let searchboxWidth = this.switchBtn.x - scale(8) - searchboxX;
 		if (searchboxWidth > searchboxProps.maxWidth) {
 			searchboxWidth = searchboxProps.maxWidth;
 		}
@@ -160,7 +165,7 @@ export class TopBar extends Component {
 			this.searchBox.visible = false;
 			this.searchBtn.visible = true;
 			this.searchBtn.setBoundary(
-				this.swithcBtn.x - _iconWidth,
+				this.switchBtn.x - _iconWidth,
 				this.y + icoOffsetTop,
 				_iconWidth, _iconWidth
 			);

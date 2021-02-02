@@ -1,4 +1,4 @@
-import { scale } from "../common/Common";
+import { scale, ThrottledRepaint } from "../common/Common";
 import { Component } from "../common/BasePart";
 import { notifyOthers, ui } from "../common/UserInterface";
 import { TopBar } from "./TopbarView";
@@ -14,6 +14,7 @@ import { PlaybackBarMenu } from "./PlaybackBarMenu";
 import { scrollbarWidth } from "../common/Theme";
 import { ArtistPageView } from "./ArtistPage";
 import { AlbumPageView } from "./AlbumPage";
+import { BrowserView } from "./BrowserView";
 
 
 const CONTROL_BAR_HEIGHT = scale(76);
@@ -31,7 +32,7 @@ const enum ViewStates {
 	Settings,
 	Artist,
 	Album,
-	LibBrower,
+	Browser,
 }
 
 export class Layout extends Component {
@@ -48,6 +49,7 @@ export class Layout extends Component {
 	albumPage: AlbumPageView;
 	searchResult: SearchResultView;
 	settingsView?: SettingsView;
+	browser: BrowserView;
 
 	//
 	inputPopupPanel?: InputPopupPanel;
@@ -72,6 +74,7 @@ export class Layout extends Component {
 		settingsView: SettingsView;
 		artistPage: ArtistPageView;
 		albumPage: AlbumPageView;
+		browser: BrowserView;
 	}) {
 		super({});
 
@@ -99,6 +102,9 @@ export class Layout extends Component {
 
 		this.albumPage = options.albumPage;
 		this.addChild(this.albumPage);
+
+		this.browser = options.browser;
+		this.addChild(this.browser);
 
 		this.playbackBarMenu = new PlaybackBarMenu();
 		this.addChild(this.playbackBarMenu);
@@ -135,6 +141,7 @@ export class Layout extends Component {
 			this.settingsView,
 			this.artistPage,
 			this.albumPage,
+			this.browser
 		];
 		all.forEach(p => p.visible = false);
 
@@ -148,6 +155,8 @@ export class Layout extends Component {
 			this.artistPage.visible = true;
 		} else if (viewState === ViewStates.Album) {
 			this.albumPage.visible = true;
+		} else if (viewState === ViewStates.Browser) {
+			this.browser.visible = true;
 		}
 	}
 
@@ -169,7 +178,7 @@ export class Layout extends Component {
 		 * Set others;
 		 */
 		const { playlistView, playlistManager, settingsView } = this;
-		const { searchResult, playbackControlBar, artistPage, albumPage } = this;
+		const { searchResult, playbackControlBar, artistPage, albumPage, browser } = this;
 		const listY = this.topbar.y + this.topbar.height;
 		const listHeight = this.height - this.topbar.height - this.playbackControlBar.height;
 
@@ -177,7 +186,7 @@ export class Layout extends Component {
 		playlistManager.visible && playlistManager.setBoundary(x, listY, PLMAN_MIN_WIDTH, listHeight);
 
 		// Get visible main view;
-		let mainView = [playlistView, searchResult, settingsView, artistPage, albumPage].find(p => p.visible);
+		let mainView = [playlistView, searchResult, settingsView, artistPage, albumPage, browser].find(p => p.visible);
 		let mainViewX = (playlistManager.visible ? playlistManager.x + playlistManager.width : x);
 		if (this.width < MIN_TWO_COLUMN_WIDTH) {
 			mainViewX = x;
@@ -364,6 +373,15 @@ export class Layout extends Component {
 				this.updatePartsLayout();
 				ui.updateParts();
 				this.repaint();
+				break;
+			case "Show.Browser":
+				this.viewState = ViewStates.Browser;
+				let browserOptions = (data as any);
+				this.setPartsVisibility(this.viewState);
+				this.updatePartsLayout();
+				ui.updateParts();
+				this.repaint()
+				break;
 		}
 	}
 }
@@ -466,4 +484,9 @@ export function GotoPlaylist(playlistIndex?: number) {
 		plman.ActivePlaylist = playlistIndex;
 	}
 	notifyOthers("Show.Playlist")
+}
+
+
+export function ShowBrowser(options?: { [key: string]: any }) {
+	notifyOthers("Show.Browser", options)
 }
