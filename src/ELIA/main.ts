@@ -11,6 +11,7 @@ import { ArtistPageView } from "./parts/ArtistPage";
 import { AlbumPageView } from "./parts/AlbumPage";
 import { Component } from "./common/BasePart";
 import { GetKeyboardMask, isFunction, KMask, lastIndex, VKeyCode } from "./common/Common";
+import { BrowserView } from "./parts/BrowserView";
 
 window.DefinePanel(
 	"ELIA THEME",
@@ -33,9 +34,12 @@ const searchResult = new SearchResultView();
 const settingsView = new SettingsView();
 const artistPage = new ArtistPageView();
 const albumPage = new AlbumPageView();
+const browser = new BrowserView();
 
-ui.monitor(playlistView);
-ui.monitor(playlistManager);
+
+// ui.monitor(playlistView);
+// ui.monitor(playlistManager);
+ui.monitor(browser);
 
 /**
  * Root part of this panel;
@@ -49,6 +53,7 @@ export const root = new Layout({
 	settingsView: settingsView,
 	artistPage: artistPage,
 	albumPage: albumPage,
+	browser: browser,
 });
 
 
