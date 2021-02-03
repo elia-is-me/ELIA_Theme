@@ -165,7 +165,7 @@ export class TopBar extends Component {
 			this.searchBox.visible = false;
 			this.searchBtn.visible = true;
 			this.searchBtn.setBoundary(
-				this.switchBtn.x - _iconWidth,
+				this.darkmodeBtn.x - _iconWidth,
 				this.y + icoOffsetTop,
 				_iconWidth, _iconWidth
 			);

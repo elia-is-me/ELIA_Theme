@@ -308,8 +308,10 @@ class BrowserItem extends Component {
 
 export class BrowserView extends ScrollView {
 
+    // Library, Playlist, AllPlaylists, SendTo
     private sourceType: number = 0;
-    // private groupType: number = 0;
+
+    // Albums, Artist, Genres
     private viewType: number = 0
 
     items: BrowserItem[] = [];
@@ -323,6 +325,7 @@ export class BrowserView extends ScrollView {
     rowHeight: number;
 
     scrollbar: Scrollbar;
+    detailHeader: LibraryBrowserHeader;
 
     constructor() {
         super({});
@@ -330,6 +333,9 @@ export class BrowserView extends ScrollView {
         this.scrollbar = new Scrollbar({ cursorColor: colors.scrollbarCursor, backgroundColor: colors.scrollbarBackground });
         this.scrollbar.z = 500;
         this.addChild(this.scrollbar);
+
+        this.detailHeader = new LibraryBrowserHeader();
+        this.addChild(this.detailHeader);
     }
 
     private getAllMetadbs() {
@@ -463,7 +469,6 @@ export class BrowserView extends ScrollView {
         // calculate grid item size;
         this.setMetrics();
 
-        let itemYOffset = 0;
 
         // update items' yOffset;
         for (let i = 0, len = this.items.length; i < len; i++) {
@@ -484,6 +489,23 @@ export class BrowserView extends ScrollView {
 
         this.scrollbar.setBoundary(this.x + this.width - scrollbarWidth, this.y, scrollbarWidth, this.height);
 
+        // set detailHeader;
+        this.detailHeader.setBoundary(this.x, this.y, this.width, tabHeight + toolbarHeight);
+
+        // update items' yOffset;
+        for (let i = 0, len = this.items.length; i < len; i++) {
+            let rowIndex = Math.floor(i / this.columnCount);
+            let columnIndex = i % this.columnCount;
+
+            this.items[i].xOffset = ((this.itemWidth + itemMarginR) * columnIndex);
+            this.items[i].yOffset = ((this.itemHeight + itemMarginB) * rowIndex);
+            this.items[i].setSize(this.itemWidth, this.itemHeight);
+        }
+
+        if (this.items.length > 0) {
+            this.totalHeight = this.items[this.items.length - 1].yOffset + this.itemHeight + 2 * paddingLR + this.detailHeader.height;
+        }
+
     }
 
     // browesr;
@@ -496,10 +518,12 @@ export class BrowserView extends ScrollView {
 
         let items = this.items;
 
+        // this.detailHeader.setPosition(null, this.y - this.scroll);
+
         // background;
         gr.FillSolidRect(px, py, pw, ph, backgroundColor);
 
-        let offsetTop = 0;
+        let offsetTop = this.detailHeader.height;
 
 
         this.visibleItems.length = 0;

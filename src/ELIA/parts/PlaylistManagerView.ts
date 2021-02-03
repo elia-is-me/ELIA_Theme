@@ -1,6 +1,8 @@
 // Playlist Manager
 // -------------------------
 
+// [2021/02/03] Cursor image dragdrop bug;
+
 import { scale, RGB, RGBA, ThrottledRepaint, MenuFlag, setAlpha, SmoothingMode, CursorName, TextRenderingHint } from "../common/Common";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
