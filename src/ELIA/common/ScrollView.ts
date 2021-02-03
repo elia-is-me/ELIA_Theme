@@ -180,6 +180,10 @@ export abstract class ScrollView extends Component {
 		else this.scroll_finish();
 	}
 
+	isScrolling() {
+		return this.draw_timer != null;
+	}
+
 	scrollTo(new_scroll: number = this.scroll, onscroll?: Function) {
 		const scroll__ = this.checkscroll(new_scroll);
 		if (this.scroll == scroll__) return;

@@ -136,8 +136,10 @@ function getFonts() {
 
     if (useFbFonts) {
         if (instanceType === 0) {
-            fbFont = window.GetFontCUI(FontTypeCUI.items, "{82196D79-69BC-4041-8E2A-E3B4406BB6FC}");
-            fbSemiFont = window.GetFontCUI(FontTypeCUI.labels, "{C0D3B76C-324D-46D3-BB3C-E81C7D3BCB85}");
+            console.log("getting column ui fonts")
+            fbFont = window.GetFontCUI(FontTypeCUI.items);
+            fbSemiFont = window.GetFontCUI(FontTypeCUI.labels);
+            console.log(fbFont.Name, fbSemiFont.Name);
         } else {
             fbFont = window.GetFontDUI(FontTypeDUI.defaults);
             fbSemiFont = window.GetFontDUI(FontTypeDUI.tabs);

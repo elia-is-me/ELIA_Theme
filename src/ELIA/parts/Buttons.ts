@@ -1,8 +1,9 @@
 import { scale, TextRenderingHint, setAlpha, SmoothingMode } from "../common/Common";
 import { StringFormat, MeasureString } from "../common/String"
-import { MaterialFont } from "../common/Icon";
-import { GdiFont } from "../common/Theme";
-import { Clickable, textRenderingHint } from "../common/Button";
+import { Material, MaterialFont } from "../common/Icon";
+import { fontNameNormal, GdiFont, themeColors } from "../common/Theme";
+import { ButtonStates, Clickable, textRenderingHint } from "../common/Button";
+import { IInjectableCallbacks } from "../common/BasePart";
 
 /**
  * Icon button that only contains an icon; Currently there is no click
@@ -67,8 +68,8 @@ export const enum ButtonStyles {
 	Outlined = "outlined",
 	Text = "text"
 }
-const buttonTextFont = GdiFont("semibold", scale(14));
-const buttonIconFont = gdi.Font(MaterialFont, scale(22));
+const textFont = GdiFont("semibold", scale(14));
+const iconFont = gdi.Font(MaterialFont, scale(22));
 
 export interface IButtonOptions {
 	style: string;
@@ -83,8 +84,8 @@ export class Button extends Clickable {
 	text: string;
 	icon?: string;
 
-	private _textFont: IGdiFont = buttonTextFont;
-	private _iconFont: IGdiFont = buttonIconFont;
+	private _textFont: IGdiFont = textFont;
+	private _iconFont: IGdiFont = iconFont;
 	private _foreColors: number[] = [];
 	private _backgroundColors: number[] = [];
 	private _iconX: number;
@@ -194,6 +195,111 @@ export class Button extends Clickable {
 		if (text) {
 			gr.DrawString(text, _textFont, foreColor, _textX, y, _textWidth, height, StringFormat.LeftCenter);
 		}
+	}
+
+}
+
+export class DropdownButton extends Clickable {
+
+	foreColor: number;
+	backgroundColor: number;
+	borderColor: number;
+	textFont: IGdiFont;
+	iconFont: IGdiFont;
+
+	text: string;
+	private _textWidth: number;
+	private _iconWidth: number;
+
+	constructor(options: {
+		foreColor?: number;
+		backgroundColor?: number;
+		borderColor?: number;
+		textFont?: IGdiFont;
+		iconFont?: IGdiFont;
+		text: string;
+		on_click?: (x?: number, y?: number) => void;
+	}) {
+		super({})
+
+		this.foreColor = (options.foreColor || themeColors.secondary);
+		this.backgroundColor = (options.backgroundColor || setAlpha(this.foreColor, 0x1A));
+		this.borderColor = (options.borderColor || setAlpha(this.foreColor, 0x31));
+		this.textFont = (options.textFont || textFont);
+		this.iconFont = (options.iconFont || iconFont);
+		this.text = options.text;
+
+		if (options.on_click) {
+			this.on_click = options.on_click;
+		}
+
+		// default height = 40;
+		let defaultHeight = scale(40);
+		let downArrowWidth = MeasureString(Material.arrow_drop_down, this.iconFont).Width;
+		this._iconWidth = downArrowWidth;
+
+		let textWidth = MeasureString(this.text, this.textFont).Width;
+		this._textWidth = textWidth;
+		let pad = scale(16);
+		let minWidth = scale(80);
+		let btnWidth = Math.max(scale(8) + pad + downArrowWidth + textWidth, minWidth);
+		this.setSize(btnWidth, defaultHeight);
+	}
+
+	setText(text: string) {
+		if (!text) {
+			return;
+		}
+		if (text !== this.text) {
+			this.text = text;
+			this._textWidth = MeasureString(this.text, this.textFont).Width;
+			let pad = scale(16);
+			let minWidth = scale(80);
+			let btnWidth = Math.max(scale(8) + pad + this._iconWidth + this._textWidth, minWidth);
+			this.setSize(btnWidth, this.height);
+		}
+	}
+
+	on_paint(gr: IGdiGraphics) {
+		let pad = scale(16);
+		let { borderColor, foreColor, backgroundColor } = this;
+		let { iconFont, textFont } = this;
+		let text = this.text;
+		let icon = Material.arrow_drop_down;
+
+		let textColor: number;
+		let arrowColor: number;
+
+		switch (this.state) {
+			case ButtonStates.Normal:
+				textColor = foreColor;
+				arrowColor = setAlpha(foreColor, 0x8D);
+				break;
+			case ButtonStates.Hover:
+				textColor = setAlpha(foreColor, 127);
+				arrowColor = textColor;
+				break;
+			case ButtonStates.Down:
+				textColor = setAlpha(foreColor, 100);
+				arrowColor = textColor;
+				break;
+		}
+
+		let R = ((this.height - scale(4) - 1) / 2) >> 0;
+
+		// border & background color;
+		gr.SetSmoothingMode(SmoothingMode.HighQuality);
+		gr.FillRoundRect(this.x, this.y + scale(2), this.width, this.height - scale(4), R, R, backgroundColor);
+		gr.DrawRoundRect(this.x, this.y + scale(2), this.width - scale(1), this.height - scale(4), R, R, scale(1), borderColor);
+		gr.SetSmoothingMode(SmoothingMode.Default);
+
+		// text;
+		gr.DrawString(text, textFont, textColor, this.x + pad, this.y, this.width, this.height, StringFormat.LeftCenter);
+
+		// icon;
+		// console.log("drawing icon: ", icon, arrowColor);
+		gr.DrawString(icon, iconFont, arrowColor,
+			this.x + scale(4) + pad + this._textWidth, this.y, this.width, this.height, StringFormat.LeftCenter);
 	}
 
 }
