@@ -1,6 +1,6 @@
 import { AlbumArtId, ArtworkType } from "../common/AlbumArt";
 import { Component } from "../common/BasePart";
-import { CropImage, CursorName, debounce, drawImage, scale, SmoothingMode, TextRenderingHint } from "../common/Common";
+import { CropImage, CursorName, debounce, debugTrace, drawImage, InterpolationMode, scale, SmoothingMode, tail, TextRenderingHint } from "../common/Common";
 import { MaterialFont } from "../common/Icon";
 import { TXT } from "../common/Lang";
 import { Scrollbar } from "../common/Scrollbar";
@@ -9,7 +9,6 @@ import { MeasureString, StringFormat, StringFormatFlags, StringTrimming } from "
 import { GdiFont, scrollbarWidth, themeColors } from "../common/Theme";
 import { DropdownButton } from "./Buttons";
 import { getYear } from "./PlaybackControlView";
-import { TopBar } from "./TopbarView";
 
 
 const colors = {
@@ -66,7 +65,6 @@ function updatePaddings(ww: number, wh?: number) {
 
 const tabHeight = scale(52);
 const toolbarHeight = scale(72);
-// const headerHeight = tabHeight + toolbarHeight;
 
 const itemMinWidth = scale(180);
 const itemMarginR = scale(16);
@@ -86,7 +84,7 @@ const enum SourceTypes {
     AllPlaylists,
 }
 
-const TF_ORDER_ALBUM = fb.TitleFormat("%album%[%date%]%discnumber%%tracknumber%");
+const TF_ORDER_ALBUM = fb.TitleFormat("%album%^^[%date%]^^%discnumber%^^%tracknumber%");
 
 // const _album = "%album%"
 const TF_ALBUM_TAGS = fb.TitleFormat("%album%|||[%date%]^^%album artist%^^%discnumber%^^%tracknumber%");
@@ -313,9 +311,7 @@ class BrowserItem extends Component {
     artwork: IGdiBitmap;
     // changed when item size changed;
     private artwork_draw: IGdiBitmap;
-    load_request: boolean = false;
-    timerCoverLoad: number | null;
-    timerCoverDone: number | null;
+    load_request: number = 0;
 
     // first metadb contained in metadbs list, for get item info like 'album
     // name', 'artist name', 'artwork'...;
@@ -327,44 +323,52 @@ class BrowserItem extends Component {
     albumName: string;
     artistName: string;
     year: string;
-    private line1Text: string;
-    private line2Text: string;
 
     constructor() {
         super({})
-
     }
 
     setArtwork(artworkImage: IGdiBitmap | null) {
         // this.load_request = false;
-        this.artwork = artworkImage || imageCache.noCover;
-        this.artwork_draw = this.adjustImageSize(this.artwork);
+        this.artwork = artworkImage;//|| imageCache.noCover;
+        this.adjustImageSize();
+        // this.artwork_draw = this.artwork//this.adjustImageSize(this.artwork);
+
     }
 
     adjustImageSize = debounce(() => {
-        if (this.artwork.Width != this.width) {
-            this.artwork_draw = this.artwork.Resize(this.width, this.width);
-        }
-    }, 200);
+        // if (!this.artwork) return;
+        // if (!this.artwork_draw) this.artwork_draw = this.artwork;
+        // if (this.artwork_draw && this.artwork_draw.Width !== this.width) {
+        //     debugTrace(this.width, this.artwork.Width, this.artwork_draw.Width);
+        //     this.artwork_draw = this.artwork.Resize(this.width, this.width, InterpolationMode.HighQuality);
+        // }
+        // browser.repaint();
+    }, 150);
 
     // browser item;
     on_paint(gr: IGdiGraphics) {
         // gr.FillSolidRect(this.x, this.y, this.width, this.width, 0x50000000);
 
-        if (!this.load_request) {
-            this.setArtwork(imageCache.hit(this, AlbumArtId.Front));
+        if (this.load_request === 0) {
+            // this.setArtwork(imageCache.cacheHit(this, AlbumArtId.Front));
+            /*this.artwork = */imageCache.cacheHit(this, AlbumArtId.Front);
         }
+        // this.artwork_draw = this.artwork || imageCache.noCover;
+        // this.adjustImageSize();
+        if (this.artwork_draw && this.artwork_draw.Width !== this.width) {
+            this.adjustImageSize();
+        }
+        let img_draw = this.artwork || imageCache.noCover;
 
-        if (this.artwork_draw) {
-            gr.DrawImage(this.artwork_draw, this.x, this.y, this.width, this.width,
-                0, 0, this.artwork_draw.Width, this.artwork_draw.Height)
-        } else {
-            // draw loading;
-        }
+        // if (this.artwork_draw) {
+        gr.DrawImage(img_draw, this.x, this.y, this.width, this.width,
+            0, 0, img_draw.Width, img_draw.Height)
+        // } else {
+        // draw loading;
+        // }
 
-        if (/** hover */ false) {
-            // draw hover mask;
-        }
+        // debugTrace(this.width, img_draw.Width);
 
         let font1 = itemFont;
         let font2 = smallItemFont;
@@ -523,9 +527,8 @@ export class BrowserView extends ScrollView {
             }
         }
 
-        console.log(this.items.length);
         let d2 = (new Date()).getTime();
-        console.log("init in: ", d2 - d1, " ms");
+        debugTrace("init in: ", d2 - d1, " ms", "total items: ", this.items.length);
 
     }
 
@@ -589,7 +592,15 @@ export class BrowserView extends ScrollView {
         // check scroll;
         this.scrollTo();
 
+        // resize noCover image;
+        imageCache.debounce_resizeCovers(this.itemWidth);
+
     }
+
+    debounce_resizeCovers = debounce(() => {
+        // this.visibleItems.map
+
+    }, 150);
 
     // browesr;
     on_paint(gr: IGdiGraphics) {
@@ -643,7 +654,7 @@ export class BrowserView extends ScrollView {
         let items = this.items;
         let len = items.length;
         let visStart = this.visibleItems[0].index;
-        let visEnd = this.visibleItems[this.visibleItems.length - 1].index;
+        let visEnd = tail(this.visibleItems)?.index;
 
         for (let i = 0; i < len; i++) {
             let item = items[i];
@@ -652,28 +663,32 @@ export class BrowserView extends ScrollView {
                 // muzik download from NeteaseCloudMusic store album artwork in
                 // 'Disc' tag.
                 if (!image && art_id === AlbumArtId.Front) {
-                    item.load_request = false;
-                    this.imageCache.hit(item, AlbumArtId.Disc);
+                    item.load_request = 0;
+                    this.imageCache.cacheHit(item, AlbumArtId.Disc);
                     break;
                 }
 
                 let artworkImage = image;
-                if (image && image.Width > 500 && image.Height > 500) {
+                let cacheImgWidth = (2 * itemMinWidth) >> 0;
+                if (image && image.Width > cacheImgWidth && image.Height > cacheImgWidth) {
                     // TODO: process image according to cover type;
-                    artworkImage = CropImage(image, 500, 500);
+                    console.log("image raw width, height, ", image.Width, image.Height);
+                    artworkImage = CropImage(image, cacheImgWidth, cacheImgWidth, InterpolationMode.HighQuality);
                 };
 
-                item.setArtwork(artworkImage);
-                item.load_request = true;
-                this.imageCache.saveToCache(item.albumName, artworkImage);
+                // item.setArtwork(artworkImage);
+                item.artwork = artworkImage;
+                item.load_request = 1;
+                this.imageCache.cacheIt(item.albumName, artworkImage);
 
 
                 if (i >= visStart && i <= visEnd) {
-                    if (!this._timerCoverDone) {
-                        this._timerCoverDone = window.SetTimeout(() => {
+                    if (!timerCoverDone) {
+                        timerCoverDone = window.SetTimeout(() => {
+                            // item.adjustImageSize();
                             this.repaint();
-                            this._timerCoverDone && window.ClearTimeout(this._timerCoverDone);
-                            this._timerCoverDone = null;
+                            timerCoverDone && window.ClearTimeout(timerCoverDone);
+                            timerCoverDone = null;
                         }, 5);
                     }
                 }
@@ -699,24 +714,31 @@ class ImageCache {
         this.noArt = this._stubImages[2];
     }
 
-    saveToCache(key: string, image: IGdiBitmap, force: boolean = false): IGdiBitmap | null {
-        if (!image) return;
+    cacheIt(key: string, image: IGdiBitmap, force: boolean = false): IGdiBitmap | null {
+        if (!image || key === "?") return;
         if (!this._cache.get(key) || force) {
             this._cache.set(key, image);
+        }
+        // save  to cache;
+        if (enableDiskCache) {
+            // todo;
         }
         return;
     }
 
     // hit(metadb: IFbMetadb, key: string, art_id = AlbumArtId.Front): IGdiBitmap | null {
-    hit(item: BrowserItem, art_id = AlbumArtId.Front): IGdiBitmap | null {
+    cacheHit(item: BrowserItem, art_id = AlbumArtId.Front): IGdiBitmap | null {
         let img = this._cache.get(item.albumName);
         if (img == null) {
+            if (enableDiskCache) {
+                // try to load image in cache;
+            }
             if (!timerCoverLoad && !item.load_request) {
                 timerCoverLoad = window.SetTimeout(() => {
-                    utils.GetAlbumArtAsync(window.ID, item.metadb, art_id);
+                    utils.GetAlbumArtAsync(window.ID, item.metadb, art_id, false, false);
                     timerCoverLoad && window.ClearTimeout(timerCoverLoad);
                     timerCoverLoad = null;
-                }, 50);
+                }, (browser.isScrolling() ? 60 : 5));
             }
         }
         return img;
@@ -749,8 +771,20 @@ class ImageCache {
         this._stubImages = stubImages;
     }
 
+    debounce_resizeCovers = debounce((img_width: number) => {
+        if (this.noCover.Width !== img_width) {
+            this.noCover = this._stubImages[0]
+                .Resize(img_width, img_width, InterpolationMode.HighQuality);
+        }
+    }, 150);
+
+
 }
 
 let imageCache = new ImageCache();
 let timerCoverLoad: number | null;
 let timerCoverDone: number | null;
+let enableDiskCache = false;
+
+
+export const browser = new BrowserView();

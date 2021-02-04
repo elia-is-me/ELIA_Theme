@@ -2,7 +2,7 @@
 // Playback control bar;
 // ---------------------
 
-import { clamp, getTimestamp, MenuFlag, Repaint, setAlpha, StopReason } from "../common/Common";
+import { clamp, debugTrace, getTimestamp, MenuFlag, Repaint, setAlpha, StopReason } from "../common/Common";
 import { TextLink } from "../common/TextLink";
 import { NowplayingArtwork } from "../common/AlbumArt";
 import { Slider, SliderThumbImage } from "../common/Slider";
@@ -26,7 +26,7 @@ function vol2pos(v: number) {
 }
 
 function formatPlaybackTime(sec: number) {
-	if (!isFinite(sec)) return '--:--';
+	if (!isFinite(sec) || sec < 0) return '--:--';
 	var seconds = sec % 60 >> 0;
 	var minutes = (sec / 60) >> 0;
 	var pad = function (num: number) {
@@ -352,19 +352,19 @@ const artistText = new TextLink({
 
 	on_playback_new_track() {
 		this.on_init();
-		Repaint();
+		this.repaint();
 	},
 
 	on_playback_stop(reason: number) {
 		if (reason != 2) {
 			this.on_init();
-			Repaint();
+			this.repaint();
 		}
 	},
 
 	on_playback_edited() {
 		this.on_init();
-		Repaint();
+		this.repaint();
 	}
 });
 
@@ -399,19 +399,45 @@ export class PlaybackControlView extends Component {
 		this.timeWidth = MeasureString("+00:00+", this.timeFont).Width;
 	}
 
-	on_init() {
-		let panelRefreshInterval = 1000; // ms;
-		let onPlaybackTimer_ = () => {
-			if (fb.IsPlaying && !fb.IsPaused && fb.PlaybackLength > 0) {
-				this.playbackTime = formatPlaybackTime(fb.PlaybackTime);
-				this.playbackLength = formatPlaybackTime(fb.PlaybackLength);
-				Repaint();
-			} else {/** do nothing */ }
-			window.ClearTimeout(this.timerId);
-			this.timerId = window.SetTimeout(onPlaybackTimer_, panelRefreshInterval);
-		};
+	private updateTimer: number | null;
 
-		onPlaybackTimer_();
+	timerStart() {
+		let refreshInterval = 1000; // 1s
+		let onPlaybackTimer = () => {
+			this.playbackTime = formatPlaybackTime(fb.PlaybackTime);
+			this.playbackLength = formatPlaybackTime(fb.PlaybackLength);
+			this.repaint();
+			debugTrace("pb control: time", fb.PlaybackTime);
+			debugTrace("pb control: length", fb.PlaybackLength);
+			window.ClearTimeout(this.updateTimer);
+			this.updateTimer = window.SetTimeout(onPlaybackTimer, refreshInterval);
+		}
+		onPlaybackTimer();
+	}
+
+	timerEnd() {
+		if (this.updateTimer) {
+			window.ClearTimeout(this.updateTimer);
+			this.updateTimer = null;
+		}
+	}
+
+	on_init() {
+		// let panelRefreshInterval = 1000; // ms;
+		// let onPlaybackTimer_ = () => {
+		// 	if (fb.IsPlaying && !fb.IsPaused && fb.PlaybackLength > 0) {
+		// 		this.playbackTime = formatPlaybackTime(fb.PlaybackTime);
+		// 		this.playbackLength = formatPlaybackTime(fb.PlaybackLength);
+		// 		this.repaint();
+		// 	} else {/** do nothing */ }
+		// 	window.ClearTimeout(this.timerId);
+		// 	this.timerId = window.SetTimeout(onPlaybackTimer_, panelRefreshInterval);
+		// };
+
+		// onPlaybackTimer_();
+		if (fb.IsPlaying && !fb.IsPaused) {
+			this.timerStart();
+		}
 
 		let npMetadb = fb.GetNowPlaying();
 		this.trackTitle = npMetadb == null ? TXT("NOT PLAYING") : TF_TRACK_TITLE.EvalWithMetadb(npMetadb);
@@ -645,7 +671,9 @@ export class PlaybackControlView extends Component {
 		this.playbackTime = "00:00";
 		this.playbackLength = "--:--";
 		this.trackTitle = TF_TRACK_TITLE.EvalWithMetadb(fb.GetNowPlaying());
-		Repaint();
+		this.timerStart();
+
+		this.repaint();
 	}
 
 	on_playback_stop(reason: number) {
@@ -653,8 +681,14 @@ export class PlaybackControlView extends Component {
 			this.playbackTime = "00:00";
 			this.playbackLength = "--:--";
 			this.trackTitle = "NOT PLAYING";
-			Repaint();
+			// Repaint();
+			this.timerEnd();
+			this.repaint();
 		}
+	}
+
+	on_playback_pause(is_paused: boolean) {
+		is_paused ? this.timerEnd() : this.timerStart();
 	}
 
 	on_mouse_rbtn_down() {

@@ -555,3 +555,25 @@ export function getTimestamp() {
 };
 
 export const foo_playcount = utils.CheckComponent("foo_playcount", true);
+
+
+// https://github.com/microsoft/vscode/blob/ba35190e9ccc4b410eaac46bfaa0f06c879db7c9/src/vs/base/common/arrays.ts
+/**
+ * Returns the last element of an array.
+ * @param array The array.
+ * @param n Which element from the end (default is zero).
+ */
+export function tail<T>(array: ArrayLike<T>, n: number = 0): T {
+	return array[array.length - (1 + n)];
+}
+
+export function debugTrace(...data: any[]) {
+	console.log("EliaTheme Debug: ", ...data);
+}
+
+
+// debugTrace("tail", tail([]));
+
+export const memoryLimit = () =>
+	window.PanelMemoryUsage / window.MemoryLimit > 0.4 ||
+	window.TotalMemoryUsage / window.MemoryLimit > 0.5;
