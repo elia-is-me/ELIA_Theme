@@ -1,14 +1,16 @@
-import { AlbumArtId, ArtworkType } from "../common/AlbumArt";
+import { AlbumArtId } from "../common/AlbumArt";
 import { Component } from "../common/BasePart";
-import { CropImage, CursorName, debounce, debugTrace, drawImage, InterpolationMode, scale, SmoothingMode, tail, TextRenderingHint } from "../common/Common";
+import { CropImage, CursorName, debounce, debugTrace, drawImage, InterpolationMode, RGB, scale, SmoothingMode, tail, TextRenderingHint, VKeyCode } from "../common/Common";
 import { MaterialFont } from "../common/Icon";
 import { TXT } from "../common/Lang";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
 import { MeasureString, StringFormat, StringFormatFlags, StringTrimming } from "../common/String";
 import { GdiFont, scrollbarWidth, themeColors } from "../common/Theme";
+import { mouseCursor } from "../common/UserInterface";
 import { DropdownButton } from "./Buttons";
 import { getYear } from "./PlaybackControlView";
+import { showTrackContextMenu } from "./PlaylistView";
 
 
 const colors = {
@@ -66,7 +68,7 @@ function updatePaddings(ww: number, wh?: number) {
 const tabHeight = scale(52);
 const toolbarHeight = scale(72);
 
-const itemMinWidth = scale(150);
+const itemMinWidth = scale(160); // make it config able;
 const itemMarginR = scale(16);
 const itemMarginB = scale(32);
 
@@ -303,7 +305,11 @@ class BrowserItem extends Component {
 
     yOffset: number = 0;
     xOffset: number = 0;
+    // list index;
     index: number;
+    isHover: boolean = false;
+    isFocus: boolean = false;
+    isSelect: boolean = false;
 
     private itemType: number = 0;
 
@@ -351,24 +357,27 @@ class BrowserItem extends Component {
         // gr.FillSolidRect(this.x, this.y, this.width, this.width, 0x50000000);
 
         if (this.load_request === 0) {
-            // this.setArtwork(imageCache.cacheHit(this, AlbumArtId.Front));
-            /*this.artwork = */imageCache.cacheHit(this, AlbumArtId.Front);
+            this.artwork = imageCache.cacheHit(this, AlbumArtId.Front);
         }
-        // this.artwork_draw = this.artwork || imageCache.noCover;
-        // this.adjustImageSize();
-        if (this.artwork_draw && this.artwork_draw.Width !== this.width) {
-            this.adjustImageSize();
-        }
+        // if (this.artwork_draw && this.artwork_draw.Width !== this.width) {
+        //     this.adjustImageSize();
+        // }
         let img_draw = this.artwork || imageCache.noCover;
 
-        // if (this.artwork_draw) {
+        // resize image or set interpolation to high quality;
         gr.DrawImage(img_draw, this.x, this.y, this.width, this.width,
             0, 0, img_draw.Width, img_draw.Height)
-        // } else {
-        // draw loading;
-        // }
 
-        // debugTrace(this.width, img_draw.Width);
+        // draw hover mask;
+        if (this.isHover) {
+            gr.FillGradRect(this.x, this.y, this.width, this.height / 2, 90, colors.text, 0, 1.0);
+        }
+
+        let rectLineWidth = scale(2);
+
+        if (this.isSelect) {
+            gr.DrawRect(this.x - rectLineWidth, this.y - rectLineWidth, this.width + 2 * rectLineWidth, this.width + 2 * rectLineWidth, scale(2), RGB(0, 90, 158));
+        }
 
         let font1 = itemFont;
         let font2 = smallItemFont;
@@ -402,6 +411,7 @@ export class BrowserView extends ScrollView {
 
     items: BrowserItem[] = [];
     visibleItems: BrowserItem[] = [];
+    selectedIndexes: number[] = [];
     metadbs: IFbMetadbList;
 
     itemWidth: number;
@@ -484,6 +494,54 @@ export class BrowserView extends ScrollView {
         this.rowHeight = itemHeight + itemMarginB;
     }
 
+    private createItemsFromMetadbs(sourceMetadbs: IFbMetadbList): BrowserItem[] {
+        let tf_diff: IFbTitleFormat;
+        let compare = "#@!";
+
+        if (this.groupType === GroupTypes.Albums) {
+            tf_diff = TF_ALBUM_TAGS;
+        } else if (this.groupType === GroupTypes.Artists) {
+            tf_diff = TF_ARTIST_TAGS;
+        } else {
+            // todo;
+        }
+
+        if (sourceMetadbs == null || sourceMetadbs.Count === 0) {
+            return [];
+        }
+
+        let d1 = Date.now();
+        let groupIndex = 0;
+        let items: BrowserItem[] = [];
+
+        for (let i = 0, len = sourceMetadbs.Count; i < len; i++) {
+            let currMetadb = sourceMetadbs[i];
+            let tags = tf_diff.EvalWithMetadb(currMetadb).split("|||");
+            let current = tags[0];
+
+            if (current !== compare) {
+                compare = current;
+
+                let currItem = new BrowserItem();
+                currItem.index = groupIndex;
+                currItem.metadb = currMetadb;
+                currItem.metadbs = new FbMetadbHandleList(currMetadb);
+                currItem.albumName = tags[0];
+                let tag1_arr = tags[1].split("^^");
+                currItem.artistName = tag1_arr[1];
+                currItem.year = getYear(tag1_arr[0]);
+                items.push(currItem);
+                groupIndex++;
+            } else {
+                let currItem = tail(items);
+                currItem.metadbs.Add(currMetadb);
+            }
+        } // EOFor
+
+        return items;
+    }
+
+    // browser set items;
     private setItems() {
 
         let tf_diff: IFbTitleFormat;
@@ -500,7 +558,14 @@ export class BrowserView extends ScrollView {
             return;
         }
 
-        let d1 = (new Date()).getTime();
+        this.selectedIndexes = [];
+
+        let d1 = Date.now();
+        this.items = this.createItemsFromMetadbs(this.metadbs);
+        debugTrace(Date.now() - d1);
+        return;
+
+        // let d1 = (new Date()).getTime();
 
         let groupIndex = 0;
 
@@ -527,8 +592,8 @@ export class BrowserView extends ScrollView {
             }
         }
 
-        let d2 = (new Date()).getTime();
-        debugTrace("init in: ", d2 - d1, " ms", "total items: ", this.items.length);
+        // let d2 = (new Date()).getTime();
+        // debugTrace("init in: ", d2 - d1, " ms", "total items: ", this.items.length);
 
     }
 
@@ -597,11 +662,6 @@ export class BrowserView extends ScrollView {
 
     }
 
-    debounce_resizeCovers = debounce(() => {
-        // this.visibleItems.map
-
-    }, 150);
-
     // browesr;
     on_paint(gr: IGdiGraphics) {
         let backgroundColor = colors.background;
@@ -640,15 +700,124 @@ export class BrowserView extends ScrollView {
 
     }
 
+    private getHoverItem(x: number, y: number) {
+        return y > this.y + this.detailHeader.height
+            && y < this.y + this.height
+            && this.visibleItems.find(item => item.trace(x, y));
+    }
+
+    private setSelection(): void;
+    private setSelection(target: number): void;
+    private setSelection(from?: number, to?: number): void {
+        if (from == null && to == null) {
+            this.selectedIndexes = [];
+            this.applySelection();
+            return;
+        } else if (to == null) {
+            to = from;
+        }
+
+        let indexes: number[] = [];
+        if (from > to) {
+            [from, to] = [to, from];
+        }
+
+        for (let i = from; i <= to; i++) {
+            this.items[i] && indexes.push(i);
+        }
+
+        if (indexes.toString() !== this.selectedIndexes.toString()) {
+            this.selectedIndexes = indexes;
+            this.applySelection();
+        }
+    }
+
+    private applySelection() {
+        this.items.forEach((item, i) =>
+            item.isSelect = (this.selectedIndexes.indexOf(i) > -1));
+    }
+
+    private hoverIndex: number = -1;
+    private downIndex: number = -1;
+
+    changeHoverIndex(index: number) {
+        if (index !== this.hoverIndex) {
+            this.items[this.hoverIndex] && (this.items[this.hoverIndex].isHover = false);
+            this.hoverIndex = index;
+            this.items[this.hoverIndex] && (this.items[this.hoverIndex].isHover = true);
+            this.repaint();
+        }
+    }
+
     on_mouse_wheel(step: number) {
         this.scrollTo(this.scroll - step * this.rowHeight);
     }
 
-    getItemsArtworks() {
+    on_mouse_move(x: number, y: number) {
+        let hoverItem = this.getHoverItem(x, y);
+
+        if (this.downIndex > -1) {
+
+        } else {
+            this.changeHoverIndex(hoverItem ? hoverItem.index : -1);
+        }
 
     }
 
-    private _timerCoverDone: number | null;
+    on_mouse_lbtn_down(x: number, y: number) {
+        let hoverItem = this.getHoverItem(x, y);
+        let hoverIndex = hoverItem ? hoverItem.index : -1;
+
+        // set selection;
+        let shiftPressed = utils.IsKeyPressed(VKeyCode.Shift);
+        let controlPressed = utils.IsKeyPressed(VKeyCode.Control);
+
+        if (controlPressed) {
+            if (hoverItem) {
+                let isselected = hoverItem.isSelect;
+                hoverItem.isSelect = !isselected;
+                isselected ? this.selectedIndexes.splice(this.selectedIndexes.indexOf(hoverItem.index), 1) : this.selectedIndexes.push(hoverItem.index);
+                this.repaint();
+            }
+        }
+
+    }
+
+    on_mouse_lbtn_up(x: number, y: number) { }
+
+    on_mouse_rbtn_down(x: number, y: number) {
+        let hoverItem = this.getHoverItem(x, y);
+        let hoverIndex = hoverItem ? hoverItem.index : -1;
+        this.changeHoverIndex(hoverIndex);
+        this.downIndex = hoverIndex;
+
+        if (hoverItem) {
+            this.setSelection(hoverIndex);
+        } else {
+            this.setSelection();
+        }
+    }
+
+    on_mouse_rbtn_up(x: number, y: number) {
+        let hoverItem = this.getHoverItem(x, y);
+        let hoverIndex = hoverItem ? hoverItem.index : -1;
+        this.changeHoverIndex(hoverIndex);
+
+        if (hoverIndex === this.downIndex && hoverIndex > -1) {
+            showTrackContextMenu(null, hoverItem.metadbs, x, y);
+        }
+
+
+        this.downIndex = -1;
+        this.repaint();
+    }
+
+    on_mouse_leave() {
+        let item = this.getHoverItem(mouseCursor.x, mouseCursor.y);
+        // console.log(mouseCursor.x, mouseCursor.y, item ? item.index : -1);
+        // debugTrace("area y: ", this.y + this.detailHeader.height)
+        this.changeHoverIndex(item ? item.index : -1);
+    }
 
     on_get_album_art_done(metadb: IFbMetadb, art_id: number, image: IGdiBitmap | null, image_path: string) {
         let items = this.items;
@@ -685,7 +854,6 @@ export class BrowserView extends ScrollView {
                 if (i >= visStart && i <= visEnd) {
                     if (!timerCoverDone) {
                         timerCoverDone = window.SetTimeout(() => {
-                            // item.adjustImageSize();
                             this.repaint();
                             timerCoverDone && window.ClearTimeout(timerCoverDone);
                             timerCoverDone = null;
@@ -696,6 +864,16 @@ export class BrowserView extends ScrollView {
             }
         }
     }
+
+    on_library_items_added(metadbsAdded: IFbMetadbList) {
+
+    }
+
+    on_library_items_changed(metadbsChanged: IFbMetadbList) {
+        // let removedItems = this.createItemsFromMetadbs(metadbsChanged);
+    }
+
+    on_library_items_removed(metadbsRemoved: IFbMetadbList) { }
 
 }
 
@@ -780,6 +958,7 @@ class ImageCache {
 
 
 }
+
 
 let imageCache = new ImageCache();
 let timerCoverLoad: number | null;
