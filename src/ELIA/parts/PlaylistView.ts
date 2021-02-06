@@ -1169,7 +1169,6 @@ export class PlaylistView extends ScrollView {
 	private setSelection(from?: number, to?: number) {
 		// Clear playlist selection;
 		if (from == null) {
-			// plman.ClearPlaylistSelection(plman.ActivePlaylist);
 			this._selectedIndexes.length = 0;
 			this.applySelection();
 			return;
@@ -1186,14 +1185,11 @@ export class PlaylistView extends ScrollView {
 		}
 
 		for (let i = from; i <= to; i++) {
-			// this.items[index] && indexes.push(this.items[index].playlistItemIndex);
 			this.items[i] && indexes.push(i);
 		}
 
 		if (indexes.toString() !== this._selectedIndexes.toString()) {
 			this._selectedIndexes = indexes;
-			// plman.ClearPlaylistSelection(plman.ActivePlaylist);
-			// plman.SetPlaylistSelection(plman.ActivePlaylist, indexes, true);
 			this.applySelection();
 		}
 	}
@@ -1745,6 +1741,139 @@ export class PlaylistView extends ScrollView {
 				this.showNowPlaying();
 				break;
 		}
+	}
+}
+
+export function showTracksContextMenu(contextType: string, playlistIndex: number, metadbs: IFbMetadbList, x: number, y: number) {
+	let nullMetadbs = !metadbs || metadbs.Count === 0;
+	let hasMetadbs = !nullMetadbs;
+	let isPlaylist = isValidPlaylist(playlistIndex);
+	const isPlaylistLocked = isPlaylist && plman.IsPlaylistLocked(playlistIndex);
+	let isAlbumlist = playlistIndex === -5;
+
+	const rootMenu = window.CreatePopupMenu();
+	let albumName = "";
+
+	//
+	if (hasMetadbs) {
+		const addToMenu = window.CreatePopupMenu();
+		addToMenu.AppendTo(rootMenu, MenuFlag.STRING, TXT("Add to playlist"));
+		addToMenu.AppendMenuItem(MenuFlag.STRING, 2000, TXT("Create playlist..."));
+		if (plman.PlaylistCount > 0) {
+			addToMenu.AppendMenuSeparator();
+		}
+		for (let index = 0; index < plman.PlaylistCount; index++) {
+			let flag = plman.IsPlaylistLocked(index) || index === playlistIndex ? MenuFlag.GRAYED : MenuFlag.STRING;
+			let playlistName = plman.GetPlaylistName(index);
+			if (index === playlistIndex) {
+				playlistName += TXT("(*Current)");
+			};
+			addToMenu.AppendMenuItem(flag, 2001 + index, playlistName);
+		}
+
+		//
+		if (isPlaylist) {
+			rootMenu.AppendMenuItem(isPlaylistLocked ? MenuFlag.GRAYED : MenuFlag.STRING, 1, TXT("Remove from playlist"));
+		}
+		rootMenu.AppendMenuSeparator();
+	}
+
+	// Cut/Copy/Paste;
+	if (hasMetadbs) {
+		isPlaylist && rootMenu.AppendMenuItem(isPlaylistLocked ? MenuFlag.GRAYED : MenuFlag.STRING, 2, TXT("Cut"));
+		rootMenu.AppendMenuItem(MenuFlag.STRING, 3, TXT("Copy"));
+	}
+
+	if (fb.CheckClipboardContents()) {
+		isPlaylist && rootMenu.AppendMenuItem(isPlaylistLocked ? MenuFlag.GRAYED : MenuFlag.STRING, 4, TXT("Paste"));
+	}
+
+	if (hasMetadbs) {
+		rootMenu.AppendMenuSeparator();
+	}
+
+	if (hasMetadbs) {
+		let albumMenu = false;
+		let artistMenu = false;
+
+		if (!isAlbumlist) {
+			let albumNames = uniq(tf_album.EvalWithMetadbs(metadbs));
+			if (albumNames.length === 1) {
+				albumName = albumNames[0];
+				const artistMenu = window.CreatePopupMenu();
+				// artistMenu.AppendTo(rootMenu, MenuFlag.STRING, lang("Go to artist"));
+				rootMenu.AppendMenuItem(MenuFlag.STRING, 20, TXT("Go to album"));
+				albumMenu = true;
+			}
+		}
+		(albumMenu || artistMenu) && rootMenu.AppendMenuSeparator();
+	}
+
+	// Context menu;
+	const Context = fb.CreateContextMenuManager();
+	const BaseID = 1000;
+	if (hasMetadbs) {
+		Context.InitContext(metadbs);
+		Context.BuildMenu(rootMenu, BaseID, -1);
+	}
+
+	const ret = rootMenu.TrackPopupMenu(x, y);
+	let targetId: number;
+
+	switch (true) {
+		// "Remove from playlist"
+		case ret === 1:
+			plman.RemovePlaylistSelection(plman.ActivePlaylist, false);
+			break;
+
+		case ret === 2:
+			// Cut
+			if (!plman.IsPlaylistLocked(plman.ActivePlaylist)) {
+				let items = plman.GetPlaylistSelectedItems(plman.ActivePlaylist);
+				if (fb.CopyHandleListToClipboard(items)) {
+					plman.UndoBackup(plman.ActivePlaylist);
+					plman.RemovePlaylistSelection(plman.ActivePlaylist);
+				}
+			}
+			break;
+
+		case ret === 3:
+			// Copy
+			fb.CopyHandleListToClipboard(plman.GetPlaylistSelectedItems(plman.ActivePlaylist));
+			break;
+
+		case ret === 4:
+			// Paste;
+			if (!plman.IsPlaylistLocked(plman.ActivePlaylist) && fb.CheckClipboardContents()) {
+				plman.UndoBackup(plman.ActivePlaylist);
+				plman.InsertPlaylistItems(plman.ActivePlaylist, plman.GetPlaylistFocusItemIndex(plman.ActivePlaylist) + 1, fb.GetClipboardContents(window.ID), true);
+			}
+			break;
+
+		// "Go to Album"
+		case ret === 20:
+			if (albumName) GoToAlbum(albumName)
+			break;
+
+		// "Go to Artist";
+		case ret >= 3000 && ret < 3100:
+			GoToArtist("ASCA")
+			break;
+
+		// "Add to... (a newly created playlist)";
+		case ret === 2000:
+			CreatePlaylistPopup(metadbs);
+			break;
+
+		case ret > 2000 && ret < 3000:
+			targetId = ret - 2001;
+			plman.InsertPlaylistItems(targetId, plman.PlaylistItemCount(targetId), metadbs, true);
+			break;
+
+		// Execute context command;
+		case ret >= BaseID && ret < 2000:
+			Context.ExecuteByID(ret - BaseID);
+			break;
 	}
 }
 

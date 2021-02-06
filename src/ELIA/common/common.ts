@@ -2,6 +2,8 @@
  *  Commonly used utilites, constants, etc.
  *------------------------------------------------------------------------------------*/
 
+import { StringFormat } from "./String";
+
 
 /*
  * 不知为何在 tsconfig.json 里 include foo_spider_monkey_panel.d.ts 时，使用

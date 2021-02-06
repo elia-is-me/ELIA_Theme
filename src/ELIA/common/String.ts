@@ -10,7 +10,6 @@ export const enum StringTrimming {
 }
 // flags, can be combined of:
 // http://msdn.microsoft.com/en-us/library/ms534181(VS.85).aspx
-
 export const enum StringFormatFlags {
 	DirectionRightToLeft = 0x00000001,
 	DirectionVertical = 0x00000002,

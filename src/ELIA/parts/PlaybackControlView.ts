@@ -407,15 +407,13 @@ export class PlaybackControlView extends Component {
 			this.playbackTime = formatPlaybackTime(fb.PlaybackTime);
 			this.playbackLength = formatPlaybackTime(fb.PlaybackLength);
 			this.repaint();
-			debugTrace("pb control: time", fb.PlaybackTime);
-			debugTrace("pb control: length", fb.PlaybackLength);
 			window.ClearTimeout(this.updateTimer);
 			this.updateTimer = window.SetTimeout(onPlaybackTimer, refreshInterval);
 		}
 		onPlaybackTimer();
 	}
 
-	timerEnd() {
+	timerStop() {
 		if (this.updateTimer) {
 			window.ClearTimeout(this.updateTimer);
 			this.updateTimer = null;
@@ -423,20 +421,11 @@ export class PlaybackControlView extends Component {
 	}
 
 	on_init() {
-		// let panelRefreshInterval = 1000; // ms;
-		// let onPlaybackTimer_ = () => {
-		// 	if (fb.IsPlaying && !fb.IsPaused && fb.PlaybackLength > 0) {
-		// 		this.playbackTime = formatPlaybackTime(fb.PlaybackTime);
-		// 		this.playbackLength = formatPlaybackTime(fb.PlaybackLength);
-		// 		this.repaint();
-		// 	} else {/** do nothing */ }
-		// 	window.ClearTimeout(this.timerId);
-		// 	this.timerId = window.SetTimeout(onPlaybackTimer_, panelRefreshInterval);
-		// };
 
-		// onPlaybackTimer_();
 		if (fb.IsPlaying && !fb.IsPaused) {
 			this.timerStart();
+		} else {
+			this.timerStop();
 		}
 
 		let npMetadb = fb.GetNowPlaying();
@@ -682,13 +671,13 @@ export class PlaybackControlView extends Component {
 			this.playbackLength = "--:--";
 			this.trackTitle = "NOT PLAYING";
 			// Repaint();
-			this.timerEnd();
+			this.timerStop();
 			this.repaint();
 		}
 	}
 
 	on_playback_pause(is_paused: boolean) {
-		is_paused ? this.timerEnd() : this.timerStart();
+		is_paused ? this.timerStop() : this.timerStart();
 	}
 
 	on_mouse_rbtn_down() {
@@ -927,3 +916,28 @@ function extractArtists(str: string) {
 function uniq(array: string[]) {
 	return Array.from(new Set(array));
 }
+
+
+// function Repaint___() {
+
+// 	let timer: number | null;
+// 	let lastpaintTime = Date.now();
+
+// 	this.requestRepaint = () => {
+// 		if (timer) {
+// 			let clock = Date.now();
+// 			if (clock - lastpaintTime < 16) {
+// 				// do nothing;
+// 			}
+// 		} else {
+// 			window.Repaint();
+
+// 		}
+
+
+
+
+// 	}
+
+
+// }
