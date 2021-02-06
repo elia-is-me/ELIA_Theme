@@ -136,10 +136,10 @@ function getFonts() {
 
     if (useFbFonts) {
         if (instanceType === 0) {
-            console.log("getting column ui fonts")
+            // console.log("getting column ui fonts")
             fbFont = window.GetFontCUI(FontTypeCUI.items);
             fbSemiFont = window.GetFontCUI(FontTypeCUI.labels);
-            console.log(fbFont.Name, fbSemiFont.Name);
+            // console.log(fbFont.Name, fbSemiFont.Name);
         } else {
             fbFont = window.GetFontDUI(FontTypeDUI.defaults);
             fbSemiFont = window.GetFontDUI(FontTypeDUI.tabs);

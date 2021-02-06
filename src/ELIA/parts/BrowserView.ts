@@ -66,7 +66,7 @@ function updatePaddings(ww: number, wh?: number) {
 const tabHeight = scale(52);
 const toolbarHeight = scale(72);
 
-const itemMinWidth = scale(180);
+const itemMinWidth = scale(150);
 const itemMarginR = scale(16);
 const itemMarginB = scale(32);
 
@@ -672,7 +672,7 @@ export class BrowserView extends ScrollView {
                 let cacheImgWidth = (2 * itemMinWidth) >> 0;
                 if (image && image.Width > cacheImgWidth && image.Height > cacheImgWidth) {
                     // TODO: process image according to cover type;
-                    console.log("image raw width, height, ", image.Width, image.Height);
+                    // console.log("image raw width, height, ", image.Width, image.Height);
                     artworkImage = CropImage(image, cacheImgWidth, cacheImgWidth, InterpolationMode.HighQuality);
                 };
 
