@@ -1,6 +1,6 @@
 import { AlbumArtId } from "../common/AlbumArt";
 import { Component } from "../common/BasePart";
-import { CropImage, CursorName, debounce, debugTrace, drawImage, InterpolationMode, RGB, scale, SmoothingMode, tail, TextRenderingHint, VKeyCode } from "../common/Common";
+import { CropImage, CursorName, debounce, debugTrace, createImage, InterpolationMode, RGB, scale, SmoothingMode, tail, TextRenderingHint, VKeyCode } from "../common/Common";
 import { MaterialFont } from "../common/Icon";
 import { TXT } from "../common/Lang";
 import { Scrollbar } from "../common/Scrollbar";
@@ -829,7 +829,7 @@ export class BrowserView extends ScrollView {
             let item = items[i];
 
             if (item.metadb && item.metadb.Compare(metadb)) {
-                // muzik download from NeteaseCloudMusic store album artwork in
+                // muzik download from NeteaseCloudMusic put album artwork in
                 // 'Disc' tag.
                 if (!image && art_id === AlbumArtId.Front) {
                     item.load_request = 0;
@@ -928,7 +928,7 @@ class ImageCache {
         let font2 = gdi.Font("Segoe UI", 120, 1);
         let foreColor = themeColors.titleText;
         for (let i = 0; i < 3; i++) {
-            stubImages[i] = drawImage(500, 500, true, g => {
+            stubImages[i] = createImage(500, 500, true, g => {
                 g.SetSmoothingMode(SmoothingMode.HighQuality);
                 g.FillRoundRect(0, 0, 500, 500, 8, 8, foreColor & 0x0fffffff);
                 g.SetTextRenderingHint(TextRenderingHint.AntiAlias);

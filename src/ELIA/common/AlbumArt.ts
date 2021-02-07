@@ -1,6 +1,6 @@
 /// <reference path="../../typings/foo_spider_monkey_panel.d.ts" />
 
-import { CropImage, TextRenderingHint, drawImage, SmoothingMode, debounce, StopReason, BuildFullPath, fso, scale, InterpolationMode, isNumber, ScaleImage, DrawImageScale } from "./Common";
+import { CropImage, TextRenderingHint, createImage, SmoothingMode, debounce, StopReason, BuildFullPath, fso, scale, InterpolationMode, isNumber, ScaleImage, DrawImageScale } from "./Common";
 import { Component } from "./BasePart";
 import { StringFormat } from "./String";
 import { themeColors } from "./Theme";
@@ -143,7 +143,7 @@ class ImageCache {
 		let font2 = gdi.Font("Segoe UI", 120, 1);
 		let foreColor = themeColors.titleText;
 		for (let i = 0; i < 3; i++) {
-			stubImages[i] = drawImage(500, 500, true, g => {
+			stubImages[i] = createImage(500, 500, true, g => {
 				g.SetSmoothingMode(SmoothingMode.HighQuality);
 				g.FillRoundRect(0, 0, 500, 500, 8, 8, foreColor & 0x0fffffff);
 				g.SetTextRenderingHint(TextRenderingHint.AntiAlias);

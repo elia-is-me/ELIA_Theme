@@ -2,9 +2,6 @@
  *  Commonly used utilites, constants, etc.
  *------------------------------------------------------------------------------------*/
 
-import { StringFormat } from "./String";
-
-
 /*
  * 不知为何在 tsconfig.json 里 include foo_spider_monkey_panel.d.ts 时，使用
  * browserify + tsify 编译始终报错，提示找不到变量什么的。
@@ -353,7 +350,7 @@ export function DrawImageScale(gr: IGdiGraphics, img: IGdiBitmap, x: number, y: 
 }
 
 
-export function drawImage(w: number, h: number, im: boolean, func: (gr: IGdiGraphics) => void) {
+export function createImage(w: number, h: number, im: boolean, func: (gr: IGdiGraphics) => void) {
 	let i = gdi.CreateImage(Math.max(w, 1) | 0, Math.max(h, 1) | 0);
 	let g = i.GetGraphics();
 	func(g);
@@ -364,6 +361,7 @@ export function drawImage(w: number, h: number, im: boolean, func: (gr: IGdiGrap
 }
 
 
+// Used in window.CreatePopupMenu(...)
 export const enum MenuFlag {
 	STRING = 0x00000000,
 	GRAYED = 0x00000001,
@@ -427,12 +425,6 @@ export function findLastIndex<T>(array: Array<T>, predicate: (value: T, index: n
 	}
 	return -1;
 }
-
-
-export function isEmptyString(str: string) {
-	return !str;
-}
-
 
 export const enum StopReason {
 	InvokedByUser = 0,
@@ -569,12 +561,10 @@ export function tail<T>(array: ArrayLike<T>, n: number = 0): T {
 	return array[array.length - (1 + n)];
 }
 
+
 export function debugTrace(...data: any[]) {
 	console.log("EliaTheme Debug: ", ...data);
 }
-
-
-// debugTrace("tail", tail([]));
 
 export const memoryLimit = () =>
 	window.PanelMemoryUsage / window.MemoryLimit > 0.4 ||

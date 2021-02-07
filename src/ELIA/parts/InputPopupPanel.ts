@@ -1,5 +1,5 @@
 import { Component } from "../common/BasePart";
-import { RGB, scale, isEmptyString, isFunction, setAlpha, blendColors, SmoothingMode } from "../common/Common";
+import { RGB, scale, isFunction, setAlpha, SmoothingMode } from "../common/Common";
 import { Button } from "./Buttons";
 import { InputBox } from "../common/Inputbox";
 import { notifyOthers } from "../common/UserInterface";
@@ -105,8 +105,8 @@ export class InputPopupPanel
 			foreColor: RGB(0, 0, 0),
 			backgroundActiveColor: RGB(255, 255, 255),
 			backgroundSelectionColor: RGB(66, 133, 244),
-			empty_text: isEmptyString(this.emptyText) ? "" : this.emptyText,
-			default_text: isEmptyString(this.defaultText) ? "" : this.defaultText,
+			empty_text: this.emptyText || "",
+			default_text: this.defaultText || "",
 			func: () => {
 				if (isFunction(opts.onSuccess)) {
 					opts.onSuccess(this.inputbox.text);
