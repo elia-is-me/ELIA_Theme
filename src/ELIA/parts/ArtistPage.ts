@@ -9,7 +9,7 @@ import { ui } from "../common/UserInterface";
 import { Button } from "./Buttons";
 import { TXT } from "../common/Lang";
 import { formatPlaylistDuration } from "./PlaylistView";
-import { GdiFont, scrollbarWidth, themeColors } from "../common/Theme";
+import { GetFont, scrollbarWidth, themeColors } from "../common/Theme";
 
 const pageColors = {
     text: themeColors.text,
@@ -29,10 +29,10 @@ const buttonColors = {
     onSecondary: themeColors.onSecondary
 }
 
-const iconFont = GdiFont(MaterialFont, scale(20));
-const itemFont = GdiFont("normal, 14");
-const titleFont = GdiFont("bold, 20");
-const groupheaderFont = GdiFont("bold, 16");
+const iconFont = GetFont(MaterialFont, scale(20));
+const itemFont = GetFont("normal, 14");
+const titleFont = GetFont("bold, 20");
+const groupheaderFont = GetFont("bold, 16");
 
 let paddingLR = scale(24);
 let paddingTB = scale(24);
@@ -88,8 +88,8 @@ class ArtistPageHeader extends Component {
     genre: string = "J-Pop Anime";
     shortInfo: string = "Years Active: 2002~Present(18 Years)";
 
-    private titleFont = GdiFont("bold", scale(32));
-    private descriptionFont = GdiFont("normal", scale(14));
+    private titleFont = GetFont("bold", scale(32));
+    private descriptionFont = GetFont("normal", scale(14));
     private MIN_HEIGHT = scale(240);
 
     constructor() {

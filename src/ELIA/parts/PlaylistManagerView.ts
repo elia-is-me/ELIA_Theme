@@ -8,7 +8,7 @@ import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
 import { Component } from "../common/BasePart";
 import { Material, MaterialFont } from "../common/Icon";
-import { scrollbarWidth, themeColors, GdiFont } from "../common/Theme";
+import { scrollbarWidth, themeColors, GetFont } from "../common/Theme";
 import { Clickable } from "../common/Button";
 import { isValidPlaylist } from "./PlaylistView";
 import { IInputPopupOptions } from "./InputPopupPanel";
@@ -29,7 +29,7 @@ let presetNames = {
 
 const ui_textRendering = ui.textRender;
 let iconFont = gdi.Font(MaterialFont, scale(20));
-let smallIconFont = GdiFont(MaterialFont, scale(18));
+let smallIconFont = GetFont(MaterialFont, scale(18));
 
 let droprectangle = new Component({});
 droprectangle.visible = false;
@@ -46,7 +46,7 @@ interface IPlaylistManagerProps {
 export const PlmanProperties = {
 	minWidth: layout.plmanMinWidth,
 	rowHeight: scale(36),
-	itemFont: GdiFont(window.GetProperty("PLMAN.Item Font", "semibold,14")),
+	itemFont: GetFont(window.GetProperty("PLMAN.Item Font", "semibold,14")),
 	headerHeight: scale(80),
 	// icons: icons,
 };

@@ -527,14 +527,7 @@ export function vol2pos(v: number) {
 }
 
 export function getTimestamp() {
-	var d,
-		s1,
-		s2,
-		s3,
-		hh,
-		min,
-		sec,
-		timestamp;
+	var d, s1, s2, s3, hh, min, sec, timestamp;
 	d = new Date();
 	s1 = d.getFullYear();
 	s2 = (d.getMonth() + 1);
@@ -569,3 +562,9 @@ export function debugTrace(...data: any[]) {
 export const memoryLimit = () =>
 	window.PanelMemoryUsage / window.MemoryLimit > 0.4 ||
 	window.TotalMemoryUsage / window.MemoryLimit > 0.5;
+
+/**
+ * let panel accept all keyboard inputs;
+ * GrabFocus should be enabled.
+ */
+export const acceptAllKeys = () => window.DlgCode = 0x0004;

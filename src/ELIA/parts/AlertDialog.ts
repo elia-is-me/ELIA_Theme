@@ -2,7 +2,7 @@ import { scale, RGB, isFunction, setAlpha, SmoothingMode } from "../common/Commo
 import { StringFormat } from "../common/String";
 import { Component } from "../common/BasePart";
 import { Button } from "./Buttons";
-import { GdiFont, themeColors } from "../common/Theme";
+import { GetFont, themeColors } from "../common/Theme";
 import { notifyOthers } from "../common/UserInterface";
 import { TXT } from "../common/Lang";
 
@@ -23,8 +23,8 @@ interface IDefaultOptions {
 }
 
 const defaultOptions: IDefaultOptions = {
-	textFont: GdiFont("semibold, 16"),
-	titleFont: GdiFont("bold, 20"),
+	textFont: GetFont("semibold, 16"),
+	titleFont: GetFont("bold, 20"),
 	panelWidth: scale(400),
 	panelHeight: scale(225),
 	textColor: themeColors.titleText,

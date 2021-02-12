@@ -5,7 +5,7 @@
 import { TextRenderingHint, MenuFlag, VKeyCode, KMask, scale, RGB, SmoothingMode, CursorName, clamp, foo_playcount } from "../common/Common";
 import { StringTrimming, StringFormatFlags, MeasureString, StringFormat, spaceStart, spaceStartEnd } from "../common/String";
 import { ThrottledRepaint } from "../common/Common";
-import { scrollbarWidth, themeColors, GdiFont } from "../common/Theme";
+import { scrollbarWidth, themeColors, GetFont } from "../common/Theme";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
 import { Component, IBoxModel } from "../common/BasePart";
@@ -47,15 +47,15 @@ const ui_textRendering = ui.textRender;
 const TF_TRACK_INFO = fb.TitleFormat("%tracknumber%^^[%artist%]^^%title%^^%length%^^%rating%^^[%album%]^^[%artist%]");
 const TF_PLAYCOUNT = fb.TitleFormat("[%play_count%]");
 
-const iconFont_list = GdiFont(MaterialFont, scale(18));
-const iconFont_btn = GdiFont(MaterialFont, scale(20));
-const iconFont_inline = GdiFont(MaterialFont, scale(16));
-let itemFont = GdiFont(window.GetProperty("Playlist.Item Font", "normal,14"));
-let smallItemFont = GdiFont(window.GetProperty("Playlist.Item Font Small", "normal,12"));
-let semiItemFont = GdiFont("semibold", itemFont.Size);
-const emptyInfoFont = GdiFont("normal, 16");
-const titleFont = GdiFont("bold, 24");
-const descriptionFont = GdiFont("normal, 14");
+const iconFont_list = GetFont(MaterialFont, scale(18));
+const iconFont_btn = GetFont(MaterialFont, scale(20));
+const iconFont_inline = GetFont(MaterialFont, scale(16));
+let itemFont = GetFont(window.GetProperty("Playlist.Item Font", "normal,14"));
+let smallItemFont = GetFont(window.GetProperty("Playlist.Item Font Small", "normal,12"));
+let semiItemFont = GetFont("semibold", itemFont.Size);
+const emptyInfoFont = GetFont("normal, 16");
+const titleFont = GetFont("bold, 24");
+const descriptionFont = GetFont("normal, 14");
 
 const descriptionLineHeight = descriptionFont.Height * 1.2;
 const moodIconWidth = MeasureString(Material.heart_empty, iconFont_list).Width;
@@ -76,10 +76,10 @@ const pageWidth = {
 }
 
 if (rowHeight < scale(42)) {
-	itemFont = GdiFont("normal,12");
+	itemFont = GetFont("normal,12");
 }
-semiItemFont = GdiFont("semibold", itemFont.Size);
-let timeFont = GdiFont("Trebuchet MS", itemFont.Size);
+semiItemFont = GetFont("semibold", itemFont.Size);
+let timeFont = GetFont("Trebuchet MS", itemFont.Size);
 
 
 /**

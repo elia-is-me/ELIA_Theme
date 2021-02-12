@@ -1,7 +1,7 @@
 import { scale, TextRenderingHint, setAlpha, SmoothingMode } from "../common/Common";
 import { StringFormat, MeasureString } from "../common/String"
 import { Material, MaterialFont } from "../common/Icon";
-import { fontNameNormal, GdiFont, themeColors } from "../common/Theme";
+import { fontNameNormal, GetFont, themeColors } from "../common/Theme";
 import { ButtonStates, Clickable, textRenderingHint } from "../common/Button";
 import { IInjectableCallbacks } from "../common/BasePart";
 
@@ -68,7 +68,7 @@ export const enum ButtonStyles {
 	Outlined = "outlined",
 	Text = "text"
 }
-const textFont = GdiFont("semibold", scale(14));
+const textFont = GetFont("semibold", scale(14));
 const iconFont = gdi.Font(MaterialFont, scale(22));
 
 export interface IButtonOptions {

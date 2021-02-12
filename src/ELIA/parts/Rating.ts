@@ -8,7 +8,7 @@ import { Material, MaterialFont } from "../common/Icon";
 import { RunContextCommandWithMetadb } from "../common/Lang";
 import { MeasureString, StringFormat } from "../common/String";
 import { ui } from "../common/UserInterface";
-import { GdiFont, themeColors } from "../common/Theme";
+import { GetFont, themeColors } from "../common/Theme";
 
 const ratingColors = {
     disabled: setAlpha(themeColors.text, 50),
@@ -19,7 +19,7 @@ const ratingColors = {
 }
 
 const iconSize = scale(14);
-const iconFont = GdiFont(MaterialFont, iconSize);
+const iconFont = GetFont(MaterialFont, iconSize);
 const iconWidth = Math.ceil(MeasureString(Material.heart, iconFont).Width);
 const barHeight = iconWidth;
 const barWidth = 5 * iconWidth;
