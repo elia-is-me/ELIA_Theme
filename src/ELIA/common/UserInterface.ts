@@ -539,11 +539,10 @@ function on_volume_change(val: number) {
 
 function on_get_album_art_done(metadb: IFbMetadb | null, art_id: number, image: IGdiBitmap | null, image_path: string) {
 	invoke_recur(rootPart, "on_get_album_art_done", metadb, art_id, image, image_path);
-	// imageCache.on_get_album_art_done(metadb, art_id, image, image_path);
 }
 
 function on_load_image_done(cookie: number, image: IGdiBitmap | null, image_path: string) {
-	// imageCache.on_load_image_done(cookie, image);
+	invoke_recur(rootPart, "on_load_image_done", cookie, image, image_path);
 }
 
 function on_library_items_added(metadbs?: IFbMetadbList) {

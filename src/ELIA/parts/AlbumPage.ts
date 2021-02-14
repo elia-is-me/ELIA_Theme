@@ -1,5 +1,5 @@
 import { MeasureString, StringFormat, spaceStartEnd, spaceEnd, spaceStart } from "../common/String";
-import { AlbumArtwork } from "../common/AlbumArt";
+import { AlbumArtId, AlbumArtwork } from "../common/AlbumArt";
 import { Component } from "../common/BasePart";
 import { clamp, CursorName, foo_playcount, KMask, MenuFlag, RGB, scale, StopReason, TextRenderingHint, VKeyCode } from "../common/Common";
 import { Material, MaterialFont } from "../common/Icon";
@@ -158,7 +158,7 @@ class AlbumHeaderView extends Component {
     constructor() {
         super({});
 
-        this.artwork = new AlbumArtwork();
+        this.artwork = new AlbumArtwork({ artworkType: AlbumArtId.Front });
         this.addChild(this.artwork);
 
         let shuffleall = new Button({
@@ -409,7 +409,7 @@ export class AlbumPageView extends ScrollView {
             this.header.albumArtistText += " \u2022 " + year;
         }
         // update header album art;
-        this.header.artwork.image = null;
+        // this.header.artwork.image = null;
         this.header.artwork.getArtwork(metadb);
 
         //

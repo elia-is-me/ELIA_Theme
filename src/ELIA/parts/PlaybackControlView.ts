@@ -2,7 +2,7 @@
 // Playback control bar;
 // ---------------------
 
-import { clamp, debugTrace, getTimestamp, MenuFlag, Repaint, setAlpha, StopReason } from "../common/Common";
+import { clamp, debugTrace, getTimestamp, getYear, MenuFlag, pos2vol, ReadMood, Repaint, setAlpha, StopReason, ToggleMood, uniq, vol2pos } from "../common/Common";
 import { TextLink } from "../common/TextLink";
 import { NowplayingArtwork } from "../common/AlbumArt";
 import { Slider, SliderThumbImage } from "../common/Slider";
@@ -15,15 +15,6 @@ import { TXT, RunContextCommandWithMetadb } from "../common/Lang";
 import { CreatePlaylistPopup, GoToAlbum, GoToArtist, GotoPlaylist, ShowPlaybackBarMenu } from "./Layout";
 import { MeasureString, StringFormat } from "../common/String";
 import { mouseCursor, notifyOthers } from "../common/UserInterface";
-
-
-function pos2vol(pos: number) {
-	return (50 * Math.log(0.99 * pos + 0.01)) / Math.LN10;
-}
-
-function vol2pos(v: number) {
-	return (Math.pow(10, v / 50) - 0.01) / 0.99;
-}
 
 function formatPlaybackTime(sec: number) {
 	if (!isFinite(sec) || sec < 0) return '--:--';
@@ -50,11 +41,6 @@ const bottomColors: IThemeColors = {
 	highlight: themeColors.highlight
 }
 
-const CMD_LOVE = 'Playback Statistics/Rating/5';
-const CMD_UNLOVE = 'Playback Statistics/Rating/<not set>';
-const TF_RATING = fb.TitleFormat('%rating%');
-
-
 type ButtonKeys = "playOrPause" | "next" | "prev" | "love" | "repeat" | "shuffle" | "volume" | "context";
 type IButtons = { [K in ButtonKeys]: IconButton };
 
@@ -69,8 +55,7 @@ const createBottomButtons = () => {
 		volume: null,
 		context: null,
 	};
-
-	const createIconButton = (code: string, fontSize: number, color: number): IconButton => {
+	const createBtn = (code: string, fontSize: number, color: number): IconButton => {
 		return new IconButton({
 			icon: code,
 			fontSize: fontSize,
@@ -78,51 +63,44 @@ const createBottomButtons = () => {
 			colors: [color]
 		});
 	}
-
 	const defaultColor = themeColors.text;
 	const highlightColor = themeColors.highlight;
 	const iconSize = scale(22);
 	const smallIconSize = scale(20);
-
 	// button 'Play or Pause';
-	buttons.playOrPause = createIconButton(Material.pause, scale(32), defaultColor);
+	buttons.playOrPause = createBtn(Material.pause, scale(32), defaultColor);
 	Object.assign(buttons.playOrPause, {
 		on_click: function () {
 			fb.PlayOrPause();
-			// this.on_init();
-			// this.repaint();
 		},
 		on_init: function () {
 			(this as IconButton).setIcon(fb.IsPlaying && !fb.IsPaused ? Material.pause : Material.play);
 		},
 		on_playback_new_track: function () {
 			this.on_init();
-			Repaint();
+			this.repaint();
 		},
 		on_playback_stop: function () {
 			this.on_init();
-			Repaint();
+			this.repaint();
 		},
 		on_playback_pause: function () {
 			this.on_init();
-			Repaint();
+			this.repaint();
 		}
 	});
-
 	// button 'Next';
-	buttons.next = createIconButton(Material.skip_next, iconSize, defaultColor);
+	buttons.next = createBtn(Material.skip_next, iconSize, defaultColor);
 	buttons.next.on_click = function () {
 		fb.Next();
 	};
-
 	// button 'Prev';
-	buttons.prev = createIconButton(Material.skip_prev, iconSize, defaultColor);
+	buttons.prev = createBtn(Material.skip_prev, iconSize, defaultColor);
 	buttons.prev.on_click = function () {
 		fb.Prev();
 	};
-
 	// button 'Love', enabled when 'foo_playcount' is installed (currently);
-	buttons.love = createIconButton(Material.heart, iconSize - scale(2), themeColors.mood);
+	buttons.love = createBtn(Material.heart, iconSize - scale(2), themeColors.mood);
 	Object.assign(buttons.love, {
 		on_init: function () {
 			let metadb = fb.GetNowPlaying();
@@ -160,9 +138,7 @@ const createBottomButtons = () => {
 			this.repaint();
 		}
 	});
-
-
-	buttons.repeat = createIconButton(Material.repeat, smallIconSize, defaultColor);
+	buttons.repeat = createBtn(Material.repeat, smallIconSize, defaultColor);
 	Object.assign(buttons.repeat, {
 		on_init() {
 			switch (plman.PlaybackOrder) {
@@ -188,17 +164,14 @@ const createBottomButtons = () => {
 			} else {
 				plman.PlaybackOrder = 1;
 			}
-			// this.on_init();
-			// Repaint();
 		},
 		on_playback_order_changed() {
 			this.on_init();
 			this.repaint();
 		}
 	});
-
 	// button 'Shuffle';
-	buttons.shuffle = createIconButton(Material.shuffle, smallIconSize, defaultColor);
+	buttons.shuffle = createBtn(Material.shuffle, smallIconSize, defaultColor);
 	Object.assign(buttons.shuffle, {
 		on_init() {
 			if (plman.PlaybackOrder === getShuffleOrder()) {
@@ -213,16 +186,14 @@ const createBottomButtons = () => {
 			} else {
 				plman.PlaybackOrder = getShuffleOrder();
 			}
-			// this.on_init();
 		},
 		on_playback_order_changed() {
 			this.on_init();
 			this.repaint();
 		},
 	});
-
 	// button 'Volume Mute Toggle';
-	buttons.volume = createIconButton(Material.volume, smallIconSize, defaultColor);
+	buttons.volume = createBtn(Material.volume, smallIconSize, defaultColor);
 	Object.assign(buttons.volume, {
 		on_init() {
 			this.setIcon(fb.Volume === -100 ? Material.volume_off : Material.volume);
@@ -236,7 +207,7 @@ const createBottomButtons = () => {
 		}
 	});
 
-	buttons.context = createIconButton(Material.more_vert, smallIconSize, defaultColor);
+	buttons.context = createBtn(Material.more_vert, smallIconSize, defaultColor);
 	Object.assign(buttons.context, {
 		on_click(x: number, y: number) {
 			ShowPlaybackBarMenu();
@@ -270,7 +241,6 @@ function createThumbImg(colors: IThemeColors): SliderThumbImage {
 
 	return { normal: thumbImg, down: downThumbImg };
 }
-
 const thumbImages = createThumbImg(bottomColors);
 const progressHeight = scale(4);
 const slider_secondaryColor = setAlpha(bottomColors.text, 76);
@@ -288,7 +258,6 @@ const seekbar = new Slider({
 		fb.PlaybackTime = fb.PlaybackLength * val;
 	}
 });
-
 const volumebar = new Slider({
 	progressHeight: progressHeight,
 	thumbImage: thumbImages.normal,
@@ -308,22 +277,10 @@ Object.assign(volumebar, {
 		this.parent.repaint();
 	}
 });
-
 const TF_TRACK_TITLE = fb.TitleFormat("%title%");
 const TF_ARTIST = fb.TitleFormat("$if2([$trim(%artist%)]," + TXT("UNKNOWN ARTIST") + ")");
 const TF_DATE = fb.TitleFormat("%date%");
 const defaultArtistName = TXT("ARTIST");
-
-/**
- * yyyy-mm-dd or yyyy/mm/dd or yyyy.mm.dd => yyyy
- * yyyy => yyyy
- * "" => ""
- */
-export function getYear(str: string) {
-	let arr = str.split(/[\.\/\-]/);
-	return arr.find(s => s.length === 4) || "";
-}
-
 const artistText = new TextLink({
 	text: defaultArtistName,
 	font: fonts.normal_12,
@@ -369,11 +326,9 @@ const artistText = new TextLink({
 });
 
 const albumArt = new NowplayingArtwork();
-
 const THIN_MODE_WIDTH = scale(640);
 
 export class PlaybackControlView extends Component {
-	private timerId: number = -1;
 	playbackTime: string = "";
 	playbackLength: string = "";
 	trackTitle: string = "";
@@ -395,7 +350,6 @@ export class PlaybackControlView extends Component {
 		super({});
 		this.colors = bottomColors;
 		this.setChildPanels();
-
 		this.timeWidth = MeasureString("+00:00+", this.timeFont).Width;
 	}
 
@@ -421,22 +375,18 @@ export class PlaybackControlView extends Component {
 	}
 
 	on_init() {
-
 		if (fb.IsPlaying && !fb.IsPaused) {
 			this.timerStart();
 		} else {
 			this.timerStop();
 		}
-
 		let npMetadb = fb.GetNowPlaying();
 		this.trackTitle = npMetadb == null ? TXT("NOT PLAYING") : TF_TRACK_TITLE.EvalWithMetadb(npMetadb);
 		if (fb.IsPlaying) {
 			this.playbackTime = formatPlaybackTime(fb.PlaybackTime);
 			this.playbackLength = formatPlaybackTime(fb.PlaybackLength);
 		}
-
 		this._rightDown = false;
-
 		let isThin = (this.width <= THIN_MODE_WIDTH);
 		if (isThin !== this.isThinMode) {
 			this.isThinMode = isThin;
@@ -461,23 +411,18 @@ export class PlaybackControlView extends Component {
 	setChildrenVisibility() {
 		const { playOrPause, next, prev, shuffle, repeat } = this.buttons;
 		const { volume, love, context } = this.buttons;
-
 		let thinModeVis = this.width <= THIN_MODE_WIDTH;
 		let wideModeVis = !thinModeVis;
-
 		playOrPause.visible = true;
 		next.visible = true;
 		prev.visible = true;
-
 		shuffle.visible = wideModeVis;
 		repeat.visible = wideModeVis;
 		volume.visible = wideModeVis;
 		love.visible = true;
 		context.visible = thinModeVis;
-
 		this.volume.visible = wideModeVis;
 		this.seekbar.visible = true;
-
 		this.artwork.visible = true;
 		this.artist.visible = true;
 	}
@@ -670,7 +615,6 @@ export class PlaybackControlView extends Component {
 			this.playbackTime = "00:00";
 			this.playbackLength = "--:--";
 			this.trackTitle = "NOT PLAYING";
-			// Repaint();
 			this.timerStop();
 			this.repaint();
 		}
@@ -865,44 +809,7 @@ function setShuffleOrder(order: number) {
 	return order;
 }
 
-export const TF_MOOD = fb.TitleFormat("[%mood%]");
-let reSpace = /\s+/g;
 
-export function ReadMood(metadb: IFbMetadb) {
-	if (!metadb) return;
-	let moodRaw = TF_MOOD.EvalWithMetadb(metadb).replace(reSpace, "");
-	return moodRaw ? 1 : 0;
-}
-
-export function ToggleMood(metadb: IFbMetadb, mood?: number) {
-	if (!metadb) {
-		console.log("EliaTheme Warning: NULL metadb!")
-		return;
-	}
-
-	try {
-		if (mood == null) {
-			mood = ReadMood(metadb);//+TF_MOOD.EvalWithMetadb(metadb);
-		}
-		let metadbs = new FbMetadbHandleList(metadb);
-		// console.log("mood: ", mood);
-
-		if (mood == 0) {
-			metadbs.UpdateFileInfoFromJSON(JSON.stringify({ "MOOD": getTimestamp() }));
-		} else {
-			metadbs.UpdateFileInfoFromJSON(JSON.stringify({ "MOOD": "" }))
-		}
-	} catch (e) {
-		console.log("EliaTheme Warning: ", "Fail to update mood!", e);
-	}
-	// if (metadb && fb.IsMetadbInMediaLibrary(metadb)) {
-	// 	let liked = +TF_RATING.EvalWithMetadb(metadb) === 5;
-	// 	RunContextCommandWithMetadb(liked ? CMD_UNLOVE : CMD_LOVE, metadb, 8);
-	// } else {
-	// 	// if (!metadb) console.log("toggle mood failed: NULL metadb!");
-	// 	// if (!fb.IsMetadbInMediaLibrary(metadb)) console.log("toggle mood failed, metadb not in MediaLibrary!")
-	// }
-}
 
 function extractArtists(str: string) {
 	let artists = str.replace(/\^\^/g, ",")
@@ -912,32 +819,3 @@ function extractArtists(str: string) {
 	artists = uniq(artists)
 	return artists;
 }
-
-function uniq(array: string[]) {
-	return Array.from(new Set(array));
-}
-
-
-// function Repaint___() {
-
-// 	let timer: number | null;
-// 	let lastpaintTime = Date.now();
-
-// 	this.requestRepaint = () => {
-// 		if (timer) {
-// 			let clock = Date.now();
-// 			if (clock - lastpaintTime < 16) {
-// 				// do nothing;
-// 			}
-// 		} else {
-// 			window.Repaint();
-
-// 		}
-
-
-
-
-// 	}
-
-
-// }
