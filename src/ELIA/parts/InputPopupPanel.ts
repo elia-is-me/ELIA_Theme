@@ -3,7 +3,7 @@ import { RGB, scale, isFunction, setAlpha, SmoothingMode } from "../common/Commo
 import { Button } from "./Buttons";
 import { InputBox } from "../common/Inputbox";
 import { notifyOthers } from "../common/UserInterface";
-import { themeColors, fonts, GdiFont } from "../common/Theme";
+import { themeColors, fonts, GetFont } from "../common/Theme";
 import { TXT } from "../common/Lang";
 import { MeasureString, StringFormat } from "../common/String";
 
@@ -27,8 +27,8 @@ interface IInputPopupDefaultOptions {
 }
 
 const defaultOptions: IInputPopupDefaultOptions = {
-	titleFont: GdiFont("bold, 20"),
-	textFont: GdiFont("semibold,14"),
+	titleFont: GetFont("bold, 20"),
+	textFont: GetFont("semibold,14"),
 	panelWidth: scale(450),
 	panelHeight: scale(225),
 	textColor: themeColors.titleText,

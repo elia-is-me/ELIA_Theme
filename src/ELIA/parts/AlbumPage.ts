@@ -1,5 +1,5 @@
 import { MeasureString, StringFormat, spaceStartEnd, spaceEnd, spaceStart } from "../common/String";
-import { AlbumArtwork } from "../common/AlbumArt";
+import { AlbumArtId, AlbumArtwork } from "../common/AlbumArt";
 import { Component } from "../common/BasePart";
 import { clamp, CursorName, foo_playcount, KMask, MenuFlag, RGB, scale, StopReason, TextRenderingHint, VKeyCode } from "../common/Common";
 import { Material, MaterialFont } from "../common/Icon";
@@ -11,7 +11,7 @@ import { TXT } from "../common/Lang";
 import { getYear, ReadMood, ToggleMood } from "./PlaybackControlView";
 import { formatPlaylistDuration, showTrackContextMenu } from "./PlaylistView";
 import { SendToQueueListPlay } from "./SearchResultView";
-import { GdiFont, scrollbarWidth, themeColors } from "../common/Theme";
+import { GetFont, scrollbarWidth, themeColors } from "../common/Theme";
 import { GotoPlaylist } from "./Layout";
 import { RatingBar } from "./Rating";
 
@@ -36,14 +36,14 @@ const buttonColors = {
 };
 
 let rowHeight = scale(48);
-const iconFont = GdiFont(MaterialFont, scale(18));
-const itemFont = GdiFont("normal, 14");
-const semiItemFont = GdiFont("semibold, 14");
-const smallItemFont = GdiFont("normal, 13");
-const descriptionFont = GdiFont("normal, 14");
-let subtitleFont = GdiFont("normal, 24");
-const titleFont = GdiFont("bold, 24");
-let timeFont = GdiFont("Trebuchet MS", itemFont.Size);
+const iconFont = GetFont(MaterialFont, scale(18));
+const itemFont = GetFont("normal, 14");
+const semiItemFont = GetFont("semibold, 14");
+const smallItemFont = GetFont("normal, 13");
+const descriptionFont = GetFont("normal, 14");
+let subtitleFont = GetFont("normal, 24");
+const titleFont = GetFont("bold, 24");
+let timeFont = GetFont("Trebuchet MS", itemFont.Size);
 
 let titleLineHeight = titleFont.Height * 1.1;
 let descriptionLineHeight = descriptionFont.Height * 1.1;
@@ -158,7 +158,7 @@ class AlbumHeaderView extends Component {
     constructor() {
         super({});
 
-        this.artwork = new AlbumArtwork();
+        this.artwork = new AlbumArtwork({ artworkType: AlbumArtId.Front });
         this.addChild(this.artwork);
 
         let shuffleall = new Button({
@@ -409,7 +409,7 @@ export class AlbumPageView extends ScrollView {
             this.header.albumArtistText += " \u2022 " + year;
         }
         // update header album art;
-        this.header.artwork.image = null;
+        // this.header.artwork.image = null;
         this.header.artwork.getArtwork(metadb);
 
         //

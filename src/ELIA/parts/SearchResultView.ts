@@ -6,7 +6,7 @@ import { ScrollView } from "../common/ScrollView";
 import { MaterialFont, Material } from "../common/Icon";
 import { ReadMood, ToggleMood } from "./PlaybackControlView";
 import { notifyOthers, ui } from "../common/UserInterface";
-import { themeColors, GdiFont, scrollbarWidth } from "../common/Theme";
+import { themeColors, GetFont, scrollbarWidth } from "../common/Theme";
 import { TXT } from "../common/Lang";
 import { IconButton } from "./Buttons";
 import { formatPlaylistDuration, showTrackContextMenu } from "./PlaylistView";
@@ -33,14 +33,14 @@ const buttonColors = {
 	onSecondary: themeColors.onSecondary,
 };
 
-const iconFont = GdiFont(MaterialFont, scale(18));
-const smallIconFont = GdiFont(MaterialFont, scale(16));
-const itemFont = GdiFont("normal, 14");
+const iconFont = GetFont(MaterialFont, scale(18));
+const smallIconFont = GetFont(MaterialFont, scale(16));
+const itemFont = GetFont("normal, 14");
 const desciptionFont = itemFont;
-const semiItemFont = GdiFont("semibold, 14");
-const smallItemFont = GdiFont("normal,13");
-const titleFont = GdiFont("bold, 24");
-let timeFont = GdiFont("Trebuchet MS", itemFont.Size);
+const semiItemFont = GetFont("semibold, 14");
+const smallItemFont = GetFont("normal,13");
+const titleFont = GetFont("bold, 24");
+let timeFont = GetFont("Trebuchet MS", itemFont.Size);
 
 const titleLineHeight = titleFont.Height * 1.2 >> 0;
 const descriptionHeight = desciptionFont.Height * 1.1 >> 0;

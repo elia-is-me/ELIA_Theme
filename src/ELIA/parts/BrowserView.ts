@@ -6,7 +6,7 @@ import { TXT } from "../common/Lang";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
 import { MeasureString, StringFormat, StringFormatFlags, StringTrimming } from "../common/String";
-import { GdiFont, scrollbarWidth, themeColors } from "../common/Theme";
+import { GetFont, scrollbarWidth, themeColors } from "../common/Theme";
 import { mouseCursor } from "../common/UserInterface";
 import { DropdownButton } from "./Buttons";
 import { GoToAlbum, GotoPlaylist } from "./Layout";
@@ -35,10 +35,10 @@ const buttonColors = {
     onSecondary: themeColors.onSecondary,
 }
 
-const itemFont = GdiFont("semibold,14");
-const smallItemFont = GdiFont("normal,14");
-const btnFont = GdiFont(MaterialFont, scale(20));
-const tabFont = GdiFont("semibold, 14");
+const itemFont = GetFont("semibold,14");
+const smallItemFont = GetFont("normal,14");
+const btnFont = GetFont(MaterialFont, scale(20));
+const tabFont = GetFont("semibold, 14");
 
 let paddingLR = 0;
 let paddingTB = 0;

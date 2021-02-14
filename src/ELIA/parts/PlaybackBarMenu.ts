@@ -3,7 +3,7 @@ import { Component } from "../common/BasePart";
 import { Material, MaterialFont } from "../common/Icon";
 import { IconButton } from "./Buttons";
 import { Slider } from "../common/Slider";
-import { GdiFont, themeColors } from "../common/Theme";
+import { GetFont, themeColors } from "../common/Theme";
 import { notifyOthers, ui } from "../common/UserInterface";
 import { TXT } from "../common/Lang";
 import { ButtonStates, Clickable } from "../common/Button";
@@ -12,7 +12,7 @@ import { StringFormat } from "../common/String";
 
 const MENU_ITEM_HEIGHT = scale(40);
 const MENU_WIDTH = scale(164);
-const MENU_FONT = GdiFont("semi,14");
+const MENU_FONT = GetFont("semi,14");
 const menuColors = {
     text: themeColors.secondaryText,
     background: themeColors.panelBackground,
@@ -206,7 +206,7 @@ export class PlaybackBarMenu extends Component {
     }
 
     private createMenuItems() {
-        let iconFont = GdiFont(MaterialFont, scale(20));
+        let iconFont = GetFont(MaterialFont, scale(20));
         let shuffle_on = new Icon(Material.shuffle, iconFont, menuColors.highlight);
         let shuffle_off = new Icon(Material.shuffle, iconFont, menuColors.text);
         let repeat_off = new Icon(Material.repeat, iconFont, menuColors.text);

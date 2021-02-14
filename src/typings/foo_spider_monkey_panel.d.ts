@@ -1,4 +1,9 @@
-// Modified: 2020-02-20;
+/**
+ * This type file should be compatible with foo_spider_monkey_panel.dll v1.4.0,
+ * if not, please let me know.
+ */
+
+// version: v1.4.0
 
 /**
  * Evaluates the script in file.
@@ -11,6 +16,13 @@ declare var include: (path: string) => void;
 type StringOrNumber = string | number;
 
 interface IFbUtils {
+
+    /** 
+     * returns foobar2000 version as a string, e.g. 1.4.1;
+     */
+    Version: string;
+
+
     /** At %appdata%\foobar2000 or foobar2000 installation folder; */
     ProfilePath: string;
 
@@ -528,6 +540,65 @@ interface IFbUtils {
 
     /** @method */
     VolumeUp(): void;
+
+    /**
+     * Does the same thing as `utils.FileTest(path, 'charset')`;
+     * 
+     * @method
+     * @param {string} path
+     */
+    DetectCharset(path: string): string;
+
+    /**
+     * It uses the same editor as the one that is set for editing scripts in
+     * `window.ShowConfigureV2`;
+     * 
+     * @method
+     * @param {string} path
+     * 
+     */
+    EditTextFile(path: string): void;
+
+    /**
+     * Does the same thing as `FileTest(path, 'e');
+     * 
+     * @method
+     * @param {string} path
+     */
+    FileExists(path: string): boolean;
+
+    /**
+     * @method
+     * @param {string} path
+     */
+    GetFileSize(path: string): string;
+
+    /**
+     * Package id can be retrieved from `window.ScriptInfo` (only if the panel
+     * actually uses script package)
+     * 
+     * @param {number} package_id
+     */
+    GetPackagePath(package_id: number): string;
+
+    /**
+     *  Does the same thing as `utils.FileTest(path, 'd');
+     * 
+     * @param {string} path
+     */
+    IsDirectory(path: string): boolean;
+
+
+    /**
+     * @param {string} path
+     */
+    IsFile(path: string): boolean;
+
+    /**
+     * @param {string} path
+     */
+    SplitFilePath(path: string): string[];
+
 }
 
 /**
@@ -1827,6 +1898,59 @@ interface Window {
      * @method
      */
     ShowProperties(): void;
+
+    /**
+     * Uses editor that is set in `window.ShowConfigureV2`. By default works as
+     * the same as the old `window.Configure` dialog.
+     */
+    EditScript(): void;
+
+    /**
+     * This dialog contains only various panel settings. Script editing is now
+     * invoked via `Edit` buttons or `window.EditScript` dialog.
+     */
+    ShowConfigureV2(): void;
+
+    /**
+     *  - 'memory_usage': same values as `window.PanelMemoryUsage`;
+     *  - 'total_memory_usage': same values as `window.TotalMemeoryUsage`;
+     *  - 'total_memory_limit': same values as `window.MemoryLimit`;
+     */
+    JsMemoryStats: {
+        memory_usage: number;
+        total_memory_usage: number;
+        total_memory_limit: number;
+    }
+
+    /**
+     * `grab_focus` has the same behavior as the checkbox int the old
+     * `window.Configure` dialog, i.e. if true, grabs user input when mouse is
+     * over the panel. `true` by default.
+     */
+    DefineScript(script_name: string, infoObj: {
+        author?: string;
+        version?: string;
+        features: {
+            drag_n_drop?: boolean;
+            grab_focus?: boolean;
+        }
+    }): void;
+
+
+    /**
+     * Contains all the info about the script that was either set up with
+     * `window.DefineScript` or was defined in script package.
+     */
+    ScriptInfo:  {
+        author: string;
+        version: string;
+        features: {
+            drag_n_drop: boolean;
+            grab_focus: boolean;
+        }
+    }
+
+    Tooltip: IFbTooltip;
 }
 
 /**
@@ -2018,7 +2142,11 @@ interface IFbMetadb {
 // }
 
 /**
- * Handle list elements can be accessed with array accessor, e.g. handle_list[i]
+ * Handle list elements can be accessed with array accessor, e.g.
+ * handle_list[i]
+ * Added iterator protocol support to FbMetadbHandleList: see
+ * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols
+ * for more info.
  *
  * @constructor
  * @param {FbMetadbHandleList | FbMetadbHandle | Array<FbMetadbHandle> | null | undefined} arg
@@ -2574,6 +2702,8 @@ interface IFbTooltip {
      * @param {number} y
      */
     TrackPosition(x: number, y: number): void;
+
+    SetFont(fontName: string, size_px: number, style?: number): void;
 }
 
 /**
@@ -2617,8 +2747,16 @@ interface IFbUiSelectionHolder {
      * Sets the selected items.
      *
      * @param {FbMetadbHandleList} handle_list
+     * @param {number} type = 0
+     *  - 0: undefined, default value;
+     *  - 1: active_playlist_selection;
+     *  - 2: caller_active_playlist;
+     *  - 3: playlist_manager;
+     *  - 4: now_playing;
+     *  - 5: keyboard_shortcut_list;
+     *  - 6: media_library_viewer;
      */
-    SetSelection(handle_list: IFbMetadbList): void;
+    SetSelection(handle_list: IFbMetadbList, type?: number): void;
 
     /**
      * Sets selected items to playlist selection and enables tracking.<br>
@@ -3020,7 +3158,7 @@ interface IGdiGraphics {
      * @param {number=} [flags=0] See Flags.js > StringFormatFlags
      * @return {MeasureStringInfo}
      */
-    MeasureString(str: number|string, font: IGdiFont, x: number, y: number, w: number, h: number, flags?: number): IMeasureStringInfo;
+    MeasureString(str: number | string, font: IGdiFont, x: number, y: number, w: number, h: number, flags?: number): IMeasureStringInfo;
 
 
     /**
@@ -3276,7 +3414,6 @@ interface IThemeManager {
 
 declare var fb: IFbUtils;
 declare var gdi: IGdiUtils;
-// declare var window: Window; // (declared already;)
 declare var utils: IWSHUtils;
 declare var plman: IFbPlaylistManager;
 declare var FbMetadbHandleList: IFbMetadbList;

@@ -175,9 +175,9 @@ export const fonts = {
     trebuchet_12: gdi.Font("Trebuchet MS", scale(12)),
 }
 
-export function GdiFont(fontInfo: string): IGdiFont;
-export function GdiFont(fontName: string, size: number, style?: number): IGdiFont;
-export function GdiFont(infoOrName: string, size?: number, style?: number): IGdiFont {
+export function GetFont(fontInfo: string): IGdiFont;
+export function GetFont(fontName: string, size: number, style?: number): IGdiFont;
+export function GetFont(infoOrName: string, size?: number, style?: number): IGdiFont {
     if (size !== undefined) {
         let fontName = infoOrName.trim().toLowerCase();
         if (fontName === "semibold" || fontName === "semi") {
@@ -207,7 +207,7 @@ export function GdiFont(infoOrName: string, size?: number, style?: number): IGdi
         if (isNumber(+infos[2])) {
             style = +infos[2];
         }
-        return GdiFont(fontName, size, style);
+        return GetFont(fontName, size, style);
     }
 }
 

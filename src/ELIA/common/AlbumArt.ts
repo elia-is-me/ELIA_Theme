@@ -1,53 +1,139 @@
 /// <reference path="../../typings/foo_spider_monkey_panel.d.ts" />
 
-import { CropImage, TextRenderingHint, createImage, SmoothingMode, debounce, StopReason, BuildFullPath, fso, scale, InterpolationMode, isNumber, ScaleImage, DrawImageScale } from "./Common";
+import {
+	CropImage,
+	TextRenderingHint,
+	createImage,
+	SmoothingMode,
+	debounce,
+	StopReason,
+	BuildFullPath,
+	fso,
+	InterpolationMode,
+	ThrottledRepaint,
+	debugTrace,
+	getOrDefault,
+} from "./Common";
 import { Component } from "./BasePart";
 import { StringFormat } from "./String";
 import { themeColors } from "./Theme";
+import { textRenderingHint } from "./Button";
 
-// image cache;
-// ---- 
+const sanitize = (str: string) => str.replace(/[/\\|:]/g, "-")
+	.replace(/\*/g, "x")
+	.replace(/"[<>]/g, "_")
+	.replace(/\?/g, "")
+	.replace(/^\./, "_")
+	.replace(/\.+$/, "")
+	.replace(/^\s+|[\n\s]+$/g, "")
+	.replace(/\^\^/g, "-")
 
-interface CacheObj {
+export interface CacheObj {
+	art_id?: number;
+	image_path?: string;
 	image: IGdiBitmap | null;
 	load_request: number;
 	tid: number;
 }
+export const enum AlbumArtId {
+	Front = 0,
+	Back = 1,
+	Disc = 2,
+	Icon = 3,
+	Artist = 4,
+}
+export const enum ArtworkType {
+	Nowplaying,
+	Album,
+	Artist,
+	Playlist,
+}
+
+const tf_album = fb.TitleFormat("$directory(%path%)^^%album%");
+const tf_crc = fb.TitleFormat("$crc32($directory(%path%)^^%album%)");
+let coverLoad: number = null;
+let coverDone: number = null;
+let saveImageSize = window.GetProperty("Global.Save to disk image size", 600);
 
 class ImageCache {
-	private _cacheFolder = fb.ProfilePath + "ELIA_CACHE\\";
-	private _imageSize = +window.GetProperty("ImageCache.Image Size", 500);
-	private _cacheMap: Map<string | number, CacheObj> = new Map();
-	tf_crc = fb.TitleFormat("$crc32($directory(%path%)^^%album%)");
-	noCover: IGdiBitmap;
-	noArt: IGdiBitmap;
-	noPhoto: IGdiBitmap;
+	private cacheFolder = fb.ProfilePath + "IMG_Cache\\";
+	// image size of the image saved in cache item
+	private imgSize: number = 0;
+	private imgFolder = "";
+	private cacheMap: Map<string | number, CacheObj> = new Map();
+	private enableDiskCache = false;
+	private tf_key: IFbTitleFormat;
+	private cacheType: number = AlbumArtId.Front;
+	private stubImg: IGdiBitmap;
+	private loadingImg: IGdiBitmap;
+	//
+	constructor(options?: {
+		tf_key?: IFbTitleFormat;
+		imageSize?: number;
+		enableDiskCache?: boolean;
+		cacheType?: number;
+	}) {
+		if (options == null) { options = {} }
+		this.imgSize = (options.imageSize || 250);
+		if (!Number.isInteger(this.imgSize)) {
+			this.imgSize = 250;
+			console.log(
+				"EliaTheme Warning: Invalid cache image size: ",
+				this.imgSize,
+				"\nSet cache image size to 250px"
+			);
+		}
+		// options.enableDiskCache || (this.enableDiskCache = options.enableDiskCache);
+		this.enableDiskCache = getOrDefault(options, o => o.enableDiskCache, false);
+		if (this.enableDiskCache) {
+			this.imgFolder = this.cacheFolder + saveImageSize + "\\"
+			BuildFullPath(this.imgFolder);
+		}
+		this.cacheType = (options.cacheType || AlbumArtId.Front);
+		this.getStubImg();
+		this.tf_key =
+			options.tf_key || fb.TitleFormat("%album artist%^^%album%^^%date%");
+	}
 
-	private coverLoad: number | null;
-	private coverDone: number | null;
-
-	constructor() {
-		// BuildFullPath(this._cacheFolder);
-		// if (!isNumber(this._imageSize)) {
-		// 	this._imageSize = 500;
-		// 	window.SetProperty("ImageCache.Image Size", this._imageSize);
-		// }
-		this._createStubImages();
-		this.noCover = this._stubImages[0];
-		this.noArt = this._stubImages[2];
-		this.noPhoto = this._stubImages[1];
+	getStubImg() {
+		if (ImageCache.stubImgs.length === 0) {
+			ImageCache.createStubImgs();
+		}
+		let stubImg: IGdiBitmap;
+		switch (this.cacheType) {
+			case AlbumArtId.Front:
+				stubImg = ImageCache.stubImgs[0]; // no cover;
+				break;
+			case AlbumArtId.Artist:
+				stubImg = ImageCache.stubImgs[1]; // no photo;
+				break;
+			default:
+				stubImg = ImageCache.stubImgs[2];// no art;
+				break;
+		}
+		this.stubImg = stubImg.Resize(this.imgSize, this.imgSize);
+		this.loadingImg = ImageCache.stubImgs[3].Resize(this.imgSize, this.imgSize);
 	}
 
 	clear() {
-		this._cacheMap.clear();
+		this.cacheMap.clear();
 	}
 
-	hit(metadb: IFbMetadb, crcKey?: string, is_scrolling = false) {
-		if (!metadb) {
-			return;
+	delete_(key: string) {
+		if (this.cacheMap.get(key) != null) {
+			this.cacheMap.delete(key);
 		}
-		let cacheKey = this.tf_crc.EvalWithMetadb(metadb);
-		let cacheObj = this._cacheMap.get(cacheKey);
+	}
+
+	hit(metadb: IFbMetadb, art_id: number, options: { force?: boolean; delay?: number; stop?: boolean } = {}) {
+		if (!metadb) {
+			return this.stubImg;
+		}
+		let force = (options.force || false);
+		let delay = (options.delay || 5);
+		let stop = (options.stop || false);
+		let cacheKey = sanitize(this.tf_key.EvalWithMetadb(metadb));
+		let cacheObj = this.cacheMap.get(cacheKey);
 		if (cacheObj && cacheObj.image) return cacheObj.image;
 		if (cacheObj == null) {
 			cacheObj = {
@@ -55,46 +141,61 @@ class ImageCache {
 				image: null,
 				load_request: 0
 			};
-			this._cacheMap.set(cacheKey, cacheObj);
+			this.cacheMap.set(cacheKey, cacheObj);
 		};
-		if (cacheObj.image == null) {
-			if (cacheObj.load_request === 0) {
-				if (!this.coverLoad) {
-					this.coverLoad = window.SetTimeout(() => {
-						try {
-							cacheObj.tid = this.loadImageFromCache(cacheKey);
-							cacheObj.load_request = 1;
-						} catch (e) { }
-						this.coverLoad && window.ClearTimeout(this.coverLoad);
-						this.coverLoad = null;
-					}, is_scrolling ? 100 : 5);
-				}
-
-			}
+		// firstly try to load image from cache folder if diskCacheEnabled.
+		if (this.enableDiskCache && cacheObj.load_request === 0) {
+			(!coverLoad) && (coverLoad = window.SetTimeout(() => {
+				cacheObj.tid = gdi.LoadImageAsync(window.ID, cacheKey);
+				coverLoad && window.ClearTimeout(coverLoad);
+				coverLoad = null;
+			}, delay));
 		}
-		if (cacheObj.load_request !== 0) {
-			if (!this.coverLoad) {
-				this.coverLoad = window.SetTimeout(() => {
-					utils.GetAlbumArtAsync(window.ID, metadb, AlbumArtId.Front, false);
-					this.coverLoad && window.ClearTimeout(this.coverLoad);
-					this.coverLoad = null;
-				}, (is_scrolling ? 100 : 5));
-			}
+		// diskCache disabled or failed to get image from cacheFolder.
+		if (!this.enableDiskCache || cacheObj.load_request === 1) {
+			(!coverLoad) && (coverLoad = window.SetTimeout(() => {
+				utils.GetAlbumArtAsync(window.ID, metadb, AlbumArtId.Front, false);
+				coverLoad && window.ClearTimeout(coverLoad);
+				coverLoad = null;
+			}, delay));
 		}
-
+		return this.loadingImg;
 	}
 
-	on_load_image_done(tid: number, image: IGdiBitmap | null) {
+	changeImageSize(size_px: number) {
+		if (size_px !== this.imgSize) {
+			this.imgSize = size_px;
+			this.getStubImg();
+			this.clear();
+		}
+	}
+
+	private formatImage(img: IGdiBitmap) {
+		if (!img || Number.isNaN(this.imgSize) || this.imgSize < 1) return;
+		return CropImage(img, this.imgSize, this.imgSize);
+	}
+
+	on_load_image_done(tid: number, image: IGdiBitmap | null, imgPath: string) {
+		if (Number.isNaN(this.imgSize) || this.imgSize < 1) {
+			console.log("ImageCache, Invalid Value: imgSize ", this.imgSize);
+			return;
+		}
 		let cacheObj: CacheObj;
-		for (let [key, obj] of this._cacheMap) {
+		for (let [key, obj] of this.cacheMap) {
 			if (obj.tid === tid) {
 				cacheObj = obj;
 				cacheObj.tid = -1; // reset;
-				cacheObj.image = image;
-				cacheObj.load_request = 2;
+				cacheObj.image = (image ? this.formatImage(image) : null);
+				if (cacheObj.load_request >= 1) {
+					debugTrace("something wrong, cachObj.load_request == ", cacheObj.load_request)
+				}
+				cacheObj.load_request = 1;
+				cacheObj.image_path = imgPath;
 				break;
 			}
 		}
+		// TODO: repaint when visible;
+		ThrottledRepaint();
 	}
 
 	on_get_album_art_done(metadb: IFbMetadb, art_id: number, image: IGdiBitmap | null, image_path: string) {
@@ -102,45 +203,48 @@ class ImageCache {
 			return;
 		}
 		if (!image && art_id === AlbumArtId.Front) {
-			if (!this.coverLoad) {
-				this.coverLoad = window.SetTimeout(() => {
+			if (!coverLoad) {
+				coverLoad = window.SetTimeout(() => {
 					// 网易云下载的音乐会把封面存在 'Disc' 中;
 					utils.GetAlbumArtAsync(window.ID, metadb, AlbumArtId.Disc, false);
-					this.coverLoad && window.ClearTimeout(this.coverLoad);
-					this.coverLoad = null;
+					coverLoad && window.ClearTimeout(coverLoad);
+					coverLoad = null;
 				}, 5);
 			}
 		} else {
-			let cacheKey = this.tf_crc.EvalWithMetadb(metadb);
-			let cacheObj: CacheObj = {
-				tid: -1,
-				image: ScaleImage(image, this._imageSize, this._imageSize, InterpolationMode.HighQuality),
-				load_request: 2
+			//
+			let cacheKey = sanitize(this.tf_key.EvalWithMetadb(metadb));
+			let cacheObj: CacheObj = this.cacheMap.get(cacheKey);
+			if (cacheObj == null) {
 			}
-			this._cacheMap.set(cacheKey, cacheObj);
+			// set cache obj.
+			cacheObj.load_request = 2;
+			cacheObj.art_id = art_id;
+			cacheObj.image = (image ? this.formatImage(image) : this.stubImg);
+			cacheObj.image_path = image_path;
+			ThrottledRepaint();
+			// save image to cache_folder if need.
 			window.SetTimeout(() => {
-				if (fso.FileExists(this._cacheFolder + cacheKey)) {
-					//
+				if (fso.FileExists(this.cacheFolder + cacheKey)) {
+					// if cacheObj.reset_cache. TODO
 				} else {
-					if (cacheObj.image) {
-						cacheObj.image.SaveAs(this._cacheFolder + cacheKey, "image/jpeg");
-						console.log("save image to " + this._cacheFolder + cacheKey)
+					// no need to save small images to cache folder.
+					if (image && (image.Width > 1000 && image.Height > 1000)) {
+						let img = CropImage(image, 600, 600, InterpolationMode.HighQuality);
+						let success = img.SaveAs(this.imgFolder + cacheKey);
+
 					}
 				}
 			}, 5);
 		}
 	}
 
-	private loadImageFromCache(crc: string) {
-		return gdi.LoadImageAsync(window.ID, this._cacheFolder + crc);
-	}
-
-	private _stubImages: IGdiBitmap[] = [];
-
-	private _createStubImages() {
+	static stubImgs: IGdiBitmap[] = [];
+	static createStubImgs() {
 		let stubImages: IGdiBitmap[] = [];
 		let font1 = gdi.Font("Segoe UI", 230, 1);
 		let font2 = gdi.Font("Segoe UI", 120, 1);
+		let font3 = gdi.Font("Segoe UI", 100, 1);
 		let foreColor = themeColors.titleText;
 		for (let i = 0; i < 3; i++) {
 			stubImages[i] = createImage(500, 500, true, g => {
@@ -161,36 +265,23 @@ class ImageCache {
 				g.FillSolidRect(60, 400, 380, 20, 0x15fffffff & foreColor);
 			});
 		}
-		this._stubImages = stubImages;
+		stubImages.push(createImage(500, 500, true, g => {
+			g.SetSmoothingMode(SmoothingMode.HighQuality);
+			g.FillRoundRect(0, 0, 500, 500, 8, 8, foreColor & 0x0fffffff);
+			g.SetTextRenderingHint(TextRenderingHint.AntiAlias);
+			g.DrawString("LOADING", font3, 0x25ffffff & foreColor, 0, 0, 500, 500, StringFormat.Center);
+		}));
+		this.stubImgs = stubImages;
 	}
 }
-
-const imageCache = new ImageCache();
-
-// -----
-
-export const enum AlbumArtId {
-	Front = 0,
-	Back = 1,
-	Disc = 2,
-	Icon = 3,
-	Artist = 4,
+if (ImageCache.stubImgs.length === 0) {
+	ImageCache.createStubImgs();
 }
-
-export const enum ArtworkType {
-	Nowplaying,
-	Album,
-	Artist,
-	Playlist,
-}
-
-const tf_album = fb.TitleFormat("$directory(%path%)^^%album%");
 
 export class PlaylistArtwork extends Component {
 	readonly className = "PlaylistArtwork";
-	readonly stubImage: IGdiBitmap = imageCache.noArt;
+	readonly stubImage: IGdiBitmap = ImageCache.stubImgs[2];
 	image: IGdiBitmap;
-
 	private _cache: Map<string | number, IGdiBitmap> = new Map();
 	private _noCoverKey = "<no-cover>";
 
@@ -199,7 +290,6 @@ export class PlaylistArtwork extends Component {
 	}
 
 	async getArtwork() {
-
 		// Check stub_image;
 		let stub = this._cache.get(-1);
 		if (!stub) {
@@ -323,15 +413,18 @@ export class PlaylistArtwork extends Component {
 	}
 
 	on_size = debounce(() => {
-		// this.image = null;
 		this._cache.clear();
-		this.getArtwork();
+		try {
+			// this.getArtwork();
+		} catch (e) { 
+			debugTrace("error accur on size getArtwork, 421")
+		}
 	}, 200);
 }
 
 export class NowplayingArtwork extends Component {
 	readonly className = "NowplayingArtwork";
-	readonly stubImage: IGdiBitmap = imageCache.noCover;	
+	readonly stubImage: IGdiBitmap = ImageCache.stubImgs[0];
 	image: IGdiBitmap;
 	_noCover: IGdiBitmap;
 	trackKey: string = "0123456789";
@@ -410,68 +503,48 @@ export class NowplayingArtwork extends Component {
 	}, 200);
 }
 
+
 export class AlbumArtwork extends Component {
 	readonly className = "AlbumArtwork";
-	readonly stubImage = imageCache.noCover;
-
-	image: IGdiBitmap;
-	_noCover: IGdiBitmap;
 	metadb: IFbMetadb;
+	private imageCache: ImageCache;// = new ImageCache({ enableDiskCache: true });
+	artId: number;
 
-	constructor() {
+	constructor(options: { artworkType?: number; }) {
 		super({})
-	}
-	processImage(image: IGdiBitmap) {
-		if (!this.width || !this.height) {
-			return;
-		}
-		return CropImage(image, this.width, this.height);
-	}
-
-	async getArtwork(metadb: IFbMetadb) {
-		if (!this._noCover || this._noCover.Width !== this.width) {
-			// console.log(this.width, this.height);
-			this._noCover = this.processImage(this.stubImage);
-		}
-
-		// getalbumart;
-		if (metadb) {
-			this.metadb = metadb;
-
-			let result = await utils.GetAlbumArtAsyncV2(
-				window.ID, metadb, AlbumArtId.Front
-			);
-			if (!result || !result.image) {
-				result = await utils.GetAlbumArtAsyncV2(
-					window.ID, metadb, AlbumArtId.Disc
-				);
-			};
-			if (result && result.image) {
-				this.image = this.processImage(result.image);
-			} else {
-				this.image = null;
-			}
-		} else {
-			this.image = null;
-			this.metadb = null;
-		}
-		this.repaint();
+		this.artId = getOrDefault(options, o => o.artworkType, AlbumArtId.Front);
+		this.imageCache = new ImageCache({
+			cacheType: this.artId,
+			enableDiskCache: true, // todo: global property.
+		});
 	}
 
-	on_init() {
-		if (this.metadb) {
-			this.getArtwork(this.metadb);
-		}
+	getArtwork(metadb?: IFbMetadb | null) {
+		this.metadb = metadb;
 	}
+
+	on_init() { }
 
 	on_paint(gr: IGdiGraphics) {
-		let img = this.image || this._noCover;
-		if (!img) return;
+		let img = this.imageCache.hit(this.metadb, this.artId, { delay: 30 });
+		if (!img) {
+			return;
+		}
 		gr.DrawImage(img, this.x, this.y, this.width, this.height, 0, 0, img.Width, img.Height);
 	}
 
 	on_size = debounce(() => {
-		this.getArtwork(this.metadb);
+		this.imageCache.changeImageSize(this.width);
 	}, 200);
+
+	on_load_image_done(tid: number, image: IGdiBitmap, imagePath: string) {
+		this.imageCache.on_load_image_done(tid, image, imagePath);
+		this.repaint();
+	}
+
+	on_get_album_art_done(metadb: IFbMetadb, artId: number, image: IGdiBitmap, image_path: string) {
+		this.imageCache.on_get_album_art_done(metadb, artId, image, image_path);
+		this.repaint();
+	}
 
 }

@@ -42,7 +42,6 @@ export function blendColors(c1: number, c2: number, factor: number) {
 	var r = Math.round(c1_[0] + factor * (c2_[0] - c1_[0]));
 	var g = Math.round(c1_[1] + factor * (c2_[1] - c1_[1]));
 	var b = Math.round(c1_[2] + factor * (c2_[2] - c1_[2]));
-	//fb.trace("R = " + r + " G = " + g + " B = " + b);
 	return 0xff000000 | (r << 16) | (g << 8) | b;
 }
 
@@ -527,33 +526,36 @@ export function vol2pos(v: number) {
 }
 
 export function getTimestamp() {
-	var d,
-		s1,
-		s2,
-		s3,
-		hh,
-		min,
-		sec,
-		timestamp;
+	var d, s1, s2, s3, hh, min, sec, timestamp;
 	d = new Date();
 	s1 = d.getFullYear();
-	s2 = (d.getMonth() + 1);
+	s2 = d.getMonth() + 1;
 	s3 = d.getDate();
 	hh = d.getHours();
 	min = d.getMinutes();
 	sec = d.getSeconds();
-	if (s3.toString().length == 1)
-		s3 = "0" + s3;
-	timestamp = s1 + ((s2 < 10) ? "-0" : "-") + s2 + ((s3 < 10) ? "-0" : "-") + s3 + ((hh < 10) ? " 0" : " ") + hh + ((min < 10) ? ":0" : ":") + min + ((sec < 10) ? ":0" : ":") + sec;
+	if (s3.toString().length == 1) s3 = "0" + s3;
+	timestamp =
+		s1 +
+		(s2 < 10 ? "-0" : "-") +
+		s2 +
+		(s3 < 10 ? "-0" : "-") +
+		s3 +
+		(hh < 10 ? " 0" : " ") +
+		hh +
+		(min < 10 ? ":0" : ":") +
+		min +
+		(sec < 10 ? ":0" : ":") +
+		sec;
 	return timestamp;
-};
+}
 
 export const foo_playcount = utils.CheckComponent("foo_playcount", true);
 
 
-// https://github.com/microsoft/vscode/blob/ba35190e9ccc4b410eaac46bfaa0f06c879db7c9/src/vs/base/common/arrays.ts
 /**
  * Returns the last element of an array.
+ * https://github.com/microsoft/vscode/blob/ba35190e9ccc4b410eaac46bfaa0f06c879db7c9/src/vs/base/common/arrays.ts
  * @param array The array.
  * @param n Which element from the end (default is zero).
  */
@@ -566,6 +568,76 @@ export function debugTrace(...data: any[]) {
 	console.log("EliaTheme Debug: ", ...data);
 }
 
-export const memoryLimit = () =>
-	window.PanelMemoryUsage / window.MemoryLimit > 0.4 ||
-	window.TotalMemoryUsage / window.MemoryLimit > 0.5;
+/**
+ * Whether panel's or total panels' memory usage are outside the allowd memory
+ * usage.
+ */
+export const memoryLimit = () => {
+	let {
+		memory_usage,
+		total_memory_limit,
+		total_memory_usage,
+	} = window.JsMemoryStats;
+	return (
+		memory_usage / total_memory_limit > 0.4 ||
+		total_memory_usage / total_memory_limit > 0.5
+	);
+};
+
+/**
+ * let panel accept all keyboard inputs;
+ * GrabFocus should be enabled.
+ */
+export const acceptAllKeys = () => window.DlgCode = 0x0004;
+
+/**
+ * ref: https://github.com/microsoft/vscode/blob/992cf6bd44d89f85b50199d52ff34ca14fd5358f/src/vs/base/common/objects.ts
+ */
+export function getOrDefault<T, R>(obj: T, fn: (obj: T) => R | undefined, defaultValue: R): R {
+	const result = fn(obj);
+	return typeof result === 'undefined' ? defaultValue : result;
+}
+
+
+export function uniq(array: string[]) {
+	return Array.from(new Set(array));
+}
+
+/**
+ * yyyy-mm-dd or yyyy/mm/dd or yyyy.mm.dd => yyyy
+ * yyyy => yyyy
+ * "" => ""
+ */
+export function getYear(str: string) {
+	let arr = str.split(/[\.\/\-]/);
+	return arr.find(s => s.length === 4) || "";
+}
+
+export const TF_MOOD = fb.TitleFormat("[%mood%]");
+let reSpace = /\s+/g;
+
+export function ReadMood(metadb: IFbMetadb) {
+	if (!metadb) return;
+	let moodRaw = TF_MOOD.EvalWithMetadb(metadb).replace(reSpace, "");
+	return moodRaw ? 1 : 0;
+}
+
+export function ToggleMood(metadb: IFbMetadb, mood?: number) {
+	if (!metadb) {
+		console.log("EliaTheme Warning: NULL metadb!")
+		return;
+	}
+	try {
+		if (mood == null) {
+			mood = ReadMood(metadb);//+TF_MOOD.EvalWithMetadb(metadb);
+		}
+		let metadbs = new FbMetadbHandleList(metadb);
+		if (mood == 0) {
+			metadbs.UpdateFileInfoFromJSON(JSON.stringify({ "MOOD": getTimestamp() }));
+		} else {
+			metadbs.UpdateFileInfoFromJSON(JSON.stringify({ "MOOD": "" }))
+		}
+	} catch (e) {
+		console.log("EliaTheme Warning: ", "Fail to update mood!", e);
+	}
+}

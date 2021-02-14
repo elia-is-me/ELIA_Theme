@@ -6,7 +6,7 @@ import { StringFormat } from "../common/String";
 import { notifyOthers } from "../common/UserInterface";
 import { IconButton } from "./Buttons";
 import { TXT } from "../common/Lang";
-import { GdiFont, themeColors } from "../common/Theme";
+import { GetFont, themeColors } from "../common/Theme";
 
 const settingsColors = {
     titleText: themeColors.titleText,
@@ -20,9 +20,9 @@ export class SettingsView extends ScrollView {
 
     colors = settingsColors;
 
-    titleFont = GdiFont("bold, 20");
-    subTitleFont = GdiFont("semibold, 16");
-    textFont = GdiFont("normal, 14");
+    titleFont = GetFont("bold, 20");
+    subTitleFont = GetFont("semibold, 16");
+    textFont = GetFont("normal, 14");
 
     closeBtn: IconButton;
     scrollbar: Scrollbar;
