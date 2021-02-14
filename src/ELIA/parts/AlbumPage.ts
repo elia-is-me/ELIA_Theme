@@ -1,14 +1,13 @@
 import { MeasureString, StringFormat, spaceStartEnd, spaceEnd, spaceStart } from "../common/String";
 import { AlbumArtId, AlbumArtwork } from "../common/AlbumArt";
 import { Component } from "../common/BasePart";
-import { clamp, CursorName, foo_playcount, KMask, MenuFlag, RGB, scale, StopReason, TextRenderingHint, VKeyCode } from "../common/Common";
+import { clamp, CursorName, foo_playcount, getYear, KMask, MenuFlag, ReadMood, RGB, scale, StopReason, TextRenderingHint, ToggleMood, VKeyCode } from "../common/Common";
 import { Material, MaterialFont } from "../common/Icon";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
 import { ui } from "../common/UserInterface";
 import { Button, IconButton } from "./Buttons";
 import { TXT } from "../common/Lang";
-import { getYear, ReadMood, ToggleMood } from "./PlaybackControlView";
 import { formatPlaylistDuration, showTrackContextMenu } from "./PlaylistView";
 import { SendToQueueListPlay } from "./SearchResultView";
 import { GetFont, scrollbarWidth, themeColors } from "../common/Theme";
@@ -408,11 +407,7 @@ export class AlbumPageView extends ScrollView {
         if (year) {
             this.header.albumArtistText += " \u2022 " + year;
         }
-        // update header album art;
-        // this.header.artwork.image = null;
         this.header.artwork.getArtwork(metadb);
-
-        //
         this.on_playback_new_track();
 
         this.repaint();
@@ -1155,7 +1150,6 @@ export class AlbumPageView extends ScrollView {
                 break;
             case 67: // C
                 if (mask === KMask.ctrl) {
-                    // this.setselection()
                     let metadbs = this.getSelectedMetadbs();
                     fb.CopyHandleListToClipboard(metadbs);
                 }
@@ -1166,12 +1160,9 @@ export class AlbumPageView extends ScrollView {
     on_playback_new_track() {
         let metadb = fb.GetNowPlaying();
         if (metadb == null || this.metadbs == null) return;
-
         this.playingIndex = this.items.findIndex(item => {
-            // return item.metadb.Compare(metadb) && item.type === 0;
             return item.metadb.RawPath === metadb.RawPath && item.type === 0;
         });
-
         if (this.playingIndex > -1) {
             this.setfocus(this.playingIndex);
             this.setselection(this.playingIndex);

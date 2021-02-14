@@ -2,7 +2,7 @@
 // Simple Playlist View
 //====================================
 
-import { TextRenderingHint, MenuFlag, VKeyCode, KMask, scale, RGB, SmoothingMode, CursorName, clamp, foo_playcount } from "../common/Common";
+import { TextRenderingHint, MenuFlag, VKeyCode, KMask, scale, RGB, SmoothingMode, CursorName, clamp, foo_playcount, ReadMood, ToggleMood } from "../common/Common";
 import { StringTrimming, StringFormatFlags, MeasureString, StringFormat, spaceStart, spaceStartEnd } from "../common/String";
 import { ThrottledRepaint } from "../common/Common";
 import { scrollbarWidth, themeColors, GetFont } from "../common/Theme";
@@ -11,7 +11,6 @@ import { ScrollView } from "../common/ScrollView";
 import { Component, IBoxModel } from "../common/BasePart";
 import { Material, MaterialFont } from "../common/Icon";
 import { PlaylistArtwork } from "../common/AlbumArt";
-import { ReadMood, ToggleMood } from "./PlaybackControlView";
 import { mouseCursor, ui } from "../common/UserInterface";
 import { Button } from "./Buttons";
 import { RunMainMenuCommand, TXT } from "../common/Lang";
@@ -418,9 +417,6 @@ class PlaylistViewItem extends Component {
 	getTags() {
 		if (!this.metadb) return;
 		if (this.title) return;
-
-		// console.log("get tags");
-
 		let rawInfo = TF_TRACK_INFO.EvalWithMetadb(this.metadb).split("^^");
 		this.title = rawInfo[2];
 		this.trackNumber = rawInfo[0];

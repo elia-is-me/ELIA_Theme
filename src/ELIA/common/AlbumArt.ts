@@ -11,13 +11,11 @@ import {
 	fso,
 	InterpolationMode,
 	ThrottledRepaint,
-	debugTrace,
 	getOrDefault,
 } from "./Common";
 import { Component } from "./BasePart";
 import { StringFormat } from "./String";
 import { themeColors } from "./Theme";
-import { textRenderingHint } from "./Button";
 
 const sanitize = (str: string) => str.replace(/[/\\|:]/g, "-")
 	.replace(/\*/g, "x")
@@ -50,10 +48,13 @@ export const enum ArtworkType {
 }
 
 const tf_album = fb.TitleFormat("$directory(%path%)^^%album%");
+const tf_album2 = fb.TitleFormat("$directory(%path%)^^%album%");
 const tf_crc = fb.TitleFormat("$crc32($directory(%path%)^^%album%)");
 let coverLoad: number = null;
 let coverDone: number = null;
 let saveImageSize = window.GetProperty("Global.Save to disk image size", 600);
+
+let id_ = (() => { let ct = 0; return () => ct++ })();
 
 class ImageCache {
 	private cacheFolder = fb.ProfilePath + "IMG_Cache\\";
@@ -66,6 +67,7 @@ class ImageCache {
 	private cacheType: number = AlbumArtId.Front;
 	private stubImg: IGdiBitmap;
 	private loadingImg: IGdiBitmap;
+	private id_ = id_();
 	//
 	constructor(options?: {
 		tf_key?: IFbTitleFormat;
@@ -73,8 +75,7 @@ class ImageCache {
 		enableDiskCache?: boolean;
 		cacheType?: number;
 	}) {
-		if (options == null) { options = {} }
-		this.imgSize = (options.imageSize || 250);
+		this.imgSize = getOrDefault(options, o => o.imageSize, 250);
 		if (!Number.isInteger(this.imgSize)) {
 			this.imgSize = 250;
 			console.log(
@@ -83,19 +84,17 @@ class ImageCache {
 				"\nSet cache image size to 250px"
 			);
 		}
-		// options.enableDiskCache || (this.enableDiskCache = options.enableDiskCache);
 		this.enableDiskCache = getOrDefault(options, o => o.enableDiskCache, false);
 		if (this.enableDiskCache) {
 			this.imgFolder = this.cacheFolder + saveImageSize + "\\"
 			BuildFullPath(this.imgFolder);
 		}
-		this.cacheType = (options.cacheType || AlbumArtId.Front);
+		this.cacheType = getOrDefault(options, o => o.cacheType, AlbumArtId.Front);
 		this.getStubImg();
-		this.tf_key =
-			options.tf_key || fb.TitleFormat("%album artist%^^%album%^^%date%");
+		this.tf_key = getOrDefault(options, o => o.tf_key, tf_album2);
 	}
 
-	getStubImg() {
+	private getStubImg() {
 		if (ImageCache.stubImgs.length === 0) {
 			ImageCache.createStubImgs();
 		}
@@ -134,7 +133,9 @@ class ImageCache {
 		let stop = (options.stop || false);
 		let cacheKey = sanitize(this.tf_key.EvalWithMetadb(metadb));
 		let cacheObj = this.cacheMap.get(cacheKey);
-		if (cacheObj && cacheObj.image) return cacheObj.image;
+		if (cacheObj && cacheObj.image) {
+			return cacheObj.image
+		};
 		if (cacheObj == null) {
 			cacheObj = {
 				tid: -1,
@@ -144,17 +145,19 @@ class ImageCache {
 			this.cacheMap.set(cacheKey, cacheObj);
 		};
 		// firstly try to load image from cache folder if diskCacheEnabled.
-		if (this.enableDiskCache && cacheObj.load_request === 0) {
+		if (this.enableDiskCache && cacheObj.load_request == 0) {
 			(!coverLoad) && (coverLoad = window.SetTimeout(() => {
-				cacheObj.tid = gdi.LoadImageAsync(window.ID, cacheKey);
+				cacheObj.tid = gdi.LoadImageAsync(window.ID, this.imgFolder + cacheKey);
+				cacheObj.load_request = 1;
 				coverLoad && window.ClearTimeout(coverLoad);
 				coverLoad = null;
 			}, delay));
 		}
 		// diskCache disabled or failed to get image from cacheFolder.
-		if (!this.enableDiskCache || cacheObj.load_request === 1) {
+		if (!this.enableDiskCache || cacheObj.load_request === 2) {
 			(!coverLoad) && (coverLoad = window.SetTimeout(() => {
 				utils.GetAlbumArtAsync(window.ID, metadb, AlbumArtId.Front, false);
+				cacheObj.load_request = 3;
 				coverLoad && window.ClearTimeout(coverLoad);
 				coverLoad = null;
 			}, delay));
@@ -181,15 +184,18 @@ class ImageCache {
 			return;
 		}
 		let cacheObj: CacheObj;
+		if (image) {
+		}
 		for (let [key, obj] of this.cacheMap) {
 			if (obj.tid === tid) {
 				cacheObj = obj;
 				cacheObj.tid = -1; // reset;
-				cacheObj.image = (image ? this.formatImage(image) : null);
-				if (cacheObj.load_request >= 1) {
-					debugTrace("something wrong, cachObj.load_request == ", cacheObj.load_request)
+				if (image) {
+					cacheObj.image = this.formatImage(image);
 				}
-				cacheObj.load_request = 1;
+				if (cacheObj.load_request >= 2) {
+				}
+				cacheObj.load_request = 2;
 				cacheObj.image_path = imgPath;
 				break;
 			}
@@ -216,9 +222,15 @@ class ImageCache {
 			let cacheKey = sanitize(this.tf_key.EvalWithMetadb(metadb));
 			let cacheObj: CacheObj = this.cacheMap.get(cacheKey);
 			if (cacheObj == null) {
+				cacheObj = {
+					tid: -1,
+					image: null,
+					image_path: null,
+					load_request: 0
+				} 
 			}
 			// set cache obj.
-			cacheObj.load_request = 2;
+			cacheObj.load_request = 4;
 			cacheObj.art_id = art_id;
 			cacheObj.image = (image ? this.formatImage(image) : this.stubImg);
 			cacheObj.image_path = image_path;
@@ -239,7 +251,14 @@ class ImageCache {
 		}
 	}
 
-	static stubImgs: IGdiBitmap[] = [];
+	static _stubImgs: IGdiBitmap[] = [];
+	static get stubImgs() {
+		if (ImageCache._stubImgs.length === 0) {
+			this.createStubImgs();
+		}
+		return this._stubImgs;
+
+	}
 	static createStubImgs() {
 		let stubImages: IGdiBitmap[] = [];
 		let font1 = gdi.Font("Segoe UI", 230, 1);
@@ -271,11 +290,8 @@ class ImageCache {
 			g.SetTextRenderingHint(TextRenderingHint.AntiAlias);
 			g.DrawString("LOADING", font3, 0x25ffffff & foreColor, 0, 0, 500, 500, StringFormat.Center);
 		}));
-		this.stubImgs = stubImages;
+		this._stubImgs = stubImages;
 	}
-}
-if (ImageCache.stubImgs.length === 0) {
-	ImageCache.createStubImgs();
 }
 
 export class PlaylistArtwork extends Component {
@@ -416,8 +432,7 @@ export class PlaylistArtwork extends Component {
 		this._cache.clear();
 		try {
 			// this.getArtwork();
-		} catch (e) { 
-			debugTrace("error accur on size getArtwork, 421")
+		} catch (e) {
 		}
 	}, 200);
 }
@@ -507,7 +522,7 @@ export class NowplayingArtwork extends Component {
 export class AlbumArtwork extends Component {
 	readonly className = "AlbumArtwork";
 	metadb: IFbMetadb;
-	private imageCache: ImageCache;// = new ImageCache({ enableDiskCache: true });
+	private imageCache: ImageCache;
 	artId: number;
 
 	constructor(options: { artworkType?: number; }) {

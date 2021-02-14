@@ -4,7 +4,7 @@
 
 import { clamp, debugTrace, getTimestamp, getYear, MenuFlag, pos2vol, ReadMood, Repaint, setAlpha, StopReason, ToggleMood, uniq, vol2pos } from "../common/Common";
 import { TextLink } from "../common/TextLink";
-import { NowplayingArtwork } from "../common/AlbumArt";
+import { AlbumArtId, AlbumArtwork, NowplayingArtwork } from "../common/AlbumArt";
 import { Slider, SliderThumbImage } from "../common/Slider";
 import { Component } from "../common/BasePart";
 import { Material, MaterialFont } from "../common/Icon"
@@ -325,7 +325,7 @@ const artistText = new TextLink({
 	}
 });
 
-const albumArt = new NowplayingArtwork();
+// const albumArt = new NowplayingArtwork();
 const THIN_MODE_WIDTH = scale(640);
 
 export class PlaybackControlView extends Component {
@@ -338,11 +338,9 @@ export class PlaybackControlView extends Component {
 	volumeWidth = scale(80);
 	artworkWidth = scale(55);
 	colors: IThemeColors;
-
-	// children;
 	volume: Slider;
 	seekbar: Slider;
-	artwork: NowplayingArtwork;
+	artwork: AlbumArtwork;
 	artist: TextLink;
 	buttons: IButtons;
 
@@ -386,6 +384,7 @@ export class PlaybackControlView extends Component {
 			this.playbackTime = formatPlaybackTime(fb.PlaybackTime);
 			this.playbackLength = formatPlaybackTime(fb.PlaybackLength);
 		}
+		this.artwork.getArtwork(npMetadb);
 		this._rightDown = false;
 		let isThin = (this.width <= THIN_MODE_WIDTH);
 		if (isThin !== this.isThinMode) {
@@ -399,7 +398,7 @@ export class PlaybackControlView extends Component {
 		this.seekbar = seekbar;
 		this.volume = volumebar;
 		this.artist = artistText;
-		this.artwork = albumArt;
+		this.artwork = new AlbumArtwork({ artworkType: AlbumArtId.Front });
 
 		this.addChild(this.seekbar);
 		this.addChild(this.volume);
@@ -547,7 +546,7 @@ export class PlaybackControlView extends Component {
 		// artist text;
 		let artist_y = this.y + this.height / 2;
 		let pb_time_x = seekbar.x - this.timeWidth - scale(4);
-		let artist_x = albumArt.x + albumArt.width + scale(12);
+		let artist_x = artwork.x + artwork.width + scale(12);
 		let artist_h = Math.ceil(artist.font.Height);
 		let artist_max_w = Math.min(pb_time_x - scale(16) - artist_x, scale(300));
 		artist.setMaxWidth(artist_max_w);
@@ -605,6 +604,7 @@ export class PlaybackControlView extends Component {
 		this.playbackTime = "00:00";
 		this.playbackLength = "--:--";
 		this.trackTitle = TF_TRACK_TITLE.EvalWithMetadb(fb.GetNowPlaying());
+		this.artwork.getArtwork(fb.GetNowPlaying());
 		this.timerStart();
 
 		this.repaint();
@@ -615,6 +615,7 @@ export class PlaybackControlView extends Component {
 			this.playbackTime = "00:00";
 			this.playbackLength = "--:--";
 			this.trackTitle = "NOT PLAYING";
+			this.artwork.getArtwork();
 			this.timerStop();
 			this.repaint();
 		}

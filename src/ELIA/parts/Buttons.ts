@@ -1,9 +1,11 @@
 import { scale, TextRenderingHint, setAlpha, SmoothingMode } from "../common/Common";
 import { StringFormat, MeasureString } from "../common/String"
 import { Material, MaterialFont } from "../common/Icon";
-import { fontNameNormal, GetFont, themeColors } from "../common/Theme";
-import { ButtonStates, Clickable, textRenderingHint } from "../common/Button";
-import { IInjectableCallbacks } from "../common/BasePart";
+import { GetFont, themeColors } from "../common/Theme";
+import { ButtonStates, Clickable } from "../common/Button";
+import { ui } from "../common/UserInterface";
+
+const ui_textRending = ui.textRender;
 
 /**
  * Icon button that only contains an icon; Currently there is no click
@@ -59,7 +61,7 @@ export class IconButton extends Clickable {
 		let { icon, _iconFont, foreColors, state } = this;
 		gr.SetTextRenderingHint(TextRenderingHint.AntiAlias);
 		gr.DrawString(icon, _iconFont, foreColors[state], this.x, this.y, this.width, this.height, StringFormat.Center);
-		gr.SetTextRenderingHint(textRenderingHint);
+		gr.SetTextRenderingHint(ui_textRending);
 	}
 }
 
@@ -190,7 +192,7 @@ export class Button extends Clickable {
 		if (icon) {
 			gr.SetTextRenderingHint(TextRenderingHint.AntiAlias);
 			gr.DrawString(icon, _iconFont, foreColor, _iconX, y, _iconWidth, height, StringFormat.Center);
-			gr.SetTextRenderingHint(textRenderingHint);
+			gr.SetTextRenderingHint(ui_textRending);
 		}
 		if (text) {
 			gr.DrawString(text, _textFont, foreColor, _textX, y, _textWidth, height, StringFormat.LeftCenter);

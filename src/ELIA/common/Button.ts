@@ -1,8 +1,5 @@
 import { CursorName } from "./Common";
 import { Component } from "./BasePart";
-import { ui } from "./UserInterface";
-
-export const textRenderingHint = ui.textRender;
 
 export const enum ButtonStates {
 	Normal = 0,

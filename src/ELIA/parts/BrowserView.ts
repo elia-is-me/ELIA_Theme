@@ -1,6 +1,6 @@
 import { AlbumArtId } from "../common/AlbumArt";
 import { Component } from "../common/BasePart";
-import { CropImage, CursorName, debounce, debugTrace, createImage, InterpolationMode, RGB, scale, SmoothingMode, tail, TextRenderingHint, VKeyCode } from "../common/Common";
+import { CropImage, CursorName, debounce, debugTrace, createImage, InterpolationMode, RGB, scale, SmoothingMode, tail, TextRenderingHint, VKeyCode, getYear } from "../common/Common";
 import { MaterialFont } from "../common/Icon";
 import { TXT } from "../common/Lang";
 import { Scrollbar } from "../common/Scrollbar";
@@ -10,7 +10,6 @@ import { GetFont, scrollbarWidth, themeColors } from "../common/Theme";
 import { mouseCursor } from "../common/UserInterface";
 import { DropdownButton } from "./Buttons";
 import { GoToAlbum, GotoPlaylist } from "./Layout";
-import { getYear } from "./PlaybackControlView";
 import { showTrackContextMenu } from "./PlaylistView";
 
 

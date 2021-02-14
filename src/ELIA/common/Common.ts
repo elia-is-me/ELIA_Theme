@@ -565,7 +565,8 @@ export function tail<T>(array: ArrayLike<T>, n: number = 0): T {
 
 
 export function debugTrace(...data: any[]) {
-	console.log("EliaTheme Debug: ", ...data);
+	let date = new Date();
+	console.log("[", [date.getHours(), date.getMinutes(), date.getSeconds(), date.getMilliseconds()].join(":"), "]", "dbg: ", ...data);
 }
 
 /**
