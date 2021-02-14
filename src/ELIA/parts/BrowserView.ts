@@ -9,6 +9,7 @@ import { MeasureString, StringFormat, StringFormatFlags, StringTrimming } from "
 import { GdiFont, scrollbarWidth, themeColors } from "../common/Theme";
 import { mouseCursor } from "../common/UserInterface";
 import { DropdownButton } from "./Buttons";
+import { GoToAlbum, GotoPlaylist } from "./Layout";
 import { getYear } from "./PlaybackControlView";
 import { showTrackContextMenu } from "./PlaylistView";
 
@@ -779,11 +780,23 @@ export class BrowserView extends ScrollView {
                 isselected ? this.selectedIndexes.splice(this.selectedIndexes.indexOf(hoverItem.index), 1) : this.selectedIndexes.push(hoverItem.index);
                 this.repaint();
             }
+        } else if (shiftPressed) {
+
+        } else {
+            this.downIndex = hoverIndex;
         }
 
     }
 
-    on_mouse_lbtn_up(x: number, y: number) { }
+    on_mouse_lbtn_up(x: number, y: number) {
+        let hoverItem = this.getHoverItem(x, y);
+        let hoverIndex = hoverItem ? hoverItem.index : -1;
+        if (hoverItem && hoverIndex === this.downIndex) {
+            GoToAlbum(hoverItem.albumName);
+        }
+        this.downIndex = -1;
+        this.repaint();
+    }
 
     on_mouse_rbtn_down(x: number, y: number) {
         let hoverItem = this.getHoverItem(x, y);
@@ -814,8 +827,6 @@ export class BrowserView extends ScrollView {
 
     on_mouse_leave() {
         let item = this.getHoverItem(mouseCursor.x, mouseCursor.y);
-        // console.log(mouseCursor.x, mouseCursor.y, item ? item.index : -1);
-        // debugTrace("area y: ", this.y + this.detailHeader.height)
         this.changeHoverIndex(item ? item.index : -1);
     }
 
