@@ -2,9 +2,9 @@
 // Playback control bar;
 // ---------------------
 
-import { clamp, debugTrace, getTimestamp, getYear, MenuFlag, pos2vol, ReadMood, Repaint, setAlpha, StopReason, ToggleMood, uniq, vol2pos } from "../common/Common";
+import { clamp, debugTrace, getYear, MenuFlag, pos2vol, ReadMood, setAlpha, StopReason, ToggleMood, uniq, vol2pos } from "../common/Common";
 import { TextLink } from "../common/TextLink";
-import { AlbumArtId, AlbumArtwork, NowplayingArtwork } from "../common/AlbumArt";
+import { AlbumArtId, AlbumArtwork } from "../common/AlbumArt";
 import { Slider, SliderThumbImage } from "../common/Slider";
 import { Component } from "../common/BasePart";
 import { Material, MaterialFont } from "../common/Icon"

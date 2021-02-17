@@ -6,17 +6,13 @@ import { notifyOthers, ui } from "../common/UserInterface";
 import { themeColors, ToggleDarkmode } from "../common/Theme";
 import { SearchBox } from "./SearchBox";
 import { TXT } from "../common/Lang";
-import { StringFormat } from "../common/String";
 import { ShowBrowser } from "./Layout";
 
 const iconSize = scale(22);
-const textRenderingHint = ui.textRender;
-
 const searchboxProps = {
-	minWidth: scale(250),
+	minWidth: scale(300),
 	maxWidth: scale(350),
 }
-
 const createIconButton = (code: string, fontSize: number, color: number) => {
 	return new IconButton({
 		icon: code,
@@ -25,7 +21,6 @@ const createIconButton = (code: string, fontSize: number, color: number) => {
 		colors: [color]
 	});
 };
-
 const topbarColors = {
 	backgroundColor: themeColors.topbarBackground,
 	foreColor: themeColors.text
@@ -47,6 +42,8 @@ export class TopBar extends Component {
 	searchBtn: IconButton;
 	searchBox: SearchBox;
 	closeSearchBtn: IconButton;
+	goBackBtn: IconButton;
+	goForwardBtn: IconButton;
 
 	constructor() {
 		super({});
@@ -104,6 +101,16 @@ export class TopBar extends Component {
 			this.repaint();
 		}
 
+		this.goBackBtn = createIconButton(Material.navigate_previous, iconSize, this.foreColor);
+		this.goBackBtn.on_init = () => { this.goBackBtn.disable(); }
+		this.goBackBtn.on_click = () => { }
+		this.addChild(this.goBackBtn);
+
+		this.goForwardBtn = createIconButton(Material.navigate_next, iconSize, this.foreColor);
+		this.goForwardBtn.on_init = () => { this.goForwardBtn.disable(); };
+		this.goForwardBtn.on_click = () => { };
+		this.addChild(this.goForwardBtn);
+
 		this.searchBox = new SearchBox();
 		this.searchBox.z = 100;
 
@@ -122,6 +129,23 @@ export class TopBar extends Component {
 
 		this.mainBtn.visible = true;
 		this.mainBtn.setBoundary(this.x + padLeft, this.y + icoOffsetTop, _iconWidth, _iconWidth);
+
+		this.goBackBtn.visible = true;
+		this.goBackBtn.setBoundary(
+			this.mainBtn.x + _iconWidth,
+			this.y + icoOffsetTop,
+			_iconWidth,
+			_iconWidth
+		);
+
+		this.goForwardBtn.visible = true;
+		this.goForwardBtn.setBoundary(
+			this.goBackBtn.x + _iconWidth,
+			this.y + icoOffsetTop,
+			_iconWidth,
+			_iconWidth
+		);
+
 		this.moreBtn.visible = true;
 		this.moreBtn.setBoundary(
 			this.x + this.width - padLeft - _iconWidth,
@@ -129,6 +153,7 @@ export class TopBar extends Component {
 			_iconWidth,
 			_iconWidth
 		);
+
 		this.switchBtn.visible = true;
 		this.switchBtn.setBoundary(
 			this.moreBtn.x - _iconWidth,
@@ -144,8 +169,12 @@ export class TopBar extends Component {
 			_iconWidth, _iconWidth
 		)
 
-		let searchboxX = this.x + scale(272);
-		let searchboxWidth = this.switchBtn.x - scale(8) - searchboxX;
+
+		let searchboxX = this.x + scale(256);
+		if (this.width < scale(850)) {
+			searchboxX = this.goForwardBtn.x + _iconWidth + scale(8);
+		}
+		let searchboxWidth = this.darkmodeBtn.x - scale(8) - searchboxX;
 		if (searchboxWidth > searchboxProps.maxWidth) {
 			searchboxWidth = searchboxProps.maxWidth;
 		}
@@ -176,12 +205,12 @@ export class TopBar extends Component {
 	on_paint(gr: IGdiGraphics) {
 		gr.FillSolidRect(this.x, this.y, this.width, this.height, topbarColors.backgroundColor);
 
-		const { _logoFont, _logoText, foreColor } = this;
-		const logoX = this.mainBtn.x + this.mainBtn.width + scale(16);
+		// const { _logoFont, _logoText, foreColor } = this;
+		// const logoX = this.mainBtn.x + this.mainBtn.width + scale(16);
 
-		gr.SetTextRenderingHint(TextRenderingHint.AntiAlias);
-		gr.DrawString(_logoText, _logoFont, foreColor, logoX, this.y, 1000, this.height, StringFormat.LeftCenter);
-		gr.SetTextRenderingHint(textRenderingHint);
+		// gr.SetTextRenderingHint(TextRenderingHint.AntiAlias);
+		// gr.DrawString(_logoText, _logoFont, foreColor, logoX, this.y, 1000, this.height, StringFormat.LeftCenter);
+		// gr.SetTextRenderingHint(textRenderingHint);
 	}
 
 	on_mouse_rbtn_up(x: number, y: number) {

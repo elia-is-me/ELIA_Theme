@@ -1,4 +1,3 @@
-import { NowplayingArtwork, PlaylistArtwork } from "../common/AlbumArt";
 import { Component } from "../common/BasePart";
 import { scale, TextRenderingHint } from "../common/Common";
 import { Material, MaterialFont } from "../common/Icon";
@@ -10,6 +9,7 @@ import { Button } from "./Buttons";
 import { TXT } from "../common/Lang";
 import { formatPlaylistDuration } from "./PlaylistView";
 import { GetFont, scrollbarWidth, themeColors } from "../common/Theme";
+import { AlbumArtId, AlbumArtwork } from "../common/AlbumArt";
 
 const pageColors = {
     text: themeColors.text,
@@ -79,7 +79,7 @@ class ThumbItem extends Component {
 
 class ArtistPageHeader extends Component {
 
-    artwork: NowplayingArtwork;
+    artwork: AlbumArtwork;
     buttons: Map<string, Button> = new Map();
 
     // for test;
@@ -95,7 +95,7 @@ class ArtistPageHeader extends Component {
     constructor() {
         super({})
 
-        this.artwork = new NowplayingArtwork(); // for test now;
+        this.artwork = new AlbumArtwork({artworkType: AlbumArtId.Artist}); // for test now;
         this.addChild(this.artwork);
 
         let shuffleall = new Button({

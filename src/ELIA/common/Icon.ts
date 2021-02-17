@@ -47,6 +47,8 @@ export const Material = {
     never_played: '\ue426',
     newly_added: '\ue3bb',
     toggle_dark: '\ue3aB',
+    navigate_previous: '\ue314',
+    navigate_next: '\ue315',
 };
 
 export const MaterialFont = "Material Icons";

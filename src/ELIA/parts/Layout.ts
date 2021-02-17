@@ -1,4 +1,4 @@
-import { scale, ThrottledRepaint } from "../common/Common";
+import { scale } from "../common/Common";
 import { Component } from "../common/BasePart";
 import { notifyOthers, ui } from "../common/UserInterface";
 import { TopBar } from "./TopbarView";
@@ -15,6 +15,7 @@ import { scrollbarWidth } from "../common/Theme";
 import { ArtistPageView } from "./ArtistPage";
 import { AlbumPageView } from "./AlbumPage";
 import { BrowserView } from "./BrowserView";
+import { ScrollView } from "../common/ScrollView";
 
 
 const CONTROL_BAR_HEIGHT = scale(76);
@@ -384,7 +385,79 @@ export class Layout extends Component {
 				break;
 		}
 	}
+
+
+	jumplist: JumpItem[];
+	jumpCurrentPosition: number;
+
+	goBack() {
+		if (!this.jumplist) {
+			this.jumplist = [];
+			return;
+		}
+		if (this.jumplist.length < 2) {
+			return;
+		}
+		// jumpCurrentPosition
+		// [1,2,3,4]
+		if (Number.isNaN(this.jumpCurrentPosition) || this.jumpCurrentPosition < 0 || this.jumpCurrentPosition >= this.jumplist.length) {
+			this.jumpCurrentPosition = this.jumplist.length - 1;
+		}
+		let jumpto = this.jumplist[this.jumpCurrentPosition - 1];
+		if (jumpto) {
+			// jump to prev page;
+			if (this.jumpCurrentPosition === this.jumplist.length - 1) {
+				/// save currentpage to jumplist;
+			}
+			this.jumpCurrentPosition -= 1;
+		}
+	}
+	goForward() {
+		if (!this.jumplist) {
+			this.jumplist = [];
+			return;
+		}
+		if (this.jumplist.length < 2) {
+			return;
+		}
+		if (Number.isNaN(this.jumpCurrentPosition) || this.jumpCurrentPosition < 0 || this.jumpCurrentPosition > this.jumplist.length - 1) {
+			this.jumpCurrentPosition = this.jumplist.length - 1;
+		}
+		let jumpto = this.jumplist[this.jumpCurrentPosition - 1];
+		if (jumpto) { }
+	}
+
+	goTo(arr: JumpItem) {
+		let viewObj: ScrollView;
+		let viewType = arr[0];
+		let options=arr[1];
+		switch (viewType){
+			case "playlistView":
+				viewObj = this.playlistView;
+				break;
+			case "albumPage":
+				viewObj = this.albumPage;
+				break;
+			case "searchResult":
+				viewObj = this.searchResult;
+				break;
+			case "browser":
+				viewObj = this.browser;
+				break;
+		}
+		if (!viewObj) return;
+
+		if (viewType === "playlistView"){
+			let activePlaylist = +options;
+			// if (!isValidPlaylist)
+			
+		}
+
+
+	}
 }
+
+type JumpItem = [string, string];
 
 /**
  * Popup an input panel for users to create a playlist, and the active_playlist

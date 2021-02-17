@@ -1,7 +1,6 @@
-import { AlbumArtId } from "../common/AlbumArt";
+import { AlbumArtId, CacheObj, ImageCache, sanitize } from "../common/AlbumArt";
 import { Component } from "../common/BasePart";
-import { CropImage, CursorName, debounce, debugTrace, createImage, InterpolationMode, RGB, scale, SmoothingMode, tail, TextRenderingHint, VKeyCode, getYear } from "../common/Common";
-import { MaterialFont } from "../common/Icon";
+import { CropImage, CursorName, debounce, debugTrace, InterpolationMode, RGB, scale, SmoothingMode, tail, TextRenderingHint, VKeyCode, getYear, getOrDefault, BuildFullPath, throttle, ThrottledRepaint, fso, MenuFlag } from "../common/Common";
 import { TXT } from "../common/Lang";
 import { Scrollbar } from "../common/Scrollbar";
 import { ScrollView } from "../common/ScrollView";
@@ -9,7 +8,7 @@ import { MeasureString, StringFormat, StringFormatFlags, StringTrimming } from "
 import { GetFont, scrollbarWidth, themeColors } from "../common/Theme";
 import { mouseCursor } from "../common/UserInterface";
 import { DropdownButton } from "./Buttons";
-import { GoToAlbum, GotoPlaylist } from "./Layout";
+import { GoToAlbum } from "./Layout";
 import { showTrackContextMenu } from "./PlaylistView";
 
 
@@ -36,12 +35,9 @@ const buttonColors = {
 
 const itemFont = GetFont("semibold,14");
 const smallItemFont = GetFont("normal,14");
-const btnFont = GetFont(MaterialFont, scale(20));
 const tabFont = GetFont("semibold, 14");
-
 let paddingLR = 0;
 let paddingTB = 0;
-
 const pageWidth = {
     thin: scale(600),
     wide: scale(920),
@@ -67,12 +63,9 @@ function updatePaddings(ww: number, wh?: number) {
 
 const tabHeight = scale(52);
 const toolbarHeight = scale(72);
-
 const itemMinWidth = scale(160); // make it config able;
 const itemMarginR = scale(16);
 const itemMarginB = scale(32);
-
-
 // View state;
 
 const enum GroupTypes {
@@ -221,7 +214,32 @@ class LibraryBrowserHeader extends Component {
         // dropdown buttons;
         // todo...
         this.sourceBtn = new DropdownButton({ text: "Library" });
-        this.sourceBtn.on_click = () => { }
+        this.sourceBtn.on_init = () => {
+            // this.sourceBtn.setText()
+        }
+        this.sourceBtn.on_click = (x: number, y: number) => {
+            let menu = window.CreatePopupMenu();
+            menu.AppendMenuItem(MenuFlag.STRING, 11, TXT("Library"));
+            menu.AppendMenuItem(MenuFlag.STRING, 12, TXT("Current playlist"));
+            menu.CheckMenuRadioItem(11, 12, browser.sourceType === SourceTypes.Library ? 11 : 12);
+            let ret = menu.TrackPopupMenu(x, y);
+            switch (ret) {
+                case 11:
+                    browser.initWithOptions({
+                        sourceType: SourceTypes.Library,
+                        viewType: GroupTypes.Albums,
+                    });
+                    break;
+                case 12:
+                    browser.initWithOptions({
+                        sourceType: SourceTypes.CurrentPlaylist,
+                        viewType: GroupTypes.Albums,
+                    });
+                    break;
+            }
+            browser.on_size();
+            browser.repaint();
+        }
         this.addChild(this.sourceBtn);
 
         this.sortBtn = new DropdownButton({ text: "Sort by: A to Z" });
@@ -287,12 +305,6 @@ class LibraryBrowserHeader extends Component {
     }
 }
 
-class ArtistDetailHeader extends Component { }
-
-class DefaultDetailHeader extends Component { }
-
-
-
 /**
  * Grid browser thumb item:
  *  - Artwork,
@@ -302,7 +314,6 @@ class DefaultDetailHeader extends Component { }
  *  - focus, hover
  */
 class BrowserItem extends Component {
-
     yOffset: number = 0;
     xOffset: number = 0;
     // list index;
@@ -310,104 +321,58 @@ class BrowserItem extends Component {
     isHover: boolean = false;
     isFocus: boolean = false;
     isSelect: boolean = false;
-
-    private itemType: number = 0;
-
-    // origin artwork get
-    artwork: IGdiBitmap;
-    // changed when item size changed;
-    private artwork_draw: IGdiBitmap;
-    load_request: number = 0;
-
     // first metadb contained in metadbs list, for get item info like 'album
     // name', 'artist name', 'artwork'...;
     metadb: IFbMetadb;
-
     // track metadbs that contained in this item;
     metadbs: IFbMetadbList;
-
     albumName: string;
     artistName: string;
     year: string;
+    cacheKey: string = "";
 
     constructor() {
         super({})
     }
 
-    setArtwork(artworkImage: IGdiBitmap | null) {
-        // this.load_request = false;
-        this.artwork = artworkImage;//|| imageCache.noCover;
-        this.adjustImageSize();
-        // this.artwork_draw = this.artwork//this.adjustImageSize(this.artwork);
-
-    }
-
-    adjustImageSize = debounce(() => {
-        // if (!this.artwork) return;
-        // if (!this.artwork_draw) this.artwork_draw = this.artwork;
-        // if (this.artwork_draw && this.artwork_draw.Width !== this.width) {
-        //     debugTrace(this.width, this.artwork.Width, this.artwork_draw.Width);
-        //     this.artwork_draw = this.artwork.Resize(this.width, this.width, InterpolationMode.HighQuality);
-        // }
-        // browser.repaint();
-    }, 150);
-
     // browser item;
     on_paint(gr: IGdiGraphics) {
-        // gr.FillSolidRect(this.x, this.y, this.width, this.width, 0x50000000);
-
-        if (this.load_request === 0) {
-            this.artwork = imageCache.cacheHit(this, AlbumArtId.Front);
+        let rectLineWidth = scale(2);
+        if (this.isSelect) {
+            gr.FillSolidRect(this.x - rectLineWidth, this.y - rectLineWidth, this.width + 2 * rectLineWidth, this.width + 2 * rectLineWidth, RGB(0, 90, 158));
         }
-        // if (this.artwork_draw && this.artwork_draw.Width !== this.width) {
-        //     this.adjustImageSize();
-        // }
-        let img_draw = this.artwork || imageCache.noCover;
-
-        // resize image or set interpolation to high quality;
-        gr.DrawImage(img_draw, this.x, this.y, this.width, this.width,
+        // draw image;
+        let img_draw = imageCache.hit(this);
+        img_draw && gr.DrawImage(img_draw, this.x, this.y, this.width, this.width,
             0, 0, img_draw.Width, img_draw.Height)
-
         // draw hover mask;
         if (this.isHover) {
             gr.FillGradRect(this.x, this.y, this.width, this.height / 2, 90, colors.text, 0, 1.0);
         }
-
-        let rectLineWidth = scale(2);
-
-        if (this.isSelect) {
-            gr.DrawRect(this.x - rectLineWidth, this.y - rectLineWidth, this.width + 2 * rectLineWidth, this.width + 2 * rectLineWidth, scale(2), RGB(0, 90, 158));
-        }
-
         let font1 = itemFont;
         let font2 = smallItemFont;
-
         let textY = this.y + this.width + scale(8);
         let line1Width = gr.MeasureString(this.albumName, font1, 0, 0, 10000, 100).Width;
-
         gr.DrawString(this.albumName, font1, colors.text,
             this.x, textY, this.width, 2.5 * font1.Height,
             StringFormat(0, 0, StringTrimming.EllipsisCharacter, StringFormatFlags.LineLimit));
-
         if (line1Width > this.width) {
             textY += 2.2 * font1.Height;
         } else {
             textY += 1.2 * font1.Height;
         }
-
         gr.DrawString(this.artistName, font2, colors.secondaryText,
             this.x, textY, this.width, this.height, StringFormat.LeftTop);
     }
-
 }
 
 export class BrowserView extends ScrollView {
 
     // Library, Playlist, AllPlaylists, SendTo
-    private sourceType: number = 0;
+    sourceType: number = 0;
 
     // Albums, Artist, Genres
-    private groupType: number = GroupTypes.Albums;
+    groupType: number = GroupTypes.Albums;
 
     items: BrowserItem[] = [];
     visibleItems: BrowserItem[] = [];
@@ -422,7 +387,7 @@ export class BrowserView extends ScrollView {
 
     scrollbar: Scrollbar;
     detailHeader: LibraryBrowserHeader;
-    imageCache: ImageCache;
+    imageCache: BrowserImageCache;
 
     constructor() {
         super({});
@@ -462,7 +427,6 @@ export class BrowserView extends ScrollView {
                 break;
             default:
                 throw new Error("ELIA THEME - Browser: " + "Invalid sourceType!");
-                break;
         }
 
         // order by format;
@@ -486,7 +450,6 @@ export class BrowserView extends ScrollView {
         let itemWidth = ((areaWidth - itemMarginR * (columnCount - 1)) / columnCount) >> 0;
         let itemHeight = itemWidth + scale(12) + (2.2 * itemFont.Height + smallItemFont.Height) >> 0;
         let rowCount = Math.ceil(this.items.length / this.columnCount);
-
         this.columnCount = columnCount;
         this.rowCount = rowCount;
         this.itemWidth = itemWidth;
@@ -510,7 +473,6 @@ export class BrowserView extends ScrollView {
             return [];
         }
 
-        let d1 = Date.now();
         let groupIndex = 0;
         let items: BrowserItem[] = [];
 
@@ -530,6 +492,15 @@ export class BrowserView extends ScrollView {
                 let tag1_arr = tags[1].split("^^");
                 currItem.artistName = tag1_arr[1];
                 currItem.year = getYear(tag1_arr[0]);
+                currItem.cacheKey = sanitize((currItem.artistName ? currItem.artistName + " - " : "") + currItem.albumName)
+                    .replace(
+                        /CD(\s*\d|\.0\d)|CD\s*(One|Two|Three)|Disc\s*\d|Disc\s*(III|II|I|One|Two|Three)\b/gi,
+                        ""
+                    )
+                    .replace(/\(\s*\)|\[\s*\]/g, " ")
+                    .replace(/\s\s+/g, " ")
+                    .replace(/-\s*$/g, " ")
+                    .trim();
                 items.push(currItem);
                 groupIndex++;
             } else {
@@ -543,77 +514,34 @@ export class BrowserView extends ScrollView {
 
     // browser set items;
     private setItems() {
-
-        let tf_diff: IFbTitleFormat;
-        let metadbs = this.metadbs;
-        let compare = "#@!";
-
-        if (this.groupType == 0) {
-            tf_diff = TF_ALBUM_TAGS;
-        } else {
-            tf_diff = TF_ARTIST_TAGS;
-        }
-
+        this.selectedIndexes = [];
         if (this.metadbs == null) {
+            this.items = [];
             return;
         }
-
-        this.selectedIndexes = [];
-
+        debugTrace("browser metadb count: ", this.metadbs.Count)
         let d1 = Date.now();
         this.items = this.createItemsFromMetadbs(this.metadbs);
         debugTrace(Date.now() - d1);
         return;
-
-        // let d1 = (new Date()).getTime();
-
-        let groupIndex = 0;
-
-        for (let i = 0, len = metadbs.Count; i < len; i++) {
-            let metadb = metadbs[i];
-            let tags = tf_diff.EvalWithMetadb(metadb).split("|||");
-            let current = tags[0];
-
-            if (current !== compare) {
-                compare = current;
-                let item = new BrowserItem();
-                item.index = groupIndex;
-                item.metadb = metadb;
-                item.metadbs = new FbMetadbHandleList(metadb);
-                item.albumName = tags[0];
-                let tag2_arr = tags[1].split("^^");
-                item.artistName = tag2_arr[1]
-                item.year = getYear(tag2_arr[0]);
-                this.items.push(item);
-                groupIndex++;
-            } else {
-                let item = this.items[this.items.length - 1];
-                item.metadbs.Add(metadb);
-            }
-        }
-
-        // let d2 = (new Date()).getTime();
-        // debugTrace("init in: ", d2 - d1, " ms", "total items: ", this.items.length);
-
     }
 
     initWithOptions(options: BrowserOptionType) {
-        this.sourceType = options.sourceType;
-        this.groupType = options.viewType;
-
-        // --> Debug;
-        this.sourceType = SourceTypes.Library;
-        this.groupType = 0;
-        // <-- debug;
-
-        this.metadbs = this.getAllMetadbs();
-
+        this.sourceType = getOrDefault(options, o => o.sourceType, SourceTypes.Library);
+        this.groupType = getOrDefault(options, o => o.viewType, 0);
+        this.metadbs = getOrDefault(options, o => o.metadbs, this.getAllMetadbs());
         this.setItems();
-
-        // Reset scroll;
         this.scroll = 0;
-
     }
+
+    private debounce_update = debounce(() => {
+        this.initWithOptions({
+            sourceType: this.sourceType,
+            viewType: this.groupType,
+        })
+        this.on_size();
+        this.repaint();
+    }, 250);
 
     //browser;
     on_init() {
@@ -621,7 +549,6 @@ export class BrowserView extends ScrollView {
             sourceType: SourceTypes.Library,
             viewType: 0
         });
-
         this.on_size();
         this.repaint();
     }
@@ -658,7 +585,7 @@ export class BrowserView extends ScrollView {
         this.scrollTo();
 
         // resize noCover image;
-        imageCache.debounce_resizeCovers(this.itemWidth);
+        imageCache.changeImageSize(this.itemWidth);
 
     }
 
@@ -829,151 +756,204 @@ export class BrowserView extends ScrollView {
         this.changeHoverIndex(item ? item.index : -1);
     }
 
+    on_load_image_done(tid: number, image: IGdiBitmap, imgPath: string) {
+        this.imageCache.loadImageDone(tid, image, imgPath);
+    }
+
     on_get_album_art_done(metadb: IFbMetadb, art_id: number, image: IGdiBitmap | null, image_path: string) {
-        let items = this.items;
-        let len = items.length;
-        let visStart = this.visibleItems[0].index;
-        let visEnd = tail(this.visibleItems)?.index;
-
-        for (let i = 0; i < len; i++) {
-            let item = items[i];
-
-            if (item.metadb && item.metadb.Compare(metadb)) {
-                // muzik download from NeteaseCloudMusic put album artwork in
-                // 'Disc' tag.
-                if (!image && art_id === AlbumArtId.Front) {
-                    item.load_request = 0;
-                    this.imageCache.cacheHit(item, AlbumArtId.Disc);
-                    break;
-                }
-
-                let artworkImage = image;
-                let cacheImgWidth = (2 * itemMinWidth) >> 0;
-                if (image && image.Width > cacheImgWidth && image.Height > cacheImgWidth) {
-                    // TODO: process image according to cover type;
-                    // console.log("image raw width, height, ", image.Width, image.Height);
-                    artworkImage = CropImage(image, cacheImgWidth, cacheImgWidth, InterpolationMode.HighQuality);
-                };
-
-                // item.setArtwork(artworkImage);
-                item.artwork = artworkImage;
-                item.load_request = 1;
-                this.imageCache.cacheIt(item.albumName, artworkImage);
-
-
-                if (i >= visStart && i <= visEnd) {
-                    if (!timerCoverDone) {
-                        timerCoverDone = window.SetTimeout(() => {
-                            this.repaint();
-                            timerCoverDone && window.ClearTimeout(timerCoverDone);
-                            timerCoverDone = null;
-                        }, 5);
-                    }
-                }
-                break;
-            }
-        }
+        this.imageCache.getAlbumArtDone(metadb, art_id, image, image_path);
     }
 
     on_library_items_added(metadbsAdded: IFbMetadbList) {
-
+        this.debounce_update();
     }
 
     on_library_items_changed(metadbsChanged: IFbMetadbList) {
-        // let removedItems = this.createItemsFromMetadbs(metadbsChanged);
+        this.debounce_update();
     }
 
-    on_library_items_removed(metadbsRemoved: IFbMetadbList) { }
+    on_library_items_removed(metadbsRemoved: IFbMetadbList) {
+        this.debounce_update();
+    }
+
+    on_metadb_changed(metadbs: IFbMetadbList | null, fromhook?: boolean) {
+        debugTrace("Browserview, ", metadbs == null || metadbs.Count, fromhook)
+    }
 
 }
 
-class ImageCache {
+interface BCacheObj {
+    tid: number;
+    image: IGdiBitmap;
+    image_path?: string;
+    load_request: number;
+}
 
-    private _cache: Map<string, IGdiBitmap> = new Map();
-    private _stubImages: IGdiBitmap[];
-    noCover: IGdiBitmap;
-    noPhoto: IGdiBitmap;
-    noArt: IGdiBitmap;
+class BrowserImageCache {
 
-    constructor() {
-        this._createStubImages();
-        this.noCover = this._stubImages[0];
-        this.noPhoto = this._stubImages[1];
-        this.noArt = this._stubImages[2];
+    private cacheMap: Map<string, BCacheObj> = new Map();
+    private cacheType: number = AlbumArtId.Front;
+    private enableDiskCache: boolean = false;
+    private cacheFolder = fb.ProfilePath + "IMG_Cache\\";
+    private imgFolder = "";
+    private stubImg: IGdiBitmap;
+    private loadingImg: IGdiBitmap;
+    private imgSize: number = 250;
+
+    constructor(op?: { enableDiskCache?: boolean; cacheType?: number }) {
+        this.enableDiskCache = getOrDefault(op, o => o.enableDiskCache, false);
+        if (this.enableDiskCache) {
+            this.imgFolder = this.cacheFolder + "600" + "\\";
+            BuildFullPath(this.imgFolder);
+        }
+        this.cacheType = getOrDefault(op, o => this.cacheType, AlbumArtId.Front);
+        this.getStubImg();
+
     }
 
-    cacheIt(key: string, image: IGdiBitmap, force: boolean = false): IGdiBitmap | null {
-        if (!image || key === "?") return;
-        if (!this._cache.get(key) || force) {
-            this._cache.set(key, image);
+    private getStubImg() {
+        let stubImg: IGdiBitmap;
+        switch (this.cacheType) {
+            case AlbumArtId.Front:
+                stubImg = ImageCache.stubImgs[0];
+                break;
+            case AlbumArtId.Artist:
+                stubImg = ImageCache.stubImgs[1];
+                break;
+            default:
+                stubImg = ImageCache.stubImgs[2];
+                break;
         }
-        // save  to cache;
-        if (enableDiskCache) {
-            // todo;
-        }
-        return;
+        this.stubImg = stubImg.Resize(this.imgSize, this.imgSize)
+        this.loadingImg = ImageCache.stubImgs[3].Resize(this.imgSize, this.imgSize);
     }
 
-    // hit(metadb: IFbMetadb, key: string, art_id = AlbumArtId.Front): IGdiBitmap | null {
-    cacheHit(item: BrowserItem, art_id = AlbumArtId.Front): IGdiBitmap | null {
-        let img = this._cache.get(item.albumName);
-        if (img == null) {
-            if (enableDiskCache) {
-                // try to load image in cache;
+    clear() {
+        this.cacheMap.clear();
+    }
+
+    hit(item: BrowserItem, art_id = AlbumArtId.Front): IGdiBitmap | null {
+        let cacheKey = item.cacheKey;
+        if (!cacheKey) {
+            return this.stubImg;
+        }
+        let cacheObj = this.cacheMap.get(cacheKey);
+        if (!cacheObj) {
+            cacheObj = {
+                tid: -1,
+                image: null,
+                load_request: 0,
             }
-            if (!timerCoverLoad && !item.load_request) {
+            this.cacheMap.set(cacheKey, cacheObj);
+        } else if (cacheObj.image) {
+            return cacheObj.image;
+        }
+        if (this.enableDiskCache && cacheObj.load_request === 0) {
+            (!timerCoverLoad) && (timerCoverLoad = window.SetTimeout(() => {
+                cacheObj.tid = gdi.LoadImageAsync(window.ID, this.imgFolder + cacheKey);
+                cacheObj.load_request = 1;
+                timerCoverLoad && window.ClearTimeout(timerCoverLoad);
+                timerCoverLoad = null;
+            }, 30));
+        }
+        if (!this.enableDiskCache || cacheObj.load_request === 2) {
+            (!timerCoverLoad) && (timerCoverLoad = window.SetTimeout(() => {
+                utils.GetAlbumArtAsync(window.ID, item.metadb, AlbumArtId.Front, false);
+                cacheObj.load_request = 3;
+                timerCoverLoad && window.ClearTimeout(timerCoverLoad);
+                timerCoverLoad = null;
+            }, 30));
+        }
+        return this.loadingImg;
+    }
+
+    changeImageSize(size_px: number) {
+        if (size_px !== this.imgSize) {
+            this.imgSize = size_px;
+            this.getStubImg();
+            this.clear();
+        }
+    }
+
+    private formatImage(img: IGdiBitmap) {
+        if (!img || Number.isNaN(this.imgSize) || this.imgSize < 1) return;
+        return CropImage(img, this.imgSize, this.imgSize);
+    }
+
+    loadImageDone(tid: number, image: IGdiBitmap | null, imgPath: string) {
+        if (Number.isNaN(this.imgSize) || this.imgSize < 1) return;
+        let cacheObj: CacheObj;
+        for (let [key, obj] of this.cacheMap) {
+            if (obj.tid === tid) {
+                cacheObj = obj;
+                cacheObj.tid = -1;
+                if (image) {
+                    cacheObj.image = this.formatImage(image);
+                }
+                if (cacheObj.load_request >= 2) { }
+                cacheObj.load_request = 2;
+                cacheObj.image_path = imgPath;
+                break;
+            }
+        }
+        ThrottledRepaint();
+    }
+
+    getAlbumArtDone(metadb: IFbMetadb, artId: number, image: IGdiBitmap | null, imgPath: string) {
+        if (!metadb) {
+            return;
+        }
+        if (!image && artId === AlbumArtId.Front) {
+            if (!timerCoverLoad) {
                 timerCoverLoad = window.SetTimeout(() => {
-                    utils.GetAlbumArtAsync(window.ID, item.metadb, art_id, false, false);
+                    utils.GetAlbumArtAsync(window.ID, metadb, AlbumArtId.Disc, false);
                     timerCoverLoad && window.ClearTimeout(timerCoverLoad);
                     timerCoverLoad = null;
-                }, (browser.isScrolling() ? 60 : 5));
+                }, 5);
             }
+        } else {
+            // TODO: 这里的响应要是混起来怎么办？
+            let cacheKey = sanitize(tf_album.EvalWithMetadb(metadb))
+                .replace(
+                    /CD(\s*\d|\.0\d)|CD\s*(One|Two|Three)|Disc\s*\d|Disc\s*(III|II|I|One|Two|Three)\b/gi,
+                    ""
+                )
+                .replace(/\(\s*\)|\[\s*\]/g, " ")
+                .replace(/\s\s+/g, " ")
+                .replace(/-\s*$/g, " ")
+                .trim();
+            let cacheObj = this.cacheMap.get(cacheKey);
+            if (cacheObj == null || cacheObj.load_request === 4) {
+                return;
+            }
+            cacheObj.load_request = 4;
+            cacheObj.image = (image ? this.formatImage(image) : this.stubImg);
+            cacheObj.image_path = imgPath;
+            ThrottledRepaint();
+            // 
+            window.SetTimeout(() => {
+                if (fso.FileExists(this.imgFolder + cacheKey)) {
+
+                } else {
+                    if (image && (image.Width > 1000 && image.Height > 1000)) {
+                        let img = CropImage(image, 600, 600, InterpolationMode.HighQuality);
+                        img.SaveAs(this.imgFolder + cacheKey);
+                    }
+                };
+            }, 5);
         }
-        return img;
     }
-
-    private _createStubImages() {
-        let stubImages: IGdiBitmap[] = [];
-        let font1 = gdi.Font("Segoe UI", 230, 1);
-        let font2 = gdi.Font("Segoe UI", 120, 1);
-        let foreColor = themeColors.titleText;
-        for (let i = 0; i < 3; i++) {
-            stubImages[i] = createImage(500, 500, true, g => {
-                g.SetSmoothingMode(SmoothingMode.HighQuality);
-                g.FillRoundRect(0, 0, 500, 500, 8, 8, foreColor & 0x0fffffff);
-                g.SetTextRenderingHint(TextRenderingHint.AntiAlias);
-                g.DrawString("NO", font1, 0x25ffffff & foreColor, 0, 0, 500, 275, StringFormat.Center);
-                g.DrawString(
-                    ["COVER", "PHOTO", "ART"][i],
-                    font2,
-                    0x20ffffff & foreColor,
-                    2.5,
-                    175,
-                    500,
-                    275,
-                    StringFormat.Center
-                );
-                g.FillSolidRect(60, 400, 380, 20, 0x15fffffff & foreColor);
-            });
-        }
-        this._stubImages = stubImages;
-    }
-
-    debounce_resizeCovers = debounce((img_width: number) => {
-        if (this.noCover.Width !== img_width) {
-            this.noCover = this._stubImages[0]
-                .Resize(img_width, img_width, InterpolationMode.HighQuality);
-        }
-    }, 150);
-
 
 }
 
 
-let imageCache = new ImageCache();
+let imageCache = new BrowserImageCache({
+    enableDiskCache: true,
+    cacheType: AlbumArtId.Front,
+});
 let timerCoverLoad: number | null;
 let timerCoverDone: number | null;
-let enableDiskCache = false;
+let tf_album = fb.TitleFormat("[%album artist% - ]%album%")
 
 
 export const browser = new BrowserView();
