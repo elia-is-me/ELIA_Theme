@@ -321,6 +321,7 @@ export class Layout extends Component {
 		if (!prevRoute || prevRoute.compare !== route.compare) {
 			this.goTo__(route);
 			this.st_back.push(route);
+			notifyOthers("update_navigation", this.st_back.length)
 		}
 	}
 
