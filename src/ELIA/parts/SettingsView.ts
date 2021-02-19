@@ -1,6 +1,6 @@
 import { scale } from "../common/Common";
 import { Material, MaterialFont } from "../common/Icon";
-import { Scrollbar } from "../common/Scrollbar";
+import { Scrollbar } from "../common/ScrollBar";
 import { ScrollView } from "../common/ScrollView";
 import { StringFormat } from "../common/String";
 import { notifyOthers } from "../common/UserInterface";

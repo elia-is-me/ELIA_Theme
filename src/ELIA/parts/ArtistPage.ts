@@ -1,7 +1,7 @@
 import { Component } from "../common/BasePart";
 import { scale, TextRenderingHint } from "../common/Common";
 import { Material, MaterialFont } from "../common/Icon";
-import { Scrollbar } from "../common/Scrollbar";
+import { Scrollbar } from "../common/ScrollBar";
 import { ScrollView } from "../common/ScrollView";
 import { StringFormat } from "../common/String";
 import { ui } from "../common/UserInterface";

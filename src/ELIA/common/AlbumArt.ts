@@ -49,6 +49,8 @@ export const enum ArtworkType {
 let coverLoad: number = null;
 let coverDone: number = null;
 let saveImageSize = window.GetProperty("Global.Save to disk image size", 600);
+let tf_comment = fb.TitleFormat("%comment%")
+const is163 = (str: string) => str.indexOf("163 key(Don't modify)") > -1;
 
 export class ImageCache {
 	private cacheFolder = fb.ProfilePath + "IMG_Cache\\";
@@ -205,7 +207,6 @@ export class ImageCache {
 	}
 
 	getAlbumArtDone(metadb: IFbMetadb, art_id: number, image: IGdiBitmap | null, image_path: string) {
-		debugTrace(this.cacheMap.entries.length);
 		if (!metadb) {
 			return;
 		}
@@ -406,11 +407,12 @@ export class PlaylistArtwork extends Component {
 			}
 		}
 
-		let images: IGdiBitmap[] = [];
+		let resultsArray: { image: IGdiBitmap; path: string }[] = [];
+		let imgs: IGdiBitmap[] = [];
 
 		for (
 			let i = 0, len = albums.length;
-			i < len && i < 10 && images.length < 4;
+			i < len && i < 10 && resultsArray.length < 4;
 			i++
 		) {
 			let result = await utils.GetAlbumArtAsyncV2(
@@ -419,33 +421,35 @@ export class PlaylistArtwork extends Component {
 				AlbumArtId.Front
 			);
 			if (!result || !result.image) {
-				result = await utils.GetAlbumArtAsyncV2(
-					window.ID,
-					albums[i],
-					AlbumArtId.Disc
-				);
+				if (is163(tf_comment.EvalWithMetadb(albums[i]))) {
+					result = await utils.GetAlbumArtAsyncV2(
+						window.ID,
+						albums[i],
+						AlbumArtId.Disc
+					);
+				}
 			}
-			if (result && result.image) {
-				images.push(result.image);
+			if (result && result.image && resultsArray.findIndex(o => o.path === result.path) === -1) {
+				resultsArray.push(result);
 			}
 		}
 
-		if (images.length === 0) {
+		if (resultsArray.length === 0) {
 			this.image = stub;
 			this.cacheMap.set(plman.ActivePlaylist, stub);
-		} else if (images.length < 4) {
-			this.image = this.processImage(images[0]);
+		} else if (resultsArray.length < 4) {
+			this.image = this.processImage(resultsArray[0].image);
 			this.cacheMap.set(plman.ActivePlaylist, this.image)
 		} else {
-			images = images.map(img => CropImage(img, 250, 250));
+			imgs = resultsArray.map(re => CropImage(re.image, 250, 250));
 			let img = gdi.CreateImage(500, 500);
 			let g = img.GetGraphics();
-			g.DrawImage(images[0], 0, 0, 250, 250, 0, 0, 250, 250);
-			g.DrawImage(images[1], 250, 0, 250, 250, 0, 0, 250, 250);
-			g.DrawImage(images[2], 0, 250, 250, 250, 0, 0, 250, 250);
-			g.DrawImage(images[3], 250, 250, 250, 250, 0, 0, 250, 250);
+			g.DrawImage(imgs[0], 0, 0, 250, 250, 0, 0, 250, 250);
+			g.DrawImage(imgs[1], 250, 0, 250, 250, 0, 0, 250, 250);
+			g.DrawImage(imgs[2], 0, 250, 250, 250, 0, 0, 250, 250);
+			g.DrawImage(imgs[3], 250, 250, 250, 250, 0, 0, 250, 250);
 			img.ReleaseGraphics(g);
-			this.image = this.processImage(img);
+			this.image = img.Resize(this.width, this.height)
 			this.cacheMap.set(plman.ActivePlaylist, this.image);
 		}
 
@@ -494,4 +498,3 @@ export class PlaylistArtwork extends Component {
 		}
 	}, 200);
 }
-

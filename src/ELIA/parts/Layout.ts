@@ -1,4 +1,4 @@
-import { scale } from "../common/Common";
+import { getOrDefault, scale, tail } from "../common/Common";
 import { Component } from "../common/BasePart";
 import { notifyOthers, ui } from "../common/UserInterface";
 import { TopBar } from "./TopbarView";
@@ -14,13 +14,12 @@ import { PlaybackBarMenu } from "./PlaybackBarMenu";
 import { scrollbarWidth } from "../common/Theme";
 import { ArtistPageView } from "./ArtistPage";
 import { AlbumPageView } from "./AlbumPage";
-import { BrowserView } from "./BrowserView";
-import { ScrollView } from "../common/ScrollView";
+import { BrowserView, SourceTypes } from "./BrowserView";
 
 
 const CONTROL_BAR_HEIGHT = scale(76);
 const TOPBAR_HEIGHT = scale(48);
-const PLMAN_MIN_WIDTH = scale(256);
+const PLMAN_MIN_WIDTH = scale(200);
 const MIN_TWO_COLUMN_WIDTH = scale(850);
 
 export const layout = {
@@ -116,6 +115,17 @@ export class Layout extends Component {
 		this.playlistManager.visible = true;
 		this.playbackBarMenu.visible = false;
 		this.setPartsVisibility(this.viewState);
+	}
+
+	on_init() {
+		this.topbar.visible = true;
+		this.playbackControlBar.visible = true;
+		this.playlistManager.visible = true;
+		this.playbackBarMenu.visible = false;
+		this.goTo(new RouteItem("playlist", {
+			scroll: 0,
+			playlistIndex: plman.ActivePlaylist,
+		}))
 	}
 
 	on_size() {
@@ -278,6 +288,81 @@ export class Layout extends Component {
 		}
 	}
 
+	private st_back: RouteItem[] = [];
+	private st_forward: RouteItem[] = [];
+
+	private checkRoute(route: RouteItem) {
+		if (!route) return;
+		switch (route.title) {
+			case "playlist":
+				break;
+		}
+		return route;
+	}
+
+	goBack() {
+		let route = this.checkRoute(this.st_back.pop());
+		if (!route) return;
+		this.goTo__(route);
+		this.st_forward.push(route);
+	}
+
+	goForward() {
+		let route = this.checkRoute(this.st_forward.pop());
+		if (!route) return;
+		this.goTo__(route);
+		this.st_back.push(route);
+	}
+
+	goTo(route: RouteItem) {
+		route = this.checkRoute(route);
+		if (!route) return;
+		let prevRoute = tail(this.st_back);
+		if (!prevRoute || prevRoute.compare !== route.compare) {
+			this.goTo__(route);
+			this.st_back.push(route);
+		}
+	}
+
+
+	// 主要视图切换，不保存切换历史. 
+	// return route;
+	private goTo__(route: RouteItem) {
+		if (!route.title) return;
+		let viewState: number;
+		switch (route.title) {
+			case "playlist":
+				viewState = ViewStates.Default;
+				break;
+			case "search":
+				viewState = ViewStates.Search;
+				break;
+			case "album":
+				viewState = ViewStates.Album;
+				break;
+			case "artist":
+				viewState = ViewStates.Artist;
+				break;
+			case "browser":
+				viewState = ViewStates.Browser;
+				break;
+			default:
+			// viewState = this.viewState;
+		}
+		if (this.viewState !== viewState) {
+			// current View onHide.
+			// 也要考虑播放列表可能只是切换歌列表，
+		}
+		// change view state with options;
+		this.viewState = viewState;
+		// get currentView;
+		// currentView onShow();
+		this.setPartsVisibility(this.viewState);
+		this.updatePartsLayout();
+		ui.updateParts();
+		this.repaint();
+	}
+
 	onNotifyData(message: string, data?: any) {
 		switch (message) {
 			case "Toggle.PlaylistManager":
@@ -386,78 +471,52 @@ export class Layout extends Component {
 		}
 	}
 
-
-	jumplist: JumpItem[];
-	jumpCurrentPosition: number;
-
-	goBack() {
-		if (!this.jumplist) {
-			this.jumplist = [];
-			return;
-		}
-		if (this.jumplist.length < 2) {
-			return;
-		}
-		// jumpCurrentPosition
-		// [1,2,3,4]
-		if (Number.isNaN(this.jumpCurrentPosition) || this.jumpCurrentPosition < 0 || this.jumpCurrentPosition >= this.jumplist.length) {
-			this.jumpCurrentPosition = this.jumplist.length - 1;
-		}
-		let jumpto = this.jumplist[this.jumpCurrentPosition - 1];
-		if (jumpto) {
-			// jump to prev page;
-			if (this.jumpCurrentPosition === this.jumplist.length - 1) {
-				/// save currentpage to jumplist;
-			}
-			this.jumpCurrentPosition -= 1;
-		}
-	}
-	goForward() {
-		if (!this.jumplist) {
-			this.jumplist = [];
-			return;
-		}
-		if (this.jumplist.length < 2) {
-			return;
-		}
-		if (Number.isNaN(this.jumpCurrentPosition) || this.jumpCurrentPosition < 0 || this.jumpCurrentPosition > this.jumplist.length - 1) {
-			this.jumpCurrentPosition = this.jumplist.length - 1;
-		}
-		let jumpto = this.jumplist[this.jumpCurrentPosition - 1];
-		if (jumpto) { }
-	}
-
-	goTo(arr: JumpItem) {
-		let viewObj: ScrollView;
-		let viewType = arr[0];
-		let options=arr[1];
-		switch (viewType){
-			case "playlistView":
-				viewObj = this.playlistView;
-				break;
-			case "albumPage":
-				viewObj = this.albumPage;
-				break;
-			case "searchResult":
-				viewObj = this.searchResult;
-				break;
-			case "browser":
-				viewObj = this.browser;
-				break;
-		}
-		if (!viewObj) return;
-
-		if (viewType === "playlistView"){
-			let activePlaylist = +options;
-			// if (!isValidPlaylist)
-			
-		}
-
-
-	}
 }
 
-type JumpItem = [string, string];
+interface IRouteItem {
+	title: string;
+	compare: string;
+	options: { [key: string]: any }
+}
+
+class RouteItem implements IRouteItem {
+	title: string;
+	compare: string;
+	options: { [key: string]: any }
+	constructor(title: string, options: { [key: string]: any }) {
+		this.title = title;
+		this.options = options;
+		// gen compare string;
+		switch (title) {
+			case "playlist":
+				let playlistIndex: number = getOrDefault(options, o => o.playlistIndex, -1);
+				this.compare = `playlist|playlistIndex=${playlistIndex}`;
+				break;
+			case "browser":
+				let sourceType: number = getOrDefault(options, o => o.sourceType, -1);
+				let groupType: number = getOrDefault(options, o => o.groupType, -1);
+				let sortType: string = getOrDefault(options, o => o.sortType, "");
+				playlistIndex = getOrDefault(options, o => o.playlistIndex, -1);
+				this.compare = `album|sourceType=${sourceType}|groupType=${groupType}|sortType=${sortType}`;
+				if (sourceType === SourceTypes.CurrentPlaylist) {
+					this.compare += `playlistIndex=${playlistIndex}`;
+				}
+				break;
+			case "search":
+				let queryString = getOrDefault(options, o => o.queryString, "");
+				groupType = getOrDefault(options, o => o.groupType, -1);
+				sortType = getOrDefault(options, o => o.sortType, "");
+				this.compare = `search|queryString=${queryString}|groupType=${groupType}|sortType=${sortType}`
+				break;
+			case "album":
+				this.compare = `album`;
+				break;
+			case "artist":
+				this.compare = `artist`;
+				break;
+		}
+	}
+}
 
 /**
  * Popup an input panel for users to create a playlist, and the active_playlist

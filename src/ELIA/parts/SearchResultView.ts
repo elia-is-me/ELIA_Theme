@@ -1,7 +1,7 @@
 import { RGB, scale, TextRenderingHint, StopReason, VKeyCode, clamp, KMask, CursorName, ReadMood, ToggleMood, } from "../common/Common";
 import { StringFormat, MeasureString, spaceStart, spaceStartEnd } from "../common/String";
 import { Component } from "../common/BasePart";
-import { Scrollbar } from "../common/Scrollbar";
+import { Scrollbar } from "../common/ScrollBar";
 import { ScrollView } from "../common/ScrollView";
 import { MaterialFont, Material } from "../common/Icon";
 import { notifyOthers, ui } from "../common/UserInterface";

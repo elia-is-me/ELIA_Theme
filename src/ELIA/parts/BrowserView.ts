@@ -2,7 +2,7 @@ import { AlbumArtId, CacheObj, ImageCache, sanitize } from "../common/AlbumArt";
 import { Component } from "../common/BasePart";
 import { CropImage, CursorName, debounce, debugTrace, InterpolationMode, RGB, scale, SmoothingMode, tail, TextRenderingHint, VKeyCode, getYear, getOrDefault, BuildFullPath, throttle, ThrottledRepaint, fso, MenuFlag } from "../common/Common";
 import { TXT } from "../common/Lang";
-import { Scrollbar } from "../common/Scrollbar";
+import { Scrollbar } from "../common/ScrollBar";
 import { ScrollView } from "../common/ScrollView";
 import { MeasureString, StringFormat, StringFormatFlags, StringTrimming } from "../common/String";
 import { GetFont, scrollbarWidth, themeColors } from "../common/Theme";
@@ -68,12 +68,12 @@ const itemMarginR = scale(16);
 const itemMarginB = scale(32);
 // View state;
 
-const enum GroupTypes {
+export const enum GroupTypes {
     Albums,
     Artists,
     Genres,
 }
-const enum SourceTypes {
+export const enum SourceTypes {
     Library,
     CurrentPlaylist,
     AllPlaylists,
@@ -519,10 +519,10 @@ export class BrowserView extends ScrollView {
             this.items = [];
             return;
         }
-        debugTrace("browser metadb count: ", this.metadbs.Count)
-        let d1 = Date.now();
+        // debugTrace("browser metadb count: ", this.metadbs.Count)
+        // let d1 = Date.now();
         this.items = this.createItemsFromMetadbs(this.metadbs);
-        debugTrace(Date.now() - d1);
+        // debugTrace(Date.now() - d1);
         return;
     }
 
@@ -585,9 +585,12 @@ export class BrowserView extends ScrollView {
         this.scrollTo();
 
         // resize noCover image;
-        imageCache.changeImageSize(this.itemWidth);
-
+        this.db_resizeImage();
     }
+
+    private db_resizeImage = debounce(() => {
+        this.imageCache.changeImageSize(this.itemWidth);
+    }, 250);
 
     // browesr;
     on_paint(gr: IGdiGraphics) {
@@ -777,7 +780,7 @@ export class BrowserView extends ScrollView {
     }
 
     on_metadb_changed(metadbs: IFbMetadbList | null, fromhook?: boolean) {
-        debugTrace("Browserview, ", metadbs == null || metadbs.Count, fromhook)
+        // debugTrace("Browserview, ", metadbs == null || metadbs.Count, fromhook)
     }
 
 }
@@ -871,7 +874,11 @@ class BrowserImageCache {
         if (size_px !== this.imgSize) {
             this.imgSize = size_px;
             this.getStubImg();
-            this.clear();
+            // this.clear();
+            // this.cacheMap.entries()
+            for (let obj of this.cacheMap.values()) {
+                obj.load_request = 0;
+            }
         }
     }
 

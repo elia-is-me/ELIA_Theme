@@ -6,7 +6,7 @@ import { TextRenderingHint, MenuFlag, VKeyCode, KMask, scale, RGB, SmoothingMode
 import { StringTrimming, StringFormatFlags, MeasureString, StringFormat, spaceStart, spaceStartEnd } from "../common/String";
 import { ThrottledRepaint } from "../common/Common";
 import { scrollbarWidth, themeColors, GetFont } from "../common/Theme";
-import { Scrollbar } from "../common/Scrollbar";
+import { Scrollbar } from "../common/ScrollBar";
 import { ScrollView } from "../common/ScrollView";
 import { Component, IBoxModel } from "../common/BasePart";
 import { Material, MaterialFont } from "../common/Icon";

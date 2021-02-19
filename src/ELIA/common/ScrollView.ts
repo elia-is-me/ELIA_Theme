@@ -184,6 +184,7 @@ export abstract class ScrollView extends Component {
 		return this.draw_timer != null;
 	}
 
+	// TODO: 滾動過快則滾動的行數不對。
 	scrollTo(new_scroll: number = this.scroll, onscroll?: Function) {
 		const scroll__ = this.checkscroll(new_scroll);
 		if (this.scroll == scroll__) return;

@@ -3,7 +3,7 @@ import { AlbumArtId, AlbumArtwork } from "../common/AlbumArt";
 import { Component } from "../common/BasePart";
 import { clamp, CursorName, foo_playcount, getYear, KMask, MenuFlag, ReadMood, RGB, scale, StopReason, TextRenderingHint, ToggleMood, VKeyCode } from "../common/Common";
 import { Material, MaterialFont } from "../common/Icon";
-import { Scrollbar } from "../common/Scrollbar";
+import { Scrollbar } from "../common/ScrollBar";
 import { ScrollView } from "../common/ScrollView";
 import { ui } from "../common/UserInterface";
 import { Button, IconButton } from "./Buttons";

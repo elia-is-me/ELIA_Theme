@@ -4,7 +4,7 @@
 // [2021/02/03] Cursor image dragdrop bug;
 
 import { scale, RGB, RGBA, ThrottledRepaint, MenuFlag, setAlpha, SmoothingMode, CursorName, TextRenderingHint } from "../common/Common";
-import { Scrollbar } from "../common/Scrollbar";
+import { Scrollbar } from "../common/ScrollBar";
 import { ScrollView } from "../common/ScrollView";
 import { Component } from "../common/BasePart";
 import { Material, MaterialFont } from "../common/Icon";

@@ -561,19 +561,18 @@ function on_playlist_item_ensure_visible(playlistIndex: number, playlistItemInde
 	invoke_recur(rootPart, "on_playlist_item_ensure_visible", playlistIndex, playlistItemIndex);
 }
 
+// 这里的执行顺序……
 function invoke_recur(part: Component, method: string, ...args: any) {
 	if (part == null || !part.isVisible()) {
 		return;
 	}
-
+	invoke(part, method, ...args);
 	let children = part.children;
 	for (let i = 0, len = children.length; i < len; i++) {
 		if (children[i].isVisible()) {
 			invoke_recur(children[i], method, ...args);
 		}
 	}
-
-	invoke(part, method, ...args);
 }
 
 
