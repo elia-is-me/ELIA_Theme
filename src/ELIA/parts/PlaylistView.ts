@@ -2232,3 +2232,4 @@ function showlistHeaderMenu(x: number, y: number, pl: PlaylistView) {
 	pl.repaint();
 
 }
+

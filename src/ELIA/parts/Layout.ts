@@ -120,7 +120,13 @@ export class Layout extends Component {
 	on_init() {
 		this.topbar.visible = true;
 		this.playbackControlBar.visible = true;
-		this.playlistManager.visible = true;
+		if (this.width >= MIN_TWO_COLUMN_WIDTH) {
+			this.playlistManager.visible = !this.hidePlman;
+			this.playlistManager.type = 0;
+		} else {
+			this.playlistManager.visible = false;
+			this.playlistManager.type = 1; // modal
+		}
 		this.playbackBarMenu.visible = false;
 		this.goTo(new RouteItem("playlist", {
 			scroll: 0,
@@ -135,7 +141,7 @@ export class Layout extends Component {
 			this.playlistManager.type = 0;
 		} else {
 			this.playlistManager.visible = false;
-			this.playlistManager.type = 1;
+			this.playlistManager.type = 1; // modal
 		}
 
 		if (this.playbackBarMenu.visible) {
@@ -305,6 +311,10 @@ export class Layout extends Component {
 		if (!route) return;
 		this.goTo__(route);
 		this.st_forward.push(route);
+		notifyOthers("update_navigation", {
+			back: this.st_back.length,
+			forward: this.st_forward.length,
+		});
 	}
 
 	goForward() {
@@ -312,6 +322,10 @@ export class Layout extends Component {
 		if (!route) return;
 		this.goTo__(route);
 		this.st_back.push(route);
+		notifyOthers("update_navigation", {
+			back: this.st_back.length,
+			forward: this.st_forward.length,
+		});
 	}
 
 	goTo(route: RouteItem) {
@@ -321,7 +335,10 @@ export class Layout extends Component {
 		if (!prevRoute || prevRoute.compare !== route.compare) {
 			this.goTo__(route);
 			this.st_back.push(route);
-			notifyOthers("update_navigation", this.st_back.length)
+			notifyOthers("update_navigation", {
+				back: this.st_back.length,
+				forward: this.st_forward.length,
+			});
 		}
 	}
 
@@ -462,12 +479,19 @@ export class Layout extends Component {
 				this.repaint();
 				break;
 			case "Show.Browser":
-				this.viewState = ViewStates.Browser;
-				let browserOptions = (data as any);
-				this.setPartsVisibility(this.viewState);
-				this.updatePartsLayout();
-				ui.updateParts();
-				this.repaint()
+				// this.viewState = ViewStates.Browser;
+				// let browserOptions = (data as any);
+				// this.setPartsVisibility(this.viewState);
+				// this.updatePartsLayout();
+				// ui.updateParts();
+				// this.repaint()
+				this.goTo(new RouteItem("browser", {}))
+				break;
+			case "Nav.Forward":
+				this.goForward();
+				break;
+			case "Nav.Back":
+				this.goBack();
 				break;
 		}
 	}
@@ -497,10 +521,10 @@ class RouteItem implements IRouteItem {
 				let sourceType: number = getOrDefault(options, o => o.sourceType, -1);
 				let groupType: number = getOrDefault(options, o => o.groupType, -1);
 				let sortType: string = getOrDefault(options, o => o.sortType, "");
-				playlistIndex = getOrDefault(options, o => o.playlistIndex, -1);
+				let playlistIndex_ = getOrDefault(options, o => o.playlistIndex, -1);
 				this.compare = `album|sourceType=${sourceType}|groupType=${groupType}|sortType=${sortType}`;
 				if (sourceType === SourceTypes.CurrentPlaylist) {
-					this.compare += `playlistIndex=${playlistIndex}`;
+					this.compare += `playlistIndex=${playlistIndex_}`;
 				}
 				break;
 			case "search":

@@ -1,4 +1,4 @@
-import { scale, TextRenderingHint, MenuFlag } from "../common/Common";
+import { scale, TextRenderingHint, MenuFlag, getOrDefault } from "../common/Common";
 import { Component } from "../common/BasePart";
 import { IconButton } from "./Buttons";
 import { Material, MaterialFont } from "../common/Icon";
@@ -215,6 +215,26 @@ export class TopBar extends Component {
 
 	on_mouse_rbtn_up(x: number, y: number) {
 		showMainMenu(x, y);
+	}
+
+	onNotifyData(msg: string, data: any) {
+		switch (msg) {
+			case "update_navigation":
+				let forward: number = getOrDefault(data, o => o.forward, 0);
+				let back_length: number = getOrDefault(data, o => o.back, 0);
+				if (back_length > 0) {
+					this.goBackBtn.enable();
+				} else {
+					this.goBackBtn.disable();
+				}
+				if (forward > 0) {
+					this.goForwardBtn.enable();
+				} else {
+					this.goForwardBtn.disable();
+				}
+				break;
+		}
+
 	}
 }
 
