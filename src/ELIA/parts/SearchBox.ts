@@ -5,7 +5,7 @@
 import { Component } from "../common/BasePart";
 import { InputBox } from "../common/Inputbox";
 import { IconButton } from "./Buttons";
-import { scale, RGB } from "../common/Common";
+import { scale, RGB, debugTrace } from "../common/Common";
 import { Material, } from "../common/Icon";
 import { GetFont, themeColors } from "../common/Theme";
 import { notifyOthers } from "../common/UserInterface";
@@ -84,20 +84,23 @@ export class SearchBox extends Component {
 	}
 
 	handleSearch() {
-		try {
+		// try {
 			let searchText = this.inputbox.text;
 			if (searchText.length == 0) {
 				return;
 			}
+			// debugTrace(searchText);
 			let result = fb.GetQueryItems(fb.GetLibraryItems(), searchText);
-
+			// debugTrace(result.Count);
 			notifyOthers("Show.SearchResult", {
 				titleText: searchText,
 				metadbs: result,
+				groupType: 1,
+				sortType: 1,
 			});
-		} catch (e) {
-			fb.ShowPopupMessage("Fail to GetQueryItems", "Search Error");
-		}
+		// } catch (e) {
+			// fb.ShowPopupMessage("Fail to GetQueryItems", "Search Error");
+		// }
 	}
 
 	private _clearInput() {

@@ -1,4 +1,4 @@
-import { getOrDefault, scale, tail } from "../common/Common";
+import { debugTrace, getOrDefault, scale, tail } from "../common/Common";
 import { Component } from "../common/BasePart";
 import { notifyOthers, ui } from "../common/UserInterface";
 import { TopBar } from "./TopbarView";
@@ -296,6 +296,7 @@ export class Layout extends Component {
 
 	private st_back: RouteItem[] = [];
 	private st_forward: RouteItem[] = [];
+	private currentRoute: RouteItem;
 
 	private checkRoute(route: RouteItem) {
 		if (!route) return;
@@ -309,8 +310,10 @@ export class Layout extends Component {
 	goBack() {
 		let route = this.checkRoute(this.st_back.pop());
 		if (!route) return;
+		let prevRoute = this.currentRoute;
+		this.currentRoute = route;
 		this.goTo__(route);
-		this.st_forward.push(route);
+		prevRoute && this.st_forward.push(prevRoute);
 		notifyOthers("update_navigation", {
 			back: this.st_back.length,
 			forward: this.st_forward.length,
@@ -320,8 +323,10 @@ export class Layout extends Component {
 	goForward() {
 		let route = this.checkRoute(this.st_forward.pop());
 		if (!route) return;
+		let prevRoute = this.currentRoute;
+		this.currentRoute = route;
 		this.goTo__(route);
-		this.st_back.push(route);
+		prevRoute && this.st_back.push(prevRoute);
 		notifyOthers("update_navigation", {
 			back: this.st_back.length,
 			forward: this.st_forward.length,
@@ -331,17 +336,18 @@ export class Layout extends Component {
 	goTo(route: RouteItem) {
 		route = this.checkRoute(route);
 		if (!route) return;
-		let prevRoute = tail(this.st_back);
+		let prevRoute = this.currentRoute;
 		if (!prevRoute || prevRoute.compare !== route.compare) {
+			this.currentRoute = route;
 			this.goTo__(route);
-			this.st_back.push(route);
+			this.st_forward = [];
+			prevRoute && this.st_back.push(prevRoute);
 			notifyOthers("update_navigation", {
 				back: this.st_back.length,
 				forward: this.st_forward.length,
 			});
 		}
 	}
-
 
 	// 主要视图切换，不保存切换历史. 
 	// return route;
@@ -351,12 +357,23 @@ export class Layout extends Component {
 		switch (route.title) {
 			case "playlist":
 				viewState = ViewStates.Default;
+				let playlistIndex = getOrDefault(route.options, o => o.playlistIndex, plman.ActivePlaylist);
+				if (isValidPlaylist(playlistIndex) && playlistIndex !== plman.ActivePlaylist) {
+					plman.ActivePlaylist = playlistIndex;
+				}
 				break;
 			case "search":
 				viewState = ViewStates.Search;
+				let titleText = getOrDefault(route.options, o => o.titleText, "");
+				let metadbs = getOrDefault(route.options, o => o.metadbs, null);
+				this.searchResult.updateList(titleText, metadbs);
 				break;
 			case "album":
 				viewState = ViewStates.Album;
+				let albumName = getOrDefault(route.options, o => o.albumName, "");
+				if (albumName) {
+					this.albumPage.setAlbum(albumName);
+				}
 				break;
 			case "artist":
 				viewState = ViewStates.Artist;
@@ -416,7 +433,6 @@ export class Layout extends Component {
 				this.alertDialog.z = 1000;
 				this.alertDialog.visible = true;
 				this.addChild(this.alertDialog);
-				// this.on_size();
 				this.updatePartsLayout();
 				ui.updateParts();
 				this.repaint();
@@ -425,28 +441,28 @@ export class Layout extends Component {
 				if (!this.alertDialog) break;
 				this.removeChild(this.alertDialog);
 				this.alertDialog = null;
-				// this.on_size();
 				this.updatePartsLayout();
 				ui.updateParts();
 				this.repaint();
 				break;
 			case "Show.SearchResult":
-				this.searchResult.updateList((data as any).titleText, (data as any).metadbs);
-				this.viewState = ViewStates.Search;
-				this.setPartsVisibility(this.viewState);
-				// this.on_size();
-				this.updatePartsLayout();
-				ui.updateParts();
-				this.repaint();
+				// this.searchResult.updateList((data as any).titleText, (data as any).metadbs);
+				// this.viewState = ViewStates.Search;
+				// this.setPartsVisibility(this.viewState);
+				// // this.on_size();
+				// this.updatePartsLayout();
+				// ui.updateParts();
+				// this.repaint();
+				this.goTo(new RouteItem("search", data || {}));
 				break;
 			case "Show.Playlist":
-				this.viewState = ViewStates.Default;
-				this.setPartsVisibility(this.viewState);
-				// this.on_size();
-				this.updatePartsLayout();
+				// this.viewState = ViewStates.Default;
+				// this.setPartsVisibility(this.viewState);
+				// this.updatePartsLayout();
 
-				ui.updateParts();
-				this.repaint();
+				// ui.updateParts();
+				// this.repaint();
+				this.goTo(new RouteItem("playlist", data || {}));
 				break;
 			case "Show.Settings":
 				this.viewState = ViewStates.Settings;
@@ -471,20 +487,15 @@ export class Layout extends Component {
 				break;
 
 			case "Show.AlbumPage":
-				this.viewState = ViewStates.Album;
-				this.albumPage.setAlbum(data as string);
-				this.setPartsVisibility(this.viewState);
-				this.updatePartsLayout();
-				ui.updateParts();
-				this.repaint();
-				break;
-			case "Show.Browser":
-				// this.viewState = ViewStates.Browser;
-				// let browserOptions = (data as any);
+				// this.viewState = ViewStates.Album;
+				// this.albumPage.setAlbum(data as string);
 				// this.setPartsVisibility(this.viewState);
 				// this.updatePartsLayout();
 				// ui.updateParts();
-				// this.repaint()
+				// this.repaint();
+				this.goTo(new RouteItem("album", data || {}))
+				break;
+			case "Show.Browser":
 				this.goTo(new RouteItem("browser", {}))
 				break;
 			case "Nav.Forward":
@@ -512,6 +523,8 @@ class RouteItem implements IRouteItem {
 		this.title = title;
 		this.options = options;
 		// gen compare string;
+		let groupType: number;
+		let sortType: string
 		switch (title) {
 			case "playlist":
 				let playlistIndex: number = getOrDefault(options, o => o.playlistIndex, -1);
@@ -519,8 +532,8 @@ class RouteItem implements IRouteItem {
 				break;
 			case "browser":
 				let sourceType: number = getOrDefault(options, o => o.sourceType, -1);
-				let groupType: number = getOrDefault(options, o => o.groupType, -1);
-				let sortType: string = getOrDefault(options, o => o.sortType, "");
+				groupType = getOrDefault(options, o => o.groupType, -1);
+				sortType = getOrDefault(options, o => o.sortType, "");
 				let playlistIndex_ = getOrDefault(options, o => o.playlistIndex, -1);
 				this.compare = `album|sourceType=${sourceType}|groupType=${groupType}|sortType=${sortType}`;
 				if (sourceType === SourceTypes.CurrentPlaylist) {
@@ -528,7 +541,7 @@ class RouteItem implements IRouteItem {
 				}
 				break;
 			case "search":
-				let queryString = getOrDefault(options, o => o.queryString, "");
+				let queryString = getOrDefault(options, o => o.titleText, "");
 				groupType = getOrDefault(options, o => o.groupType, -1);
 				sortType = getOrDefault(options, o => o.sortType, "");
 				this.compare = `search|queryString=${queryString}|groupType=${groupType}|sortType=${sortType}`
@@ -637,9 +650,9 @@ export function GoToAlbum(albumName: string) {
 }
 
 export function GotoPlaylist(playlistIndex?: number) {
-	if (isValidPlaylist(playlistIndex)) {
-		plman.ActivePlaylist = playlistIndex;
-	}
+	// if (isValidPlaylist(playlistIndex)) {
+	// 	plman.ActivePlaylist = playlistIndex;
+	// }
 	notifyOthers("Show.Playlist")
 }
 

@@ -107,24 +107,6 @@ class PlmanHeader extends Component {
 	}
 }
 
-// class PlmanItem {
-// 	metadb: IFbMetadb; // First track in playlist;
-// 	index: number;
-// 	x: number = 0;
-// 	y: number = 0;
-// 	width: number = 0;
-// 	height: number = 0;
-// 	yOffset: number = 0;
-// 	//
-// 	listName: string = "";
-// 	isSelect: boolean = false;
-// 	isAuto: boolean = false;
-
-// 	trace(x: number, y: number) {
-// 		return x > this.x && x <= this.x + this.width && y > this.y && y <= this.y + this.height;
-// 	}
-// }
-
 class PlmanItem extends Component {
 	metadb: IFbMetadb;
 	index: number;
@@ -199,7 +181,6 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 
 		this.rowHeight = attrs.rowHeight;
 		this.itemFont = attrs.itemFont;
-		// this.icons = attrs.icons;
 
 		this.scrollbar = new Scrollbar({
 			cursorColor: themeColors.scrollbarCursor,
@@ -222,13 +203,8 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 
 		for (let playlistIndex = 0; playlistIndex < itemCount; playlistIndex++) {
 			let rowItem = new PlmanItem(playlistIndex);
-			// let playlistMetadbs = plman.GetPlaylistItems(playlistIndex);
 			items.push(rowItem);
-			// rowItem.index = playlistIndex;
 			rowItem.height = rowHeight;
-			// rowItem.metadb = playlistMetadbs.Count === 0 ? null : playlistMetadbs[0];
-			// rowItem.listName = plman.GetPlaylistName(playlistIndex);
-			// rowItem.isAuto = plman.IsAutoPlaylist(playlistIndex);
 			rowItem.yOffset = itemYOffset;
 			itemYOffset += rowHeight;
 		}
@@ -256,7 +232,6 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 
 		this.header.setBoundary(this.x, this.y, this.width, PlmanProperties.headerHeight);
 
-		// this.scroll = this.checkscroll(this.scroll);
 		this.scrollTo();
 	}
 
@@ -298,7 +273,6 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 				}
 
 				// draw icon;
-				// let iconCode = rowItem.isAuto ? Material.gear : Material.queue_music;
 				gr.DrawString(rowItem.icon, iconFont, textColor,
 					rowItem.x + paddingL, rowItem.y, iconWidth, rowItem.height, StringFormat.Center);
 
@@ -460,10 +434,10 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 
 		if (this.clickedIndex === this.hoverIndex && isValidPlaylist(this.hoverIndex) && !this.dragdrop.isDrag) {
 			plman.ActivePlaylist = this.hoverIndex;
-			notifyOthers("Show.Playlist");
-		}
-
-		else if (this.dragdrop.isDrag && this.dragdrop.targetIndex > -1) {
+			notifyOthers("Show.Playlist", {
+				playlistIndex: plman.ActivePlaylist
+			});
+		} else if (this.dragdrop.isDrag && this.dragdrop.targetIndex > -1) {
 			let { targetIndex } = this.dragdrop;
 			if (targetIndex <= this.clickedIndex) {
 				plman.MovePlaylist(this.clickedIndex, targetIndex);
@@ -567,15 +541,15 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 
 		if (addPlaylistBtn.trace(x, y)) {
 			let created = plman.CreatePlaylist(plman.PlaylistCount, "");
-			plman.ActivePlaylist = created;
+			// plman.ActivePlaylist = created;
 			action.Playlist = created;
 			action.Base = 0;
 			action.ToSelect = true;
 			action.Effect = 1;
-			GotoPlaylist();
+			notifyOthers("Show.Playlist", {
+				playlistIndex: created
+			});
 			RenamePlaylist(created);
-			// droprectangle.visible = false;
-			// this.repaint();
 		} else if (this.trace(x, y)) {
 			let hoveritem = this.items.find(item => item.trace(x, y) && item.y >= this.header.y + this.header.height && item.y + item.height < this.y + this.height);
 			if (hoveritem) {
@@ -586,24 +560,18 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 					action.Base = plman.PlaylistItemCount(playlistIndex);
 					action.ToSelect = true;
 					action.Effect = 1;
-					// droprectangle.visible = false;
-					GotoPlaylist();
+					notifyOthers("Show.Playlist", {
+						playlistIndex: playlistIndex,
+					})
 					setTimeout(() => {
 						notifyOthers("Playlist.Scroll End");
 					}, 5);
-					// this.repaint();
 				} else {
-					// droprectangle.visible = false;
-					// this.repaint();
 				}
 			} else {
-				// droprectangle.visible = false;
 				action.Effect = 0;
-				// this.repaint();
 			}
 		} else {
-			// droprectangle.visible = false;
-			// this.repaint();
 		}
 		droprectangle.visible = false;
 		this.repaint();

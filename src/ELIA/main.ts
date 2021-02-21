@@ -9,8 +9,6 @@ import { SettingsView } from "./parts/SettingsView";
 import { TXT } from "./common/Lang";
 import { ArtistPageView } from "./parts/ArtistPage";
 import { AlbumPageView } from "./parts/AlbumPage";
-import { Component } from "./common/BasePart";
-import { GetKeyboardMask, isFunction, KMask, lastIndex, VKeyCode } from "./common/Common";
 import { browser, BrowserView } from "./parts/BrowserView";
 
 window.DefinePanel(
@@ -35,11 +33,8 @@ const settingsView = new SettingsView();
 const artistPage = new ArtistPageView();
 const albumPage = new AlbumPageView();
 
-
-// ui.monitor(playlistView);
-// ui.monitor(playlistManager);
-ui.monitor(browser);
-ui.monitor(playbackControlBar);
+// ui.monitor(browser);
+// ui.monitor(playbackControlBar);
 
 /**
  * Root part of this panel;

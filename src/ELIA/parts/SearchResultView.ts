@@ -246,7 +246,6 @@ export class SearchResultView extends ScrollView {
 
 	scrollbar: Scrollbar;
 	headerView: SearchHeaderView;
-	closeBtn: IconButton;
 
 	_columnsMap: Map<string, PlaylistColumn> = new Map();
 
@@ -262,19 +261,8 @@ export class SearchResultView extends ScrollView {
 		this.headerView = new SearchHeaderView();
 		this.headerView.z = 1;
 
-		this.closeBtn = new IconButton({
-			icon: Material.close,
-			fontName: MaterialFont,
-			fontSize: scale(28),
-			colors: [buttonColors.secondary],
-		})
-		this.closeBtn.setSize(scale(48), scale(48));
-		this.closeBtn.z = 10;
-		this.closeBtn.on_click = () => {
-			notifyOthers("Show.Playlist")
-		};
 
-		;[this.scrollbar, this.headerView, this.closeBtn]
+		;[this.scrollbar, this.headerView]
 			.forEach(child => this.addChild(child));
 
 		let moodWidth = rowHeight;
@@ -429,7 +417,6 @@ export class SearchResultView extends ScrollView {
 			this.x + this.width - scrollbarWidth, this.y, scrollbarWidth, this.height);
 
 		this.headerView.setBoundary(this.x, this.y, this.width, headerHeight);
-		this.closeBtn.setPosition(this.x + this.width - scale(64), this.y + scale(16) - this.scroll);
 
 		// Re-calc totalHeight;
 		this.itemsTotalHeight = rowHeight * this.items.length + rowHeight;
@@ -462,9 +449,6 @@ export class SearchResultView extends ScrollView {
 
 		// headerView;
 		this.headerView.setPosition(null, this.y - this.scroll);
-
-		// closeBtn;
-		this.closeBtn.setPosition(null, this.y + scale(16) - this.scroll);
 
 		// background;
 		gr.FillSolidRect(this.x, this.y, this.width, this.height, backgroundColor);

@@ -11,7 +11,7 @@ import { ScrollView } from "../common/ScrollView";
 import { Component, IBoxModel } from "../common/BasePart";
 import { Material, MaterialFont } from "../common/Icon";
 import { PlaylistArtwork } from "../common/AlbumArt";
-import { mouseCursor, ui } from "../common/UserInterface";
+import { mouseCursor, notifyOthers, ui } from "../common/UserInterface";
 import { Button } from "./Buttons";
 import { RunMainMenuCommand, TXT } from "../common/Lang";
 import { CreatePlaylistPopup, DeletePlaylistDialog, GoToAlbum, GoToArtist, RenamePlaylist } from "./Layout";
@@ -1848,7 +1848,7 @@ export function showTracksContextMenu(contextType: string, playlistIndex: number
 
 		// "Go to Album"
 		case ret === 20:
-			if (albumName) GoToAlbum(albumName)
+			if (albumName) notifyOthers("Show.AlbumPage", { albumName: albumName });
 			break;
 
 		// "Go to Artist";
@@ -1981,7 +1981,7 @@ export function showTrackContextMenu(playlistIndex: number, metadbs: IFbMetadbLi
 
 		// "Go to Album"
 		case ret === 20:
-			if (albumName) GoToAlbum(albumName)
+			if (albumName) notifyOthers("Show.AlbumPage", { albumName: albumName });
 			break;
 
 		// "Go to Artist";

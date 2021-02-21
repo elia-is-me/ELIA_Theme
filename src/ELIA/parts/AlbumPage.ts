@@ -5,7 +5,7 @@ import { clamp, CursorName, foo_playcount, getYear, KMask, MenuFlag, ReadMood, R
 import { Material, MaterialFont } from "../common/Icon";
 import { Scrollbar } from "../common/ScrollBar";
 import { ScrollView } from "../common/ScrollView";
-import { ui } from "../common/UserInterface";
+import { notifyOthers, ui } from "../common/UserInterface";
 import { Button, IconButton } from "./Buttons";
 import { TXT } from "../common/Lang";
 import { formatPlaylistDuration, showTrackContextMenu } from "./PlaylistView";
@@ -191,20 +191,6 @@ class AlbumHeaderView extends Component {
             foreColor: buttonColors.secondary
         });
         this.buttons.set("context", context);
-        // this.addChild(context);
-
-        let closeBtn = new IconButton({
-            icon: Material.close,
-            fontName: MaterialFont,
-            fontSize: scale(28),
-            colors: [buttonColors.secondary],
-        });
-        closeBtn.on_click = () => {
-            GotoPlaylist();
-        }
-        this.addChild(closeBtn);
-        closeBtn.setSize(scale(48), scale(48));
-        this.buttons.set("close", closeBtn);
     }
 
     on_size() {
@@ -215,7 +201,6 @@ class AlbumHeaderView extends Component {
         let shuffleall = this.buttons.get("shuffleall");
         let sort = this.buttons.get("sort");
         let context = this.buttons.get("context");
-        let close = this.buttons.get("close");
         if (this.width < pageWidth.thin) {
             btnX = this.x + paddingLR;
             btnY = this.y + 2 * paddingTB + this.artwork.height;
@@ -226,8 +211,6 @@ class AlbumHeaderView extends Component {
         shuffleall.setPosition(btnX, btnY);
         sort.setPosition(shuffleall.x + shuffleall.width + scale(8), btnY);
         context.setPosition(sort.x + sort.width + scale(4), btnY);
-
-        close.setPosition(this.x + this.width - scale(64), this.y + scale(16));
     }
 
     // header;

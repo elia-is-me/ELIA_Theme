@@ -177,7 +177,7 @@ export class ImageCache {
 
 	private formatImage(img: IGdiBitmap) {
 		if (!img || Number.isNaN(this.imgSize) || this.imgSize < 1) return;
-		return CropImage(img, this.imgSize, this.imgSize);
+		return CropImage(img, this.imgSize, this.imgSize, InterpolationMode.HighQuality);
 	}
 
 	loadImageDone(tid: number, image: IGdiBitmap | null, imgPath: string) {
@@ -249,7 +249,9 @@ export class ImageCache {
 					if (image && (image.Width > 1000 && image.Height > 1000)) {
 						let img = CropImage(image, 600, 600, InterpolationMode.HighQuality);
 						let success = img.SaveAs(this.imgFolder + cacheKey);
-
+						if (!success) {
+							console.log("WARN: Fail to save image: ", this.imgFolder + cacheKey);
+						}
 					}
 				}
 			}, 5);

@@ -658,11 +658,13 @@ export class PlaybackControlView extends Component {
 			return;
 		}
 		if (plman.PlayingPlaylist === plman.ActivePlaylist) {
-			GotoPlaylist();
+			// GotoPlaylist();
+			notifyOthers("Show.Playlist", { playlistIndex: plman.ActivePlaylist });
 			notifyOthers("playlist-show-now-playing-in-playlist");
 		} else {
-			GotoPlaylist();
-			plman.ActivePlaylist = plman.PlayingPlaylist;
+			notifyOthers("Show.Playlist", { playlistIndex: plman.PlayingPlaylist });
+			// GotoPlaylist();
+			// plman.ActivePlaylist = plman.PlayingPlaylist;
 			// will trigger showNowPlaying on playlistView.on_init();
 		}
 	}
@@ -745,25 +747,29 @@ function showPanelContextMenu(metadb: IFbMetadb, x: number, y: number) {
 				return;
 			}
 			if (plman.PlayingPlaylist === plman.ActivePlaylist) {
-				GotoPlaylist();
+				notifyOthers("Show.Playlist", {
+					playlistIndex: plman.ActivePlaylist,
+				})
 				notifyOthers("playlist-show-now-playing-in-playlist");
 			} else {
-				GotoPlaylist();
-				plman.ActivePlaylist = plman.PlayingPlaylist;
+				// GotoPlaylist();
+				notifyOthers("Show.Playlist", {
+					playlistIndex: plman.PlayingPlaylist,
+				})
+				// plman.ActivePlaylist = plman.PlayingPlaylist;
 				// will trigger showNowPlaying on playlistView.on_init();
 			}
 			break;
 		case ret === 11:
 			// goto album
 			if (album && album !== "?") {
-				GoToAlbum(album);
+				notifyOthers("Show.AlbumPage", {
+					albumName: album,
+				});
 			}
 			break;
 		case ret === 12:
 			// for test only;
-			// console.log(extractArtists(artist_));
-
-			// console.log(artist_[0])
 			let artists = extractArtists(artist_);
 			if (artists[0]) {
 				GoToArtist(artists[0]);

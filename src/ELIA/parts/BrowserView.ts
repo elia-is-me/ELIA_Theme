@@ -6,9 +6,8 @@ import { Scrollbar } from "../common/ScrollBar";
 import { ScrollView } from "../common/ScrollView";
 import { MeasureString, StringFormat, StringFormatFlags, StringTrimming } from "../common/String";
 import { GetFont, scrollbarWidth, themeColors } from "../common/Theme";
-import { mouseCursor } from "../common/UserInterface";
+import { mouseCursor, notifyOthers } from "../common/UserInterface";
 import { DropdownButton } from "./Buttons";
-import { GoToAlbum } from "./Layout";
 import { showTrackContextMenu } from "./PlaylistView";
 
 
@@ -721,7 +720,9 @@ export class BrowserView extends ScrollView {
         let hoverItem = this.getHoverItem(x, y);
         let hoverIndex = hoverItem ? hoverItem.index : -1;
         if (hoverItem && hoverIndex === this.downIndex) {
-            GoToAlbum(hoverItem.albumName);
+            notifyOthers("Show.AlbumPage", {
+                albumName: hoverItem.albumName,
+            });
         }
         this.downIndex = -1;
         this.repaint();
