@@ -1,13 +1,15 @@
 import { AlbumArtId, CacheObj, ImageCache, sanitize } from "../common/AlbumArt";
 import { Component } from "../common/BasePart";
 import { CropImage, CursorName, debounce, debugTrace, InterpolationMode, RGB, scale, SmoothingMode, tail, TextRenderingHint, VKeyCode, getYear, getOrDefault, BuildFullPath, throttle, ThrottledRepaint, fso, MenuFlag } from "../common/Common";
+import { Material } from "../common/Icon";
+import { InputBox } from "../common/Inputbox";
 import { TXT } from "../common/Lang";
 import { Scrollbar } from "../common/ScrollBar";
 import { ScrollView } from "../common/ScrollView";
 import { MeasureString, StringFormat, StringFormatFlags, StringTrimming } from "../common/String";
 import { GetFont, scrollbarWidth, themeColors } from "../common/Theme";
 import { mouseCursor, notifyOthers } from "../common/UserInterface";
-import { DropdownButton } from "./Buttons";
+import { DropdownButton, IconButton } from "./Buttons";
 import { showTrackContextMenu } from "./PlaylistView";
 
 
@@ -65,7 +67,6 @@ const toolbarHeight = scale(72);
 const itemMinWidth = scale(160); // make it config able;
 const itemMarginR = scale(16);
 const itemMarginB = scale(32);
-// View state;
 
 export const enum GroupTypes {
     Albums,
@@ -74,26 +75,114 @@ export const enum GroupTypes {
 }
 export const enum SourceTypes {
     Library,
-    CurrentPlaylist,
-    AllPlaylists,
+    CurrentPlaylist, // preserved
+    AllPlaylists,// preserved
+}
+
+export const enum SortTypes {
+    AZ, // Album-album name, Artist-artist name;
+    Year,
+    AddTime, // foo_playcount
+    Artist,
 }
 
 const TF_ORDER_ALBUM = fb.TitleFormat("%album%^^[%date%]^^%discnumber%^^%tracknumber%");
-
-// const _album = "%album%"
-const TF_ALBUM_TAGS = fb.TitleFormat("%album%|||[%date%]^^%album artist%^^%discnumber%^^%tracknumber%");
+const TF_ALBUM_TAGS = fb.TitleFormat("%album%|||[%date%]^^%album artist%^^%discnumber%^^%tracknumber%^^%added%");
 const TF_ARTIST_TAGS = fb.TitleFormat("%artist%");
-
 
 export interface BrowserOptionType {
     sourceType: number;
     viewType: number;
+    sortType: number;
     metadbs?: IFbMetadbList;
+    scroll?: number;
 }
+
+const browserProp = window.GetProperty("Browser.Props", `${SourceTypes.Library},${GroupTypes.Albums},${SortTypes.AZ}`)
+    .split(",")
+    .map(a => Number(a));
 
 // Classes
 // ------------------------------------------------
 
+const filterBoxWidth = scale(200);
+const filterBoxHeight = scale(32);
+
+class FilterBox extends Component {
+    inputbox: InputBox;
+    inputbox_h: number;
+    clearBtn: IconButton;
+    filterBtn: IconButton;
+
+    constructor() {
+        super({});
+        this.grabFocus = false;
+        this.inputbox = new InputBox({
+            font: GetFont("normal,14"),
+            foreColor: colors.text,
+            backgroundColor: colors.background,
+            backgroundActiveColor: colors.background,
+            backgroundSelectionColor: RGB(28, 98, 185),
+            empty_text: TXT("Filter..."),
+            autovalidation: true,
+            func: () => { }
+        })
+        this.inputbox_h = MeasureString("ABCD", this.inputbox.font).Height + scale(4);
+        this.clearBtn = new IconButton({
+            icon: Material.close,
+            fontSize: scale(20),
+            colors: [colors.titleText],
+        });
+        this.clearBtn.on_click = () => {
+            if (this.inputbox.text.length > 0) {
+                this.inputbox.text = "";
+                this.inputbox.offset = 0;
+                this.repaint();
+            }
+        }
+        this.clearBtn.visible = this.inputbox.text.length > 0;
+        this.filterBtn = new IconButton({
+            icon: Material.filter,
+            fontSize: scale(20),
+            colors: [colors.titleText]
+        })
+        this.addChild(this.inputbox);
+        this.addChild(this.clearBtn);
+        this.addChild(this.filterBtn);
+        this.setSize(filterBoxWidth, filterBoxHeight);
+    }
+
+    on_size() {
+        let offsetY = ((this.height - this.inputbox_h) / 2);
+        this.inputbox.setBoundary(
+            this.x + scale(32),
+            this.y + offsetY,
+            this.width - scale(32) - scale(32),
+            this.inputbox_h
+        );
+        this.clearBtn.setBoundary(
+            this.inputbox.x + this.inputbox.width,
+            this.y,
+            scale(24),
+            this.height
+        );
+        this.filterBtn.setBoundary(
+            this.x, this.y, scale(32), this.height
+        );
+    }
+
+    on_paint(gr: IGdiGraphics) {
+        gr.DrawRect(this.x, this.y, this.width - scale(1), this.height - scale(1), scale(1), colors.titleText & 0x25ffffff);
+        if (this.inputbox.edit) {
+            gr.DrawRect(this.x, this.y, this.width - scale(1), this.height - scale(1), scale(1), RGB(28, 98, 185));
+        }
+        this.clearBtn.visible = (this.inputbox.edit && this.inputbox.text.length > 0);
+    }
+
+    repaint() {
+        this.parent.repaint();
+    }
+}
 
 
 /**
@@ -191,16 +280,16 @@ class LibraryBrowserHeader extends Component {
 
     tabItems: TabItem[] = [];
     highlightTabIndex = -1;
-
-    sourceBtn: DropdownButton;
+    // sourceBtn: DropdownButton;
     sortBtn: DropdownButton;
+    filterBox: FilterBox;
 
     // browser header;
     constructor() {
         super({})
 
         // init tabitems;
-        let tabContents = [TXT("ALBUMS"), TXT("ARTISTS"), TXT("GENRES")];
+        let tabContents = [TXT("ALBUMS"), TXT("ARTISTS")];
         this.tabItems = tabContents.map((txt, i) => {
             let tab = new TabItem(txt)
             tab.on_click = (x: number, y: number) => {
@@ -212,38 +301,14 @@ class LibraryBrowserHeader extends Component {
 
         // dropdown buttons;
         // todo...
-        this.sourceBtn = new DropdownButton({ text: "Library" });
-        this.sourceBtn.on_init = () => {
-            // this.sourceBtn.setText()
-        }
-        this.sourceBtn.on_click = (x: number, y: number) => {
-            let menu = window.CreatePopupMenu();
-            menu.AppendMenuItem(MenuFlag.STRING, 11, TXT("Library"));
-            menu.AppendMenuItem(MenuFlag.STRING, 12, TXT("Current playlist"));
-            menu.CheckMenuRadioItem(11, 12, browser.sourceType === SourceTypes.Library ? 11 : 12);
-            let ret = menu.TrackPopupMenu(x, y);
-            switch (ret) {
-                case 11:
-                    browser.initWithOptions({
-                        sourceType: SourceTypes.Library,
-                        viewType: GroupTypes.Albums,
-                    });
-                    break;
-                case 12:
-                    browser.initWithOptions({
-                        sourceType: SourceTypes.CurrentPlaylist,
-                        viewType: GroupTypes.Albums,
-                    });
-                    break;
-            }
-            browser.on_size();
-            browser.repaint();
-        }
-        this.addChild(this.sourceBtn);
-
         this.sortBtn = new DropdownButton({ text: "Sort by: A to Z" });
-        this.sortBtn.on_click = () => { }
+        this.sortBtn.on_click = (x: number, y: number) => {
+            showSortMenu(x, y, GroupTypes.Albums)
+        }
         this.addChild(this.sortBtn);
+        this.filterBox = new FilterBox();
+        this.filterBox.z = 1000;
+        this.addChild(this.filterBox);
     };
 
     getGroupType() {
@@ -284,14 +349,11 @@ class LibraryBrowserHeader extends Component {
             this.tabItems[i].setPosition(tabX, tabY);
             tabX += this.tabItems[i].width;
         }
+        let btnY = this.y + tabHeight + (toolbarHeight - this.sortBtn.height) / 2;
+        let btnX = this.x + paddingLR;
 
-        let btnY = this.y + tabHeight + (toolbarHeight - this.sourceBtn.height) / 2;
-        let btnX = this.x + paddingLR + scale(4);
-
-        this.sourceBtn.setPosition(btnX, btnY);
-        btnX += this.sourceBtn.width + scale(16);
-
-        this.sortBtn.setPosition(btnX, btnY);
+        this.filterBox.setPosition(btnX, btnY)
+        this.sortBtn.setPosition(this.filterBox.x + this.filterBox.width + scale(16), btnY);
     }
 
     // browser header;
@@ -328,6 +390,7 @@ class BrowserItem extends Component {
     albumName: string;
     artistName: string;
     year: string;
+    addTime: string;
     cacheKey: string = "";
 
     constructor() {
@@ -369,21 +432,18 @@ export class BrowserView extends ScrollView {
 
     // Library, Playlist, AllPlaylists, SendTo
     sourceType: number = 0;
-
     // Albums, Artist, Genres
     groupType: number = GroupTypes.Albums;
-
+    sortType: number = SortTypes.AddTime;
     items: BrowserItem[] = [];
+    // groups: BrowserItem[][] = [];
     visibleItems: BrowserItem[] = [];
     selectedIndexes: number[] = [];
     metadbs: IFbMetadbList;
-
     itemWidth: number;
     itemHeight: number;
     columnCount: number;
-    rowCount: number;
     rowHeight: number;
-
     scrollbar: Scrollbar;
     detailHeader: LibraryBrowserHeader;
     imageCache: BrowserImageCache;
@@ -391,8 +451,10 @@ export class BrowserView extends ScrollView {
     constructor() {
         super({});
 
-        this.scrollbar = new Scrollbar({ cursorColor: colors.scrollbarCursor, backgroundColor: colors.scrollbarBackground });
-        this.scrollbar.z = 500;
+        this.scrollbar = new Scrollbar({
+            cursorColor: colors.scrollbarCursor,
+            backgroundColor: colors.scrollbarBackground
+        });
         this.addChild(this.scrollbar);
 
         this.detailHeader = new LibraryBrowserHeader();
@@ -448,9 +510,9 @@ export class BrowserView extends ScrollView {
         }
         let itemWidth = ((areaWidth - itemMarginR * (columnCount - 1)) / columnCount) >> 0;
         let itemHeight = itemWidth + scale(12) + (2.2 * itemFont.Height + smallItemFont.Height) >> 0;
-        let rowCount = Math.ceil(this.items.length / this.columnCount);
+        // let rowCount = Math.ceil(this.items.length / this.columnCount);
         this.columnCount = columnCount;
-        this.rowCount = rowCount;
+        // this.rowCount = rowCount;
         this.itemWidth = itemWidth;
         this.itemHeight = itemHeight;
         this.rowHeight = itemHeight + itemMarginB;
@@ -491,6 +553,7 @@ export class BrowserView extends ScrollView {
                 let tag1_arr = tags[1].split("^^");
                 currItem.artistName = tag1_arr[1];
                 currItem.year = getYear(tag1_arr[0]);
+                currItem.addTime = tag1_arr[4];
                 currItem.cacheKey = sanitize((currItem.artistName ? currItem.artistName + " - " : "") + currItem.albumName)
                     .replace(
                         /CD(\s*\d|\.0\d)|CD\s*(One|Two|Three)|Disc\s*\d|Disc\s*(III|II|I|One|Two|Three)\b/gi,
@@ -528,16 +591,19 @@ export class BrowserView extends ScrollView {
     initWithOptions(options: BrowserOptionType) {
         this.sourceType = getOrDefault(options, o => o.sourceType, SourceTypes.Library);
         this.groupType = getOrDefault(options, o => o.viewType, 0);
+        this.sortType = getOrDefault(options, o => o.sortType, SortTypes.AddTime);
         this.metadbs = getOrDefault(options, o => o.metadbs, this.getAllMetadbs());
         this.setItems();
-        this.scroll = 0;
+        this.scroll = getOrDefault(options, o => o.scroll, 0);;
     }
 
-    private debounce_update = debounce(() => {
+    private debounce_update = debounce((opts?: BrowserOptionType) => {
         this.initWithOptions({
             sourceType: this.sourceType,
             viewType: this.groupType,
-        })
+            sortType: this.sortType,
+            scroll: this.scroll,
+        });
         this.on_size();
         this.repaint();
     }, 250);
@@ -545,8 +611,9 @@ export class BrowserView extends ScrollView {
     //browser;
     on_init() {
         this.initWithOptions({
-            sourceType: SourceTypes.Library,
-            viewType: 0
+            sourceType: browserProp[0],
+            viewType: browserProp[1],
+            sortType: browserProp[2],
         });
         this.on_size();
         this.repaint();
@@ -616,15 +683,10 @@ export class BrowserView extends ScrollView {
         for (let i = 0, len = items.length; i < len; i++) {
             let item = items[i];
             item.setPosition(this.x + paddingLR + item.xOffset, this.y + offsetTop + item.yOffset - this.scroll);
-
             if (item.y + item.height > this.y + offsetTop && item.y < this.y + this.height) {
-                // draw visib
                 this.visibleItems.push(item);
-
                 item.on_paint(gr);
-
             }
-
         }
 
     }
@@ -779,9 +841,42 @@ export class BrowserView extends ScrollView {
     on_library_items_removed(metadbsRemoved: IFbMetadbList) {
         this.debounce_update();
     }
+}
 
-    on_metadb_changed(metadbs: IFbMetadbList | null, fromhook?: boolean) {
-        // debugTrace("Browserview, ", metadbs == null || metadbs.Count, fromhook)
+function showSortMenu(x: number, y: number, viewType: number) {
+    let menu = window.CreatePopupMenu();
+
+    if (viewType === GroupTypes.Albums) {
+        menu.AppendMenuItem(MenuFlag.STRING, 10, TXT("Add time"));
+    }
+    menu.AppendMenuItem(MenuFlag.STRING, 11, TXT("A to Z"));
+    if (viewType === GroupTypes.Albums) {
+        menu.AppendMenuItem(MenuFlag.STRING, 12, TXT("Artists"));
+        // menu.AppendMenuItem(MenuFlag.STRING, 14, TXT("Album"));
+        menu.AppendMenuItem(MenuFlag.STRING, 13, TXT("Release year"));
+    }
+    menu.AppendMenuSeparator();
+    menu.AppendMenuItem(MenuFlag.STRING, 20, TXT("Reverse"));
+
+    let ret = menu.TrackPopupMenu(x, y);
+
+    switch (true) {
+        case ret === 10:
+            browser.items.sort((a, b) => +a.addTime - (+b.addTime));
+            browser.on_size();
+            browser.repaint();
+            break;
+        case ret === 11:
+            debugTrace("sort by az")
+            // debugTrace()
+            let a1 = browser.items[0];
+            let a2 = browser.items[1];
+            debugTrace(a1.albumName.localeCompare(a2.albumName));
+            browser.items.sort((a, b) => b.albumName.localeCompare(a.albumName));
+            browser.on_size();
+            browser.repaint();
+            break;
+
     }
 
 }
@@ -965,3 +1060,27 @@ let tf_album = fb.TitleFormat("[%album artist% - ]%album%")
 
 
 export const browser = new BrowserView();
+
+function process_string(str: string) {
+    str = str.toLowerCase();
+    let str_ = [];
+    let temp: string;
+    while (str != (temp = str.replace("  ", " ")))
+        str = temp;
+    let str__ = str.split(" ").sort();
+    for (var i in str__) {
+        if (str__[i] != "")
+            str_[str_.length] = str__[i];
+    };
+    return str_;
+}
+
+function match(input: string, str: string[]) {
+    var temp = "";
+    input = input.toLowerCase();
+    for (var j in str) {
+        if (input.indexOf(str[j]) < 0)
+            return false;
+    };
+    return true;
+}

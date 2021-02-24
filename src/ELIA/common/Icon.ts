@@ -49,6 +49,7 @@ export const Material = {
     toggle_dark: '\ue3aB',
     navigate_previous: '\ue314',
     navigate_next: '\ue315',
+    filter: '\ue152',
 };
 
 export const MaterialFont = "Material Icons";

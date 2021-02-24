@@ -449,15 +449,18 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 		this.clickedIndex = -1;
 		this.dragdrop.isDrag = false;
 		this.dragdrop.targetIndex = -1;
+		let repaintAll = this.drag_cursorImage != null;
 		this.drag_cursorImage = null;
 		ui.setCursorImage(null);
 		window.SetCursor(CursorName.IDC_ARROW);
 
-		this.repaint();
+		repaintAll ? window.Repaint() : this.repaint();
 	}
 
 	on_mouse_lbtn_dblclk(x: number, y: number) {
-		/** Do nothing. */
+		// if (this.type === 1) {
+		// 	notifyOthers("Toggle.PlaylistManager");
+		// }
 	}
 
 	on_mouse_rbtn_down(x: number, y: number) {

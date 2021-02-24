@@ -65,6 +65,7 @@ const cInputbox = {
     doc: new ActiveXObject("htmlfile"),
     clipboard: ""
 }
+let gfunc_launch_timer: number | null = null;
 
 
 export interface IInputBoxOptions {
@@ -76,6 +77,7 @@ export interface IInputBoxOptions {
     backgroundSelectionColor: number;
     default_text?: string;
     empty_text?: string;
+    autovalidation?: boolean;
     func: () => void;
 }
 
@@ -817,18 +819,18 @@ export class InputBox extends Component implements IInputBoxOptions {
         }
 
         // autosearch: has text changed after on_key or on_char ?
-        // if (this.autovalidation) {
-        //     if (this.text != this.prev_text) {
-        //         // launch timer to process the search
-        //         gfunc_launch_timer && window.ClearTimeout(gfunc_launch_timer);
-        //         gfunc_launch_timer = window.SetTimeout(function () {
-        //             gfunc();
-        //             gfunc_launch_timer && window.ClearTimeout(gfunc_launch_timer);
-        //             gfunc_launch_timer = false;
-        //         }, 500);
-        //         this.prev_text = this.text;
-        //     }
-        // }
+        if (this.autovalidation) {
+            if (this.text != this.prev_text) {
+                // launch timer to process the search
+                gfunc_launch_timer && window.ClearTimeout(gfunc_launch_timer);
+                gfunc_launch_timer = window.SetTimeout(() => {
+                    this.func();
+                    gfunc_launch_timer && window.ClearTimeout(gfunc_launch_timer);
+                    gfunc_launch_timer = null;
+                }, 500);
+                this.prev_text = this.text;
+            }
+        }
     }
 
     on_char(code: number, mask?: number) {
@@ -872,18 +874,18 @@ export class InputBox extends Component implements IInputBoxOptions {
         }
 
         // autosearch: has text changed after on_key or on_char ?
-        // if (this.autovalidation) {
-        // 	if (this.text != this.prev_text) {
-        // 		// launch timer to process the search
-        // 		gfunc_launch_timer && window.ClearTimeout(gfunc_launch_timer);
-        // 		gfunc_launch_timer = window.SetTimeout(function () {
-        // 				gfunc();
-        // 				gfunc_launch_timer && window.ClearTimeout(gfunc_launch_timer);
-        // 				gfunc_launch_timer = false;
-        // 			}, 500);
-        // 		this.prev_text = this.text;
-        // 	}
-        // }
+        if (this.autovalidation) {
+            if (this.text != this.prev_text) {
+                // launch timer to process the search
+                gfunc_launch_timer && window.ClearTimeout(gfunc_launch_timer);
+                gfunc_launch_timer = window.SetTimeout(() => {
+                    this.func();
+                    gfunc_launch_timer && window.ClearTimeout(gfunc_launch_timer);
+                    gfunc_launch_timer = null;
+                }, 500);
+                this.prev_text = this.text;
+            }
+        }
 
     }
 
@@ -916,5 +918,7 @@ export class InputBox extends Component implements IInputBoxOptions {
             this.check("down", -1, -1);
         }
     }
+
+    on_mouse_wheel(step: number) { }
 
 }

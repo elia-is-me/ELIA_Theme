@@ -26,7 +26,7 @@ export class Scrollbar extends Component implements ICallbacks {
 		backgroundColor: number;
 	}) {
 		super(attrs);
-		this.z = 100;
+		this.z = 1000;
 	}
 	on_paint(gr: IGdiGraphics) {
 		let minCursorHeight = this.minCursorHeight;

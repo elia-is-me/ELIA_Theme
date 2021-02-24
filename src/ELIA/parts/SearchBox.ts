@@ -84,7 +84,7 @@ export class SearchBox extends Component {
 	}
 
 	handleSearch() {
-		// try {
+		try {
 			let searchText = this.inputbox.text;
 			if (searchText.length == 0) {
 				return;
@@ -98,9 +98,9 @@ export class SearchBox extends Component {
 				groupType: 1,
 				sortType: 1,
 			});
-		// } catch (e) {
-			// fb.ShowPopupMessage("Fail to GetQueryItems", "Search Error");
-		// }
+		} catch (e) {
+			fb.ShowPopupMessage("Fail to GetQueryItems", "Search Error");
+		}
 	}
 
 	private _clearInput() {
