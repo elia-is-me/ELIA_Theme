@@ -122,7 +122,7 @@ export class Component implements IBoxModel, ICallbacks {
 	/**
 	 * 'on_init' 考虑的是当一个部件从隐藏切换到显示后，有一个默认的方法更新/初始化该部件。这么做是否合理现在值得怀疑。
 	 */
-	on_init() { }
+	on_show() { }
 	on_paint(gr: IGdiGraphics) { }
 	on_size() { }
 	on_click(x?: number, y?: number) { }

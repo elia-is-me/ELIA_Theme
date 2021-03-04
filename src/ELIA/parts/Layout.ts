@@ -117,7 +117,7 @@ export class Layout extends Component {
 		this.setPartsVisibility(this.viewState);
 	}
 
-	on_init() {
+	on_show() {
 		this.topbar.visible = true;
 		this.playbackControlBar.visible = true;
 		if (this.width >= MIN_TWO_COLUMN_WIDTH) {
@@ -247,7 +247,7 @@ export class Layout extends Component {
 
 		this.playlistManager.visible = !prevVisibleState;
 		if (this.playlistManager.visible) {
-			this.playlistManager.on_init();
+			this.playlistManager.on_show();
 		}
 		this.updatePartsLayout();
 		ui.updateParts();
@@ -446,22 +446,9 @@ export class Layout extends Component {
 				this.repaint();
 				break;
 			case "Show.SearchResult":
-				// this.searchResult.updateList((data as any).titleText, (data as any).metadbs);
-				// this.viewState = ViewStates.Search;
-				// this.setPartsVisibility(this.viewState);
-				// // this.on_size();
-				// this.updatePartsLayout();
-				// ui.updateParts();
-				// this.repaint();
 				this.goTo(new RouteItem("search", data || {}));
 				break;
 			case "Show.Playlist":
-				// this.viewState = ViewStates.Default;
-				// this.setPartsVisibility(this.viewState);
-				// this.updatePartsLayout();
-
-				// ui.updateParts();
-				// this.repaint();
 				this.goTo(new RouteItem("playlist", data || {}));
 				break;
 			case "Show.Settings":
@@ -487,12 +474,6 @@ export class Layout extends Component {
 				break;
 
 			case "Show.AlbumPage":
-				// this.viewState = ViewStates.Album;
-				// this.albumPage.setAlbum(data as string);
-				// this.setPartsVisibility(this.viewState);
-				// this.updatePartsLayout();
-				// ui.updateParts();
-				// this.repaint();
 				this.goTo(new RouteItem("album", data || {}))
 				break;
 			case "Show.Browser":

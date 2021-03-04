@@ -146,7 +146,7 @@ function updateParts() {
 	vis_parts
 		.filter(p => cached.indexOf(p) === -1)
 		.forEach(p => {
-			p.on_init();
+			p.on_show();
 			p.didUpdateOnInit();
 		});
 	cached

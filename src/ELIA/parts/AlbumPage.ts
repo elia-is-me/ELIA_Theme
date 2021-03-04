@@ -283,7 +283,7 @@ class TrackItem extends Component {
 
     constructor() {
         super({});
-        this.moodbtn.on_init = () => {
+        this.moodbtn.on_show = () => {
             if (this.mood > 0) {
                 this.moodbtn.setColors(pageColors.moodRed);
                 this.moodbtn.setIcon(Material.heart);
@@ -318,7 +318,7 @@ class TrackItem extends Component {
         // init mood btn;
         // this.moodbtn.setColors(this.mood > 0 ? pageColors.moodRed : pageColors.secondaryText);
         // this.moodbtn.setIcon(this.mood > 0 ? Material.heart : Material.heart_empty);
-        this.moodbtn.on_init();
+        this.moodbtn.on_show();
     }
 }
 
@@ -540,7 +540,7 @@ export class AlbumPageView extends ScrollView {
         duration.x = rating.x + rating.width;
     }
 
-    on_init() {
+    on_show() {
         //
         if (!this.metadbs) {
             return;

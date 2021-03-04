@@ -34,7 +34,7 @@ export class Clickable extends Component {
 		this.state = ButtonStates.Normal;
 	}
 
-	on_init() {
+	on_show() {
 		this.changeState(ButtonStates.Normal);
 	}
 

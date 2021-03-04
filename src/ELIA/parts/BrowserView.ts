@@ -79,11 +79,13 @@ export const enum SourceTypes {
     AllPlaylists,// preserved
 }
 
-export const enum SortTypes {
+export enum SortTypes {
     AZ, // Album-album name, Artist-artist name;
     Year,
     AddTime, // foo_playcount
     Artist,
+    Reverse,
+    Random,
 }
 
 const TF_ORDER_ALBUM = fb.TitleFormat("%album%^^[%date%]^^%discnumber%^^%tracknumber%");
@@ -97,10 +99,6 @@ export interface BrowserOptionType {
     metadbs?: IFbMetadbList;
     scroll?: number;
 }
-
-const browserProp = window.GetProperty("Browser.Props", `${SourceTypes.Library},${GroupTypes.Albums},${SortTypes.AZ}`)
-    .split(",")
-    .map(a => Number(a));
 
 // Classes
 // ------------------------------------------------
@@ -331,7 +329,7 @@ class LibraryBrowserHeader extends Component {
     }
 
     // browser header on init;
-    on_init() {
+    on_show() {
         // init highlighted tab;
         this.tabItems.forEach((item, i) => {
             item.isHighlight = (this.getHighlightTabIndex() === i);
@@ -444,6 +442,8 @@ export class BrowserView extends ScrollView {
     itemHeight: number;
     columnCount: number;
     rowHeight: number;
+    private hoverIndex: number = -1;
+    private downIndex: number = -1;
     scrollbar: Scrollbar;
     detailHeader: LibraryBrowserHeader;
     imageCache: BrowserImageCache;
@@ -588,17 +588,19 @@ export class BrowserView extends ScrollView {
         return;
     }
 
-    initWithOptions(options: BrowserOptionType) {
+    init(options: BrowserOptionType) {
         this.sourceType = getOrDefault(options, o => o.sourceType, SourceTypes.Library);
         this.groupType = getOrDefault(options, o => o.viewType, 0);
         this.sortType = getOrDefault(options, o => o.sortType, SortTypes.AddTime);
         this.metadbs = getOrDefault(options, o => o.metadbs, this.getAllMetadbs());
-        this.setItems();
         this.scroll = getOrDefault(options, o => o.scroll, 0);;
+        this.setItems();
+        this.sort();
+        this.saveProperties();
     }
 
     private debounce_update = debounce((opts?: BrowserOptionType) => {
-        this.initWithOptions({
+        this.init({
             sourceType: this.sourceType,
             viewType: this.groupType,
             sortType: this.sortType,
@@ -608,15 +610,29 @@ export class BrowserView extends ScrollView {
         this.repaint();
     }, 250);
 
+    private saveProperties() {
+        let savedProps = window.GetProperty("Browser.Props");
+        let props = `${this.sourceType},${this.groupType},${this.sortType}`;
+        if (props !== savedProps) {
+            window.SetProperty("Browser.Props", props);
+        }
+    }
+
     //browser;
-    on_init() {
-        this.initWithOptions({
+    on_show() {
+        const browserProp = window.GetProperty(
+            "Browser.Props",
+            `${SourceTypes.Library},${GroupTypes.Albums},${SortTypes.AddTime}`
+        )
+            .split(",")
+            .map(a => Number(a));
+        this.init({
             sourceType: browserProp[0],
             viewType: browserProp[1],
             sortType: browserProp[2],
         });
         this.on_size();
-        this.repaint();
+        ThrottledRepaint();
     }
 
     // browser;
@@ -728,15 +744,55 @@ export class BrowserView extends ScrollView {
             item.isSelect = (this.selectedIndexes.indexOf(i) > -1));
     }
 
-    private hoverIndex: number = -1;
-    private downIndex: number = -1;
 
-    changeHoverIndex(index: number) {
+    private changeHoverIndex(index: number) {
         if (index !== this.hoverIndex) {
             this.items[this.hoverIndex] && (this.items[this.hoverIndex].isHover = false);
             this.hoverIndex = index;
             this.items[this.hoverIndex] && (this.items[this.hoverIndex].isHover = true);
             this.repaint();
+        }
+    }
+
+    sortBy(sortType: SortTypes) {
+        let validSortTypes = Object.values(SortTypes);
+        if (validSortTypes.indexOf(sortType) === -1) {
+            console.log("WARN: ", "Browser.sortBy, Invalid parameter ", sortType);
+            return;
+        }
+        if (sortType !== this.sortType) {
+            this.sortType = sortType;
+            this.sort();
+            this.on_size();
+            this.repaint();
+            if (this.sortType !== SortTypes.Reverse && this.sortType !== SortTypes.Random) {
+                this.saveProperties();
+            }
+        }
+    }
+
+    private sort() {
+        if (this.items.length < 2) {
+            return;
+        }
+        switch (this.sortType) {
+            case SortTypes.AddTime:
+                this.items.sort((a, b) =>
+                    a.addTime > b.addTime ? -1 : a.addTime < b.addTime ? 1 : 0
+                );
+                break;
+            case SortTypes.AZ:
+                this.items.sort((a, b) => a.albumName.localeCompare(b.albumName));
+                break;
+            case SortTypes.Artist:
+                this.items.sort((a, b) => a.artistName.localeCompare(b.artistName));
+                break;
+            case SortTypes.Year:
+                this.items.sort((a, b) => (a.year > b.year ? -1 : a.year < b.year ? 1 : 0));
+                break;
+            case SortTypes.Reverse:
+                this.items.reverse();
+                break;
         }
     }
 
@@ -862,23 +918,21 @@ function showSortMenu(x: number, y: number, viewType: number) {
 
     switch (true) {
         case ret === 10:
-            browser.items.sort((a, b) => +a.addTime - (+b.addTime));
-            browser.on_size();
-            browser.repaint();
+            browser.sortBy(SortTypes.AddTime);
             break;
         case ret === 11:
-            debugTrace("sort by az")
-            // debugTrace()
-            let a1 = browser.items[0];
-            let a2 = browser.items[1];
-            debugTrace(a1.albumName.localeCompare(a2.albumName));
-            browser.items.sort((a, b) => b.albumName.localeCompare(a.albumName));
-            browser.on_size();
-            browser.repaint();
+            browser.sortBy(SortTypes.AZ);
             break;
-
+        case ret === 13:
+            browser.sortBy(SortTypes.Year);
+            break;
+        case ret === 12:
+            browser.sortBy(SortTypes.Artist);
+            break;
+        case ret === 20:
+            browser.sortBy(SortTypes.Reverse);
+            break;
     }
-
 }
 
 interface BCacheObj {

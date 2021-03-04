@@ -64,6 +64,7 @@ const createBottomButtons = () => {
 		});
 	}
 	const defaultColor = themeColors.text;
+	const secondaryColor = setAlpha(themeColors.text, 127);
 	const highlightColor = themeColors.highlight;
 	const iconSize = scale(22);
 	const smallIconSize = scale(20);
@@ -106,11 +107,11 @@ const createBottomButtons = () => {
 			let metadb = fb.GetNowPlaying();
 			if (!metadb) {
 				buttons.love.setIcon(Material.heart_empty);
-				buttons.love.setColors(defaultColor);
+				buttons.love.setColors(secondaryColor);
 			} else {
 				let loved = ReadMood(metadb) > 0;
 				buttons.love.setIcon(loved ? Material.heart : Material.heart_empty);
-				buttons.love.setColors(loved ? themeColors.mood : defaultColor);
+				buttons.love.setColors(loved ? themeColors.mood : secondaryColor);
 			}
 			if (!metadb || !fb.IsPlaying!) {
 				this.disable();
@@ -138,7 +139,7 @@ const createBottomButtons = () => {
 			this.repaint();
 		}
 	});
-	buttons.repeat = createBtn(Material.repeat, smallIconSize, defaultColor);
+	buttons.repeat = createBtn(Material.repeat, smallIconSize, secondaryColor);
 	Object.assign(buttons.repeat, {
 		on_init() {
 			switch (plman.PlaybackOrder) {
@@ -152,7 +153,7 @@ const createBottomButtons = () => {
 					break;
 				default: // repeat off
 					this.setIcon(Material.repeat);
-					this.setColors(defaultColor);
+					this.setColors(secondaryColor);
 					break;
 			}
 		},
@@ -171,13 +172,13 @@ const createBottomButtons = () => {
 		}
 	});
 	// button 'Shuffle';
-	buttons.shuffle = createBtn(Material.shuffle, smallIconSize, defaultColor);
+	buttons.shuffle = createBtn(Material.shuffle, smallIconSize, secondaryColor);
 	Object.assign(buttons.shuffle, {
 		on_init() {
 			if (plman.PlaybackOrder === getShuffleOrder()) {
 				this.setColors(highlightColor);
 			} else {
-				this.setColors(defaultColor);
+				this.setColors(secondaryColor);
 			}
 		},
 		on_click() {
@@ -295,7 +296,6 @@ const artistText = new TextLink({
 			let date = TF_DATE.EvalWithMetadb(metadb);
 			let year = getYear(date);
 			let yearText = year ? " \u30FB " + year : "";
-
 			this.setText(artistText + yearText);
 		} else {
 			this.setText(defaultArtistName);
@@ -372,7 +372,7 @@ export class PlaybackControlView extends Component {
 		}
 	}
 
-	on_init() {
+	on_show() {
 		if (fb.IsPlaying && !fb.IsPaused) {
 			this.timerStart();
 		} else {

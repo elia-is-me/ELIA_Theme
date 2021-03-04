@@ -651,7 +651,7 @@ export class PlaylistView extends ScrollView {
 		artist.setPaddings({ right: scale(16) });
 	}
 
-	on_init() {
+	on_show() {
 		this.setList();
 		this.header.setPlaylistIndex(plman.ActivePlaylist);
 

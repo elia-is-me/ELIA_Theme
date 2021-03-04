@@ -151,7 +151,7 @@ class VolumeMenuItem extends MenuItem {
             fontSize: scale(20),
             colors: [menuColors.text]
         });
-        btn.on_init = () => {
+        btn.on_show = () => {
             btn.setIcon(fb.Volume === -100 ? Material.volume_off : Material.volume);
         }
         btn.on_click = () => {
@@ -159,7 +159,7 @@ class VolumeMenuItem extends MenuItem {
         }
         Object.assign(btn, {
             on_volume_change: () => {
-                btn.on_init();
+                btn.on_show();
                 btn.repaint();
             }
         });

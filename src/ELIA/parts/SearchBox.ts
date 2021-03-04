@@ -110,7 +110,7 @@ export class SearchBox extends Component {
 		}
 	}
 
-	on_init() { }
+	on_show() { }
 
 	on_size() {
 		const { searchBtn, clearBtn, inputbox } = this;

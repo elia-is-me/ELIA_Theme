@@ -102,14 +102,14 @@ export class TopBar extends Component {
 		}
 
 		this.goBackBtn = createIconButton(Material.navigate_previous, iconSize, this.foreColor);
-		this.goBackBtn.on_init = () => { this.goBackBtn.disable(); }
+		this.goBackBtn.on_show = () => { this.goBackBtn.disable(); }
 		this.goBackBtn.on_click = () => {
 			notifyOthers("Nav.Back")
 		}
 		this.addChild(this.goBackBtn);
 
 		this.goForwardBtn = createIconButton(Material.navigate_next, iconSize, this.foreColor);
-		this.goForwardBtn.on_init = () => { this.goForwardBtn.disable(); };
+		this.goForwardBtn.on_show = () => { this.goForwardBtn.disable(); };
 		this.goForwardBtn.on_click = () => {
 			notifyOthers("Nav.Forward");
 		};
@@ -123,7 +123,7 @@ export class TopBar extends Component {
 		);
 	}
 
-	on_init() {
+	on_show() {
 	}
 
 	on_size() {

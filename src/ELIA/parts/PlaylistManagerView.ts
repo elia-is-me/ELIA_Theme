@@ -213,7 +213,7 @@ export class PlaylistManagerView extends ScrollView implements IPlaylistManagerP
 		this.totalHeight = rowHeight * itemCount + PlmanProperties.headerHeight;
 	}
 
-	on_init() {
+	on_show() {
 		this.initList();
 	}
 

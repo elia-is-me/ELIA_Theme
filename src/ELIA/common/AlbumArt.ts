@@ -320,7 +320,7 @@ export class AlbumArtwork extends Component {
 		this.metadb = metadb;
 	}
 
-	on_init() { }
+	on_show() { }
 
 	on_paint(gr: IGdiGraphics) {
 		let img = this.imageCache.hit(this.metadb, this.artId, { delay: 30 });
@@ -462,7 +462,7 @@ export class PlaylistArtwork extends Component {
 		return CropImage(image, this.width, this.height);
 	}
 
-	on_init() {
+	on_show() {
 		this.cacheMap.clear();
 		this.getArtwork();
 	}
