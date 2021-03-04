@@ -118,6 +118,7 @@ export abstract class ScrollView extends Component {
 	className = "ScrollView";
 	totalHeight: number;
 	scrolling: boolean = false;
+	smooth: boolean = false;
 	private scroll_: number = 0;
 	private timerId: number = -1;
 	constructor(attrs: object) {
@@ -188,13 +189,18 @@ export abstract class ScrollView extends Component {
 	scrollTo(new_scroll: number = this.scroll, onscroll?: Function) {
 		const scroll__ = this.checkscroll(new_scroll);
 		if (this.scroll == scroll__) return;
-		this.elap = 30;
-		this.start = this.scroll;
-		this.clock = Date.now();
 		this.delta = scroll__;
-		if (!this.draw_timer) {
-			this.scroll_timer();
-			this.smooth_scroll();
+		if (this.smooth) {
+			this.elap = 30;
+			this.start = this.scroll;
+			this.clock = Date.now();
+			if (!this.draw_timer) {
+				this.scroll_timer();
+				this.smooth_scroll();
+			}
+		} else {
+			this.scroll = this.delta;
+			this.repaint();
 		}
 	}
 

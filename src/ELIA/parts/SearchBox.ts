@@ -140,7 +140,7 @@ export class SearchBox extends Component {
 
 	on_paint(gr: IGdiGraphics) {
 		gr.FillSolidRect(this.x, this.y, this.width, this.height, this.backgroundColor);
-		gr.DrawRect(this.x, this.y, this.width - scale(1), this.height - scale(1), scale(1), themeColors.playlistSplitLine);
+		gr.DrawRect(this.x, this.y, this.width - scale(1), this.height - scale(1), scale(1), themeColors.titleText & 0x25ffffff);
 		if (this.inputbox.edit) {
 			gr.DrawRect(this.x, this.y, this.width, this.height - scale(1), scale(1), RGB(28, 98, 185));
 		}
