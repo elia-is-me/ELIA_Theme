@@ -1,7 +1,8 @@
-import { scale } from "./Common";
-import { IInjectableCallbacks } from "./BasePart";
+import { getOrDefault, RGB, scale, SmoothingMode } from "./Common";
+import { Component, IInjectableCallbacks } from "./BasePart";
 import { ButtonStates, Clickable } from "./Button";
 import { MeasureString, StringFormat } from "./String";
+import { GetFont } from "./Theme";
 
 export interface ITextLinkProps {
 	text: string;
@@ -77,3 +78,42 @@ export class TextLink extends Clickable {
 			this.x, this.y, this.width, this.height, StringFormat.LeftCenter);
 	}
 }
+
+// "Ablum, Playlist, Artist 等等";
+export class Label extends Component {
+	text: string = "";
+	icon?: string = "";
+	private textColor: number = 0xffffffff;
+	private backgroundColor: number = RGB(234, 67, 53);
+	private font: IGdiFont = GetFont("normal", 12);
+
+	constructor(options: { text: string, icon?: string }) {
+		super({});
+		this.text = getOrDefault(options, o => o.text, "TEXT");
+		this.icon = getOrDefault(options, o => o.icon, "");
+		this.calc();
+	}
+
+	on_paint(gr: IGdiGraphics) {
+		gr.SetSmoothingMode(SmoothingMode.AntiAlias);
+		gr.FillSolidRect(this.x, this.y, this.width, this.height, this.backgroundColor);
+		gr.SetSmoothingMode(SmoothingMode.Default);
+		gr.DrawString(this.text, this.font, this.textColor, this.x, this.y, this.width, this.height, StringFormat.Center);
+	}
+
+	private calc() {
+		let lbwidth = MeasureString(this.text, this.font).Width + scale(16);
+		let lbheight = this.font.Height + scale(8);
+		this.setSize(lbwidth, lbheight);
+	}
+
+	setFont(font: IGdiFont) {
+		this.font = font;
+		this.calc();
+	}
+
+	setColors(colors: { textColor: number, backgroundColor: number }) {
+		this.textColor = getOrDefault(colors, o => o.textColor, this.textColor);
+		this.backgroundColor = getOrDefault(colors, o => o.backgroundColor, this.backgroundColor);
+	}
+} 
