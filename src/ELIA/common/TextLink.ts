@@ -85,18 +85,28 @@ export class Label extends Component {
 	icon?: string = "";
 	private textColor: number = 0xffffffff;
 	private backgroundColor: number = RGB(234, 67, 53);
-	private font: IGdiFont = GetFont("normal", 12);
+	private font: IGdiFont = GetFont("normal", scale(12));
 
-	constructor(options: { text: string, icon?: string }) {
+	constructor(options: {
+		text: string;
+		icon?: string;
+		textColor?: number;
+		backgroundColor?: number;
+	}) {
 		super({});
 		this.text = getOrDefault(options, o => o.text, "TEXT");
 		this.icon = getOrDefault(options, o => o.icon, "");
+		this.setColors({
+			textColor: options.textColor,
+			backgroundColor: options.backgroundColor,
+		});
 		this.calc();
 	}
 
 	on_paint(gr: IGdiGraphics) {
 		gr.SetSmoothingMode(SmoothingMode.AntiAlias);
-		gr.FillSolidRect(this.x, this.y, this.width, this.height, this.backgroundColor);
+		let r = scale(2);
+		gr.FillRoundRect(this.x, this.y, this.width, this.height, r, r, this.backgroundColor);
 		gr.SetSmoothingMode(SmoothingMode.Default);
 		gr.DrawString(this.text, this.font, this.textColor, this.x, this.y, this.width, this.height, StringFormat.Center);
 	}
@@ -116,4 +126,4 @@ export class Label extends Component {
 		this.textColor = getOrDefault(colors, o => o.textColor, this.textColor);
 		this.backgroundColor = getOrDefault(colors, o => o.backgroundColor, this.backgroundColor);
 	}
-} 
+}

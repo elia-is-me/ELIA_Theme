@@ -16,6 +16,7 @@ import { Button } from "./Buttons";
 import { RunMainMenuCommand, TXT } from "../common/Lang";
 import { CreatePlaylistPopup, DeletePlaylistDialog, GoToAlbum, GoToArtist, RenamePlaylist } from "./Layout";
 import { RatingBar } from "./Rating";
+import { Label } from "../common/TextLink";
 
 
 const playlistColors = {
@@ -176,7 +177,7 @@ class PlaylistHeaderView extends Component {
 	shuffleBtn: Button;
 	editBtn: Button;
 	contextBtn: Button;
-	sortBtn: Button;
+	label: Label;
 
 	constructor() {
 		super({});
@@ -214,18 +215,11 @@ class PlaylistHeaderView extends Component {
 		};
 		this.addChild(this.contextBtn);
 
-		// Playlist Sort btn;
-		this.sortBtn = new Button({
-			style: "text",
-			text: TXT("Sort"),
-			icon: Material.sort,
-			foreColor: buttonColors.secondary
+		this.label = new Label({
+			text: TXT("PLAYLIST"),
+			backgroundColor: RGB(66, 133, 244),
 		});
-		this.sortBtn.on_click = (x, y) => {
-			showSortPlaylistMenu(plman.ActivePlaylist, x, y);
-		}
-		this.addChild(this.sortBtn);
-
+		this.addChild(this.label);
 	}
 
 	/**
@@ -284,11 +278,12 @@ class PlaylistHeaderView extends Component {
 	// playlist header;
 	on_size() {
 		this.artwork.setBoundary(this.x + paddingLR, this.y + paddingTB, artworkHeight, artworkHeight);
+		this.label.setPosition(this.x + paddingLR + this.artwork.height + artworkMarginL, this.artwork.y);
 
 		// Set btns position;
 		let btnY: number;
 		let btnX: number;
-		let btns = [this.shuffleBtn, this.sortBtn, this.contextBtn];
+		let btns = [this.shuffleBtn, this.contextBtn];
 		if (this.width < pageWidth.thin) {
 			btnX = this.x + paddingLR;
 			btnY = this.y + 2 * paddingTB + this.artwork.height;
@@ -346,16 +341,9 @@ class PlaylistHeaderView extends Component {
 			gr.DrawString(this.descriptionText, descriptionFont, secondaryTextColor,
 				textX, textY, textAreaWidth, descriptionLineHeight, StringFormat.LeftTop);
 		}
-
-		// gr.FillSolidRect(this.x, this.y, scale(200), scale(100), 0xff000000);
 	}
 
 	on_mouse_rbtn_up(x: number, y: number) {
-		// if (columnHeader.trace(x, y)) {
-		// 	try {
-		// 		// showlistHeaderMenu(x, y, this.parent);
-		// 	} catch (e) { }
-		// } else {
 		try {
 			showHeaderContextMenu(this.playlistIndex, x, y);
 		} catch (e) { }
@@ -2012,23 +2000,17 @@ function showHeaderContextMenu(playlistIndex: number, x: number, y: number) {
 	const isValid = isValidPlaylist(playlistIndex);
 	const hasTracks = plman.PlaylistItemCount(playlistIndex) > 0;
 	const menu = window.CreatePopupMenu();
-
+	const editMan = fb.CreateMainMenuManager();
+	editMan.Init("edit");
+	editMan.BuildMenu(menu, 201, 400);
+	menu.AppendMenuSeparator();
 	menu.AppendMenuItem(MenuFlag.STRING, 10, TXT("Rename playlist"));
 	if (plman.IsAutoPlaylist(playlistIndex)) {
 		menu.AppendMenuItem(MenuFlag.STRING, 11, TXT("Edit autoplaylist..."));
 	}
 	menu.AppendMenuSeparator();
-
-	// TODO;
-	// menu.AppendMenuItem(hasTracks ? MenuFlag.STRING : MenuFlag.GRAYED, 20, lang("Play"));
-	// menu.AppendMenuItem(hasTracks ? MenuFlag.STRING : MenuFlag.GRAYED, 21, lang("Play next"));
-	// menu.AppendMenuItem(hasTracks ? MenuFlag.STRING : MenuFlag.GRAYED, 22, lang("Add to queue"));
-
-	// menu.AppendMenuSeparator();
-
 	menu.AppendMenuItem(MenuFlag.STRING, 30, TXT("Delete"));
-
-	let ret = menu.TrackPopupMenu(x, y);
+	const ret = menu.TrackPopupMenu(x, y);
 
 	switch (true) {
 		case ret === 10:
@@ -2054,6 +2036,9 @@ function showHeaderContextMenu(playlistIndex: number, x: number, y: number) {
 
 		case ret === 30:
 			DeletePlaylistDialog(playlistIndex);
+			break;
+		case ret >= 201 && ret < 401:
+			editMan.ExecuteByID(ret - 201);
 			break;
 	}
 
