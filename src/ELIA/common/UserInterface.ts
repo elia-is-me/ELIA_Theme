@@ -1,6 +1,5 @@
 import { GetKeyboardMask, isFunction, KMask, lastIndex, RGBA, scale, setAlpha, TextRenderingHint, VKeyCode } from "./Common";
 import { Component, IBoxModel } from "./BasePart";
-import { root } from "../main";
 import { themeColors } from "./Theme";
 // import { root } from "../main";
 
@@ -54,13 +53,6 @@ function _getHoverPart(root: Component, x: number, y: number): Component {
 	if (!root || !root.trace(x, y)) {
 		return;
 	}
-	// const children = root.children;
-	// const resultIndex = lastIndex(children, n => n.trace(x, y));
-	// if (resultIndex > -1) {
-	// 	return _getHoverPart(children[resultIndex], x, y);
-	// } else {
-	// 	return root;
-	// }
 	let visibleParts = findVisibleParts(root);
 	let resultIndex = lastIndex(visibleParts, part => part.isVisible() && (part.trace(x, y) || part.type !== 0));
 	return visibleParts[resultIndex];
@@ -330,10 +322,6 @@ function on_mouse_lbtn_down(x: number, y: number) {
 	setActive(x, y);
 	setFocus(x, y);
 	invoke(activePart, "on_mouse_lbtn_down", x, y);
-
-	// if (modalPart && !modalPart.trace(x, y) && !compareParts(modalPart, activePart)) {
-	// 	invoke(modalPart, "on_mouse_lbtn_down", x, y);
-	// }
 }
 
 function on_mouse_lbtn_dblclk(x: number, y: number) {
@@ -346,10 +334,6 @@ function on_mouse_lbtn_up(x: number, y: number) {
 		isInternalDrag = false;
 		setActive(x, y);
 	}
-
-	// if (modalPart && !modalPart.trace(x, y) && !compareParts(modalPart, activePart)) {
-	// 	invoke(modalPart, "on_mouse_lbtn_up", x, y);
-	// }
 }
 
 function on_mouse_leave() {
@@ -406,7 +390,6 @@ function on_key_down(vkey: number) {
 		}
 	}
 	invoke(focusPart, "on_key_down", vkey, mask);
-	// invoke(rootPart, "on_key_down", vkey, mask);
 }
 
 function on_key_up(vkey: number) { }
@@ -438,102 +421,75 @@ function findDropTargetPart(x: number, y: number) {
 let dropTargetPart: Component = null;
 
 function on_drag_enter(action: IDropTargetAction, x: number, y: number) {
-	// console.log("on_drag_enter, ", new Date());
-	// dropTargetPart = findDropTargetPart(x, y);
-	// if (dropTargetPart) {
-	// 	invoke(dropTargetPart, "on_drag_enter", action, x, y);
-	// }
 	invoke(rootPart, "on_drag_enter", action, x, y);
 }
 
 function on_drag_leave() {
-	// console.log("on_drag_leave", new Date());
-	// if (dropTargetPart) {
-	// 	invoke(dropTargetPart, "on_drag_leave");
-	// }
-	// dropTargetPart = undefined;
 	invoke(rootPart, "on_drag_leave");
 }
 
 function on_drag_over(action: IDropTargetAction, x: number, y: number) {
-	// let prevDropTargetPart = dropTargetPart;
-	// dropTargetPart = findDropTargetPart(x, y);
-	// if (!compareParts(prevDropTargetPart, dropTargetPart)) {
-	// 	invoke(prevDropTargetPart, "on_drag_leave");
-	// 	invoke(dropTargetPart, "on_drag_enter", action, x, y);
-	// }
-	// invoke(dropTargetPart, "on_drag_over", action, x, y);
 	invoke(rootPart, "on_drag_over", action, x, y);
 }
 
 function on_drag_drop(action: IDropTargetAction, x: number, y: number) {
-	// dropTargetPart = findDropTargetPart(x, y);
-	// if (dropTargetPart) {
-	// 	invoke(dropTargetPart, "on_drag_drop", action, x, y);
-	// 	dropTargetPart = undefined;
-	// }
 	invoke(rootPart, "on_drag_drop", action, x, y);
 }
 
 function on_playback_order_changed(newOrder: number) {
-	vis_parts.forEach(p => invoke(p, "on_playback_order_changed", newOrder));
+	invoke_recur(rootPart, "on_playback_order_changed", newOrder);
 }
 
 function on_playback_stop(reason: number) {
-	vis_parts.forEach(p => invoke(p, "on_playback_stop", reason));
+	invoke_recur(rootPart, "on_playback_stop", reason);
 }
 
 function on_playback_pause(isPaused: boolean) {
-	vis_parts.forEach(p => invoke(p, "on_playback_pause", isPaused));
+	invoke_recur(rootPart, "on_playback_pause", isPaused);
 }
 
 function on_playback_edited(metadb: IFbMetadb) {
-	vis_parts.forEach(p => invoke(p, "on_playback_edited", metadb));
+	invoke_recur(rootPart, "on_playback_edited", metadb);
 }
 
 function on_playback_new_track(metadb: IFbMetadb) {
-	vis_parts.forEach(p => invoke(p, "on_playback_new_track", metadb));
+	invoke_recur(rootPart, "on_playback_new_track", metadb);
 }
 
 function on_selection_changed() {
-	vis_parts.forEach(p => invoke(p, "on_selection_changed"));
+	invoke_recur(rootPart, "on_selection_changed");
 }
 
 function on_playlist_items_added(playlistIndex: number) {
-	vis_parts.forEach(p => invoke(p, "on_playlist_items_added", playlistIndex));
+	invoke_recur(rootPart, "on_playlist_items_added", playlistIndex);
 }
 
 function on_playlist_items_removed(playlistIndex: number) {
-	vis_parts.forEach(p => invoke(p, "on_playlist_items_removed", playlistIndex));
+	invoke_recur(rootPart, "on_playlist_items_removed", playlistIndex);
 }
 
 function on_playlist_items_reordered(playlistIndex: number) {
-	vis_parts.forEach(p =>
-		invoke(p, "on_playlist_items_reordered", playlistIndex)
-	);
+	invoke_recur(rootPart, "on_playlist_items_reordered", playlistIndex);
 }
 
 function on_playlists_changed() {
-	vis_parts.forEach(p => invoke(p, "on_playlists_changed"));
+	invoke_recur(rootPart, "on_playlists_changed");
 }
 
 function on_playlist_switch() {
-	vis_parts.forEach(p => invoke(p, "on_playlist_switch"));
+	invoke_recur(rootPart, "on_playlist_switch");
 }
 
 function on_item_focus_change(playlistIndex: number, from: number, to: number) {
-	vis_parts.forEach(p =>
-		invoke(p, "on_item_focus_change", playlistIndex, from, to)
-	);
+	invoke_recur(rootPart, "on_item_focus_change", playlistIndex, from, to)
 }
 
 function on_metadb_changed(metadbs: IFbMetadbList, fromHook: boolean) {
-	vis_parts.forEach(p => invoke(p, "on_metadb_changed", metadbs, fromHook));
+	invoke_recur(rootPart, "on_metadb_changed", metadbs, fromHook);
 }
 
 function on_volume_change(val: number) {
-	vis_parts.forEach(p =>
-		invoke(p, invoke(p, "on_volume_change", val)));
+	invoke_recur(rootPart, "on_volume_change", val);
 }
 
 
@@ -546,15 +502,15 @@ function on_load_image_done(cookie: number, image: IGdiBitmap | null, image_path
 }
 
 function on_library_items_added(metadbs?: IFbMetadbList) {
-	vis_parts.forEach(p => invoke(p, "on_library_items_added", metadbs));
+	invoke_recur(rootPart, "on_library_items_added", metadbs);
 }
 
 function on_library_items_removed(metadbs?: IFbMetadbList) {
-	vis_parts.forEach(p => invoke(p, "on_library_items_removed", metadbs));
+	invoke_recur(rootPart, "on_library_items_removed", metadbs);
 }
 
 function on_library_items_changed(metadbs?: IFbMetadbList) {
-	vis_parts.forEach(p => invoke(p, "on_library_items_changed", metadbs));
+	invoke_recur(rootPart, "on_library_items_changed", metadbs);
 }
 
 function on_playlist_item_ensure_visible(playlistIndex: number, playlistItemIndex: number) {

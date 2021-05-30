@@ -14,7 +14,7 @@ import { PlaylistArtwork } from "../common/AlbumArt";
 import { mouseCursor, notifyOthers, ui } from "../common/UserInterface";
 import { Button } from "./Buttons";
 import { RunMainMenuCommand, TXT } from "../common/Lang";
-import { CreatePlaylistPopup, DeletePlaylistDialog, GoToAlbum, GoToArtist, RenamePlaylist } from "./Layout";
+import { CreatePlaylistPopup, DeletePlaylistDialog, GoToArtist, RenamePlaylist } from "./Layout";
 import { RatingBar } from "./Rating";
 import { Label } from "../common/TextLink";
 

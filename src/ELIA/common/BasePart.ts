@@ -49,7 +49,7 @@ export interface IPaddings {
 }
 
 export interface IInjectableCallbacks {
-	on_init?: () => void;
+	on_show?: () => void;
 	on_size?: () => void;
 	on_click?: (x?: number, y?: number) => void;
 	on_playback_order_changed?: (newOrder?: number) => void;
@@ -119,9 +119,6 @@ export class Component implements IBoxModel, ICallbacks {
 			Object.assign(this, callbacks);
 		}
 	}
-	/**
-	 * 'on_init' 考虑的是当一个部件从隐藏切换到显示后，有一个默认的方法更新/初始化该部件。这么做是否合理现在值得怀疑。
-	 */
 	on_show() { }
 	on_paint(gr: IGdiGraphics) { }
 	on_size() { }

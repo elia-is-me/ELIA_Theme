@@ -10,7 +10,6 @@ const themeColorsLight = {
     titleText: RGB(0, 0, 0),
     text: RGBA(0, 0, 0, 245),
     secondaryText: RGBA(0, 0, 0, 170),
-    // highlight: RGB(251, 114, 153),
     highlight: RGB(234, 67, 53),
 
     mood: RGBA(221, 0, 27, 220),
@@ -34,7 +33,6 @@ const themeColorsLight = {
     panelText: RGB(0, 0, 0),
     panelBackground: RGB(255, 255, 255),
 
-    // primary: RGB(0, 0, 0),
     primary: RGB(52, 168, 83),
     onPrimary: RGBA(255, 255, 255, 245),
     secondary: RGB(0, 0, 0),
@@ -46,7 +44,6 @@ const themeColorsDark = {
     titleText: RGB(255, 255, 255),
     text: RGBA(255, 255, 255, 245),
     secondaryText: RGBA(255, 255, 255, 100),
-    // highlight: RGB(251, 114, 153),
     highlight: RGB(234, 67, 53),
 
     // loved,
@@ -81,16 +78,11 @@ const themeColorsDark = {
     // inputbox;
     inputboxText: RGB(255, 255, 255),
     inputboxSecondaryText: RGBA(255, 255, 255, 120),
-    // inputboxActiveBackground: RGB()
     inputboxBorder: RGBA(255, 255, 255, 118),
-    // inputboxBorderActive: RGB()
 
     // buttons,
-
     primary: RGB(52, 168, 83),
     onPrimary: RGBA(255, 255, 255, 245),
-    // primary: RGB(255, 255, 255),
-    // onPrimary: RGBA(0, 0, 0, 245),
     secondary: RGB(255, 255, 255),
     onSecondary: RGBA(0, 0, 0, 245),
 };

@@ -221,7 +221,7 @@ export class PlaybackBarMenu extends Component {
 
         let repeat_menu_item = new MenuItem(repeat_off, "");
         Object.assign(repeat_menu_item, {
-            on_init() {
+            on_show() {
                 let cp: [Icon, string] = repeat_off_cp;
                 switch (plman.PlaybackOrder) {
                     case PlaybackOrder.RepeatPlaylist:
@@ -250,7 +250,7 @@ export class PlaybackBarMenu extends Component {
                 }
             },
             on_playback_order_changed() {
-                this.on_init();
+                this.on_show();
                 this.on_size();
                 this.repaint();
             }
@@ -258,7 +258,7 @@ export class PlaybackBarMenu extends Component {
 
         let shuffle_menu_item = new MenuItem(shuffle_off, "");
         Object.assign(shuffle_menu_item, {
-            on_init() {
+            on_show() {
                 let cp = shuffle_off_cp;
                 if (plman.PlaybackOrder === getShuffleOrder()) {
                     cp = shuffle_on_cp;
@@ -279,7 +279,7 @@ export class PlaybackBarMenu extends Component {
                 }
             },
             on_playback_order_changed() {
-                this.on_init();
+                this.on_show();
                 this.on_size();
                 this.repaint();
             }

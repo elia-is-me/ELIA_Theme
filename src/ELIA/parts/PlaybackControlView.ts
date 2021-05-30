@@ -74,19 +74,19 @@ const createBottomButtons = () => {
 		on_click: function () {
 			fb.PlayOrPause();
 		},
-		on_init: function () {
+		on_show: function () {
 			(this as IconButton).setIcon(fb.IsPlaying && !fb.IsPaused ? Material.pause : Material.play);
 		},
 		on_playback_new_track: function () {
-			this.on_init();
+			this.on_show();
 			this.repaint();
 		},
 		on_playback_stop: function () {
-			this.on_init();
+			this.on_show();
 			this.repaint();
 		},
 		on_playback_pause: function () {
-			this.on_init();
+			this.on_show();
 			this.repaint();
 		}
 	});
@@ -103,7 +103,7 @@ const createBottomButtons = () => {
 	// button 'Love', enabled when 'foo_playcount' is installed (currently);
 	buttons.love = createBtn(Material.heart, iconSize - scale(2), themeColors.mood);
 	Object.assign(buttons.love, {
-		on_init: function () {
+		on_show: function () {
 			let metadb = fb.GetNowPlaying();
 			if (!metadb) {
 				buttons.love.setIcon(Material.heart_empty);
@@ -121,27 +121,27 @@ const createBottomButtons = () => {
 		},
 		on_click: function () {
 			ToggleMood(fb.GetNowPlaying());
-			this.on_init();
+			this.on_show();
 			this.repaint();
 		},
 		on_playback_new_track: function () {
-			this.on_init();
+			this.on_show();
 			this.repaint();
 		},
 		on_playback_stop: function (reason: number) {
 			if (reason !== StopReason.StartingAnotherTrack) {
-				this.on_init();
+				this.on_show();
 				this.repaint();
 			}
 		},
 		on_playback_edited() {
-			this.on_init();
+			this.on_show();
 			this.repaint();
 		}
 	});
 	buttons.repeat = createBtn(Material.repeat, smallIconSize, secondaryColor);
 	Object.assign(buttons.repeat, {
-		on_init() {
+		on_show() {
 			switch (plman.PlaybackOrder) {
 				case PlaybackOrder.RepeatPlaylist:
 					this.setIcon(Material.repeat);
@@ -167,14 +167,14 @@ const createBottomButtons = () => {
 			}
 		},
 		on_playback_order_changed() {
-			this.on_init();
+			this.on_show();
 			this.repaint();
 		}
 	});
 	// button 'Shuffle';
 	buttons.shuffle = createBtn(Material.shuffle, smallIconSize, secondaryColor);
 	Object.assign(buttons.shuffle, {
-		on_init() {
+		on_show() {
 			if (plman.PlaybackOrder === getShuffleOrder()) {
 				this.setColors(highlightColor);
 			} else {
@@ -189,21 +189,21 @@ const createBottomButtons = () => {
 			}
 		},
 		on_playback_order_changed() {
-			this.on_init();
+			this.on_show();
 			this.repaint();
 		},
 	});
 	// button 'Volume Mute Toggle';
 	buttons.volume = createBtn(Material.volume, smallIconSize, defaultColor);
 	Object.assign(buttons.volume, {
-		on_init() {
+		on_show() {
 			this.setIcon(fb.Volume === -100 ? Material.volume_off : Material.volume);
 		},
 		on_click() {
 			fb.VolumeMute();
 		},
 		on_volume_change() {
-			this.on_init();
+			this.on_show();
 			this.repaint();
 		}
 	});
@@ -289,7 +289,7 @@ const artistText = new TextLink({
 	textHoverColor: bottomColors.text,
 }, {
 
-	on_init() {
+		on_show() {
 		let metadb = fb.GetNowPlaying();
 		if (metadb) {
 			let artistText = TF_ARTIST.EvalWithMetadb(metadb);
@@ -308,19 +308,19 @@ const artistText = new TextLink({
 	},
 
 	on_playback_new_track() {
-		this.on_init();
+		this.on_show();
 		this.repaint();
 	},
 
 	on_playback_stop(reason: number) {
 		if (reason != 2) {
-			this.on_init();
+			this.on_show();
 			this.repaint();
 		}
 	},
 
 	on_playback_edited() {
-		this.on_init();
+		this.on_show();
 		this.repaint();
 	}
 });
@@ -658,14 +658,10 @@ export class PlaybackControlView extends Component {
 			return;
 		}
 		if (plman.PlayingPlaylist === plman.ActivePlaylist) {
-			// GotoPlaylist();
 			notifyOthers("Show.Playlist", { playlistIndex: plman.ActivePlaylist });
 			notifyOthers("playlist-show-now-playing-in-playlist");
 		} else {
 			notifyOthers("Show.Playlist", { playlistIndex: plman.PlayingPlaylist });
-			// GotoPlaylist();
-			// plman.ActivePlaylist = plman.PlayingPlaylist;
-			// will trigger showNowPlaying on playlistView.on_init();
 		}
 	}
 
@@ -752,12 +748,9 @@ function showPanelContextMenu(metadb: IFbMetadb, x: number, y: number) {
 				})
 				notifyOthers("playlist-show-now-playing-in-playlist");
 			} else {
-				// GotoPlaylist();
 				notifyOthers("Show.Playlist", {
 					playlistIndex: plman.PlayingPlaylist,
 				})
-				// plman.ActivePlaylist = plman.PlayingPlaylist;
-				// will trigger showNowPlaying on playlistView.on_init();
 			}
 			break;
 		case ret === 11:
