@@ -83,8 +83,8 @@ export class TextLink extends Clickable {
 export class Label extends Component {
 	text: string = "";
 	icon?: string = "";
-	private textColor: number = 0xffffffff;
-	private backgroundColor: number = RGB(234, 67, 53);
+	private textColor: number = RGB(234, 67, 53);
+	private backgroundColor: number = 0;
 	private font: IGdiFont = GetFont("normal", scale(12));
 
 	constructor(options: {
@@ -106,7 +106,7 @@ export class Label extends Component {
 	on_paint(gr: IGdiGraphics) {
 		gr.SetSmoothingMode(SmoothingMode.AntiAlias);
 		let r = scale(2);
-		gr.FillRoundRect(this.x, this.y, this.width, this.height, r, r, this.backgroundColor);
+		gr.DrawRoundRect(this.x, this.y, this.width, this.height, r, r, scale(1), this.textColor);
 		gr.SetSmoothingMode(SmoothingMode.Default);
 		gr.DrawString(this.text, this.font, this.textColor, this.x, this.y, this.width, this.height, StringFormat.Center);
 	}

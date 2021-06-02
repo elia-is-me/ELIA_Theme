@@ -259,9 +259,7 @@ class PlaylistHeaderView extends Component {
 		this.titleText = plman.GetPlaylistName(this.playlistIndex) || TXT("NO TITLE");
 		this.titleFullWidth = MeasureString(this.titleText, titleFont).Width;
 		this.descriptionText =
-			TXT("playlist")
-			+ spaceStartEnd("\u2022")
-			+ plman.PlaylistItemCount(this.playlistIndex)
+			plman.PlaylistItemCount(this.playlistIndex)
 			+ spaceStart(plman.PlaylistItemCount(this.playlistIndex) > 1 ? TXT("tracks") : TXT("track"));
 		if (plman.PlaylistItemCount(this.playlistIndex) > 0) {
 			this.descriptionText +=
@@ -278,7 +276,7 @@ class PlaylistHeaderView extends Component {
 	// playlist header;
 	on_size() {
 		this.artwork.setBoundary(this.x + paddingLR, this.y + paddingTB, artworkHeight, artworkHeight);
-		this.label.setPosition(this.x + paddingLR + this.artwork.height + artworkMarginL, this.artwork.y);
+		this.label.setPosition(this.x + paddingLR + this.artwork.width + artworkMarginL, this.artwork.y);
 
 		// Set btns position;
 		let btnY: number;
