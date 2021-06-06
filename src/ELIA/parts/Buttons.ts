@@ -6,6 +6,8 @@ import { ButtonStates, Clickable } from "../common/Button";
 import { ui } from "../common/UserInterface";
 
 const ui_textRending = ui.textRender;
+const textFont = GetFont("semibold", scale(14));
+const iconFont = gdi.Font(MaterialFont, scale(22));
 
 /**
  * Icon button that only contains an icon; Currently there is no click
@@ -70,8 +72,6 @@ export const enum ButtonStyles {
 	Outlined = "outlined",
 	Text = "text"
 }
-const textFont = GetFont("semibold", scale(14));
-const iconFont = gdi.Font(MaterialFont, scale(22));
 
 export interface IButtonOptions {
 	style: string;

@@ -1,4 +1,4 @@
-import { MeasureString, StringFormat, spaceStartEnd, spaceEnd, spaceStart } from "../common/String";
+import { MeasureString, StringFormat, spaceStartEnd, spaceEnd, spaceStart, StringFormatFlags, StringTrimming } from "../common/String";
 import { AlbumArtId, AlbumArtwork } from "../common/AlbumArt";
 import { Component } from "../common/BasePart";
 import { clamp, CursorName, foo_playcount, getYear, KMask, MenuFlag, ReadMood, RGB, scale, StopReason, TextRenderingHint, ToggleMood, VKeyCode } from "../common/Common";
@@ -11,8 +11,8 @@ import { TXT } from "../common/Lang";
 import { formatPlaylistDuration, showTrackContextMenu } from "./PlaylistView";
 import { SendToQueueListPlay } from "./SearchResultView";
 import { GetFont, scrollbarWidth, themeColors } from "../common/Theme";
-import { GotoPlaylist } from "./Layout";
 import { RatingBar } from "./Rating";
+import { Label, MutilineText } from "../common/TextLink";
 
 const pageColors = {
     text: themeColors.text,
@@ -146,7 +146,11 @@ let selecting = new SelectionHelper();
 
 class AlbumHeaderView extends Component {
     artwork: AlbumArtwork;
+    label: Label;
     buttons: Map<string, Button | IconButton> = new Map;
+    objAlbumText: MutilineText;
+    objAlbumInfo: MutilineText;
+    objAlbumArtist: MutilineText;
 
     //
     albumArtistText: string = "";
@@ -159,6 +163,37 @@ class AlbumHeaderView extends Component {
 
         this.artwork = new AlbumArtwork({ artworkType: AlbumArtId.Front });
         this.addChild(this.artwork);
+
+        this.label = new Label({
+            text: TXT("ALBUM"),
+            textColor: RGB(66, 133, 244),
+        });
+        this.addChild(this.label);
+
+        this.objAlbumText = new MutilineText({
+            font: titleFont,
+            textColor: pageColors.titleText,
+            stringFormat: StringFormat(0, 1, StringTrimming.EllipsisCharacter, StringFormatFlags.LineLimit),
+            maxLines: 2,
+        });
+        this.addChild(this.objAlbumText);
+
+        this.objAlbumArtist = new MutilineText({
+            font: descriptionFont,
+            textColor: pageColors.secondaryText,
+            stringFormat: StringFormat(0, 1, StringTrimming.EllipsisCharacter, StringFormatFlags.LineLimit),
+            maxLines: 1,
+        });
+        this.addChild(this.objAlbumArtist);
+
+        this.objAlbumInfo = new MutilineText({
+            font: descriptionFont,
+            textColor: pageColors.secondaryText,
+            stringFormat: StringFormat(0, 1, StringTrimming.EllipsisCharacter, StringFormatFlags.LineLimit),
+            maxLines: 1,
+        })
+        this.addChild(this.objAlbumInfo);
+
 
         let shuffleall = new Button({
             style: "contained",
@@ -174,16 +209,6 @@ class AlbumHeaderView extends Component {
         this.buttons.set("shuffleall", shuffleall);
         this.addChild(shuffleall);
 
-        let sort = new Button({
-            style: "text",
-            text: TXT("Sort"),
-            icon: Material.sort,
-            foreColor: buttonColors.secondary
-        });
-        sort.on_click = (x: number, y: number) => { }
-        this.buttons.set("sort", sort);
-        // this.addChild(sort);
-
         let context = new Button({
             style: "text",
             icon: Material.more_vert,
@@ -191,15 +216,27 @@ class AlbumHeaderView extends Component {
             foreColor: buttonColors.secondary
         });
         this.buttons.set("context", context);
+        this.addChild(context);
     }
 
     on_size() {
         this.artwork.setBoundary(this.x + paddingLR, this.y + paddingTB, artworkHeight, artworkHeight);
+        this.label.setPosition(this.artwork.x + this.artwork.width + artworkMarginL, this.artwork.y);
+
+        let textX = this.artwork.x + this.artwork.width + artworkMarginL;
+        let textWidth = this.x + this.width - textX - paddingLR;
+        this.objAlbumText.getBoxSize(textWidth);
+        this.objAlbumText.setPosition(textX, this.label.y + this.label.height * 1.5);
+
+        this.objAlbumArtist.getBoxSize(textWidth);
+        this.objAlbumArtist.setPosition(textX, this.objAlbumText.y + this.objAlbumText.height + scale(8));
+
+        this.objAlbumInfo.getBoxSize(textWidth);
+        this.objAlbumInfo.setPosition(textX, this.objAlbumArtist.y + this.objAlbumArtist.height);
 
         // set btns positon;
         let btnX: number, btnY: number;
         let shuffleall = this.buttons.get("shuffleall");
-        let sort = this.buttons.get("sort");
         let context = this.buttons.get("context");
         if (this.width < pageWidth.thin) {
             btnX = this.x + paddingLR;
@@ -209,38 +246,13 @@ class AlbumHeaderView extends Component {
             btnY = this.y + this.height - paddingTB - shuffleall.height;
         }
         shuffleall.setPosition(btnX, btnY);
-        sort.setPosition(shuffleall.x + shuffleall.width + scale(8), btnY);
-        context.setPosition(sort.x + sort.width + scale(4), btnY);
+        context.setPosition(shuffleall.x + shuffleall.width + scale(4), btnY);
     }
 
     // header;
     on_paint(gr: IGdiGraphics) {
-        // background;;
+        // background;
         gr.FillSolidRect(this.x, this.y, this.width, this.height, pageColors.background);
-
-        // text info;
-        // ----
-        let textX = this.artwork.x + this.artwork.width + artworkMarginL;
-        let textWidth = this.x + this.width - textX - paddingLR;
-        let _buttonY = this.buttons.get("shuffleall").y;
-        let textTotalHeight = titleLineHeight + descriptionLineHeight + subtitleLineHeight;
-        let textY = this.y + paddingTB + (-this.artwork.y + _buttonY - textTotalHeight) / 2;
-        let sf = StringFormat.LeftTop;
-
-        // title;
-        gr.SetTextRenderingHint(TextRenderingHint.AntiAliasGridFit);
-        gr.DrawString(this.albumText, titleFont, pageColors.titleText, textX, textY, textWidth, titleLineHeight, sf);
-        gr.SetTextRenderingHint(ui.textRender);
-
-        // album artist;
-        textY += titleLineHeight;
-        gr.DrawString(this.albumArtistText, subtitleFont, pageColors.secondaryText,
-            textX, textY, textWidth, subtitleLineHeight, sf);
-
-        // album track info;
-        textY += subtitleLineHeight;
-        gr.DrawString(this.albumTracksInfo, descriptionFont, pageColors.secondaryText,
-            textX, textY, textWidth, descriptionLineHeight, sf);
     }
 }
 
@@ -382,14 +394,29 @@ export class AlbumPageView extends ScrollView {
         //  change header;
         this.header.metadbs = metadbs;
         this.header.albumText = albumName;
-        this.header.albumTracksInfo = TXT("Album")
-            + spaceStartEnd("\u2022") + formatTrackCount(metadbs.Count)
-            + spaceStartEnd("\u2022") + formatPlaylistDuration(this.metadbs.CalcTotalDuration());
-        this.header.albumArtistText = TF_ALBUM_ARTIST.EvalWithMetadb(metadb);
+        this.header.objAlbumText.setText(albumName);
+        this.header.objAlbumText.getBoxSize();
+
+        let subtitle = TF_ALBUM_ARTIST.EvalWithMetadb(metadb);
         let year = getYear(TF_DATE.EvalWithMetadb(metadb));
         if (year) {
-            this.header.albumArtistText += " \u2022 " + year;
+            subtitle += " \u2022 " + year;
         }
+        this.header.objAlbumArtist.setText(subtitle);
+
+        this.header.objAlbumArtist.getBoxSize();
+
+        this.header.objAlbumInfo.setText(
+            formatTrackCount(metadbs.Count)
+            + spaceStartEnd("\u2022")
+            + formatPlaylistDuration(this.metadbs.CalcTotalDuration())
+        );
+        this.header.objAlbumInfo.getBoxSize();
+
+        this.header.albumTracksInfo = formatTrackCount(metadbs.Count)
+            + spaceStartEnd("\u2022")
+            + formatPlaylistDuration(this.metadbs.CalcTotalDuration());
+        this.header.albumArtistText = TF_ALBUM_ARTIST.EvalWithMetadb(metadb);
         this.header.artwork.getArtwork(metadb);
         this.on_playback_new_track();
 

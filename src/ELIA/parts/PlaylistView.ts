@@ -217,7 +217,8 @@ class PlaylistHeaderView extends Component {
 
 		this.label = new Label({
 			text: TXT("PLAYLIST"),
-			backgroundColor: RGB(66, 133, 244),
+			textColor: RGB(234, 67, 53),
+			// backgroundColor: RGB(66, 133, 244),
 		});
 		this.addChild(this.label);
 	}

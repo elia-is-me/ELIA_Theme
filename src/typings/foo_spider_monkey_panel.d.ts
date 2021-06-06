@@ -3202,12 +3202,12 @@ interface IGdiGraphics {
  */
 interface IMeasureStringInfo {
     // Properties
-    readonly x: number;
-    readonly y: number;
+    readonly X: number;
+    readonly Y: number;
     readonly Width: number;
     readonly Height: number;
-    readonly lines: number;
-    readonly chars: number;
+    readonly Lines: number;
+    readonly Chars: number;
 }
 
 /**

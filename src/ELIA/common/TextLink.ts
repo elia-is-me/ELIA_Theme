@@ -1,7 +1,7 @@
 import { getOrDefault, RGB, scale, SmoothingMode } from "./Common";
 import { Component, IInjectableCallbacks } from "./BasePart";
 import { ButtonStates, Clickable } from "./Button";
-import { MeasureString, StringFormat } from "./String";
+import { MeasureString, StringFormat, StringFormatFlags, StringTrimming } from "./String";
 import { GetFont } from "./Theme";
 
 export interface ITextLinkProps {
@@ -85,7 +85,7 @@ export class Label extends Component {
 	icon?: string = "";
 	private textColor: number = RGB(234, 67, 53);
 	private backgroundColor: number = 0;
-	private font: IGdiFont = GetFont("normal", scale(12));
+	private font: IGdiFont = GetFont("normal", scale(11));
 
 	constructor(options: {
 		text: string;
@@ -126,4 +126,70 @@ export class Label extends Component {
 		this.textColor = getOrDefault(colors, o => o.textColor, this.textColor);
 		this.backgroundColor = getOrDefault(colors, o => o.backgroundColor, this.backgroundColor);
 	}
+}
+
+export class MutilineText extends Component {
+	defaultText: string = "<text>"
+	text: string = "<text>";
+	font: IGdiFont = GetFont("normal,12");
+	textColor: number = 0xff000000;
+	backgroundColor: number = 0;
+	maxLines: number = 0;
+	lineCount: number;
+	stringFormat: number = StringFormat(0, 0, StringTrimming.EllipsisCharacter, StringFormatFlags.LineLimit);
+
+	private tempImg: IGdiBitmap = gdi.CreateImage(1, 1);
+	private gr: IGdiGraphics = this.tempImg.GetGraphics();
+
+	constructor(options?: {
+		text?: string;
+		font?: IGdiFont;
+		textColor?: number;
+		backgroundColor?: number;
+		maxLines?: number;
+		stringFormat?: number;
+	}) {
+		super({})
+
+		Object.assign(this, options);
+		this.setText(options.text);
+	}
+
+	setText(text: string) {
+		this.text = text || this.defaultText;
+		this.getBoxSize();
+	}
+
+
+	getBoxSize(textWidth?: number) {
+		let textWidth_ = textWidth || this.width;
+		if (!textWidth_) { return; }
+
+		let h = (this.maxLines > 0 ? this.font.Height * (this.maxLines + .5) : 5000);
+		let textInfo: IMeasureStringInfo;
+		textInfo = this.gr.MeasureString(this.text, this.font, 0, 0, textWidth_, h, this.stringFormat)
+
+		if (this.maxLines > 0) {
+			this.lineCount = Math.min(this.maxLines, textInfo.Lines);
+		}
+
+		this.setSize(Math.ceil(textInfo.Width), Math.ceil(textInfo.Height));
+	}
+
+	on_paint(gr: IGdiGraphics) {
+
+		// draw background;
+		if (this.backgroundColor) {
+			// gr.FillSolidRect(this.x, this.y, this.width, this.height, this.backgroundColor);
+		}
+		gr.FillSolidRect(this.x, this.y, this.width, this.height, 0xa0aabbcc);
+
+		// draw text lines;
+		let textHeight = Math.min(this.height, this.font.Height * (this.lineCount + .5));
+
+		gr.DrawString(this.text, this.font, this.textColor,
+			this.x, this.y, this.width, textHeight, this.stringFormat);
+
+	}
+
 }
