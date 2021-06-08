@@ -2,19 +2,19 @@
 // Playback control bar;
 // ---------------------
 
-import { clamp, debugTrace, getYear, MenuFlag, pos2vol, ReadMood, setAlpha, StopReason, ToggleMood, uniq, vol2pos } from "../common/Common";
-import { TextLink } from "../common/TextLink";
-import { AlbumArtId, AlbumArtwork } from "../common/AlbumArt";
-import { Slider, SliderThumbImage } from "../common/Slider";
-import { Component } from "../common/BasePart";
-import { Material, MaterialFont } from "../common/Icon"
-import { scale, PlaybackOrder, SmoothingMode } from "../common/Common";
-import { themeColors, fonts, GetFont } from "../common/Theme";
+import { clamp, debugTrace, getYear, MenuFlag, pos2vol, ReadMood, setAlpha, StopReason, ToggleMood, uniq, vol2pos } from "./Common";
+import { TextLink } from "./TextLink";
+import { AlbumArtId, AlbumArtwork } from "./AlbumArt";
+import { Slider, SliderThumbImage } from "./Slider";
+import { Component } from "./BasePart";
+import { Material, MaterialFont } from "./Icon"
+import { scale, PlaybackOrder, SmoothingMode } from "./Common";
+import { themeColors, fonts, GetFont } from "./Theme";
 import { IconButton } from "./Buttons";
-import { TXT, RunContextCommandWithMetadb } from "../common/Lang";
+import { TXT, RunContextCommandWithMetadb } from "./Lang";
 import { CreatePlaylistPopup, GoToAlbum, GoToArtist, GotoPlaylist, ShowPlaybackBarMenu } from "./Layout";
-import { MeasureString, StringFormat } from "../common/String";
-import { mouseCursor, notifyOthers } from "../common/UserInterface";
+import { MeasureString, StringFormat } from "./String";
+import { mouseCursor, notifyOthers } from "./UserInterface";
 
 function formatPlaybackTime(sec: number) {
 	if (!isFinite(sec) || sec < 0) return '--:--';
@@ -289,7 +289,7 @@ const artistText = new TextLink({
 	textHoverColor: bottomColors.text,
 }, {
 
-		on_show() {
+	on_show() {
 		let metadb = fb.GetNowPlaying();
 		if (metadb) {
 			let artistText = TF_ARTIST.EvalWithMetadb(metadb);

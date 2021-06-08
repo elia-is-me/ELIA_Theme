@@ -2,13 +2,13 @@
  * 5 star rating & like button;
  */
 
-import { Component } from "../common/BasePart";
-import { foo_playcount, RGB, scale, setAlpha, TextRenderingHint } from "../common/Common";
-import { Material, MaterialFont } from "../common/Icon";
-import { RunContextCommandWithMetadb } from "../common/Lang";
-import { MeasureString, StringFormat } from "../common/String";
-import { ui } from "../common/UserInterface";
-import { GetFont, themeColors } from "../common/Theme";
+import { Component } from "./BasePart";
+import { foo_playcount, RGB, scale, setAlpha, TextRenderingHint } from "./Common";
+import { Material, MaterialFont } from "./Icon";
+import { RunContextCommandWithMetadb } from "./Lang";
+import { MeasureString, StringFormat } from "./String";
+import { ui } from "./UserInterface";
+import { GetFont, themeColors } from "./Theme";
 
 const ratingColors = {
     disabled: setAlpha(themeColors.text, 50),

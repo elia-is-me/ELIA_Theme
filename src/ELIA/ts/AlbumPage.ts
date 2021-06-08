@@ -1,18 +1,18 @@
-import { MeasureString, StringFormat, spaceStartEnd, spaceEnd, spaceStart, StringFormatFlags, StringTrimming } from "../common/String";
-import { AlbumArtId, AlbumArtwork } from "../common/AlbumArt";
-import { Component } from "../common/BasePart";
-import { clamp, CursorName, foo_playcount, getYear, KMask, MenuFlag, ReadMood, RGB, scale, StopReason, TextRenderingHint, ToggleMood, VKeyCode } from "../common/Common";
-import { Material, MaterialFont } from "../common/Icon";
-import { Scrollbar } from "../common/ScrollBar";
-import { ScrollView } from "../common/ScrollView";
-import { notifyOthers, ui } from "../common/UserInterface";
+import { MeasureString, StringFormat, spaceStartEnd, spaceEnd, spaceStart, StringFormatFlags, StringTrimming } from "./String";
+import { AlbumArtId, AlbumArtwork } from "./AlbumArt";
+import { Component } from "./BasePart";
+import { clamp, CursorName, foo_playcount, getYear, KMask, MenuFlag, ReadMood, RGB, scale, StopReason, TextRenderingHint, ToggleMood, VKeyCode } from "./Common";
+import { Material, MaterialFont } from "./Icon";
+import { Scrollbar } from "./ScrollBar";
+import { ScrollView } from "./ScrollView";
+import { notifyOthers, ui } from "./UserInterface";
 import { Button, IconButton } from "./Buttons";
-import { TXT } from "../common/Lang";
+import { TXT } from "./Lang";
 import { formatPlaylistDuration, showTrackContextMenu } from "./PlaylistView";
 import { SendToQueueListPlay } from "./SearchResultView";
-import { GetFont, scrollbarWidth, themeColors } from "../common/Theme";
+import { GetFont, scrollbarWidth, themeColors } from "./Theme";
 import { RatingBar } from "./Rating";
-import { Label, MutilineText } from "../common/TextLink";
+import { Label, MutilineText } from "./TextLink";
 
 const pageColors = {
     text: themeColors.text,
@@ -40,13 +40,10 @@ const itemFont = GetFont("normal, 14");
 const semiItemFont = GetFont("semibold, 14");
 const smallItemFont = GetFont("normal, 13");
 const descriptionFont = GetFont("normal, 14");
-let subtitleFont = GetFont("normal, 24");
-const titleFont = GetFont("bold, 24");
+let subtitleFont = GetFont("normal, 14");
+const titleFont = GetFont("bold, 20");
 let timeFont = GetFont("Trebuchet MS", itemFont.Size);
 
-let titleLineHeight = titleFont.Height * 1.1;
-let descriptionLineHeight = descriptionFont.Height * 1.1;
-let subtitleLineHeight = subtitleFont.Height * 1.2;
 let moodWidth = MeasureString(Material.heart, iconFont).Width;
 
 let paddingLR = scale(24);
@@ -70,7 +67,7 @@ const TF_TRACK_INFO = fb.TitleFormat([
     "[%track artist%]", //2
     "%rating%",  //3
     "%length%", //4
-    "%track number%", //5
+    "%tracknumber%", //5
     "%disc number%", //6
     "[%play_count%]",//7
     "$date(%added%)",// 8
@@ -148,14 +145,9 @@ class AlbumHeaderView extends Component {
     artwork: AlbumArtwork;
     label: Label;
     buttons: Map<string, Button | IconButton> = new Map;
-    objAlbumText: MutilineText;
-    objAlbumInfo: MutilineText;
-    objAlbumArtist: MutilineText;
-
-    //
-    albumArtistText: string = "";
-    albumText: string = "";
-    albumTracksInfo: string = "";
+    albumName: MutilineText;
+    tracksInfo: MutilineText;
+    albumArtist: MutilineText;
     metadbs: IFbMetadbList;
 
     constructor() {
@@ -170,29 +162,29 @@ class AlbumHeaderView extends Component {
         });
         this.addChild(this.label);
 
-        this.objAlbumText = new MutilineText({
+        this.albumName = new MutilineText({
             font: titleFont,
             textColor: pageColors.titleText,
             stringFormat: StringFormat(0, 1, StringTrimming.EllipsisCharacter, StringFormatFlags.LineLimit),
             maxLines: 2,
         });
-        this.addChild(this.objAlbumText);
+        this.addChild(this.albumName);
 
-        this.objAlbumArtist = new MutilineText({
+        this.albumArtist = new MutilineText({
             font: descriptionFont,
             textColor: pageColors.secondaryText,
             stringFormat: StringFormat(0, 1, StringTrimming.EllipsisCharacter, StringFormatFlags.LineLimit),
             maxLines: 1,
         });
-        this.addChild(this.objAlbumArtist);
+        this.addChild(this.albumArtist);
 
-        this.objAlbumInfo = new MutilineText({
+        this.tracksInfo = new MutilineText({
             font: descriptionFont,
             textColor: pageColors.secondaryText,
             stringFormat: StringFormat(0, 1, StringTrimming.EllipsisCharacter, StringFormatFlags.LineLimit),
             maxLines: 1,
         })
-        this.addChild(this.objAlbumInfo);
+        this.addChild(this.tracksInfo);
 
 
         let shuffleall = new Button({
@@ -225,14 +217,14 @@ class AlbumHeaderView extends Component {
 
         let textX = this.artwork.x + this.artwork.width + artworkMarginL;
         let textWidth = this.x + this.width - textX - paddingLR;
-        this.objAlbumText.getBoxSize(textWidth);
-        this.objAlbumText.setPosition(textX, this.label.y + this.label.height * 1.5);
+        this.albumName.getBoxSize(textWidth);
+        this.albumName.setPosition(textX, this.label.y + this.label.height * 1.5);
 
-        this.objAlbumArtist.getBoxSize(textWidth);
-        this.objAlbumArtist.setPosition(textX, this.objAlbumText.y + this.objAlbumText.height + scale(8));
+        this.albumArtist.getBoxSize(textWidth);
+        this.albumArtist.setPosition(textX, this.albumName.y + this.albumName.height + scale(8));
 
-        this.objAlbumInfo.getBoxSize(textWidth);
-        this.objAlbumInfo.setPosition(textX, this.objAlbumArtist.y + this.objAlbumArtist.height);
+        this.tracksInfo.getBoxSize(textWidth);
+        this.tracksInfo.setPosition(textX, this.albumArtist.y + this.albumArtist.height);
 
         // set btns positon;
         let btnX: number, btnY: number;
@@ -393,33 +385,23 @@ export class AlbumPageView extends ScrollView {
 
         //  change header;
         this.header.metadbs = metadbs;
-        this.header.albumText = albumName;
-        this.header.objAlbumText.setText(albumName);
-        this.header.objAlbumText.getBoxSize();
+        this.header.albumName.setText(albumName);
 
         let subtitle = TF_ALBUM_ARTIST.EvalWithMetadb(metadb);
         let year = getYear(TF_DATE.EvalWithMetadb(metadb));
         if (year) {
             subtitle += " \u2022 " + year;
         }
-        this.header.objAlbumArtist.setText(subtitle);
+        this.header.albumArtist.setText(subtitle);
 
-        this.header.objAlbumArtist.getBoxSize();
-
-        this.header.objAlbumInfo.setText(
+        this.header.tracksInfo.setText(
             formatTrackCount(metadbs.Count)
             + spaceStartEnd("\u2022")
             + formatPlaylistDuration(this.metadbs.CalcTotalDuration())
         );
-        this.header.objAlbumInfo.getBoxSize();
-
-        this.header.albumTracksInfo = formatTrackCount(metadbs.Count)
-            + spaceStartEnd("\u2022")
-            + formatPlaylistDuration(this.metadbs.CalcTotalDuration());
-        this.header.albumArtistText = TF_ALBUM_ARTIST.EvalWithMetadb(metadb);
         this.header.artwork.getArtwork(metadb);
-        this.on_playback_new_track();
 
+        this.on_playback_new_track();
         this.repaint();
     }
 

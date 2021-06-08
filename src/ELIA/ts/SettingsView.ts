@@ -1,12 +1,12 @@
-import { scale } from "../common/Common";
-import { Material, MaterialFont } from "../common/Icon";
-import { Scrollbar } from "../common/ScrollBar";
-import { ScrollView } from "../common/ScrollView";
-import { StringFormat } from "../common/String";
-import { notifyOthers } from "../common/UserInterface";
+import { scale } from "./Common";
+import { Material, MaterialFont } from "./Icon";
+import { Scrollbar } from "./ScrollBar";
+import { ScrollView } from "./ScrollView";
+import { StringFormat } from "./String";
+import { notifyOthers } from "./UserInterface";
 import { IconButton } from "./Buttons";
-import { TXT } from "../common/Lang";
-import { GetFont, themeColors } from "../common/Theme";
+import { TXT } from "./Lang";
+import { GetFont, themeColors } from "./Theme";
 
 const settingsColors = {
     titleText: themeColors.titleText,

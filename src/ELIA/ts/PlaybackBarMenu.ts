@@ -1,14 +1,14 @@
-import { clamp, PlaybackOrder, pos2vol, RGB, RGBA, scale, setAlpha, SmoothingMode, TextRenderingHint, vol2pos } from "../common/Common";
-import { Component } from "../common/BasePart";
-import { Material, MaterialFont } from "../common/Icon";
+import { clamp, PlaybackOrder, pos2vol, RGB, RGBA, scale, setAlpha, SmoothingMode, TextRenderingHint, vol2pos } from "./Common";
+import { Component } from "./BasePart";
+import { Material, MaterialFont } from "./Icon";
 import { IconButton } from "./Buttons";
-import { Slider } from "../common/Slider";
-import { GetFont, themeColors } from "../common/Theme";
-import { notifyOthers, ui } from "../common/UserInterface";
-import { TXT } from "../common/Lang";
-import { ButtonStates, Clickable } from "../common/Button";
+import { Slider } from "./Slider";
+import { GetFont, themeColors } from "./Theme";
+import { notifyOthers, ui } from "./UserInterface";
+import { TXT } from "./Lang";
+import { ButtonStates, Clickable } from "./Button";
 import { getShuffleOrder } from "./PlaybackControlView";
-import { StringFormat } from "../common/String";
+import { StringFormat } from "./String";
 
 const MENU_ITEM_HEIGHT = scale(40);
 const MENU_WIDTH = scale(164);

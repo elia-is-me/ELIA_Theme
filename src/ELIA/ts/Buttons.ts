@@ -1,9 +1,9 @@
-import { scale, TextRenderingHint, setAlpha, SmoothingMode } from "../common/Common";
-import { StringFormat, MeasureString } from "../common/String"
-import { Material, MaterialFont } from "../common/Icon";
-import { GetFont, themeColors } from "../common/Theme";
-import { ButtonStates, Clickable } from "../common/Button";
-import { ui } from "../common/UserInterface";
+import { scale, TextRenderingHint, setAlpha, SmoothingMode } from "./Common";
+import { StringFormat, MeasureString } from "./String"
+import { Material, MaterialFont } from "./Icon";
+import { GetFont, themeColors } from "./Theme";
+import { ButtonStates, Clickable } from "./Button";
+import { ui } from "./UserInterface";
 
 const ui_textRending = ui.textRender;
 const textFont = GetFont("semibold", scale(14));
@@ -299,9 +299,7 @@ export class DropdownButton extends Clickable {
 		gr.DrawString(text, textFont, textColor, this.x + pad, this.y, this.width, this.height, StringFormat.LeftCenter);
 
 		// icon;
-		// console.log("drawing icon: ", icon, arrowColor);
-		gr.DrawString(icon, iconFont, arrowColor,
-			this.x + scale(4) + pad + this._textWidth, this.y, this.width, this.height, StringFormat.LeftCenter);
+		gr.DrawString(icon, iconFont, arrowColor, this.x + scale(4) + pad + this._textWidth, this.y, this.width, this.height, StringFormat.LeftCenter);
 	}
 
 }

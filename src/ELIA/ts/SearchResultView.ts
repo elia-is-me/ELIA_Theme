@@ -1,12 +1,12 @@
-import { RGB, scale, TextRenderingHint, StopReason, VKeyCode, clamp, KMask, CursorName, ReadMood, ToggleMood, } from "../common/Common";
-import { StringFormat, MeasureString, spaceStart, spaceStartEnd } from "../common/String";
-import { Component } from "../common/BasePart";
-import { Scrollbar } from "../common/ScrollBar";
-import { ScrollView } from "../common/ScrollView";
-import { MaterialFont, Material } from "../common/Icon";
-import { notifyOthers, ui } from "../common/UserInterface";
-import { themeColors, GetFont, scrollbarWidth } from "../common/Theme";
-import { TXT } from "../common/Lang";
+import { RGB, scale, TextRenderingHint, StopReason, VKeyCode, clamp, KMask, CursorName, ReadMood, ToggleMood, } from "./Common";
+import { StringFormat, MeasureString, spaceStart, spaceStartEnd } from "./String";
+import { Component } from "./BasePart";
+import { Scrollbar } from "./ScrollBar";
+import { ScrollView } from "./ScrollView";
+import { MaterialFont, Material } from "./Icon";
+import { notifyOthers, ui } from "./UserInterface";
+import { themeColors, GetFont, scrollbarWidth } from "./Theme";
+import { TXT } from "./Lang";
 import { IconButton } from "./Buttons";
 import { formatPlaylistDuration, showTrackContextMenu } from "./PlaylistView";
 

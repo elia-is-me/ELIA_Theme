@@ -1,11 +1,11 @@
-import { Component } from "../common/BasePart";
-import { RGB, scale, isFunction, setAlpha, SmoothingMode } from "../common/Common";
+import { Component } from "./BasePart";
+import { RGB, scale, isFunction, setAlpha, SmoothingMode } from "./Common";
 import { Button } from "./Buttons";
-import { InputBox } from "../common/Inputbox";
-import { notifyOthers } from "../common/UserInterface";
-import { themeColors, fonts, GetFont } from "../common/Theme";
-import { TXT } from "../common/Lang";
-import { MeasureString, StringFormat } from "../common/String";
+import { InputBox } from "./Inputbox";
+import { notifyOthers } from "./UserInterface";
+import { themeColors, fonts, GetFont } from "./Theme";
+import { TXT } from "./Lang";
+import { MeasureString, StringFormat } from "./String";
 
 
 export interface IInputPopupOptions {

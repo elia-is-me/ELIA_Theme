@@ -11,7 +11,6 @@ import {
 	InterpolationMode,
 	ThrottledRepaint,
 	getOrDefault,
-	debugTrace,
 } from "./Common";
 import { Component } from "./BasePart";
 import { StringFormat } from "./String";

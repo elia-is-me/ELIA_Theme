@@ -137,6 +137,7 @@ export class MutilineText extends Component {
 	maxLines: number = 0;
 	lineCount: number;
 	stringFormat: number = StringFormat(0, 0, StringTrimming.EllipsisCharacter, StringFormatFlags.LineLimit);
+	containerWidth: number;
 
 	private tempImg: IGdiBitmap = gdi.CreateImage(1, 1);
 	private gr: IGdiGraphics = this.tempImg.GetGraphics();
@@ -162,7 +163,8 @@ export class MutilineText extends Component {
 
 
 	getBoxSize(textWidth?: number) {
-		let textWidth_ = textWidth || this.width;
+		this.containerWidth = (textWidth || this.containerWidth);
+		let textWidth_ = this.containerWidth;
 		if (!textWidth_) { return; }
 
 		let h = (this.maxLines > 0 ? this.font.Height * (this.maxLines + .5) : 5000);
@@ -180,9 +182,9 @@ export class MutilineText extends Component {
 
 		// draw background;
 		if (this.backgroundColor) {
-			// gr.FillSolidRect(this.x, this.y, this.width, this.height, this.backgroundColor);
+			gr.FillSolidRect(this.x, this.y, this.width, this.height, this.backgroundColor);
 		}
-		gr.FillSolidRect(this.x, this.y, this.width, this.height, 0xa0aabbcc);
+		// gr.FillSolidRect(this.x, this.y, this.width, this.height, 0xa0aabbcc);
 
 		// draw text lines;
 		let textHeight = Math.min(this.height, this.font.Height * (this.lineCount + .5));

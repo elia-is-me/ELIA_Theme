@@ -2,21 +2,21 @@
 // Simple Playlist View
 //====================================
 
-import { TextRenderingHint, MenuFlag, VKeyCode, KMask, scale, RGB, SmoothingMode, CursorName, clamp, foo_playcount, ReadMood, ToggleMood } from "../common/Common";
-import { StringTrimming, StringFormatFlags, MeasureString, StringFormat, spaceStart, spaceStartEnd } from "../common/String";
-import { ThrottledRepaint } from "../common/Common";
-import { scrollbarWidth, themeColors, GetFont } from "../common/Theme";
-import { Scrollbar } from "../common/ScrollBar";
-import { ScrollView } from "../common/ScrollView";
-import { Component, IBoxModel } from "../common/BasePart";
-import { Material, MaterialFont } from "../common/Icon";
-import { PlaylistArtwork } from "../common/AlbumArt";
-import { mouseCursor, notifyOthers, ui } from "../common/UserInterface";
+import { TextRenderingHint, MenuFlag, VKeyCode, KMask, scale, RGB, SmoothingMode, CursorName, clamp, foo_playcount, ReadMood, ToggleMood } from "./Common";
+import { StringTrimming, StringFormatFlags, MeasureString, StringFormat, spaceStart, spaceStartEnd } from "./String";
+import { ThrottledRepaint } from "./Common";
+import { scrollbarWidth, themeColors, GetFont } from "./Theme";
+import { Scrollbar } from "./ScrollBar";
+import { ScrollView } from "./ScrollView";
+import { Component, IBoxModel } from "./BasePart";
+import { Material, MaterialFont } from "./Icon";
+import { PlaylistArtwork } from "./AlbumArt";
+import { mouseCursor, notifyOthers, ui } from "./UserInterface";
 import { Button } from "./Buttons";
-import { RunMainMenuCommand, TXT } from "../common/Lang";
+import { RunMainMenuCommand, TXT } from "./Lang";
 import { CreatePlaylistPopup, DeletePlaylistDialog, GoToArtist, RenamePlaylist } from "./Layout";
 import { RatingBar } from "./Rating";
-import { Label } from "../common/TextLink";
+import { Label, MutilineText } from "./TextLink";
 
 
 const playlistColors = {
@@ -168,6 +168,9 @@ class PlaylistHeaderView extends Component {
 	titleText: string = "";
 	private titleFullWidth: number = 0;
 	descriptionText: string = "";
+	Title: MutilineText;
+	Description: MutilineText;
+
 	parentOffsetY: number;
 	artworkHeight: number;
 	minHeight: number;
@@ -218,9 +221,24 @@ class PlaylistHeaderView extends Component {
 		this.label = new Label({
 			text: TXT("PLAYLIST"),
 			textColor: RGB(234, 67, 53),
-			// backgroundColor: RGB(66, 133, 244),
 		});
 		this.addChild(this.label);
+
+		this.Title = new MutilineText({
+			font: titleFont,
+			textColor: playlistColors.titleText,
+			stringFormat: StringFormat(0, 1, StringTrimming.EllipsisCharacter, StringFormatFlags.LineLimit),
+			maxLines: 2,
+		});
+		this.addChild(this.Title);
+
+		this.Description = new MutilineText({
+			font: descriptionFont,
+			textColor: playlistColors.secondaryText,
+			stringFormat: StringFormat(0, 1, StringTrimming.EllipsisCharacter, StringFormatFlags.LineLimit),
+			maxLines: 1,
+		});
+		this.addChild(this.Description);
 	}
 
 	/**
@@ -257,16 +275,17 @@ class PlaylistHeaderView extends Component {
 	}
 
 	setTitles() {
-		this.titleText = plman.GetPlaylistName(this.playlistIndex) || TXT("NO TITLE");
-		this.titleFullWidth = MeasureString(this.titleText, titleFont).Width;
-		this.descriptionText =
+		this.Title.setText(plman.GetPlaylistName(this.playlistIndex) || TXT("<NO TITLE>"))
+		let descriptionText_ =
 			plman.PlaylistItemCount(this.playlistIndex)
 			+ spaceStart(plman.PlaylistItemCount(this.playlistIndex) > 1 ? TXT("tracks") : TXT("track"));
 		if (plman.PlaylistItemCount(this.playlistIndex) > 0) {
-			this.descriptionText +=
+			descriptionText_ +=
 				spaceStartEnd("\u2022")
 				+ formatPlaylistDuration(plman.GetPlaylistItems(this.playlistIndex).CalcTotalDuration());
 		}
+		this.Description.setText(descriptionText_);
+		this.on_size();
 	}
 
 	setPlaylistIndex(value: number): void {
@@ -278,6 +297,16 @@ class PlaylistHeaderView extends Component {
 	on_size() {
 		this.artwork.setBoundary(this.x + paddingLR, this.y + paddingTB, artworkHeight, artworkHeight);
 		this.label.setPosition(this.x + paddingLR + this.artwork.width + artworkMarginL, this.artwork.y);
+
+		let textX = this.artwork.x + this.artwork.width + artworkMarginL;
+		let textWidth = this.x + this.width - textX - paddingLR;
+
+		this.Title.getBoxSize(textWidth);
+		this.Description.getBoxSize(textWidth);
+
+		this.Title.setPosition(textX, this.label.y + this.label.height * 1.5);
+		this.Description.setPosition(textX, this.Title.y + this.Title.height + scale(16));
+
 
 		// Set btns position;
 		let btnY: number;
@@ -300,46 +329,7 @@ class PlaylistHeaderView extends Component {
 
 	// playlist header;
 	on_paint(gr: IGdiGraphics) {
-		let secondaryTextColor = playlistColors.secondaryText;
-		let textColor = playlistColors.text;
-		const textX = this.x + paddingLR + artworkHeight + artworkMarginL;
-		const textAreaWidth = this.x + this.width - textX - paddingLR;
-		const titleFullWidth_ = this.titleFullWidth;
-		let textTotalHeight = 0;
-		let textY = 0;
 
-		if (titleFullWidth_ > textAreaWidth) {
-			textTotalHeight = titleLineHeight + titleFont.Height + descriptionLineHeight;
-		} else {
-			textTotalHeight = titleLineHeight + descriptionLineHeight;
-		}
-
-		if (this.width < pageWidth.thin) {
-			textY = this.y + paddingTB + (this.artwork.height - textTotalHeight) / 2;
-		} else {
-			textY = this.y + paddingTB + (this.artwork.height - this.shuffleBtn.height - textTotalHeight) / 2;
-		}
-
-		// Title;
-		gr.SetTextRenderingHint(TextRenderingHint.AntiAlias);
-		const titleText_ = this.titleText;
-		if (titleFullWidth_ > textAreaWidth) {
-			let sf = StringFormat(0, 0, StringTrimming.EllipsisCharacter, StringFormatFlags.LineLimit);
-			gr.DrawString(titleText_, titleFont, textColor,
-				textX, textY, textAreaWidth, titleLineHeight + titleFont.Height, sf);
-			textY += titleLineHeight + titleFont.Height;
-		} else {
-			gr.DrawString(titleText_, titleFont, textColor,
-				textX, textY, textAreaWidth, titleLineHeight, StringFormat.LeftTop);
-			textY += titleLineHeight;
-		}
-		gr.SetTextRenderingHint(ui_textRendering);
-
-		// Description;
-		if (this.descriptionText) {
-			gr.DrawString(this.descriptionText, descriptionFont, secondaryTextColor,
-				textX, textY, textAreaWidth, descriptionLineHeight, StringFormat.LeftTop);
-		}
 	}
 
 	on_mouse_rbtn_up(x: number, y: number) {

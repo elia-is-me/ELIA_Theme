@@ -1,10 +1,10 @@
-import { scale, RGB, isFunction, setAlpha, SmoothingMode } from "../common/Common";
-import { StringFormat } from "../common/String";
-import { Component } from "../common/BasePart";
+import { scale, RGB, isFunction, setAlpha, SmoothingMode } from "./Common";
+import { StringFormat } from "./String";
+import { Component } from "./BasePart";
 import { Button } from "./Buttons";
-import { GetFont, themeColors } from "../common/Theme";
-import { notifyOthers } from "../common/UserInterface";
-import { TXT } from "../common/Lang";
+import { GetFont, themeColors } from "./Theme";
+import { notifyOthers } from "./UserInterface";
+import { TXT } from "./Lang";
 
 export interface IAlertDialogOptions {
 	title: string;

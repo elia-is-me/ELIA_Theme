@@ -2,15 +2,15 @@
  * SearchBox on TopBar, Search library, playlist, etc.
  * ------------------------------------------------- */
 
-import { Component } from "../common/BasePart";
-import { InputBox } from "../common/Inputbox";
+import { Component } from "./BasePart";
+import { InputBox } from "./Inputbox";
 import { IconButton } from "./Buttons";
-import { scale, RGB, debugTrace } from "../common/Common";
-import { Material, } from "../common/Icon";
-import { GetFont, themeColors } from "../common/Theme";
-import { notifyOthers } from "../common/UserInterface";
-import { TXT } from "../common/Lang";
-import { MeasureString } from "../common/String";
+import { scale, RGB, debugTrace } from "./Common";
+import { Material, } from "./Icon";
+import { GetFont, themeColors } from "./Theme";
+import { notifyOthers } from "./UserInterface";
+import { TXT } from "./Lang";
+import { MeasureString } from "./String";
 
 export class SearchBox extends Component {
 	inputbox: InputBox;

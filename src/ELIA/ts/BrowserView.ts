@@ -1,14 +1,14 @@
-import { AlbumArtId, CacheObj, ImageCache, sanitize } from "../common/AlbumArt";
-import { Component } from "../common/BasePart";
-import { CropImage, CursorName, debounce, debugTrace, InterpolationMode, RGB, scale, SmoothingMode, tail, TextRenderingHint, VKeyCode, getYear, getOrDefault, BuildFullPath, throttle, ThrottledRepaint, fso, MenuFlag } from "../common/Common";
-import { Material } from "../common/Icon";
-import { InputBox } from "../common/Inputbox";
-import { TXT } from "../common/Lang";
-import { Scrollbar } from "../common/ScrollBar";
-import { ScrollView } from "../common/ScrollView";
-import { MeasureString, StringFormat, StringFormatFlags, StringTrimming } from "../common/String";
-import { GetFont, scrollbarWidth, themeColors } from "../common/Theme";
-import { mouseCursor, notifyOthers } from "../common/UserInterface";
+import { AlbumArtId, CacheObj, ImageCache, sanitize } from "./AlbumArt";
+import { Component } from "./BasePart";
+import { CropImage, CursorName, debounce, debugTrace, InterpolationMode, RGB, scale, SmoothingMode, tail, TextRenderingHint, VKeyCode, getYear, getOrDefault, BuildFullPath, throttle, ThrottledRepaint, fso, MenuFlag } from "./Common";
+import { Material } from "./Icon";
+import { InputBox } from "./Inputbox";
+import { TXT } from "./Lang";
+import { Scrollbar } from "./ScrollBar";
+import { ScrollView } from "./ScrollView";
+import { MeasureString, StringFormat, StringFormatFlags, StringTrimming } from "./String";
+import { GetFont, scrollbarWidth, themeColors } from "./Theme";
+import { mouseCursor, notifyOthers } from "./UserInterface";
 import { DropdownButton, IconButton } from "./Buttons";
 import { showTrackContextMenu } from "./PlaylistView";
 

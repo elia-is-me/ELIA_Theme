@@ -1,15 +1,15 @@
-﻿import { ui } from "./common/UserInterface";
-import { Layout } from "./parts/Layout";
-import { PlaybackControlView } from "./parts/PlaybackControlView";
-import { TopBar } from "./parts/TopbarView";
-import { isValidPlaylist, PlaylistView } from "./parts/PlaylistView";
-import { PlaylistManagerView } from "./parts/PlaylistManagerView";
-import { SearchResultView } from "./parts/SearchResultView";
-import { SettingsView } from "./parts/SettingsView";
-import { TXT } from "./common/Lang";
-import { ArtistPageView } from "./parts/ArtistPage";
-import { AlbumPageView } from "./parts/AlbumPage";
-import { browser, BrowserView } from "./parts/BrowserView";
+﻿import { ui } from "./ts/UserInterface";
+import { Layout } from "./ts/Layout";
+import { PlaybackControlView } from "./ts/PlaybackControlView";
+import { TopBar } from "./ts/TopbarView";
+import { isValidPlaylist, PlaylistView } from "./ts/PlaylistView";
+import { PlaylistManagerView } from "./ts/PlaylistManagerView";
+import { SearchResultView } from "./ts/SearchResultView";
+import { SettingsView } from "./ts/SettingsView";
+import { TXT } from "./ts/Lang";
+import { ArtistPageView } from "./ts/ArtistPage";
+import { AlbumPageView } from "./ts/AlbumPage";
+import { browser, BrowserView } from "./ts/BrowserView";
 
 window.DefinePanel(
 	"ELIA THEME",

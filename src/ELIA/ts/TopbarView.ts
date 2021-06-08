@@ -1,11 +1,11 @@
-import { scale, TextRenderingHint, MenuFlag, getOrDefault } from "../common/Common";
-import { Component } from "../common/BasePart";
+import { scale, TextRenderingHint, MenuFlag, getOrDefault } from "./Common";
+import { Component } from "./BasePart";
 import { IconButton } from "./Buttons";
-import { Material, MaterialFont } from "../common/Icon";
-import { notifyOthers, ui } from "../common/UserInterface";
-import { themeColors, ToggleDarkmode } from "../common/Theme";
+import { Material, MaterialFont } from "./Icon";
+import { notifyOthers, ui } from "./UserInterface";
+import { themeColors, ToggleDarkmode } from "./Theme";
 import { SearchBox } from "./SearchBox";
-import { TXT } from "../common/Lang";
+import { TXT } from "./Lang";
 import { ShowBrowser } from "./Layout";
 
 const iconSize = scale(22);

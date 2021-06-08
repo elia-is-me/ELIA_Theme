@@ -1,15 +1,15 @@
-import { Component } from "../common/BasePart";
-import { scale, TextRenderingHint } from "../common/Common";
-import { Material, MaterialFont } from "../common/Icon";
-import { Scrollbar } from "../common/ScrollBar";
-import { ScrollView } from "../common/ScrollView";
-import { StringFormat } from "../common/String";
-import { ui } from "../common/UserInterface";
+import { Component } from "./BasePart";
+import { scale, TextRenderingHint } from "./Common";
+import { Material, MaterialFont } from "./Icon";
+import { Scrollbar } from "./ScrollBar";
+import { ScrollView } from "./ScrollView";
+import { StringFormat } from "./String";
+import { ui } from "./UserInterface";
 import { Button } from "./Buttons";
-import { TXT } from "../common/Lang";
+import { TXT } from "./Lang";
 import { formatPlaylistDuration } from "./PlaylistView";
-import { GetFont, scrollbarWidth, themeColors } from "../common/Theme";
-import { AlbumArtId, AlbumArtwork } from "../common/AlbumArt";
+import { GetFont, scrollbarWidth, themeColors } from "./Theme";
+import { AlbumArtId, AlbumArtwork } from "./AlbumArt";
 
 const pageColors = {
     text: themeColors.text,
@@ -95,7 +95,7 @@ class ArtistPageHeader extends Component {
     constructor() {
         super({})
 
-        this.artwork = new AlbumArtwork({artworkType: AlbumArtId.Artist}); // for test now;
+        this.artwork = new AlbumArtwork({ artworkType: AlbumArtId.Artist }); // for test now;
         this.addChild(this.artwork);
 
         let shuffleall = new Button({

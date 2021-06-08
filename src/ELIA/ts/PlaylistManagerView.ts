@@ -3,19 +3,19 @@
 
 // [2021/02/03] Cursor image dragdrop bug;
 
-import { scale, RGB, RGBA, ThrottledRepaint, MenuFlag, setAlpha, SmoothingMode, CursorName, TextRenderingHint } from "../common/Common";
-import { Scrollbar } from "../common/ScrollBar";
-import { ScrollView } from "../common/ScrollView";
-import { Component } from "../common/BasePart";
-import { Material, MaterialFont } from "../common/Icon";
-import { scrollbarWidth, themeColors, GetFont } from "../common/Theme";
-import { Clickable } from "../common/Button";
+import { scale, RGB, RGBA, ThrottledRepaint, MenuFlag, setAlpha, SmoothingMode, CursorName, TextRenderingHint } from "./Common";
+import { Scrollbar } from "./ScrollBar";
+import { ScrollView } from "./ScrollView";
+import { Component } from "./BasePart";
+import { Material, MaterialFont } from "./Icon";
+import { scrollbarWidth, themeColors, GetFont } from "./Theme";
+import { Clickable } from "./Button";
 import { isValidPlaylist } from "./PlaylistView";
 import { IInputPopupOptions } from "./InputPopupPanel";
-import { mouseCursor, notifyOthers, ui } from "../common/UserInterface";
+import { mouseCursor, notifyOthers, ui } from "./UserInterface";
 import { CreatePlaylistPopup, DeletePlaylistDialog, GotoPlaylist, layout, RenamePlaylist } from "./Layout";
-import { TXT } from "../common/Lang";
-import { StringFormat, spaceStart } from "../common/String";
+import { TXT } from "./Lang";
+import { StringFormat, spaceStart } from "./String";
 import { root } from "../main";
 
 // Playlist names;
@@ -45,7 +45,7 @@ interface IPlaylistManagerProps {
 
 export const PlmanProperties = {
 	minWidth: layout.plmanMinWidth,
-	rowHeight: scale(36),
+	rowHeight: scale(32),
 	itemFont: GetFont(window.GetProperty("PLMAN.Item Font", "semibold,14")),
 	headerHeight: scale(80),
 	// icons: icons,
