@@ -9,7 +9,7 @@ import { SettingsView } from "./ts/SettingsView";
 import { TXT } from "./ts/Lang";
 import { ArtistPageView } from "./ts/ArtistPage";
 import { AlbumPageView } from "./ts/AlbumPage";
-import { browser, BrowserView } from "./ts/BrowserView";
+import { BrowserView, browser } from "./ts/BrowserView";
 
 window.DefinePanel(
 	"ELIA THEME",
@@ -32,6 +32,7 @@ const searchResult = new SearchResultView();
 const settingsView = new SettingsView();
 const artistPage = new ArtistPageView();
 const albumPage = new AlbumPageView();
+// const browser = new BrowserView();
 
 // ui.monitor(browser);
 // ui.monitor(playbackControlBar);

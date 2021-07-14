@@ -750,6 +750,8 @@ export class BrowserView extends ScrollView {
             this.items[this.hoverIndex] && (this.items[this.hoverIndex].isHover = false);
             this.hoverIndex = index;
             this.items[this.hoverIndex] && (this.items[this.hoverIndex].isHover = true);
+
+            console.log(this.hoverIndex)
             this.repaint();
         }
     }
@@ -908,7 +910,6 @@ function showSortMenu(x: number, y: number, viewType: number) {
     menu.AppendMenuItem(MenuFlag.STRING, 11, TXT("A to Z"));
     if (viewType === GroupTypes.Albums) {
         menu.AppendMenuItem(MenuFlag.STRING, 12, TXT("Artists"));
-        // menu.AppendMenuItem(MenuFlag.STRING, 14, TXT("Album"));
         menu.AppendMenuItem(MenuFlag.STRING, 13, TXT("Release year"));
     }
     menu.AppendMenuSeparator();
