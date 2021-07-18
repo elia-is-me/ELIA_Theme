@@ -314,7 +314,7 @@ export class Layout extends Component {
 		this.currentRoute = route;
 		this.goTo__(route);
 		prevRoute && this.st_forward.push(prevRoute);
-		notifyOthers("update_navigation", {
+		notifyOthers("update_navigation_button", {
 			back: this.st_back.length,
 			forward: this.st_forward.length,
 		});
@@ -327,7 +327,7 @@ export class Layout extends Component {
 		this.currentRoute = route;
 		this.goTo__(route);
 		prevRoute && this.st_back.push(prevRoute);
-		notifyOthers("update_navigation", {
+		notifyOthers("update_navigation_button", {
 			back: this.st_back.length,
 			forward: this.st_forward.length,
 		});
@@ -342,7 +342,7 @@ export class Layout extends Component {
 			this.goTo__(route);
 			this.st_forward = [];
 			prevRoute && this.st_back.push(prevRoute);
-			notifyOthers("update_navigation", {
+			notifyOthers("update_navigation_button", {
 				back: this.st_back.length,
 				forward: this.st_forward.length,
 			});

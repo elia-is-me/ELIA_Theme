@@ -223,7 +223,7 @@ export class TopBar extends Component {
 
 	onNotifyData(msg: string, data: any) {
 		switch (msg) {
-			case "update_navigation":
+			case "update_navigation_button":
 				let forward: number = getOrDefault(data, o => o.forward, 0);
 				let back_length: number = getOrDefault(data, o => o.back, 0);
 				if (back_length > 0) {

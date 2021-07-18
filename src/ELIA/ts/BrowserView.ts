@@ -182,7 +182,7 @@ class FilterBox extends Component {
         this.clearBtn.visible = (this.inputbox.edit && this.inputbox.text.length > 0);
     }
 
-    clearInput() {}
+    clearInput() { }
 
     repaint() {
         this.parent.repaint();
@@ -368,6 +368,14 @@ class LibraryBrowserHeader extends Component {
 
         //tab underline;
         gr.DrawLine(this.x + paddingLR, this.y + tabHeight - 1, this.x + this.width - paddingLR, this.y + tabHeight - 1, 1, brwColors.titleText & 0x25ffffff);
+
+        // items count display;
+        let text = (<BrowserView>this.parent).items.length + " " + TXT("albums");
+        let textWidth = gr.MeasureString(text, itemFont, 0, 0, 1000, 100).Width + 1;
+        let textX = this.x + this.width - paddingLR - textWidth;
+        let textY = this.y;
+        let textHeight = tabHeight;
+        gr.DrawString(text, itemFont, brwColors.secondaryText, textX, textY, textWidth, textHeight, StringFormat.LeftCenter);
     }
 }
 
@@ -803,13 +811,24 @@ export class BrowserView extends ScrollView {
     }
 
 
-    private changeHoverIndex(index: number) {
-        if (index !== this.hoverIndex) {
-            this.items[this.hoverIndex] && (this.items[this.hoverIndex].isHover = false);
-            this.hoverIndex = index;
-            this.items[this.hoverIndex] && (this.items[this.hoverIndex].isHover = true);
+    // private changeHoverIndex(index: number) {
+    //     if (index !== this.hoverIndex) {
+    //         this.items[this.hoverIndex] && (this.items[this.hoverIndex].isHover = false);
+    //         this.hoverIndex = index;
+    //         this.items[this.hoverIndex] && (this.items[this.hoverIndex].isHover = true);
 
-            // console.log(this.hoverIndex)
+    //         // console.log(this.hoverIndex)
+    //         this.repaint();
+    //     }
+    // }
+
+    private hoverItem: BrowserItem = null;
+
+    private changeHoverItem(it?: BrowserItem) {
+        if (it != this.hoverItem) {
+            this.hoverItem && (this.hoverItem.isHover = false);
+            this.hoverItem = it;
+            this.hoverItem && (this.hoverItem.isHover = true);
             this.repaint();
         }
     }
@@ -826,6 +845,7 @@ export class BrowserView extends ScrollView {
                 this.reversed = false;
                 this.sort();
                 this.saveStates();
+                this.scroll = 0;
                 this.on_size();
                 this.repaint();
             }
@@ -872,7 +892,7 @@ export class BrowserView extends ScrollView {
         if (this.downIndex > -1) {
 
         } else {
-            this.changeHoverIndex(hoverItem ? hoverItem.index : -1);
+            this.changeHoverItem(hoverItem);
         }
 
     }
@@ -915,7 +935,7 @@ export class BrowserView extends ScrollView {
     on_mouse_rbtn_down(x: number, y: number) {
         let hoverItem = this.getHoverItem(x, y);
         let hoverIndex = hoverItem ? hoverItem.index : -1;
-        this.changeHoverIndex(hoverIndex);
+        this.changeHoverItem(hoverItem);
         this.downIndex = hoverIndex;
 
         if (hoverItem) {
@@ -928,7 +948,8 @@ export class BrowserView extends ScrollView {
     on_mouse_rbtn_up(x: number, y: number) {
         let hoverItem = this.getHoverItem(x, y);
         let hoverIndex = hoverItem ? hoverItem.index : -1;
-        this.changeHoverIndex(hoverIndex);
+        // this.changeHoverIndex(hoverIndex);
+        this.changeHoverItem(hoverItem);
 
         if (hoverIndex === this.downIndex && hoverIndex > -1) {
             showTrackContextMenu(null, hoverItem.metadbs, x, y);
@@ -940,8 +961,9 @@ export class BrowserView extends ScrollView {
     }
 
     on_mouse_leave() {
-        let item = this.getHoverItem(mouseCursor.x, mouseCursor.y);
-        this.changeHoverIndex(item ? item.index : -1);
+        let hoverItem = this.getHoverItem(mouseCursor.x, mouseCursor.y);
+        // this.changeHoverIndex(item ? item.index : -1);
+        this.changeHoverItem(hoverItem);
     }
 
     on_load_image_done(tid: number, image: IGdiBitmap, imgPath: string) {

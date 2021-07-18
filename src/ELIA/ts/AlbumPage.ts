@@ -40,7 +40,6 @@ const itemFont = GetFont("normal, 14");
 const semiItemFont = GetFont("semibold, 14");
 const smallItemFont = GetFont("normal, 13");
 const descriptionFont = GetFont("normal, 14");
-let subtitleFont = GetFont("normal, 14");
 const titleFont = GetFont("bold, 20");
 let timeFont = GetFont("Trebuchet MS", itemFont.Size);
 
@@ -716,11 +715,6 @@ export class AlbumPageView extends ScrollView {
 
                     // liked;
                     if (liked.visible) {
-                        // let moodOn = row.mood > 0;
-                        // let likedIcon = moodOn ? Material.heart : Material.heart_empty;
-                        // let iconColor = moodOn ? pageColors.moodRed : _textSecondaryColor;
-                        // gr.DrawString(likedIcon, iconFont, iconColor,
-                        //     liked.x, row.y, liked.width, row.height, StringFormat.Center);
                         row.moodbtn.setBoundary(liked.x, row.y, liked.width, row.height);
                         row.moodbtn.on_paint(gr);
                     }
