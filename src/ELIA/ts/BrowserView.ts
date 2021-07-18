@@ -1,6 +1,6 @@
+import { CropImage, CursorName, debounce, InterpolationMode, RGB, scale, tail, VKeyCode, getYear, getOrDefault, BuildFullPath, ThrottledRepaint, fso, MenuFlag } from "./Common";
 import { AlbumArtId, CacheObj, ImageCache, sanitize } from "./AlbumArt";
 import { Component } from "./BasePart";
-import { CropImage, CursorName, debounce, debugTrace, InterpolationMode, RGB, scale, SmoothingMode, tail, TextRenderingHint, VKeyCode, getYear, getOrDefault, BuildFullPath, throttle, ThrottledRepaint, fso, MenuFlag } from "./Common";
 import { Material } from "./Icon";
 import { InputBox } from "./Inputbox";
 import { TXT } from "./Lang";
@@ -11,9 +11,11 @@ import { GetFont, scrollbarWidth, themeColors } from "./Theme";
 import { mouseCursor, notifyOthers } from "./UserInterface";
 import { DropdownButton, IconButton } from "./Buttons";
 import { showTrackContextMenu } from "./PlaylistView";
+import * as $ from "./Common";
 
+// const RGB = $.RGB;
 
-const colors = {
+const brwColors = {
     text: themeColors.text,
     titleText: themeColors.titleText,
     secondaryText: themeColors.secondaryText,
@@ -25,13 +27,6 @@ const colors = {
     scrollbarBackground: themeColors.scrollbarBackground,
     moodRed: themeColors.mood,
     headerBackground: themeColors.topbarBackground,
-}
-
-const buttonColors = {
-    onPrimary: themeColors.onPrimary,
-    primary: themeColors.primary,
-    secondary: themeColors.secondary,
-    onSecondary: themeColors.onSecondary,
 }
 
 const itemFont = GetFont("semibold,14");
@@ -88,6 +83,16 @@ export enum SortTypes {
     Random,
 }
 
+const sortNames: string[] = [];
+sortNames[SortTypes.AZ] = TXT("A to Z");
+sortNames[SortTypes.Year] = TXT("Release year");
+sortNames[SortTypes.AddTime] = TXT("Add time");
+sortNames[SortTypes.Artist] = TXT("Artists");
+sortNames[SortTypes.Random] = TXT("Random");
+sortNames[SortTypes.Reverse] = TXT("Reverse");
+
+
+
 const TF_ORDER_ALBUM = fb.TitleFormat("%album%^^[%date%]^^%discnumber%^^%tracknumber%");
 const TF_ALBUM_TAGS = fb.TitleFormat("%album%|||[%date%]^^%album artist%^^%discnumber%^^%tracknumber%^^%added%");
 const TF_ARTIST_TAGS = fb.TitleFormat("%artist%");
@@ -117,9 +122,9 @@ class FilterBox extends Component {
         this.grabFocus = false;
         this.inputbox = new InputBox({
             font: GetFont("normal,14"),
-            foreColor: colors.text,
-            backgroundColor: colors.background,
-            backgroundActiveColor: colors.background,
+            foreColor: brwColors.text,
+            backgroundColor: brwColors.background,
+            backgroundActiveColor: brwColors.background,
             backgroundSelectionColor: RGB(28, 98, 185),
             empty_text: TXT("Filter..."),
             autovalidation: true,
@@ -129,7 +134,7 @@ class FilterBox extends Component {
         this.clearBtn = new IconButton({
             icon: Material.close,
             fontSize: scale(20),
-            colors: [colors.titleText],
+            colors: [brwColors.titleText],
         });
         this.clearBtn.on_click = () => {
             if (this.inputbox.text.length > 0) {
@@ -142,7 +147,7 @@ class FilterBox extends Component {
         this.filterBtn = new IconButton({
             icon: Material.filter,
             fontSize: scale(20),
-            colors: [colors.titleText]
+            colors: [brwColors.titleText]
         })
         this.addChild(this.inputbox);
         this.addChild(this.clearBtn);
@@ -170,12 +175,14 @@ class FilterBox extends Component {
     }
 
     on_paint(gr: IGdiGraphics) {
-        gr.DrawRect(this.x, this.y, this.width - scale(1), this.height - scale(1), scale(1), colors.titleText & 0x25ffffff);
+        gr.DrawRect(this.x, this.y, this.width - scale(1), this.height - scale(1), scale(1), brwColors.titleText & 0x25ffffff);
         if (this.inputbox.edit) {
             gr.DrawRect(this.x, this.y, this.width - scale(1), this.height - scale(1), scale(1), RGB(28, 98, 185));
         }
         this.clearBtn.visible = (this.inputbox.edit && this.inputbox.text.length > 0);
     }
+
+    clearInput() {}
 
     repaint() {
         this.parent.repaint();
@@ -222,7 +229,7 @@ class TabItem extends Component {
     on_paint(gr: IGdiGraphics) {
         let { pad, text } = this;
         let tabFont_ = tabFont;
-        let color = this.isHighlight ? colors.titleText : colors.secondaryText;
+        let color = this.isHighlight ? brwColors.titleText : brwColors.secondaryText;
 
         // text;
         gr.DrawString(text, tabFont_, color, this.x + pad, this.y, this.width, this.height, StringFormat.LeftCenter);
@@ -278,7 +285,6 @@ class LibraryBrowserHeader extends Component {
 
     tabItems: TabItem[] = [];
     highlightTabIndex = -1;
-    // sourceBtn: DropdownButton;
     sortBtn: DropdownButton;
     filterBox: FilterBox;
 
@@ -347,20 +353,21 @@ class LibraryBrowserHeader extends Component {
             this.tabItems[i].setPosition(tabX, tabY);
             tabX += this.tabItems[i].width;
         }
+        let fbox = this.y + tabHeight + (toolbarHeight - this.filterBox.height) / 2;
         let btnY = this.y + tabHeight + (toolbarHeight - this.sortBtn.height) / 2;
         let btnX = this.x + paddingLR;
 
-        this.filterBox.setPosition(btnX, btnY)
+        this.filterBox.setPosition(btnX, fbox)
         this.sortBtn.setPosition(this.filterBox.x + this.filterBox.width + scale(16), btnY);
     }
 
     // browser header;
     on_paint(gr: IGdiGraphics) {
         // background;
-        gr.FillSolidRect(this.x, this.y, this.width, this.height, colors.background);
+        gr.FillSolidRect(this.x, this.y, this.width, this.height, brwColors.background);
 
         //tab underline;
-        gr.DrawLine(this.x + paddingLR, this.y + tabHeight - 1, this.x + this.width - paddingLR, this.y + tabHeight - 1, 1, colors.titleText & 0x25ffffff);
+        gr.DrawLine(this.x + paddingLR, this.y + tabHeight - 1, this.x + this.width - paddingLR, this.y + tabHeight - 1, 1, brwColors.titleText & 0x25ffffff);
     }
 }
 
@@ -407,13 +414,13 @@ class BrowserItem extends Component {
             0, 0, img_draw.Width, img_draw.Height)
         // draw hover mask;
         if (this.isHover) {
-            gr.FillGradRect(this.x, this.y, this.width, this.height / 2, 90, colors.text, 0, 1.0);
+            gr.FillGradRect(this.x, this.y, this.width, this.height / 2, 90, brwColors.text, 0, 1.0);
         }
         let font1 = itemFont;
         let font2 = smallItemFont;
         let textY = this.y + this.width + scale(8);
         let line1Width = gr.MeasureString(this.albumName, font1, 0, 0, 10000, 100).Width;
-        gr.DrawString(this.albumName, font1, colors.text,
+        gr.DrawString(this.albumName, font1, brwColors.text,
             this.x, textY, this.width, 2.5 * font1.Height,
             StringFormat(0, 0, StringTrimming.EllipsisCharacter, StringFormatFlags.LineLimit));
         if (line1Width > this.width) {
@@ -421,7 +428,7 @@ class BrowserItem extends Component {
         } else {
             textY += 1.2 * font1.Height;
         }
-        gr.DrawString(this.artistName, font2, colors.secondaryText,
+        gr.DrawString(this.artistName, font2, brwColors.secondaryText,
             this.x, textY, this.width, this.height, StringFormat.LeftTop);
     }
 }
@@ -433,7 +440,11 @@ export class BrowserView extends ScrollView {
     // Albums, Artist, Genres
     groupType: number = GroupTypes.Albums;
     sortType: number = SortTypes.AddTime;
+    sortTypeName: string = "";
     items: BrowserItem[] = [];
+    reversed: boolean = false;
+    filterText: string = "";
+    private reverseItems: BrowserItem[] = [];
     // groups: BrowserItem[][] = [];
     visibleItems: BrowserItem[] = [];
     selectedIndexes: number[] = [];
@@ -452,8 +463,8 @@ export class BrowserView extends ScrollView {
         super({});
 
         this.scrollbar = new Scrollbar({
-            cursorColor: colors.scrollbarCursor,
-            backgroundColor: colors.scrollbarBackground
+            cursorColor: brwColors.scrollbarCursor,
+            backgroundColor: brwColors.scrollbarBackground
         });
         this.addChild(this.scrollbar);
 
@@ -461,6 +472,23 @@ export class BrowserView extends ScrollView {
         this.addChild(this.detailHeader);
         this.detailHeader.getGroupType = () => {
             return this.groupType;
+        }
+
+        this.detailHeader.filterBox.inputbox.func = () => {
+            let filterText = this.detailHeader.filterBox.inputbox.text;
+            this.setFilter(filterText);
+        }
+
+        this.detailHeader.filterBox.clearInput = () => {
+            if (this.detailHeader.filterBox.inputbox.text.length > 0) {
+                this.detailHeader.filterBox.inputbox.text = "";
+                this.detailHeader.filterBox.inputbox.offset = 0;
+            };
+            this.detailHeader.filterBox.inputbox.func();
+        }
+
+        this.detailHeader.filterBox.clearBtn.on_click = () => {
+            this.detailHeader.filterBox.clearInput();
         }
 
         this.imageCache = imageCache;
@@ -536,38 +564,50 @@ export class BrowserView extends ScrollView {
 
         let groupIndex = 0;
         let items: BrowserItem[] = [];
+        let str_filter = process_string(this.filterText);
 
         for (let i = 0, len = sourceMetadbs.Count; i < len; i++) {
             let currMetadb = sourceMetadbs[i];
             let tags = tf_diff.EvalWithMetadb(currMetadb).split("|||");
             let current = tags[0];
+            let toAdd = true;
+            if (str_filter.length > 0) {
+                let comp_str = "";
+                if (this.groupType === GroupTypes.Albums) {
+                    comp_str = tags[0] + " " + tags[1].split("^^")[1];
+                    // todo: 处理 various artists 之类的;
+                }
+                toAdd = match(comp_str, str_filter);
+            }
 
-            if (current !== compare) {
-                compare = current;
+            if (toAdd) {
+                if (current !== compare) {
+                    compare = current;
 
-                let currItem = new BrowserItem();
-                currItem.index = groupIndex;
-                currItem.metadb = currMetadb;
-                currItem.metadbs = new FbMetadbHandleList(currMetadb);
-                currItem.albumName = tags[0];
-                let tag1_arr = tags[1].split("^^");
-                currItem.artistName = tag1_arr[1];
-                currItem.year = getYear(tag1_arr[0]);
-                currItem.addTime = tag1_arr[4];
-                currItem.cacheKey = sanitize((currItem.artistName ? currItem.artistName + " - " : "") + currItem.albumName)
-                    .replace(
-                        /CD(\s*\d|\.0\d)|CD\s*(One|Two|Three)|Disc\s*\d|Disc\s*(III|II|I|One|Two|Three)\b/gi,
-                        ""
-                    )
-                    .replace(/\(\s*\)|\[\s*\]/g, " ")
-                    .replace(/\s\s+/g, " ")
-                    .replace(/-\s*$/g, " ")
-                    .trim();
-                items.push(currItem);
-                groupIndex++;
-            } else {
-                let currItem = tail(items);
-                currItem.metadbs.Add(currMetadb);
+                    let currItem = new BrowserItem();
+                    currItem.index = groupIndex;
+                    currItem.metadb = currMetadb;
+                    currItem.metadbs = new FbMetadbHandleList(currMetadb);
+                    currItem.albumName = tags[0];
+                    let tag1_arr = tags[1].split("^^");
+                    currItem.artistName = tag1_arr[1];
+                    currItem.year = getYear(tag1_arr[0]);
+                    currItem.addTime = tag1_arr[4];
+                    currItem.cacheKey = sanitize((currItem.artistName ? currItem.artistName + " - " : "") + currItem.albumName)
+                        .replace(
+                            /CD(\s*\d|\.0\d)|CD\s*(One|Two|Three)|Disc\s*\d|Disc\s*(III|II|I|One|Two|Three)\b/gi,
+                            ""
+                        )
+                        .replace(/\(\s*\)|\[\s*\]/g, " ")
+                        .replace(/\s\s+/g, " ")
+                        .replace(/-\s*$/g, " ")
+                        .trim();
+                    items.push(currItem);
+                    groupIndex++;
+                } else {
+                    let currItem = tail(items);
+                    currItem.metadbs.Add(currMetadb);
+                }
             }
         } // EOFor
 
@@ -577,6 +617,7 @@ export class BrowserView extends ScrollView {
     // browser set items;
     private setItems() {
         this.selectedIndexes = [];
+        this.reversed = false;
         if (this.metadbs == null) {
             this.items = [];
             return;
@@ -596,7 +637,8 @@ export class BrowserView extends ScrollView {
         this.scroll = getOrDefault(options, o => o.scroll, 0);;
         this.setItems();
         this.sort();
-        this.saveProperties();
+        this.detailHeader.sortBtn.setText("Sort by: " + sortNames[this.sortType]);
+        this.saveStates();
     }
 
     private debounce_update = debounce((opts?: BrowserOptionType) => {
@@ -610,26 +652,40 @@ export class BrowserView extends ScrollView {
         this.repaint();
     }, 250);
 
-    private saveProperties() {
-        let savedProps = window.GetProperty("Browser.Props");
+    private _statesKey = "Browser._States";
+
+    private saveStates() {
+        let savedStates = window.GetProperty(this._statesKey);
         let props = `${this.sourceType},${this.groupType},${this.sortType}`;
-        if (props !== savedProps) {
-            window.SetProperty("Browser.Props", props);
+        if (props !== savedStates) {
+            window.SetProperty(this._statesKey, props);
         }
+    }
+
+    setFilter(filterText: string) {
+        this.filterText = filterText;
+        this.init({
+            sourceType: this.sourceType,
+            viewType: this.groupType,
+            sortType: this.sortType,
+            scroll: 0,
+        });
+        this.on_size();
+        this.repaint();
     }
 
     //browser;
     on_show() {
-        const browserProp = window.GetProperty(
-            "Browser.Props",
+        const brwStates = window.GetProperty(
+            this._statesKey,
             `${SourceTypes.Library},${GroupTypes.Albums},${SortTypes.AddTime}`
         )
             .split(",")
             .map(a => Number(a));
         this.init({
-            sourceType: browserProp[0],
-            viewType: browserProp[1],
-            sortType: browserProp[2],
+            sourceType: brwStates[0],
+            viewType: brwStates[1],
+            sortType: brwStates[2],
         });
         this.on_size();
         ThrottledRepaint();
@@ -676,7 +732,7 @@ export class BrowserView extends ScrollView {
 
     // browesr;
     on_paint(gr: IGdiGraphics) {
-        let backgroundColor = colors.background;
+        let backgroundColor = brwColors.background;
         let px = this.x;
         let py = this.y;
         let pw = this.width;
@@ -691,7 +747,7 @@ export class BrowserView extends ScrollView {
 
         // show top split line when this.scroll > 0;
         if (this.scroll > 0) {
-            gr.DrawLine(this.x, this.y + offsetTop, this.x + this.width - this.scrollbar.width, this.y + offsetTop, scale(2), colors.splitLine);
+            gr.DrawLine(this.x, this.y + offsetTop, this.x + this.width - this.scrollbar.width, this.y + offsetTop, scale(2), brwColors.splitLine);
         }
 
         this.visibleItems.length = 0;
@@ -708,9 +764,11 @@ export class BrowserView extends ScrollView {
     }
 
     private getHoverItem(x: number, y: number) {
-        return y > this.y + this.detailHeader.height
-            && y < this.y + this.height
-            && this.visibleItems.find(item => item.trace(x, y));
+        if (y > this.y + this.detailHeader.height && y < this.y + this.height) {
+            return this.visibleItems.find(item => item.trace(x, y));
+        } else {
+            return null;
+        }
     }
 
     private setSelection(): void;
@@ -751,7 +809,7 @@ export class BrowserView extends ScrollView {
             this.hoverIndex = index;
             this.items[this.hoverIndex] && (this.items[this.hoverIndex].isHover = true);
 
-            console.log(this.hoverIndex)
+            // console.log(this.hoverIndex)
             this.repaint();
         }
     }
@@ -762,14 +820,20 @@ export class BrowserView extends ScrollView {
             console.log("WARN: ", "Browser.sortBy, Invalid parameter ", sortType);
             return;
         }
-        if (sortType !== this.sortType) {
-            this.sortType = sortType;
-            this.sort();
+        if (sortType !== SortTypes.Reverse) {
+            if (sortType !== this.sortType) {
+                this.sortType = sortType;
+                this.reversed = false;
+                this.sort();
+                this.saveStates();
+                this.on_size();
+                this.repaint();
+            }
+        } else {
+            this.reversed = !this.reversed;
+            this.items.reverse();
             this.on_size();
             this.repaint();
-            if (this.sortType !== SortTypes.Reverse && this.sortType !== SortTypes.Random) {
-                this.saveProperties();
-            }
         }
     }
 
@@ -793,7 +857,7 @@ export class BrowserView extends ScrollView {
                 this.items.sort((a, b) => (a.year > b.year ? -1 : a.year < b.year ? 1 : 0));
                 break;
             case SortTypes.Reverse:
-                this.items.reverse();
+                // do nothing here;
                 break;
         }
     }
@@ -914,21 +978,27 @@ function showSortMenu(x: number, y: number, viewType: number) {
     }
     menu.AppendMenuSeparator();
     menu.AppendMenuItem(MenuFlag.STRING, 20, TXT("Reverse"));
+    menu.CheckMenuItem(20, browser.reversed);
 
     let ret = menu.TrackPopupMenu(x, y);
+    let sortbtn = browser.detailHeader.sortBtn;
 
     switch (true) {
         case ret === 10:
             browser.sortBy(SortTypes.AddTime);
+            sortbtn.setText("Sort by: " + sortNames[SortTypes.AddTime])
             break;
         case ret === 11:
             browser.sortBy(SortTypes.AZ);
+            sortbtn.setText("Sort by: " + sortNames[SortTypes.AZ]);
             break;
         case ret === 13:
             browser.sortBy(SortTypes.Year);
+            sortbtn.setText("Sort by: " + sortNames[SortTypes.Year]);
             break;
         case ret === 12:
             browser.sortBy(SortTypes.Artist);
+            sortbtn.setText("Sort by: " + sortNames[SortTypes.Artist]);
             break;
         case ret === 20:
             browser.sortBy(SortTypes.Reverse);
